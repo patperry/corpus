@@ -22,7 +22,7 @@
  * File buffer, for holding portions of a file in memory.
  */
 
-#define _FILE_OFFSET_BITS 64
+#define _FILE_OFFSET_BITS 64	/**< enable large file support */
 
 #include <stddef.h>
 #include <sys/types.h>

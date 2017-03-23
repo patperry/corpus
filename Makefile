@@ -15,7 +15,7 @@ CORPUS_A = libcorpus.a
 LIB_O	= src/array.o src/filebuf.o src/text.o src/xalloc.o
 
 TESTS_T = tests/check_text
-TESTS_O = tests/check_text.o
+TESTS_O = tests/check_text.o tests/testutil.o
 
 ALL_O = $(LIB_O)
 ALL_T = $(CORPUS_A)

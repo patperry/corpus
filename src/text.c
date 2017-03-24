@@ -30,6 +30,7 @@ static int assign_raw_unsafe(struct text *text, const uint8_t *ptr, size_t size)
 
 static int decode_uescape(const uint8_t **inputptr, const uint8_t *end,
 			  uint32_t *codeptr);
+static void decode_valid_escape(const uint8_t **inputptr, uint32_t *codeptr);
 static void decode_valid_uescape(const uint8_t **inputptr, uint32_t *codeptr);
 
 
@@ -52,6 +53,51 @@ int text_assign(struct text *text, const uint8_t *ptr, size_t size, int flags)
 	}
 
 	return err;
+}
+
+
+
+void text_iter_make(struct text_iter *it, const struct text *text)
+{
+	it->ptr = text->ptr;
+	it->end = it->ptr + TEXT_SIZE(text);
+	it->attr = text->attr;
+	it->current = -1;
+}
+
+
+int text_iter_advance(struct text_iter *it)
+{
+	const uint8_t *ptr = it->ptr;
+	size_t attr = it->attr;
+	uint32_t code;
+
+	if (ptr == it->end) {
+		goto at_end;
+	}
+
+	code = *ptr++;
+	if (code == '\\' && (attr & TEXT_ESC_BIT)) {
+		decode_valid_escape(&ptr, &code);
+	} else if ((attr & TEXT_UTF8_BIT) && code >= 0x80) {
+		ptr--;
+		decode_utf8(&ptr, &code);
+	}
+
+	it->ptr = (uint8_t *)ptr;
+	it->current = code;
+
+	return 1;
+
+at_end:
+	return 0;
+}
+
+
+void text_iter_reset(struct text_iter *it)
+{
+	it->ptr = it->end - (it->attr & TEXT_SIZE_MASK);
+	it->current = -1;
 }
 
 
@@ -297,15 +343,6 @@ error:
 }
 
 
-int text_unescape(const struct text *text, uint8_t *buf, size_t *sizeptr)
-{
-	(void)text;
-	(void)buf;
-	(void)sizeptr;
-	return 0;
-}
-
-
 int decode_uescape(const uint8_t **inputptr, const uint8_t *end,
 		   uint32_t *codeptr)
 {
@@ -424,4 +461,40 @@ void decode_valid_uescape(const uint8_t **inputptr, uint32_t *codeptr)
 
 	*codeptr = code;
 	*inputptr = ptr;
+}
+
+
+void decode_valid_escape(const uint8_t **inputptr, uint32_t *codeptr)
+{
+	const uint8_t *ptr = *inputptr;
+	uint32_t code;
+
+	code = *ptr++;
+
+	switch (code) {
+	case 'b':
+		code = '\b';
+		break;
+	case 'f':
+		code = '\f';
+		break;
+	case 'n':
+		code = '\n';
+		break;
+	case 'r':
+		code = '\r';
+		break;
+	case 't':
+		code = '\t';
+		break;
+	case 'u':
+		*inputptr = ptr;
+		decode_valid_uescape(inputptr, codeptr);
+		return;
+	default:
+		break;
+	}
+
+	*inputptr = ptr;
+	*codeptr = code;
 }

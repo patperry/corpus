@@ -52,14 +52,14 @@
 // BF: 1011 1111
 // E0: 1110 0000
 
-int scan_utf8(const uint8_t **bufp, const uint8_t *end)
+int scan_utf8(const uint8_t **bufptr, const uint8_t *end)
 {
-	const uint8_t *ptr = *bufp;
+	const uint8_t *ptr = *bufptr;
 	uint_fast8_t ch, ch1;
 	unsigned nc;
 	int err;
 
-	if (*bufp >= end)
+	if (*bufptr >= end)
 		return ERROR_INVAL;
 
 	// determine number of bytes
@@ -134,23 +134,14 @@ backtrack:
 	ptr--;
 	err = ERROR_INVAL;
 out:
-	*bufp = ptr;
+	*bufptr = ptr;
 	return err;
 }
 
 
-void scan_valid_utf8(const uint8_t **bufp)
+void decode_utf8(const uint8_t **bufptr, uint32_t *codeptr)
 {
-	const uint8_t *ptr = *bufp;
-	uint_fast8_t ch = *ptr;
-	unsigned len = 1 + UTF8_TAIL_LEN(ch);
-	*bufp = ptr + len;
-}
-
-
-void decode_valid_utf8(const uint8_t **bufp, uint32_t *codep)
-{
-	const uint8_t *ptr = *bufp;
+	const uint8_t *ptr = *bufptr;
 	uint32_t code;
 	uint_fast8_t ch;
 	unsigned nc;
@@ -175,15 +166,15 @@ void decode_valid_utf8(const uint8_t **bufp, uint32_t *codep)
 		code = (code << 6) + (ch & 0x3F);
 	}
 
-	*bufp = ptr;
-	*codep = code;
+	*bufptr = ptr;
+	*codeptr = code;
 }
 
 
 // http://www.fileformat.info/info/unicode/utf8.htm
-void encode_valid_utf32(uint32_t code, uint8_t **bufp)
+void encode_utf8(uint32_t code, uint8_t **bufptr)
 {
-	uint8_t *ptr = *bufp;
+	uint8_t *ptr = *bufptr;
 	uint32_t x = code;
 
 	if (x <= 0x7F) {
@@ -202,40 +193,7 @@ void encode_valid_utf32(uint32_t code, uint8_t **bufp)
 		*ptr++ = 0x80 | (x & 0x3F);
 	}
 
-	*bufp = ptr;
-}
-
-
-int encode_utf32(uint32_t code, uint8_t **bufp)
-{
-	uint8_t *ptr = *bufp;
-	uint32_t x = code;
-	int err = 0;
-
-	if (x <= 0x7F) {
-		*ptr++ = x;
-	} else if (x <= 0x07FF) {
-		*ptr++ = 0xC0 | (x >> 6);
-		*ptr++ = 0x80 | (x & 0x3F);
-	} else if (x <= 0xFFFF) {
-		*ptr++ = 0xE0 | (x >> 12);
-		*ptr++ = 0x80 | ((x >> 6) & 0x3F);
-		*ptr++ = 0x80 | (x & 0x3F);
-	} else if (x <= 0x1FFFFF) {
-		*ptr++ = 0xF0 | (x >> 18);
-		*ptr++ = 0x80 | ((x >> 12) & 0x3F);
-		*ptr++ = 0x80 | ((x >> 6) & 0x3F);
-		*ptr++ = 0x80 | (x & 0x3F);
-	} else {
-		// invalid utf8; use unicode repllacement char U+FFFD
-		*ptr++ = 0xEF;
-		*ptr++ = 0xBF;
-		*ptr++ = 0xBD;
-		err = ERROR_INVAL;
-	}
-
-	*bufp = ptr;
-	return err;
+	*bufptr = ptr;
 }
 
 

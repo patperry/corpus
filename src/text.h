@@ -37,6 +37,16 @@ struct text {
 	size_t attr;	/**< text attributes */
 };
 
+/**
+ * An iterator over the decoded UTF-32 characters in a text.
+ */
+struct text_iter {
+	const uint8_t *ptr;	/**< current position in the text buffer*/
+	const uint8_t *end;	/**< end of the text buffer */
+	size_t attr;		/**< text attributes */
+	uint32_t current;	/**< current character (UTF-32) */
+};
+
 /** Whether the text contains a non-ASCII UTF-8 character */
 #define TEXT_UTF8_BIT	((size_t)1 << (CHAR_BIT * sizeof(size_t) - 1))
 
@@ -53,9 +63,10 @@ struct text {
 /** The encoded size of the text, in bytes */
 #define TEXT_SIZE(text)		((text)->attr & TEXT_SIZE_MASK)
 
-/** Indicates whether the text decodes to ASCII. For this to be true,
- *  the text must be encoded in ASCII and not have any escapes that
- *  decode to non-ASCII codepoints. */
+/** Indicates whether the text definitely decodes to ASCII. For this to be true,
+ *  the text must be encoded in ASCII and not have any escapes that decode to
+ *  non-ASCII codepoints.
+ */
 #define TEXT_IS_ASCII(text)	(((text)->attr & TEXT_UTF8_BIT) ? 0 : 1)
 
 /** Indicates whether the text contains a backslash (`\`) that should
@@ -87,17 +98,28 @@ enum text_flag {
 int text_assign(struct text *text, const uint8_t *ptr, size_t size, int flags);
 
 /**
- * Write the raw bytes in a text value to the given buffer, decoding
- * escape sequences if necessary.
+ * Initialize a text iterator to start at the beginning of a text.
  *
- * \param text the text value
- * \param buf a pointer to the destination buffer; must have at least
- *        #TEXT_SIZE(`text`) bytes available
- * \param sizeptr on exit, a pointer to the size (in bytes) of the decoded
- *        text; this will be less than or equal to #TEXT_SIZE(`text`)
- *
- * \returns 0 on success
+ * \param it the iterator
+ * \param text the text
  */
-int text_unescape(const struct text *text, uint8_t *buf, size_t *sizeptr);
+void text_iter_make(struct text_iter *it, const struct text *text);
+
+/**
+ * Advance to the next character in a text.
+ *
+ * \param it the text iterator
+ *
+ * \returns non-zero if the iterator successfully advanced; zero if
+ * 	the iterator has passed the end of the text
+ */
+int text_iter_advance(struct text_iter *it);
+
+/**
+ * Reset an iterator to the beginning of the text.
+ *
+ * \param it the text iterator
+ */
+void text_iter_reset(struct text_iter *it);
 
 #endif /* TEXT_H */

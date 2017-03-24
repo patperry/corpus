@@ -103,4 +103,7 @@ src/text.o: src/text.c src/text.h
 src/unicode.o: src/unicode.c src/unicode/casefold.h src/unicode/combining.h \
 	src/unicode/decompose.h src/errcode.h src/unicode.h
 src/xalloc.o: src/xalloc.c src/xalloc.h
+
+tests/check_text.o: tests/check_text.c src/text.h src/unicode.h tests/testutil.h
+tests/check_unicode.o: tests/check_unicode.c src/unicode.h tests/testutil.h
 tests/testutil.o: tests/testutil.c src/text.h tests/testutil.h

@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <syslog.h>
 #include "../src/text.h"
+#include "../src/unicode.h"
 #include "testutil.h"
 
 
@@ -54,12 +55,17 @@ int is_valid_raw(const char *str)
 
 const char *unescape(const struct text *text)
 {
+	struct text_iter it;
 	size_t n = TEXT_SIZE(text);
-	uint8_t *ptr = alloc(n + 1);
-	int err = text_unescape(text, ptr, &n);
-	ck_assert(!err);
-	ptr[n] = '\0';
-	return (const char *)ptr;
+	uint8_t *buf = alloc(n + 1);
+	uint8_t *ptr = buf;
+
+	text_iter_make(&it, text);
+	while (text_iter_advance(&it)) {
+		encode_utf8(it.current, &ptr);
+	}
+	*ptr = '\0';
+	return (const char *)buf;
 }
 
 

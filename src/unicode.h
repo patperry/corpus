@@ -67,16 +67,42 @@
 /** Maximum number of UTF-8 continuation bytes in a valid encoded character */
 #define UTF8_TAIL_MAX 3
 
-/* validation */
-int scan_utf8(const uint8_t **bufp, const uint8_t *end);
-void scan_valid_utf8(const uint8_t **bufp);
+/** Indicates whether a given unsigned integer is a valid unicode codepoint */
+#define IS_UNICODE(x) \
+	(((x) <= UNICODE_MAX) && !IS_UTF16_HIGH(x) && !IS_UTF16_LOW(x))
 
-/* decoding */
-void decode_valid_utf8(const uint8_t **bufp, uint32_t *codep);
+/**
+ * Validate the first character in a UTF-8 character buffer.
+ *
+ * \param bufptr a pointer to the input buffer; on exit, a pointer to
+ * 	the end of the first valid UTF-8 character, or the first invalid
+ * 	byte in the encoding
+ * \param end the end of the input buffer
+ *
+ * \returns 0 on success
+ */
+int scan_utf8(const uint8_t **bufptr, const uint8_t *end);
 
-/* encoding */
-void encode_valid_utf32(uint32_t code, uint8_t **bufp);
-int encode_utf32(uint32_t code, uint8_t **bufp);
+/**
+ * Decode the first codepoint from a UTF-8 character buffer.
+ * 
+ * \param bufptr on input, a pointer to the start of the character buffer;
+ * 	on exit, a pointer to the end of the first UTF-8 character in
+ * 	the buffer
+ * \param on exit, the first codepoint in the buffer
+ */
+void decode_utf8(const uint8_t **bufptr, uint32_t *codeptr);
+
+/**
+ * Encode a codepoint into a UTF-8 character buffer. The codepoint must
+ * be a valid unicode character (according to #IS_UNICODE) and the buffer
+ * must have space for at least #UTF8_ENCODE_LEN bytes.
+ *
+ * \param code the codepoint
+ * \param bufptr on input, a pointer to the start of the buffer;
+ * 	on exit, a pointer to the end of the encoded codepoint
+ */
+void encode_utf8(uint32_t code, uint8_t **bufptr);
 
 /**
  * Unicode character decomposition mappings. The compatibility mappings are
@@ -105,7 +131,7 @@ enum udecomp_type {
 };
 
 /**
- * Unicode case folding. These are defined in TR444 Sec. 5.6.
+ * Unicode case folding. These are defined in TR44 Sec. 5.6.
  */
 enum ucasefold_type {
 	UCASEFOLD_NONE = 0,		/**< do not perform any case folding */

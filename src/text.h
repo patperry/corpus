@@ -37,7 +37,7 @@ struct text {
 	size_t attr;	/**< text attributes */
 };
 
-/** Whether the text decodes to UTF-8. Need not be set for ASCII text. */
+/** Whether the text contains a non-ASCII UTF-8 character */
 #define TEXT_UTF8_BIT	((size_t)1 << (CHAR_BIT * sizeof(size_t) - 1))
 
 /** Whether the text contains a backslash (`\`) that should be interpreted

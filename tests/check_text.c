@@ -17,6 +17,7 @@
 #include <check.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <syslog.h>
 #include "../src/text.h"
 #include "testutil.h"
 
@@ -33,11 +34,20 @@ void teardown_text(void)
 }
 
 
-int is_valid(const char *str)
+int is_valid_text(const char *str)
 {
 	struct text text;
 	size_t n = strlen(str);
 	int err = text_assign(&text, (const uint8_t *)str, n, 0);
+	return !err;
+}
+
+
+int is_valid_raw(const char *str)
+{
+	struct text text;
+	size_t n = strlen(str);
+	int err = text_assign(&text, (const uint8_t *)str, n, TEXT_NOESCAPE);
 	return !err;
 }
 
@@ -53,25 +63,56 @@ const char *unescape(const struct text *text)
 }
 
 
-START_TEST(test_valid)
+START_TEST(test_valid_text)
 {
-	ck_assert(is_valid("hello world"));
-	ck_assert(is_valid("escape: \\n\\r\\t"));
-	ck_assert(is_valid("unicode escape: \\u0034"));
-	ck_assert(is_valid("surrogate pair: \\uD834\\uDD1E"));
+	ck_assert(is_valid_text("hello world"));
+	ck_assert(is_valid_text("escape: \\n\\r\\t"));
+	ck_assert(is_valid_text("unicode escape: \\u0034"));
+	ck_assert(is_valid_text("surrogate pair: \\uD834\\uDD1E"));
 }
 END_TEST
 
 
-START_TEST(test_invalid_escape)
+START_TEST(test_invalid_text)
 {
-	ck_assert(!is_valid("\\a"));
-	ck_assert(!is_valid("\\uD800 high surrogate"));
-	ck_assert(!is_valid("\\uDBFF high surrogate"));
-	ck_assert(!is_valid("\\uDC00 low surrogate"));
-	ck_assert(!is_valid("\\uDFFF low surrogate"));
-	ck_assert(!is_valid("\\uD84 incomplete"));
-	ck_assert(!is_valid("\\uD804\\u2603 invalid low"));
+	ck_assert(!is_valid_text("invalid utf-8 \xBF"));
+	ck_assert(!is_valid_text("invalid utf-8 \xC2\x7F"));
+	ck_assert(!is_valid_text("invalid escape \\a"));
+	ck_assert(!is_valid_text("missing escape \\"));
+	ck_assert(!is_valid_text("ends early \\u007"));
+	ck_assert(!is_valid_text("non-hex value \\u0G7F"));
+	ck_assert(!is_valid_text("\\uD800 high surrogate"));
+	ck_assert(!is_valid_text("\\uDBFF high surrogate"));
+	ck_assert(!is_valid_text("\\uD800\\uDC0G invalid hex"));
+	ck_assert(!is_valid_text("\\uDC00 low surrogate"));
+	ck_assert(!is_valid_text("\\uDFFF low surrogate"));
+	ck_assert(!is_valid_text("\\uD84 incomplete"));
+	ck_assert(!is_valid_text("\\uD804\\u2603 invalid low"));
+}
+END_TEST
+
+
+START_TEST(test_valid_raw)
+{
+	ck_assert(is_valid_raw("invalid escape \\a"));
+	ck_assert(is_valid_raw("missing escape \\"));
+	ck_assert(is_valid_raw("ends early \\u007"));
+	ck_assert(is_valid_raw("non-hex value \\u0G7F"));
+	ck_assert(is_valid_raw("\\uD800 high surrogate"));
+	ck_assert(is_valid_raw("\\uDBFF high surrogate"));
+	ck_assert(is_valid_raw("\\uD800\\uDC0G invalid hex"));
+	ck_assert(is_valid_raw("\\uDC00 low surrogate"));
+	ck_assert(is_valid_raw("\\uDFFF low surrogate"));
+	ck_assert(is_valid_raw("\\uD84 incomplete"));
+	ck_assert(is_valid_raw("\\uD804\\u2603 invalid low"));
+}
+END_TEST
+
+
+START_TEST(test_invalid_raw)
+{
+	ck_assert(!is_valid_raw("invalid utf-8 \xBF"));
+	ck_assert(!is_valid_raw("invalid utf-8 \xC2\x7F"));
 }
 END_TEST
 
@@ -124,8 +165,10 @@ Suite *text_suite(void)
 
 	tc = tcase_create("validation");
         tcase_add_checked_fixture(tc, setup_text, teardown_text);
-	tcase_add_test(tc, test_valid);
-	tcase_add_test(tc, test_invalid_escape);
+	tcase_add_test(tc, test_valid_text);
+	tcase_add_test(tc, test_invalid_text);
+	tcase_add_test(tc, test_valid_raw);
+	tcase_add_test(tc, test_invalid_raw);
 	suite_add_tcase(s, tc);
 
 	tc = tcase_create("unescaping");
@@ -144,6 +187,10 @@ int main(void)
 	int nfail;
 	Suite *s;
 	SRunner *sr;
+
+	openlog("check_text", LOG_CONS | LOG_PERROR | LOG_PID, LOG_USER);
+        setlogmask(LOG_UPTO(LOG_INFO));
+        setlogmask(LOG_UPTO(LOG_DEBUG));
 
 	s = text_suite();
 	sr = srunner_create(s);

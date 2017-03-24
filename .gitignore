@@ -1,2 +1,4 @@
+/data/ucd
 /doc/html
 /tests/check_text
+/tests/check_unicode

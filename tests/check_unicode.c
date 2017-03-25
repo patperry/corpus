@@ -397,13 +397,13 @@ START_TEST(test_normalize_nfd)
 		dst = buf;
 		for (j = 0; j < test->source_len; j++) {
 			code = test->source[j];
-			utf32_decompose(0, code, &dst);
+			unicode_map(0, code, &dst);
 		}
 
 		len = dst - buf;
 		ck_assert_int_eq(len, test->nfd_len);
 
-		utf32_reorder(buf, dst);
+		unicode_order(buf, len);
 
 		for (j = 0; j < test->nfd_len; j++) {
 			if (buf[j] != test->nfd[j]) {
@@ -430,13 +430,13 @@ START_TEST(test_normalize_nfkd)
 		dst = buf;
 		for (j = 0; j < test->source_len; j++) {
 			code = test->source[j];
-			utf32_decompose(UDECOMP_ALL, code, &dst);
+			unicode_map(UDECOMP_ALL, code, &dst);
 		}
 
 		len = dst - buf;
 		ck_assert_int_eq(len, test->nfkd_len);
 
-		utf32_reorder(buf, dst);
+		unicode_order(buf, len);
 
 		for (j = 0; j < test->nfkd_len; j++) {
 			if (buf[j] != test->nfkd[j]) {

@@ -244,18 +244,18 @@ static void casefold(int type, uint32_t code, uint32_t **bufp)
 		*dst++ = code;
 		*bufp = dst;
 	} else if (length == 1) {
-		utf32_decompose(type, c.data, bufp);
+		unicode_map(type, c.data, bufp);
 	} else {
 		src = &casefold_mapping[c.data];
 		while (length-- > 0) {
-			utf32_decompose(type, *src, bufp);
+			unicode_map(type, *src, bufp);
 			src++;
 		}
 	}
 }
 
 
-void utf32_decompose(int type, uint32_t code, uint32_t **bufp)
+void unicode_map(int type, uint32_t code, uint32_t **bufptr)
 {
 	const uint32_t block_size = DECOMPOSITION_BLOCK_SIZE;
 	unsigned i = decomposition_stage1[code / block_size];
@@ -266,33 +266,32 @@ void utf32_decompose(int type, uint32_t code, uint32_t **bufp)
 
 	if (length == 0 || (d.type > 0 && !(type & (1 << (d.type - 1))))) {
 		if (type & UCASEFOLD_ALL) {
-			casefold(type, code, bufp);
+			casefold(type, code, bufptr);
 		} else {
-			dst = *bufp;
+			dst = *bufptr;
 			*dst++ = code;
-			*bufp = dst;
+			*bufptr = dst;
 		}
 	} else if (length == 1) {
-		utf32_decompose(type, d.data, bufp);
+		unicode_map(type, d.data, bufptr);
 	} else if (d.type >= 0) {
 		src = &decomposition_mapping[d.data];
 		while (length-- > 0) {
-			utf32_decompose(type, *src, bufp);
+			unicode_map(type, *src, bufptr);
 			src++;
 		}
 	} else {
-		hangul_decompose(code, bufp);
+		hangul_decompose(code, bufptr);
 	}
 }
 
 
-void utf32_reorder(uint32_t *ptr, uint32_t *end)
+void unicode_order(uint32_t *ptr, size_t len)
 {
+	uint32_t *end = ptr + len;
 	uint32_t *c_begin, *c_end, *c_tail, *c_ptr;
 	uint32_t code, code_prev;
 	uint32_t cl, cl_prev;
-
-	assert(ptr <= end);
 
 	while (ptr != end) {
 		c_begin = ptr;

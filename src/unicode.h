@@ -106,7 +106,7 @@ void encode_utf8(uint32_t code, uint8_t **bufptr);
 
 /**
  * Unicode character decomposition mappings. The compatibility mappings are
- * defined in TR44 Sec. 5.7.3 Table 14.
+ * defined in *TR44* Sec. 5.7.3 Table 14.
  */
 enum udecomp_type {
 	UDECOMP_NORMAL = 0,          /**< normalization (required for NFD) */
@@ -131,7 +131,7 @@ enum udecomp_type {
 };
 
 /**
- * Unicode case folding. These are defined in TR44 Sec. 5.6.
+ * Unicode case folding. These are defined in *TR44* Sec. 5.6.
  */
 enum ucasefold_type {
 	UCASEFOLD_NONE = 0,		/**< do not perform any case folding */
@@ -141,14 +141,31 @@ enum ucasefold_type {
 /**
  * Maximum size (in codepoints) of a single code point's decomposition.
  *
- * From TR44 Sec. 5.7.3: "Compatibility mappings are guaranteed to be no longer
+ * From *TR44* Sec. 5.7.3: "Compatibility mappings are guaranteed to be no longer
  * than 18 characters, although most consist of just a few characters."
  */
 #define UNICODE_DECOMP_MAX 18
 
-void utf32_decompose(int type, uint32_t code, uint32_t **bufp);
-void utf32_reorder(uint32_t *ptr, uint32_t *end);
-void utf32_compose(uint32_t *buf, size_t *lenp);
+/**
+ * Apply decomposition and/or casefold mapping to a unicode character,
+ * outputting the result to the specified buffer. The output will be at
+ * most #UNICODE_DECOMP_MAX codepoints.
+ *
+ * \param type a bitmask composed from #udecomp_type and #ucasefold_type
+ * 	values specifying the mapping type
+ * \param code the input codepoint
+ * \param bufptr on entry, a pointer to the output buffer; on exit,
+ * 	a pointer past the last output codepoint
+ */
+void unicode_map(int type, uint32_t code, uint32_t **bufptr);
 
+/**
+ * Apply the canonical ordering algorithm to put an array of unicode
+ * codepoints in normal order. See *Unicode* Sec 3.11 and *TR44* Sec. 5.7.4.
+ *
+ * \param ptr a pointer to the first codepoint
+ * \param len the number of codepoints
+ */
+void unicode_order(uint32_t *ptr, size_t len);
 
 #endif /* UNICODE_H */

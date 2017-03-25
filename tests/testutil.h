@@ -21,12 +21,29 @@
 
 struct text;
 
+/**
+ * Common test framework set up.
+ */
 void setup(void);
+
+/**
+ * Common test framework tear down.
+ */ 
 void teardown(void);
 
+/**
+ * Allocate memory.
+ */
 void *alloc(size_t size);
 
+/**
+ * Allocate a text object, interpreting escape codes.
+ */
 struct text *T(const char *str);
-struct text *R(const char *str);
+
+/**
+ * Cast a raw string as a text object, ignoring escape codes.
+ */
+struct text *S(const char *str);
 
 #endif /* TESTUTIL_H */

@@ -67,7 +67,7 @@ struct text *T(const char *str)
 }
 
 
-struct text *R(const char *str)
+struct text *S(const char *str)
 {
 	return mktext(str, TEXT_NOESCAPE);
 }

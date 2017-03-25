@@ -139,14 +139,14 @@ END_TEST
 
 START_TEST(test_unescape_raw)
 {
-	ck_assert_str_eq(unescape(R("\\\\")), "\\\\");
-	ck_assert_str_eq(unescape(R("\\/")), "\\/");
-	ck_assert_str_eq(unescape(R("\\\"")), "\\\"");
-	ck_assert_str_eq(unescape(R("\\b")), "\\b");
-	ck_assert_str_eq(unescape(R("\\f")), "\\f");
-	ck_assert_str_eq(unescape(R("\\n")), "\\n");
-	ck_assert_str_eq(unescape(R("\\r")), "\\r");
-	ck_assert_str_eq(unescape(R("\\t")), "\\t");
+	ck_assert_str_eq(unescape(S("\\\\")), "\\\\");
+	ck_assert_str_eq(unescape(S("\\/")), "\\/");
+	ck_assert_str_eq(unescape(S("\\\"")), "\\\"");
+	ck_assert_str_eq(unescape(S("\\b")), "\\b");
+	ck_assert_str_eq(unescape(S("\\f")), "\\f");
+	ck_assert_str_eq(unescape(S("\\n")), "\\n");
+	ck_assert_str_eq(unescape(S("\\r")), "\\r");
+	ck_assert_str_eq(unescape(S("\\t")), "\\t");
 }
 END_TEST
 

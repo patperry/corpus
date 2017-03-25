@@ -15,12 +15,14 @@ CHECK_LIBS = `pkg-config --libs check`
 UNICODE = http://www.unicode.org/Public/8.0.0
 
 CORPUS_A = libcorpus.a
-LIB_O	= src/array.o src/filebuf.o src/text.o src/unicode.o src/xalloc.o
+LIB_O	= src/array.o src/filebuf.o src/text.o src/token.o src/unicode.o \
+	  src/xalloc.o
 
 DATA    = data/ucd/CaseFolding.txt data/ucd/UnicodeData.txt
 
-TESTS_T = tests/check_text tests/check_unicode
-TESTS_O = tests/check_text.o tests/check_unicode.o tests/testutil.o
+TESTS_T = tests/check_text tests/check_token tests/check_unicode
+TESTS_O = tests/check_text.o test/check_token.o tests/check_unicode.o \
+		  tests/testutil.o
 
 TESTS_DATA = data/ucd/NormalizationTest.txt
 
@@ -72,6 +74,9 @@ src/unicode/decompose.h: util/gen-decompose.py \
 tests/check_text: tests/check_text.o tests/testutil.o $(CORPUS_A)
 	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS) $^
 
+tests/check_token: tests/check_token.o tests/testutil.o $(CORPUS_A)
+	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS) $^
+
 tests/check_unicode: tests/check_unicode.o $(CORPUS_A) \
 		data/ucd/NormalizationTest.txt
 	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS) \
@@ -98,12 +103,16 @@ tests/%.o: tests/%.c
 
 src/array.o: src/array.c src/errcode.h src/xalloc.h src/array.h
 src/filebuf.o: src/filebuf.c src/array.h src/errcode.h src/xalloc.h \
-	src/filebuf.h
+    src/filebuf.h
 src/text.o: src/text.c src/text.h
+src/token.o: src/token.c src/errcode.h src/text.h src/unicode.h src/xalloc.h \
+    src/token.h
 src/unicode.o: src/unicode.c src/unicode/casefold.h src/unicode/combining.h \
-	src/unicode/decompose.h src/errcode.h src/unicode.h
+    src/unicode/decompose.h src/errcode.h src/unicode.h
 src/xalloc.o: src/xalloc.c src/xalloc.h
 
 tests/check_text.o: tests/check_text.c src/text.h src/unicode.h tests/testutil.h
+test/check_token.o: tests/check_token.c src/text.h src/token.h src/unicode.h \
+    tests/testutil.h
 tests/check_unicode.o: tests/check_unicode.c src/unicode.h tests/testutil.h
 tests/testutil.o: tests/testutil.c src/text.h tests/testutil.h

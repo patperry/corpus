@@ -21,7 +21,7 @@ LIB_O	= src/array.o src/filebuf.o src/text.o src/token.o src/unicode.o \
 DATA    = data/ucd/CaseFolding.txt data/ucd/UnicodeData.txt
 
 TESTS_T = tests/check_text tests/check_token tests/check_unicode
-TESTS_O = tests/check_text.o test/check_token.o tests/check_unicode.o \
+TESTS_O = tests/check_text.o tests/check_token.o tests/check_unicode.o \
 		  tests/testutil.o
 
 TESTS_DATA = data/ucd/NormalizationTest.txt
@@ -112,7 +112,7 @@ src/unicode.o: src/unicode.c src/unicode/casefold.h src/unicode/combining.h \
 src/xalloc.o: src/xalloc.c src/xalloc.h
 
 tests/check_text.o: tests/check_text.c src/text.h src/unicode.h tests/testutil.h
-test/check_token.o: tests/check_token.c src/text.h src/token.h src/unicode.h \
+tests/check_token.o: tests/check_token.c src/text.h src/token.h src/unicode.h \
     tests/testutil.h
 tests/check_unicode.o: tests/check_unicode.c src/unicode.h tests/testutil.h
 tests/testutil.o: tests/testutil.c src/text.h tests/testutil.h

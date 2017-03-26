@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Patrick O. Perry.
+ * Copyright 2017 Patrick O. Perry.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,13 @@
 #include "token.h"
 
 
-static void typbuf_clear_flags(struct typbuf *buf);
-static int typbuf_reserve(struct typbuf *buf, size_t size);
-static int typbuf_set_ascii(struct typbuf *buf, const struct text *tok);
-static int typbuf_set_utf32(struct typbuf *buf, const uint32_t *ptr,
+static void typebuf_clear_flags(struct typebuf *buf);
+static int typebuf_reserve(struct typebuf *buf, size_t size);
+static int typebuf_set_ascii(struct typebuf *buf, const struct text *tok);
+static int typebuf_set_utf32(struct typebuf *buf, const uint32_t *ptr,
 			    const uint32_t *end);
 
-int typbuf_init(struct typbuf *buf, int flags)
+int typebuf_init(struct typebuf *buf, int flags)
 {
 	int err;
 
@@ -40,59 +40,36 @@ int typbuf_init(struct typbuf *buf, int flags)
 	buf->code = NULL;
 	buf->size_max = 0;
 
-	typbuf_clear_flags(buf);
-	err = typbuf_set_flags(buf, flags);
+	typebuf_clear_flags(buf);
+	err = typebuf_set_flags(buf, flags);
 
 	return err;
 }
 
 
-void typbuf_destroy(struct typbuf *buf)
+void typebuf_destroy(struct typebuf *buf)
 {
 	free(buf->code);
 	free(buf->text.ptr);
 }
 
 
-void typbuf_clear_flags(struct typbuf *buf)
+void typebuf_clear_flags(struct typebuf *buf)
 {
 	uint_fast8_t ch;
 
-	// NFKD
-	buf->decomp = UDECOMP_ALL | UCASEFOLD_ALL;
+	// NFD
+	buf->decomp = UDECOMP_NORMAL | UCASEFOLD_NONE;
 
 	for (ch = 0; ch < 0x80; ch++) {
 		buf->ascii_map[ch] = ch;
 	}
 
-	// case fold
-	for (ch = 'A'; ch <= 'Z'; ch++) {
-		buf->ascii_map[ch] = ch + ('a' - 'A');
-	}
-
-	// quote fold
-	buf->ascii_map['"'] = '\'';
-
-	// remove non-whitespace control characters
-	for (ch = 0x00; ch <= 0x08; ch++) {
-		buf->ascii_map[ch] = -1;
-	}
-	for (ch = 0x0E; ch <= 0x1F; ch++) {
-		buf->ascii_map[ch] = -1;
-	}
-	buf->ascii_map[0x7F] = -1;
-
-	// remove white space
-	for (ch = 0x09; ch <= 0x0D; ch++) {
-		buf->ascii_map[ch] = -1;
-	}
-	buf->ascii_map[' '] = -1;
-
 	buf->flags = 0;
 }
 
 
-int typbuf_set_flags(struct typbuf *buf, int flags)
+int typebuf_set_flags(struct typebuf *buf, int flags)
 {
 	int_fast8_t ch;
 
@@ -100,39 +77,39 @@ int typbuf_set_flags(struct typbuf *buf, int flags)
 		return 0;
 	}
 
-	typbuf_clear_flags(buf);
+	typebuf_clear_flags(buf);
 
-	if (flags & TYP_NOCOMPAT) {
-		buf->decomp = 0;
+	if (flags & TYPE_COMPAT) {
+		buf->decomp = UDECOMP_ALL;
 	}
 
-	if (flags & TYP_NOFOLD_CASE) {
+	if (flags & TYPE_CASEFOLD) {
 		for (ch = 'A'; ch <= 'Z'; ch++) {
-			buf->ascii_map[ch] = ch;
+			buf->ascii_map[ch] = ch + ('a' - 'A');
 		}
 
-		buf->decomp &= ~UCASEFOLD_ALL;
+		buf->decomp |= UCASEFOLD_ALL;
 	}
 
-	if (flags & TYP_NOFOLD_QUOT) {
-		buf->ascii_map['"'] = '"';
+	if (flags & TYPE_QUOTFOLD) {
+		buf->ascii_map['"'] = '\'';
 	}
 
-	if (flags & TYP_KEEP_CC) {
+	if (flags & TYPE_RMCC) {
 		for (ch = 0x00; ch <= 0x08; ch++) {
-			buf->ascii_map[ch] = ch;
+			buf->ascii_map[ch] = -1;
 		}
 		for (ch = 0x0E; ch <= 0x1F; ch++) {
-			buf->ascii_map[ch] = ch;
+			buf->ascii_map[ch] = -1;
 		}
-		buf->ascii_map[0x7F] = 0x7F;
+		buf->ascii_map[0x7F] = -1;
 	}
 
-	if (flags & TYP_KEEP_WS) {
+	if (flags & TYPE_RMWS) {
 		for (ch = 0x09; ch <= 0x0D; ch++) {
-			buf->ascii_map[ch] = ch;
+			buf->ascii_map[ch] = -1;
 		}
-		buf->ascii_map[' '] = ' ';
+		buf->ascii_map[' '] = -1;
 	}
 
 	buf->flags = flags;
@@ -141,7 +118,7 @@ int typbuf_set_flags(struct typbuf *buf, int flags)
 }
 
 
-int typbuf_reserve(struct typbuf *buf, size_t size)
+int typebuf_reserve(struct typebuf *buf, size_t size)
 {
 	uint8_t *ptr = buf->text.ptr;
 	uint32_t *code = buf->code;
@@ -170,7 +147,7 @@ error_nomem:
 
 
 
-int typbuf_set(struct typbuf *buf, const struct text *tok)
+int typebuf_set(struct typebuf *buf, const struct text *tok)
 {
 	struct text_iter it;
 	size_t size = TEXT_SIZE(tok);
@@ -178,11 +155,11 @@ int typbuf_set(struct typbuf *buf, const struct text *tok)
 	int err;
 
 	if (TEXT_IS_ASCII(tok)) {
-		err = typbuf_set_ascii(buf, tok);
+		err = typebuf_set_ascii(buf, tok);
 		return err;
 	}
 
-	if ((err = typbuf_reserve(buf, size + 1))) {
+	if ((err = typebuf_reserve(buf, size + 1))) {
 		goto error;
 	}
 
@@ -193,7 +170,7 @@ int typbuf_set(struct typbuf *buf, const struct text *tok)
 	}
 	unicode_order(buf->code, dst - buf->code);
 
-	err = typbuf_set_utf32(buf, buf->code, dst);
+	err = typebuf_set_utf32(buf, buf->code, dst);
 	return err;
 
 error:
@@ -202,14 +179,14 @@ error:
 }
 
 
-int typbuf_set_utf32(struct typbuf *buf, const uint32_t *ptr,
+int typebuf_set_utf32(struct typebuf *buf, const uint32_t *ptr,
 		     const uint32_t *end)
 {
-	bool fold_dash = !(buf->flags & TYP_NOFOLD_DASH);
-	bool fold_quot = !(buf->flags & TYP_NOFOLD_QUOT);
-	bool keep_cc = buf->flags & TYP_KEEP_CC;
-	bool keep_di = buf->flags & TYP_KEEP_DI;
-	bool keep_ws = buf->flags & TYP_KEEP_WS;
+	bool fold_dash = (buf->flags & TYPE_DASHFOLD);
+	bool fold_quot = (buf->flags & TYPE_QUOTFOLD);
+	bool keep_cc = !(buf->flags & TYPE_RMCC);
+	bool keep_di = !(buf->flags & TYPE_RMDI);
+	bool keep_ws = !(buf->flags & TYPE_RMWS);
 	uint8_t *dst = buf->text.ptr;
 	uint32_t code;
 	int8_t ch;
@@ -436,7 +413,7 @@ int typbuf_set_utf32(struct typbuf *buf, const uint32_t *ptr,
 }
 
 
-int typbuf_set_ascii(struct typbuf *buf, const struct text *tok)
+int typebuf_set_ascii(struct typebuf *buf, const struct text *tok)
 {
 	struct text_iter it;
 	size_t size = TEXT_SIZE(tok);
@@ -446,7 +423,7 @@ int typbuf_set_ascii(struct typbuf *buf, const struct text *tok)
 
 	assert(TEXT_IS_ASCII(tok));
 
-	if ((err = typbuf_reserve(buf, size + 1))) {
+	if ((err = typebuf_reserve(buf, size + 1))) {
 		goto error;
 	}
 

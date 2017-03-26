@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Patrick O. Perry.
+ * Copyright 2017 Patrick O. Perry.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@
  *
  *     Source: http://unicode.org/reports/tr15/
  *
- *     Defaults to NFKD; specify `TYP_NOCOMPAT` for NFD
+ *     Defaults to NFKD; specify `TYPE_NOCOMPAT` for NFD
  *
  *
  * 2. Perform case folding.
@@ -47,7 +47,7 @@
  * 	Source: UnicodeStandard-8.0, Sec. 5.18, p. 236
  * 	http://unicode.org/faq/casemap_charprop.html
  *
- *	Disabled with `TYP_NOFOLD_CASE`
+ *	Disabled with `TYPE_NOFOLD_CASE`
  *
  *
  * 3. Perform dash folding.
@@ -64,7 +64,7 @@
  *	Source: http://unicode.org/Public/UNIDATA/PropList.txt
  *		http://unicode.org/reports/tr44/#Dash
  *
- *	Disabled with `TYP_NOFOLD_DASH`
+ *	Disabled with `TYPE_NOFOLD_DASH`
  *
  *
  * 4. Perform quote folding.
@@ -88,10 +88,10 @@
  *	Source: http://unicode.org/Public/UNIDATA/PropList.txt
  *		http://unicode.org/reports/tr44/#Quotation_Mark
  *
- *	Disabled with `TYP_NOFOLD_QUOT`
+ *	Disabled with `TYPE_NOFOLD_QUOT`
  *
  *
- * 5. Remove non-whitespace control characters.
+ * 5. Remove non-whitespace control characters (Cc).
  *
  *	U+0000..U+0008	(C0)
  *	U+000E..U+001F	(C0)
@@ -102,10 +102,10 @@
  *	Source:
  *	UnicodeStandard-8.0, Sec. 23.1, p. 808
  *
- *	Disabled with `TYP_KEEP_CC`
+ *	Disabled with `TYPE_KEEP_CC`
  *
  *
- * 6. Remove default ignorable code points.
+ * 6. Remove default ignorable code points (DI).
  *
  *	U+00AD	SOFT HYPHEN
  *	U+200B	ZERO WIDTH SPACE
@@ -117,10 +117,10 @@
  *	UnicodeStandard-8.0, Sec. 5.21, p. 253
  *	http://www.unicode.org/reports/tr44/#Default_Ignorable_Code_Point
  *
- *	Disabled with `TYP_KEEP_DI`
+ *	Disabled with `TYPE_KEEP_DI`
  *
  *
- * 7. Remove white space.
+ * 7. Remove white space (WS).
  *
  *	U+0009..U+000D	(control-0009>..<control-000D>)
  *	U+0020		SPACE
@@ -140,21 +140,22 @@
  *	http://www.unicode.org/reports/tr44/#White_Space
  *	http://unicode.org/Public/UNIDATA/PropList.txt
  *
- *	Disabled with `TYP_KEEP_WS`
+ *	Disabled with `TYPE_KEEP_WS`
  */
 
-enum typ_flag {
-	TYP_NOCOMPAT	= (1 << 0),	/* use NFD, not NFKD */
-	TYP_NOFOLD_CASE = (1 << 1),	/* do not perform case folding */
-	TYP_NOFOLD_DASH = (1 << 2),	/* do not perform dash folding */
-	TYP_NOFOLD_QUOT = (1 << 3),	/* do not perform quote folding */
-	TYP_KEEP_CC     = (1 << 4),	/* keep control characters (Cc) */
-	TYP_KEEP_DI     = (1 << 5),	/* keep default ignorables (DI) */
-	TYP_KEEP_WS     = (1 << 6)	/* keep whitespace (WS) */
+enum type_type {
+	TYPE_NORMAL   = 0,        /**< apply decomposition mappings */
+	TYPE_COMPAT   = (1 << 0), /**< apply compatibility mappings */
+	TYPE_CASEFOLD = (1 << 1), /**< perform case folding */
+	TYPE_DASHFOLD = (1 << 2), /**< replace dashes with `'-'` */
+	TYPE_QUOTFOLD = (1 << 3), /**< replace quotes with `'` */
+	TYPE_RMCC     = (1 << 4), /**< remove non-whitespace control characters */
+	TYPE_RMDI     = (1 << 5), /**< remove default ignorables */
+	TYPE_RMWS     = (1 << 6)  /**< remove white space */
 };
 
 
-struct typbuf {
+struct typebuf {
 	int8_t ascii_map[128];
 	struct text text;
 	uint32_t *code;
@@ -163,10 +164,10 @@ struct typbuf {
 	int decomp;
 };
 
-int typbuf_init(struct typbuf *buf, int flags);
-void typbuf_destroy(struct typbuf *buf);
-int typbuf_set(struct typbuf *buf, const struct text *tok);
-int typbuf_set_flags(struct typbuf *buf, int flags);
+int typebuf_init(struct typebuf *buf, int type);
+void typebuf_destroy(struct typebuf *buf);
+int typebuf_set(struct typebuf *buf, const struct text *tok);
+int typebuf_set_flags(struct typebuf *buf, int flags);
 
 size_t tok_hash(const struct text *tok);
 int tok_equals(const struct text *tok1, const struct text *tok2);

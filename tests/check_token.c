@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Patrick O. Perry.
+ * Copyright 2017 Patrick O. Perry.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,14 +33,14 @@
 		#Y, _ck_y->ptr, _ck_y->attr); \
 } while (0)
 
-struct text *get_typ(const struct text *tok, int flags)
+struct text *get_type(const struct text *tok, int flags)
 {
 	struct text *typ;
-	struct typbuf buf;
+	struct typebuf buf;
 	size_t size;
 
-	ck_assert(!typbuf_init(&buf, flags));
-	ck_assert(!typbuf_set(&buf, tok));
+	ck_assert(!typebuf_init(&buf, flags));
+	ck_assert(!typebuf_set(&buf, tok));
 	size = TEXT_SIZE(&buf.text);
 
 	typ = alloc(sizeof(*typ));
@@ -50,7 +50,7 @@ struct text *get_typ(const struct text *tok, int flags)
 	typ->ptr[size] = '\0';
 	typ->attr = buf.text.attr;
 
-	typbuf_destroy(&buf);
+	typebuf_destroy(&buf);
 
 	return typ;
 }
@@ -58,7 +58,7 @@ struct text *get_typ(const struct text *tok, int flags)
 
 struct text *casefold(const struct text *tok)
 {
-	return get_typ(tok, ~TYP_NOFOLD_CASE);
+	return get_type(tok, TYPE_CASEFOLD);
 }
 
 
@@ -90,9 +90,9 @@ END_TEST
 
 START_TEST(test_typ_basic)
 {
-	ck_assert_tok_eq(get_typ(S("hello"), 0), S("hello"));
-	ck_assert_tok_eq(get_typ(S("world"), 0), T("world"));
-	ck_assert_tok_eq(get_typ(T("foo"), 0), S("foo"));
+	ck_assert_tok_eq(get_type(S("hello"), 0), S("hello"));
+	ck_assert_tok_eq(get_type(S("world"), 0), T("world"));
+	ck_assert_tok_eq(get_type(T("foo"), 0), S("foo"));
 }
 END_TEST
 
@@ -100,18 +100,18 @@ END_TEST
 START_TEST(test_typ_esc)
 {
 	// backslash
-	ck_assert_tok_eq(get_typ(S("\\"), 0), S("\\"));
-	ck_assert_tok_eq(get_typ(T("\\\\"), 0), S("\\"));
-	ck_assert_tok_eq(get_typ(T("\\u005C"), 0), S("\\"));
-	ck_assert_tok_eq(get_typ(S("\\\\"), 0), S("\\\\"));
-	ck_assert_tok_eq(get_typ(S("\\u005C"), 0), S("\\u005c")); // casefold
+	ck_assert_tok_eq(get_type(S("\\"), 0), S("\\"));
+	ck_assert_tok_eq(get_type(T("\\\\"), 0), S("\\"));
+	ck_assert_tok_eq(get_type(T("\\u005C"), 0), S("\\"));
+	ck_assert_tok_eq(get_type(S("\\\\"), 0), S("\\\\"));
+	ck_assert_tok_eq(get_type(S("\\u005C"), TYPE_CASEFOLD), S("\\u005c"));
 
 	// quote (")
-	ck_assert_tok_eq(get_typ(S("\""), 0), S("\'")); // quote fold
-	ck_assert_tok_eq(get_typ(T("\\\""), 0), S("\'"));
-	ck_assert_tok_eq(get_typ(T("\\u0022"), 0), S("\'"));
-	ck_assert_tok_eq(get_typ(S("\\\'"), 0), S("\\\'"));
-	ck_assert_tok_eq(get_typ(S("\\u0022"), 0), S("\\u0022"));
+	ck_assert_tok_eq(get_type(S("\""), TYPE_QUOTFOLD), S("\'"));
+	ck_assert_tok_eq(get_type(T("\\\""), TYPE_QUOTFOLD), S("\'"));
+	ck_assert_tok_eq(get_type(T("\\u0022"), TYPE_QUOTFOLD), S("\'"));
+	ck_assert_tok_eq(get_type(S("\\\'"), TYPE_QUOTFOLD), S("\\\'"));
+	ck_assert_tok_eq(get_type(S("\\u0022"), TYPE_QUOTFOLD), S("\\u0022"));
 }
 END_TEST
 
@@ -132,26 +132,30 @@ START_TEST(test_rm_control_ascii)
 	char str[256];
 	uint8_t i;
 
-	ck_assert_tok_eq(get_typ(S("\a"), 0), S(""));
-	ck_assert_tok_eq(get_typ(S("\b"), 0), S(""));
-	ck_assert_tok_eq(get_typ(S("\t"), 0), S(""));
-	ck_assert_tok_eq(get_typ(S("\n"), 0), S(""));
-	ck_assert_tok_eq(get_typ(S("\v"), 0), S(""));
-	ck_assert_tok_eq(get_typ(S("\f"), 0), S(""));
-	ck_assert_tok_eq(get_typ(S("\r"), 0), S(""));
+	ck_assert_tok_eq(get_type(S("\a"), TYPE_RMCC), S(""));
+	ck_assert_tok_eq(get_type(S("\b"), TYPE_RMCC), S(""));
+	ck_assert_tok_eq(get_type(S("\t"), TYPE_RMCC), S("\t"));
+	ck_assert_tok_eq(get_type(S("\n"), TYPE_RMCC), S("\n"));
+	ck_assert_tok_eq(get_type(S("\v"), TYPE_RMCC), S("\v"));
+	ck_assert_tok_eq(get_type(S("\f"), TYPE_RMCC), S("\f"));
+	ck_assert_tok_eq(get_type(S("\r"), TYPE_RMCC), S("\r"));
 
 	// C0
 	for (i = 1; i < 0x20; i++) {
+		if (0x09 <= i && i <= 0x0D) {
+			continue;
+		}
+
 		str[0] = (char)i; str[1] = '\0';
-		ck_assert_tok_eq(get_typ(S(str), 0), S(""));
+		ck_assert_tok_eq(get_type(S(str), TYPE_RMCC), S(""));
 
 		sprintf(str, "\\u%04X", i);
-		ck_assert_tok_eq(get_typ(T(str), 0), S(""));
+		ck_assert_tok_eq(get_type(T(str), TYPE_RMCC), S(""));
 	}
 
 	// delete
-	ck_assert_tok_eq(get_typ(S("\x7F"), 0), S(""));
-	ck_assert_tok_eq(get_typ(T("\\u007F"), 0), S(""));
+	ck_assert_tok_eq(get_type(S("\x7F"), TYPE_RMCC), S(""));
+	ck_assert_tok_eq(get_type(T("\\u007F"), TYPE_RMCC), S(""));
 }
 END_TEST
 
@@ -163,11 +167,15 @@ START_TEST(test_rm_control_utf8)
 
 	// C1: JSON
 	for (i = 0x80; i < 0xA0; i++) {
+		if (i == 0x85) {
+			continue;
+		}
+
 		str[0] = 0xC2; str[1] = i; str[2] = '\0';
-		ck_assert_tok_eq(get_typ(S((char *)str), 0), S(""));
+		ck_assert_tok_eq(get_type(S((char *)str), TYPE_RMCC), S(""));
 
 		sprintf((char *)str, "\\u%04X", i);
-		ck_assert_tok_eq(get_typ(T((char *)str), 0), S(""));
+		ck_assert_tok_eq(get_type(T((char *)str), TYPE_RMCC), S(""));
 	}
 }
 END_TEST
@@ -179,8 +187,8 @@ START_TEST(test_keep_control_ascii)
 	char str[256];
 	uint8_t i;
 
-	ck_assert_tok_eq(get_typ(S("\a"), TYP_KEEP_CC), S("\a"));
-	ck_assert_tok_eq(get_typ(S("\b"), TYP_KEEP_CC), S("\b"));
+	ck_assert_tok_eq(get_type(S("\a"), 0), S("\a"));
+	ck_assert_tok_eq(get_type(S("\b"), 0), S("\b"));
 
 	// C0
 	for (i = 1; i < 0x20; i++) {
@@ -189,16 +197,16 @@ START_TEST(test_keep_control_ascii)
 		}
 		str[0] = (char)i; str[1] = '\0';
 		t = S(str);
-		ck_assert_tok_eq(get_typ(t, TYP_KEEP_CC), t);
+		ck_assert_tok_eq(get_type(t, 0), t);
 
 		sprintf(str, "\\u%04X", i);
 		js = T(str);
-		ck_assert_tok_eq(get_typ(js, TYP_KEEP_CC), t);
+		ck_assert_tok_eq(get_type(js, 0), t);
 	}
 
 	// delete
-	ck_assert_tok_eq(get_typ(S("\x7F"), TYP_KEEP_CC), S("\x7F"));
-	ck_assert_tok_eq(get_typ(T("\\u007F"), TYP_KEEP_CC), S("\x7F"));
+	ck_assert_tok_eq(get_type(S("\x7F"), 0), S("\x7F"));
+	ck_assert_tok_eq(get_type(T("\\u007F"), 0), S("\x7F"));
 }
 END_TEST
 
@@ -217,11 +225,11 @@ START_TEST(test_keep_control_utf8)
 
 		str[0] = 0xC2; str[1] = i; str[2] = '\0';
 		t = S((char *)str);
-		ck_assert_tok_eq(get_typ(t, TYP_KEEP_CC), t);
+		ck_assert_tok_eq(get_type(t, 0), t);
 
 		sprintf((char *)str, "\\u%04X", i);
 		js = T((char *)str);
-		ck_assert_tok_eq(get_typ(js, TYP_KEEP_CC), t);
+		ck_assert_tok_eq(get_type(js, 0), t);
 	}
 }
 END_TEST
@@ -229,24 +237,24 @@ END_TEST
 
 START_TEST(test_keep_ws_ascii)
 {
-	ck_assert_tok_eq(get_typ(S("\t"), TYP_KEEP_WS), S("\t"));
-	ck_assert_tok_eq(get_typ(S("\n"), TYP_KEEP_WS), S("\n"));
-	ck_assert_tok_eq(get_typ(S("\v"), TYP_KEEP_WS), S("\v"));
-	ck_assert_tok_eq(get_typ(S("\f"), TYP_KEEP_WS), S("\f"));
-	ck_assert_tok_eq(get_typ(S("\r"), TYP_KEEP_WS), S("\r"));
-	ck_assert_tok_eq(get_typ(S(" "), TYP_KEEP_WS), S(" "));
+	ck_assert_tok_eq(get_type(S("\t"), 0), S("\t"));
+	ck_assert_tok_eq(get_type(S("\n"), 0), S("\n"));
+	ck_assert_tok_eq(get_type(S("\v"), 0), S("\v"));
+	ck_assert_tok_eq(get_type(S("\f"), 0), S("\f"));
+	ck_assert_tok_eq(get_type(S("\r"), 0), S("\r"));
+	ck_assert_tok_eq(get_type(S(" "), 0), S(" "));
 }
 END_TEST
 
 
 START_TEST(test_rm_ws_ascii)
 {
-	ck_assert_tok_eq(get_typ(S("\t"), 0), S(""));
-	ck_assert_tok_eq(get_typ(S("\n"), 0), S(""));
-	ck_assert_tok_eq(get_typ(S("\v"), 0), S(""));
-	ck_assert_tok_eq(get_typ(S("\f"), 0), S(""));
-	ck_assert_tok_eq(get_typ(S("\r"), 0), S(""));
-	ck_assert_tok_eq(get_typ(S(" "), 0), S(""));
+	ck_assert_tok_eq(get_type(S("\t"), TYPE_RMWS), S(""));
+	ck_assert_tok_eq(get_type(S("\n"), TYPE_RMWS), S(""));
+	ck_assert_tok_eq(get_type(S("\v"), TYPE_RMWS), S(""));
+	ck_assert_tok_eq(get_type(S("\f"), TYPE_RMWS), S(""));
+	ck_assert_tok_eq(get_type(S("\r"), TYPE_RMWS), S(""));
+	ck_assert_tok_eq(get_type(S(" "), TYPE_RMWS), S(""));
 }
 END_TEST
 
@@ -303,11 +311,11 @@ START_TEST(test_keep_ws_utf8)
 		encode_utf8(ws[i], &buf);
 		*buf = '\0';
 		t = S((char *)str);
-		ck_assert_tok_eq(get_typ(t, TYP_KEEP_WS), typ);
+		ck_assert_tok_eq(get_type(t, TYPE_COMPAT), typ);
 
 		sprintf((char *)str, "\\u%04x", ws[i]);
 		js = T((char *)str);
-		ck_assert_tok_eq(get_typ(js, TYP_KEEP_WS), typ);
+		ck_assert_tok_eq(get_type(js, TYPE_COMPAT), typ);
 	}
 }
 END_TEST
@@ -330,11 +338,11 @@ START_TEST(test_rm_ws_utf8)
 		encode_utf8(ws[i], &buf);
 		*buf = '\0';
 		t = S((char *)str);
-		ck_assert_tok_eq(get_typ(t, 0), S(""));
+		ck_assert_tok_eq(get_type(t, TYPE_RMWS), S(""));
 
 		sprintf((char *)str, "\\u%04x", ws[i]);
 		js = T((char *)str);
-		ck_assert_tok_eq(get_typ(js, 0), S(""));
+		ck_assert_tok_eq(get_type(js, TYPE_RMWS), S(""));
 	}
 }
 END_TEST
@@ -384,58 +392,48 @@ END_TEST
 
 START_TEST(test_fold_dash)
 {
-	ck_assert_tok_eq(get_typ(S("-"), 0), S("-"));
-	ck_assert_tok_eq(get_typ(T("\\u058A"), 0), S("-"));
-	ck_assert_tok_eq(get_typ(T("\\u2212"), 0), S("-"));
-	ck_assert_tok_eq(get_typ(T("\\u2E3A"), 0), S("-"));
-	ck_assert_tok_eq(get_typ(T("\\u2E3B"), 0), S("-"));
-	ck_assert_tok_eq(get_typ(T("\\uFF0D"), 0), S("-"));
+	ck_assert_tok_eq(get_type(S("-"), TYPE_DASHFOLD), S("-"));
+	ck_assert_tok_eq(get_type(T("\\u058A"), TYPE_DASHFOLD), S("-"));
+	ck_assert_tok_eq(get_type(T("\\u2212"), TYPE_DASHFOLD), S("-"));
+	ck_assert_tok_eq(get_type(T("\\u2E3A"), TYPE_DASHFOLD), S("-"));
+	ck_assert_tok_eq(get_type(T("\\u2E3B"), TYPE_DASHFOLD), S("-"));
+	ck_assert_tok_eq(get_type(T("\\uFF0D"), TYPE_DASHFOLD), S("-"));
 }
 END_TEST
 
 
 START_TEST(test_nofold_dash)
 {
-	ck_assert_tok_eq(get_typ(S("-"), TYP_NOFOLD_DASH), S("-"));
-	ck_assert_tok_eq(get_typ(T("\\u058A"), TYP_NOFOLD_DASH),
-			 S("\xD6\x8A"));
-	ck_assert_tok_eq(get_typ(T("\\u2212"), TYP_NOFOLD_DASH),
-			 S("\xE2\x88\x92"));
-	ck_assert_tok_eq(get_typ(T("\\u2E3A"), TYP_NOFOLD_DASH),
-			 S("\xE2\xB8\xBA"));
-	ck_assert_tok_eq(get_typ(T("\\u2E3B"), TYP_NOFOLD_DASH),
-			 S("\xE2\xB8\xBB"));
-	ck_assert_tok_eq(get_typ(T("\\uFF0D"),
-			         TYP_NOCOMPAT | TYP_NOFOLD_DASH),
-			 S("\xEF\xBC\x8D"));
+	ck_assert_tok_eq(get_type(S("-"), 0), S("-"));
+	ck_assert_tok_eq(get_type(T("\\u058A"), 0), S("\xD6\x8A"));
+	ck_assert_tok_eq(get_type(T("\\u2212"), 0), S("\xE2\x88\x92"));
+	ck_assert_tok_eq(get_type(T("\\u2E3A"), 0), S("\xE2\xB8\xBA"));
+	ck_assert_tok_eq(get_type(T("\\u2E3B"), 0), S("\xE2\xB8\xBB"));
+	ck_assert_tok_eq(get_type(T("\\uFF0D"), 0), S("\xEF\xBC\x8D"));
 }
 END_TEST
 
 
 START_TEST(test_fold_quote)
 {
-	ck_assert_tok_eq(get_typ(S("'"), 0), S("'"));
-	ck_assert_tok_eq(get_typ(S("\""), 0), S("'"));
-	ck_assert_tok_eq(get_typ(T("\\u2018"), 0), S("'"));
-	ck_assert_tok_eq(get_typ(T("\\u2019"), 0), S("'"));
-	ck_assert_tok_eq(get_typ(T("\\u201A"), 0), S("'"));
-	ck_assert_tok_eq(get_typ(T("\\u201F"), 0), S("'"));
+	ck_assert_tok_eq(get_type(S("'"), TYPE_QUOTFOLD), S("'"));
+	ck_assert_tok_eq(get_type(S("\""), TYPE_QUOTFOLD), S("'"));
+	ck_assert_tok_eq(get_type(T("\\u2018"), TYPE_QUOTFOLD), S("'"));
+	ck_assert_tok_eq(get_type(T("\\u2019"), TYPE_QUOTFOLD), S("'"));
+	ck_assert_tok_eq(get_type(T("\\u201A"), TYPE_QUOTFOLD), S("'"));
+	ck_assert_tok_eq(get_type(T("\\u201F"), TYPE_QUOTFOLD), S("'"));
 }
 END_TEST
 
 
 START_TEST(test_nofold_quote)
 {
-	ck_assert_tok_eq(get_typ(S("'"), TYP_NOFOLD_QUOT), S("'"));
-	ck_assert_tok_eq(get_typ(S("\""), TYP_NOFOLD_QUOT), S("\""));
-	ck_assert_tok_eq(get_typ(T("\\u2018"), TYP_NOFOLD_QUOT),
-			 S("\xE2\x80\x98"));
-	ck_assert_tok_eq(get_typ(T("\\u2019"), TYP_NOFOLD_QUOT),
-			 S("\xE2\x80\x99"));
-	ck_assert_tok_eq(get_typ(T("\\u201A"), TYP_NOFOLD_QUOT),
-			 S("\xE2\x80\x9A"));
-	ck_assert_tok_eq(get_typ(T("\\u201F"), TYP_NOFOLD_QUOT),
-			 S("\xE2\x80\x9F"));
+	ck_assert_tok_eq(get_type(S("'"), 0), S("'"));
+	ck_assert_tok_eq(get_type(S("\""), 0), S("\""));
+	ck_assert_tok_eq(get_type(T("\\u2018"), 0), S("\xE2\x80\x98"));
+	ck_assert_tok_eq(get_type(T("\\u2019"), 0), S("\xE2\x80\x99"));
+	ck_assert_tok_eq(get_type(T("\\u201A"), 0), S("\xE2\x80\x9A"));
+	ck_assert_tok_eq(get_type(T("\\u201F"), 0), S("\xE2\x80\x9F"));
 }
 END_TEST
 

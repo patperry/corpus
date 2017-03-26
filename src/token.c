@@ -26,13 +26,15 @@
 #include "token.h"
 
 
-static void typebuf_clear_flags(struct typebuf *buf);
+static void typebuf_clear_kind(struct typebuf *buf);
+static int typebuf_set_kind(struct typebuf *buf, int kind);
+
 static int typebuf_reserve(struct typebuf *buf, size_t size);
 static int typebuf_set_ascii(struct typebuf *buf, const struct text *tok);
 static int typebuf_set_utf32(struct typebuf *buf, const uint32_t *ptr,
 			    const uint32_t *end);
 
-int typebuf_init(struct typebuf *buf, int flags)
+int typebuf_init(struct typebuf *buf, int kind)
 {
 	int err;
 
@@ -40,8 +42,8 @@ int typebuf_init(struct typebuf *buf, int flags)
 	buf->code = NULL;
 	buf->size_max = 0;
 
-	typebuf_clear_flags(buf);
-	err = typebuf_set_flags(buf, flags);
+	typebuf_clear_kind(buf);
+	err = typebuf_set_kind(buf, kind);
 
 	return err;
 }
@@ -54,48 +56,47 @@ void typebuf_destroy(struct typebuf *buf)
 }
 
 
-void typebuf_clear_flags(struct typebuf *buf)
+void typebuf_clear_kind(struct typebuf *buf)
 {
 	uint_fast8_t ch;
 
-	// NFD
-	buf->decomp = UDECOMP_NORMAL | UCASEFOLD_NONE;
+	buf->map_type = UDECOMP_NORMAL | UCASEFOLD_NONE;
 
 	for (ch = 0; ch < 0x80; ch++) {
 		buf->ascii_map[ch] = ch;
 	}
 
-	buf->flags = 0;
+	buf->kind = 0;
 }
 
 
-int typebuf_set_flags(struct typebuf *buf, int flags)
+int typebuf_set_kind(struct typebuf *buf, int kind)
 {
 	int_fast8_t ch;
 
-	if (buf->flags == flags) {
+	if (buf->kind == kind) {
 		return 0;
 	}
 
-	typebuf_clear_flags(buf);
+	typebuf_clear_kind(buf);
 
-	if (flags & TYPE_COMPAT) {
-		buf->decomp = UDECOMP_ALL;
+	if (kind & TYPE_COMPAT) {
+		buf->map_type = UDECOMP_ALL;
 	}
 
-	if (flags & TYPE_CASEFOLD) {
+	if (kind & TYPE_CASEFOLD) {
 		for (ch = 'A'; ch <= 'Z'; ch++) {
 			buf->ascii_map[ch] = ch + ('a' - 'A');
 		}
 
-		buf->decomp |= UCASEFOLD_ALL;
+		buf->map_type |= UCASEFOLD_ALL;
 	}
 
-	if (flags & TYPE_QUOTFOLD) {
+	if (kind & TYPE_QUOTFOLD) {
 		buf->ascii_map['"'] = '\'';
 	}
 
-	if (flags & TYPE_RMCC) {
+	if (kind & TYPE_RMCC) {
 		for (ch = 0x00; ch <= 0x08; ch++) {
 			buf->ascii_map[ch] = -1;
 		}
@@ -105,14 +106,14 @@ int typebuf_set_flags(struct typebuf *buf, int flags)
 		buf->ascii_map[0x7F] = -1;
 	}
 
-	if (flags & TYPE_RMWS) {
+	if (kind & TYPE_RMWS) {
 		for (ch = 0x09; ch <= 0x0D; ch++) {
 			buf->ascii_map[ch] = -1;
 		}
 		buf->ascii_map[' '] = -1;
 	}
 
-	buf->flags = flags;
+	buf->kind = kind;
 
 	return 0;
 }
@@ -166,7 +167,7 @@ int typebuf_set(struct typebuf *buf, const struct text *tok)
 	dst = buf->code;
 	text_iter_make(&it, tok);
 	while (text_iter_advance(&it)) {
-		unicode_map(buf->decomp, it.current, &dst);
+		unicode_map(buf->map_type, it.current, &dst);
 	}
 	unicode_order(buf->code, dst - buf->code);
 
@@ -182,11 +183,11 @@ error:
 int typebuf_set_utf32(struct typebuf *buf, const uint32_t *ptr,
 		     const uint32_t *end)
 {
-	bool fold_dash = (buf->flags & TYPE_DASHFOLD);
-	bool fold_quot = (buf->flags & TYPE_QUOTFOLD);
-	bool keep_cc = !(buf->flags & TYPE_RMCC);
-	bool keep_di = !(buf->flags & TYPE_RMDI);
-	bool keep_ws = !(buf->flags & TYPE_RMWS);
+	bool fold_dash = buf->kind & TYPE_DASHFOLD;
+	bool fold_quot = buf->kind & TYPE_QUOTFOLD;
+	bool rm_cc = buf->kind & TYPE_RMCC;
+	bool rm_di = buf->kind & TYPE_RMDI;
+	bool rm_ws = buf->kind & TYPE_RMWS;
 	uint8_t *dst = buf->text.ptr;
 	uint32_t code;
 	int8_t ch;
@@ -203,12 +204,12 @@ int typebuf_set_utf32(struct typebuf *buf, const uint32_t *ptr,
 			continue;
 		} else if (code <= 0x9F) {
 			if (code == 0x85) {
-				if (!keep_ws) {
+				if (rm_ws) {
 					continue;
 				}
 			} else {
 				// remove C1 control chars
-				if (!keep_cc) {
+				if (rm_cc) {
 					continue;
 				}
 			}
@@ -301,7 +302,7 @@ int typebuf_set_utf32(struct typebuf *buf, const uint32_t *ptr,
 			case 0x202F:
 			case 0x205F:
 			case 0x3000:
-				if (!keep_ws) {
+				if (rm_ws) {
 					continue;
 				}
 				break;
@@ -384,7 +385,7 @@ int typebuf_set_utf32(struct typebuf *buf, const uint32_t *ptr,
 			case 0x1D178:
 			case 0x1D179:
 			case 0x1D17A:
-				if (!keep_di) {
+				if (rm_di) {
 					continue;
 				}
 				break;
@@ -393,7 +394,7 @@ int typebuf_set_utf32(struct typebuf *buf, const uint32_t *ptr,
 				break;
 			}
 		} else if (code <= 0xE0FFF) {
-			if (!keep_di) {
+			if (rm_di) {
 				continue;
 			}
 		}

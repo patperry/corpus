@@ -59,7 +59,7 @@
  *		U+2E3B THREE-EM DASH
  *		U+301C WAVE DASH
  *
- *		+ anything else with "Dash=Yes" proporty
+ *		+ anything else with "Dash=Yes" property
  *
  *	Source: http://unicode.org/Public/UNIDATA/PropList.txt
  *		http://unicode.org/reports/tr44/#Dash
@@ -143,7 +143,7 @@
  *	Disabled with `TYPE_KEEP_WS`
  */
 
-enum type_type {
+enum type_kind {
 	TYPE_NORMAL   = 0,        /**< apply decomposition mappings */
 	TYPE_COMPAT   = (1 << 0), /**< apply compatibility mappings */
 	TYPE_CASEFOLD = (1 << 1), /**< perform case folding */
@@ -151,7 +151,7 @@ enum type_type {
 	TYPE_QUOTFOLD = (1 << 3), /**< replace quotes with `'` */
 	TYPE_RMCC     = (1 << 4), /**< remove non-whitespace control characters */
 	TYPE_RMDI     = (1 << 5), /**< remove default ignorables */
-	TYPE_RMWS     = (1 << 6)  /**< remove white space */
+	TYPE_RMWS     = (1 << 6)  /**< remove whitespace */
 };
 
 
@@ -160,14 +160,13 @@ struct typebuf {
 	struct text text;
 	uint32_t *code;
 	size_t size_max;
-	int flags;
-	int decomp;
+	int kind;
+	int map_type;
 };
 
-int typebuf_init(struct typebuf *buf, int type);
+int typebuf_init(struct typebuf *buf, int kind);
 void typebuf_destroy(struct typebuf *buf);
 int typebuf_set(struct typebuf *buf, const struct text *tok);
-int typebuf_set_flags(struct typebuf *buf, int flags);
 
 size_t tok_hash(const struct text *tok);
 int tok_equals(const struct text *tok1, const struct text *tok2);

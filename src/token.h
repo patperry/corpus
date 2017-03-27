@@ -168,7 +168,7 @@ int typebuf_init(struct typebuf *buf, int kind);
 void typebuf_destroy(struct typebuf *buf);
 int typebuf_set(struct typebuf *buf, const struct text *tok);
 
-size_t tok_hash(const struct text *tok);
+uint64_t tok_hash(const struct text *tok);
 int tok_equals(const struct text *tok1, const struct text *tok2);
 int compare_typ(const struct text *typ1, const struct text *typ2);
 

@@ -15,9 +15,12 @@
  */
 
 #include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
 #include <syslog.h>
 #include "errcode.h"
 #include "unicode.h"
+#include "xalloc.h"
 #include "text.h"
 
 /* http://stackoverflow.com/a/11986885 */
@@ -32,6 +35,29 @@ static int decode_uescape(const uint8_t **inputptr, const uint8_t *end,
 			  uint32_t *codeptr);
 static void decode_valid_escape(const uint8_t **inputptr, uint32_t *codeptr);
 static void decode_valid_uescape(const uint8_t **inputptr, uint32_t *codeptr);
+
+
+int text_init_copy(struct text *text, const struct text *other)
+{
+        size_t size = TEXT_SIZE(other);
+        size_t attr = other->attr;
+
+        if (!(text->ptr = xmalloc(size + 1))) {
+                syslog(LOG_ERR, "failed allocating text object");
+                return ERROR_NOMEM;
+        }
+
+        memcpy(text->ptr, other->ptr, size);
+        text->ptr[size] = '\0';
+        text->attr = attr;
+        return 0;
+}
+
+
+void text_destroy(struct text *text)
+{
+        free(text->ptr);
+}
 
 
 int text_assign(struct text *text, const uint8_t *ptr, size_t size, int flags)

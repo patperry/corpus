@@ -85,6 +85,24 @@ enum text_flag {
 };
 
 /**
+ * Initialize a new text object by allocating space for and copying
+ * the encoded characters from another text object.
+ *
+ * \param text the object to initialize
+ * \param other the object to copy
+ *
+ * \returns 0 on success, or non-zero on memory allocation failure
+ */
+int text_init_copy(struct text *text, const struct text *other);
+
+/**
+ * Free the resources associated with a text object.
+ *
+ * \param text the text object
+ */
+void text_destroy(struct text *text);
+
+/**
  * Assign a text value to point to data in the specified memory location
  * after validating the input data.
  *

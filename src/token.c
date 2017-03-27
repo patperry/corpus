@@ -449,11 +449,11 @@ error:
 
 
 // Dan Bernstein's djb2 XOR hash: http://www.cse.yorku.ca/~oz/hash.html
-size_t tok_hash(const struct text *tok)
+uint64_t tok_hash(const struct text *tok)
 {
 	const uint8_t *ptr = tok->ptr;
 	const uint8_t *end = ptr + TEXT_SIZE(tok);
-	size_t hash = 5381;
+	uint64_t hash = 5381;
 	uint_fast8_t ch;
 
 	while (ptr != end) {

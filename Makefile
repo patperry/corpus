@@ -15,8 +15,8 @@ CHECK_LIBS = `pkg-config --libs check`
 UNICODE = http://www.unicode.org/Public/8.0.0
 
 CORPUS_A = libcorpus.a
-LIB_O	= src/array.o src/filebuf.o src/text.o src/token.o src/unicode.o \
-	  src/xalloc.o
+LIB_O	= src/array.o src/filebuf.o src/symtab.o src/table.o src/text.o \
+		  src/token.o src/unicode.o src/xalloc.o
 
 DATA    = data/ucd/CaseFolding.txt data/ucd/UnicodeData.txt
 
@@ -104,7 +104,10 @@ tests/%.o: tests/%.c
 src/array.o: src/array.c src/errcode.h src/xalloc.h src/array.h
 src/filebuf.o: src/filebuf.c src/array.h src/errcode.h src/xalloc.h \
     src/filebuf.h
-src/text.o: src/text.c src/text.h
+src/symtab.o: src/symtab.c src/array.h src/errcode.h src/table.h src/text.h \
+	src/token.h src/xalloc.h src/symtab.h
+src/table.o: src/table.c src/errcode.h src/xalloc.h src/table.h
+src/text.o: src/text.c src/errcode.h src/unicode.h src/xalloc.h src/text.h
 src/token.o: src/token.c src/errcode.h src/text.h src/unicode.h src/xalloc.h \
     src/token.h
 src/unicode.o: src/unicode.c src/unicode/casefold.h src/unicode/combining.h \

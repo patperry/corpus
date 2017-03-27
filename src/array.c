@@ -33,7 +33,15 @@
 #define ARRAY_GROW 1.618 /* Golden Ratio, (1 + sqrt(5)) / 2 */
 
 
-int array_grow_size(int count, int size)
+/**
+ * Determine the capacity for an array that needs to grow.
+ *
+ * \param count the minimum capacity
+ * \param size the current capacity
+ *
+ * \returns the new capacity
+ */
+static int array_grow_size(int count, int size)
 {
 	double n1;
 

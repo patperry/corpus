@@ -20,7 +20,7 @@
 /**
  * \file array.h
  *
- * Utility functions for arrays.
+ * Dynamic array, growing to accommodate more elements.
  */
 
 #include <stddef.h>
@@ -38,15 +38,5 @@
  * \returns 0 on success
  */
 int array_grow(void **baseptr, int *sizeptr, size_t width, int count, int nadd);
-
-/**
- * Determine the capacity for an array that needs to grow.
- *
- * \param count the minimum capacity
- * \param size the current capacity
- *
- * \returns the new capacity
- */
-int array_grow_size(int count, int size);
 
 #endif /* ARRAY_H */

@@ -20,9 +20,10 @@ LIB_O	= src/array.o src/filebuf.o src/symtab.o src/table.o src/text.o \
 
 DATA    = data/ucd/CaseFolding.txt data/ucd/UnicodeData.txt
 
-TESTS_T = tests/check_text tests/check_token tests/check_unicode
-TESTS_O = tests/check_text.o tests/check_token.o tests/check_unicode.o \
-		  tests/testutil.o
+TESTS_T = tests/check_symtab tests/check_text tests/check_token \
+		  tests/check_unicode
+TESTS_O = tests/check_symtab.o tests/check_text.o tests/check_token.o \
+		  tests/check_unicode.o tests/testutil.o
 
 TESTS_DATA = data/ucd/NormalizationTest.txt
 
@@ -71,6 +72,9 @@ src/unicode/decompose.h: util/gen-decompose.py \
 
 # Tests
 
+tests/check_symtab: tests/check_symtab.o tests/testutil.o $(CORPUS_A)
+	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS) $^
+
 tests/check_text: tests/check_text.o tests/testutil.o $(CORPUS_A)
 	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS) $^
 
@@ -114,6 +118,8 @@ src/unicode.o: src/unicode.c src/unicode/casefold.h src/unicode/combining.h \
     src/unicode/decompose.h src/errcode.h src/unicode.h
 src/xalloc.o: src/xalloc.c src/xalloc.h
 
+tests/check_symtab.o: tests/check_symtab.c src/table.h src/text.h src/token.h \
+	src/symtab.h tests/testutil.h
 tests/check_text.o: tests/check_text.c src/text.h src/unicode.h tests/testutil.h
 tests/check_token.o: tests/check_token.c src/text.h src/token.h src/unicode.h \
     tests/testutil.h

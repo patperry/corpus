@@ -120,19 +120,16 @@ void symtab_clear(struct symtab *tab)
 
 int symtab_has_tok(const struct symtab *tab, const struct text *tok, int *tok_idp)
 {
+	struct table_probe probe;
 	const int *table = tab->tok_table.items;
-	unsigned mask = tab->tok_table.mask;
 	uint64_t hash = tok_hash(tok);
-	unsigned pos, nprobe;
 	int tok_id;
-	bool found;
+	bool found = false;
 
-	nprobe = 1;
-	pos = ((unsigned)hash) & mask;
-
-	while (1) {
-		tok_id = table[pos];
-		if (tok_id == TABLE_ITEM_NONE) {
+	table_probe_make(&probe, &tab->tok_table, hash);
+	while (table_probe_advance(&probe)) {
+		tok_id = table[probe.current];
+		if (tok_id == TABLE_ITEM_EMPTY) {
 			found = false;
 			break;
 		}
@@ -141,13 +138,10 @@ int symtab_has_tok(const struct symtab *tab, const struct text *tok, int *tok_id
 			found = true;
 			break;
 		}
-
-		nprobe++;
-		pos = (pos + PROBE_JUMP(nprobe)) & mask;
 	}
 
 	if (tok_idp) {
-		*tok_idp = found ? tok_id : (int)pos;
+		*tok_idp = found ? tok_id : probe.current;
 	}
 
 	return found;
@@ -156,19 +150,16 @@ int symtab_has_tok(const struct symtab *tab, const struct text *tok, int *tok_id
 
 int symtab_has_typ(const struct symtab *tab, const struct text *typ, int *typ_idp)
 {
+	struct table_probe probe;
 	const int *items = tab->typ_table.items;
-	unsigned mask = tab->typ_table.mask;
 	uint64_t hash = tok_hash(typ);
-	unsigned pos, nprobe;
 	int typ_id;
-	bool found;
+	bool found = false;
 
-	nprobe = 1;
-	pos = ((unsigned)hash) & mask;
-
-	while (1) {
-		typ_id = items[pos];
-		if (typ_id == TABLE_ITEM_NONE) {
+	table_probe_make(&probe, &tab->typ_table, hash);
+	while (table_probe_advance(&probe)) {
+		typ_id = items[probe.current];
+		if (typ_id == TABLE_ITEM_EMPTY) {
 			found = false;
 			break;
 		}
@@ -177,13 +168,10 @@ int symtab_has_typ(const struct symtab *tab, const struct text *typ, int *typ_id
 			found = true;
 			break;
 		}
-
-		nprobe++;
-		pos = (pos + PROBE_JUMP(nprobe)) & mask;
 	}
 
 	if (typ_idp) {
-		*typ_idp = found ? typ_id : (int)pos;
+		*typ_idp = found ? typ_id : probe.current;
 	}
 
 	return found;
@@ -219,7 +207,7 @@ int symtab_add_tok(struct symtab *tab, const struct text *tok, int *tok_idp)
 		}
 
 		// grow the token table if necessary
-		if (tok_id == tab->tok_table.max) {
+		if (tok_id == tab->tok_table.max_count) {
 			if ((err = table_grow(&tab->tok_table, tok_id, 1))) {
 				goto error;
 			}
@@ -285,7 +273,7 @@ int symtab_add_typ(struct symtab *tab, const struct text *typ, int *typ_idp)
 		}
 
 		// grow the type table if necessary
-		if (typ_id == tab->typ_table.max) {
+		if (typ_id == tab->typ_table.max_count) {
 			if ((err = table_grow(&tab->typ_table, typ_id, 1))) {
 				goto error;
 			}

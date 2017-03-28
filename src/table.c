@@ -42,21 +42,17 @@
 //#define TABLE_SIZE_INIT	32
 #define TABLE_SIZE_INIT	1
 
-/* The number of buckets must be a power of 2, and below INT_MAX + 1.
- * This is the largest size_t satisfying these constraints.
- */
-#define TABLE_SIZE_MAX \
-	((int)1 << (CHAR_BIT * sizeof(int) - 2))
+/* The number of buckets must be a power of 2, and below (INT_MAX + 1) */
+#define TABLE_SIZE_MAX ((unsigned)INT_MAX + 1)
 
 /* Maximum number of occupied buckets. */
-#define TABLE_COUNT_MAX	\
-	MIN(TABLE_ITEM_NONE - 1, (int)(LOAD_FACTOR * TABLE_SIZE_MAX))
+#define TABLE_COUNT_MAX	(int)(LOAD_FACTOR * TABLE_SIZE_MAX)
 
 
 // The smallest size a hash table can be while holding 'count' elements
-static size_t table_size_min(int count, int size_min)
+static unsigned table_size_min(int count, unsigned size_min)
 {
-	int n;
+	unsigned n;
 
 	assert(count <= TABLE_COUNT_MAX);
 	assert(size_min <= TABLE_SIZE_MAX);
@@ -64,7 +60,7 @@ static size_t table_size_min(int count, int size_min)
 
 	n = TABLE_SIZE_MIN;
 
-	while (n < size_min || count > (int)(LOAD_FACTOR * n)) {
+	while (n < size_min || (unsigned)count > (unsigned)(LOAD_FACTOR * n)) {
 		n *= 2;
 	}
 
@@ -74,7 +70,7 @@ static size_t table_size_min(int count, int size_min)
 
 int table_init(struct table *tab)
 {
-	int size = TABLE_SIZE_INIT;
+	unsigned size = TABLE_SIZE_INIT;
 
 	assert(size >= TABLE_SIZE_MIN);
 	assert(size <= TABLE_SIZE_MAX);
@@ -83,8 +79,8 @@ int table_init(struct table *tab)
 		goto error_nomem;
 	}
 
-	tab->max = (int)(LOAD_FACTOR * size);
-	tab->mask = (unsigned)(size - 1);
+	tab->max_count = (int)(LOAD_FACTOR * size);
+	tab->mask = size - 1;
 	table_clear(tab);
 
 	return 0;
@@ -103,10 +99,10 @@ void table_destroy(struct table *tab)
 
 void table_clear(struct table *tab)
 {
-	int i, n = (int)tab->mask + 1;
+	unsigned i, n = tab->mask + 1;
 
 	for (i = 0; i < n; i++) {
-		tab->items[i] = TABLE_ITEM_NONE;
+		tab->items[i] = TABLE_ITEM_EMPTY;
 	}
 }
 
@@ -114,8 +110,8 @@ void table_clear(struct table *tab)
 int table_grow(struct table *tab, int count, int nadd)
 {
 	int *items = tab->items;
-	int max = tab->max;
-	int size = (int)tab->mask + 1;
+	int max_count = tab->max_count;
+	unsigned size = tab->mask + 1;
 
 	if (count > INT_MAX - nadd) {
 		syslog(LOG_ERR, "table item count exceeds maximum (%d)",
@@ -124,7 +120,7 @@ int table_grow(struct table *tab, int count, int nadd)
 	}
 	count = count + nadd;
 
-	if (count <= max) {
+	if (count <= max_count) {
 		return 0;
 	}
 
@@ -135,7 +131,7 @@ int table_grow(struct table *tab, int count, int nadd)
 	}
 
 	size = table_size_min(count, size);
-	max = (int)(LOAD_FACTOR * size);
+	max_count = (int)(LOAD_FACTOR * size);
 
 	if ((size_t)size > SIZE_MAX / sizeof(*items)) {
 		syslog(LOG_ERR, "table size (%d) exceeds maximum (%zu)",
@@ -149,26 +145,24 @@ int table_grow(struct table *tab, int count, int nadd)
 	}
 
 	tab->items = items;
-	tab->max = max;
-	tab->mask = (unsigned)(size - 1);
+	tab->max_count = max_count;
+	tab->mask = size - 1;
 
 	return 0;
 }
 
 
-int table_next_empty(const struct table *tab, uint64_t hash)
+int table_next_empty(const struct table *tab, unsigned hash)
 {
+	struct table_probe probe;
 	const int *items = tab->items;
-	unsigned mask = tab->mask;
-	unsigned nprobe, pos;
 
-	nprobe = 1;
-	pos = ((unsigned)hash) & mask;
-
-	while (items[pos] != TABLE_ITEM_NONE) {
-		nprobe++;
-		pos = (pos + PROBE_JUMP(nprobe)) & mask;
+	table_probe_make(&probe, tab, hash);
+	while (table_probe_advance(&probe)) {
+		if (items[probe.current] == TABLE_ITEM_EMPTY) {
+			break;
+		}
 	}
 
-	return (int)pos;
+	return probe.current;
 }

@@ -123,22 +123,18 @@ int symtab_has_tok(const struct symtab *tab, const struct text *tok, int *tok_id
 	struct table_probe probe;
 	unsigned hash = tok_hash(tok);
 	int tok_id;
-	bool found = false;
+	bool found;
 
 	table_probe_make(&probe, &tab->tok_table, hash);
 	while (table_probe_advance(&probe)) {
 		tok_id = probe.current;
-		if (tok_id == TABLE_ITEM_EMPTY) {
-			found = false;
-			break;
-		}
-
 		if (tok_equals(tok, &tab->toks[tok_id].text)) {
 			found = true;
-			break;
+			goto out;
 		}
 	}
-
+	found = false;
+out:
 	if (tok_idp) {
 		*tok_idp = found ? tok_id : probe.index;
 	}
@@ -152,22 +148,18 @@ int symtab_has_typ(const struct symtab *tab, const struct text *typ, int *typ_id
 	struct table_probe probe;
 	unsigned hash = tok_hash(typ);
 	int typ_id;
-	bool found = false;
+	bool found;
 
 	table_probe_make(&probe, &tab->typ_table, hash);
 	while (table_probe_advance(&probe)) {
 		typ_id = probe.current;
-		if (typ_id == TABLE_ITEM_EMPTY) {
-			found = false;
-			break;
-		}
-
 		if (tok_equals(typ, &tab->typs[typ_id].text)) {
 			found = true;
-			break;
+			goto out;
 		}
 	}
-
+	found = false;
+out:
 	if (typ_idp) {
 		*typ_idp = found ? typ_id : probe.index;
 	}

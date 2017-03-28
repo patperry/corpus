@@ -113,7 +113,8 @@ static inline void table_probe_make(struct table_probe *probe,
  *
  * \param probe the probe
  *
- * \returns 1
+ * \returns zero if at the end of the sequence and `probe->current` is invalid;
+ * 	nonzero if not at the end of the sequence
  */
 static inline int table_probe_advance(struct table_probe *probe)
 {
@@ -146,7 +147,7 @@ static inline int table_probe_advance(struct table_probe *probe)
 	probe->current = probe->table->items[probe->index];
 	probe->nprobe++;
 
-	return 1;
+	return (probe->current != TABLE_ITEM_EMPTY);
 }
 
 #endif /* TABLE_H */

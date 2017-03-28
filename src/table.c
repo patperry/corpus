@@ -151,9 +151,7 @@ int table_next_empty(const struct table *tab, unsigned hash)
 
 	table_probe_make(&probe, tab, hash);
 	while (table_probe_advance(&probe)) {
-		if (probe.current == TABLE_ITEM_EMPTY) {
-			break;
-		}
+		// skip over occupied table cells
 	}
 
 	return probe.index;

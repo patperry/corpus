@@ -42,10 +42,11 @@ struct table {
  * Hash table probe, for looking up items by their hash value.
  */
 struct table_probe {
-	unsigned mask;   /**< hash table indexing mask */
-	unsigned nprobe; /**< number of previous probes */
-	unsigned hash;	 /**< starting hash value */
-	int current;     /**< current index in the probe sequence */
+	const struct table *table;	/**< the underlying table */
+	unsigned hash;			/**< starting hash value */
+	unsigned nprobe;		/**< number of previous probes */
+	unsigned index;			/**< current index in the probe sequence */
+	int current;			/**< current item in the probe sequence */
 };
 
 /**
@@ -99,10 +100,11 @@ void table_add(struct table *tab, unsigned hash, int item);
 static inline void table_probe_make(struct table_probe *probe,
 			            const struct table *tab, unsigned hash)
 {
-	probe->mask = tab->mask;
-	probe->nprobe = 0;
+	probe->table = tab;
 	probe->hash = hash;
-	probe->current = -1;
+	probe->nprobe = 0;
+	probe->index = 0;
+	probe->current = TABLE_ITEM_EMPTY;
 }
 
 /**
@@ -115,34 +117,33 @@ static inline void table_probe_make(struct table_probe *probe,
  */
 static inline int table_probe_advance(struct table_probe *probe)
 {
-	/* Use an unsigned integer so that overflow and bitwise operations
-	 * are well-defined. */
-	unsigned current = (unsigned)probe->current;
+	unsigned index;
 
 	if (probe->nprobe == 0) {
-		current = probe->hash;
+		index = probe->hash;
 	} else {
 		/* Linear probing:
 		 *
 		 *     h(k,i) = h(k) + i
 		 *
-		 * current += 1;
+		 * index += 1;
 		 *
 		 * Quadratic probing:
 		 *
 		 *     h(k,i) = h(k) + 0.5 i + 0.5 i^2
 		 *
-		 * current += probe->nprobe;
+		 * index += nprobe;
 		 *
 		 * When the table size m is a power of 2, the values h(k,i) % m
 		 * are all distinct for i = 0, 1, ..., m - 1
 		 *
 		 *     https://en.wikipedia.org/wiki/Quadratic_probing
 		 */
-		current += probe->nprobe;
+		index = probe->index + probe->nprobe;
 	}
 
-	probe->current = (int)(current & probe->mask);
+	probe->index = index & (probe->table->mask);
+	probe->current = probe->table->items[probe->index];
 	probe->nprobe++;
 
 	return 1;

@@ -148,14 +148,13 @@ void table_add(struct table *tab, unsigned hash, int item)
 int table_next_empty(const struct table *tab, unsigned hash)
 {
 	struct table_probe probe;
-	const int *items = tab->items;
 
 	table_probe_make(&probe, tab, hash);
 	while (table_probe_advance(&probe)) {
-		if (items[probe.current] == TABLE_ITEM_EMPTY) {
+		if (probe.current == TABLE_ITEM_EMPTY) {
 			break;
 		}
 	}
 
-	return probe.current;
+	return probe.index;
 }

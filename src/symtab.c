@@ -121,14 +121,13 @@ void symtab_clear(struct symtab *tab)
 int symtab_has_tok(const struct symtab *tab, const struct text *tok, int *tok_idp)
 {
 	struct table_probe probe;
-	const int *table = tab->tok_table.items;
 	unsigned hash = tok_hash(tok);
 	int tok_id;
 	bool found = false;
 
 	table_probe_make(&probe, &tab->tok_table, hash);
 	while (table_probe_advance(&probe)) {
-		tok_id = table[probe.current];
+		tok_id = probe.current;
 		if (tok_id == TABLE_ITEM_EMPTY) {
 			found = false;
 			break;
@@ -141,7 +140,7 @@ int symtab_has_tok(const struct symtab *tab, const struct text *tok, int *tok_id
 	}
 
 	if (tok_idp) {
-		*tok_idp = found ? tok_id : probe.current;
+		*tok_idp = found ? tok_id : probe.index;
 	}
 
 	return found;
@@ -151,14 +150,13 @@ int symtab_has_tok(const struct symtab *tab, const struct text *tok, int *tok_id
 int symtab_has_typ(const struct symtab *tab, const struct text *typ, int *typ_idp)
 {
 	struct table_probe probe;
-	const int *items = tab->typ_table.items;
 	unsigned hash = tok_hash(typ);
 	int typ_id;
 	bool found = false;
 
 	table_probe_make(&probe, &tab->typ_table, hash);
 	while (table_probe_advance(&probe)) {
-		typ_id = items[probe.current];
+		typ_id = probe.current;
 		if (typ_id == TABLE_ITEM_EMPTY) {
 			found = false;
 			break;
@@ -171,7 +169,7 @@ int symtab_has_typ(const struct symtab *tab, const struct text *typ, int *typ_id
 	}
 
 	if (typ_idp) {
-		*typ_idp = found ? typ_id : probe.current;
+		*typ_idp = found ? typ_id : probe.index;
 	}
 
 	return found;

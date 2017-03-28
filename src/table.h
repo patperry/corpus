@@ -83,7 +83,7 @@ void table_clear(struct table *tab);
  *
  * \param tab a table with at least one empty cell
  * \param hash the hash code
- * \param a non-negative item
+ * \param item a non-negative item
  */
 void table_add(struct table *tab, unsigned hash, int item);
 

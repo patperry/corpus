@@ -89,7 +89,7 @@ int scan_utf8(const uint8_t **bufptr, const uint8_t *end);
  * \param bufptr on input, a pointer to the start of the character buffer;
  * 	on exit, a pointer to the end of the first UTF-8 character in
  * 	the buffer
- * \param on exit, the first codepoint in the buffer
+ * \param codeptr on exit, the first codepoint in the buffer
  */
 void decode_utf8(const uint8_t **bufptr, uint32_t *codeptr);
 

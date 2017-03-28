@@ -23,35 +23,108 @@
  * Symbol table, assigning integer IDs to tokens and types.
  */
 
+/**
+ * Symbol table token.
+ */
 struct symtab_token {
-	struct text text;
-	int type_id;
+	struct text text;	/**< the token text */
+	int type_id;		/**< the ID of the token's type */
 };
 
+/**
+ * Symbol table type.
+ */
 struct symtab_type {
-	struct text text;
-	int *token_ids;
-	int ntoken;
+	struct text text;	/**< the type text */
+	int *token_ids;		/**< the IDs of the tokens in the type */
+	int ntoken;		/**< the number of tokens in the type */
 };
 
+/**
+ * Symbol table.
+ */
 struct symtab {
-	struct typebuf typebuf;
-	struct table type_table;
-	struct table token_table;
-	struct symtab_type *types;
-	struct symtab_token *tokens;
-	int ntype, ntype_max;
-	int ntoken, ntoken_max;
+	struct typebuf typebuf;		/**< type buffer, for normalizing
+					  tokens to types */
+	struct table type_table;	/**< type hash table */
+	struct table token_table;	/**< token hash table */
+	struct symtab_type *types;	/**< type array */
+	struct symtab_token *tokens;	/**< token array */
+	int ntype;			/**< type array length */
+	int ntype_max;			/**< type array capacity */
+	int ntoken;			/**< token array length */
+	int ntoken_max;			/**< token array capacity */
 };
 
+/**
+ * Initialize an empty symbol table with types of the specified kind.
+ *
+ * \param tab the symbol table
+ * \param type_kind the type kind specifier, a bit mask of #type_kind values.
+ *
+ * \returns 0 on success
+ */
 int symtab_init(struct symtab *tab, int type_kind);
+
+/**
+ * Release the resources associated with a symbol table.
+ *
+ * \param tab the symbol table
+ */
 void symtab_destroy(struct symtab *tab);
+
+/**
+ * Remove all tokens and types from a symbol table.
+ *
+ * \param tab the symbol table
+ */
 void symtab_clear(struct symtab *tab);
 
+/**
+ * Add a token to a symbol table if it does not already exist there, and
+ * get the id of the token in the table.
+ *
+ * \param tab the symbol table
+ * \param tok the token
+ * \param idptr a pointer to store the token id, or NULL
+ *
+ * \returns 0 on success
+ */
 int symtab_add_token(struct symtab *tab, const struct text *tok, int *idptr);
+
+/**
+ * Add a type to a symbol table if it does not already exist there, and
+ * get the id of the type in the table.
+ *
+ * \param tab the symbol table
+ * \param typ the type
+ * \param idptr a pointer to store the type id, or NULL
+ *
+ * \returns 0 on success
+ */
 int symtab_add_type(struct symtab *tab, const struct text *typ, int *idptr);
+
+/**
+ * Query whether a token exists in a symbol table.
+ *
+ * \param tab the symbol table
+ * \param tok the token
+ * \param idptr a pointer to store the token id if it exists, or NULL
+ *
+ * \returns non-zero if the token exists in the table; zero otherwise
+ */
 int symtab_has_token(const struct symtab *tab, const struct text *tok,
 		     int *idptr);
+
+/**
+ * Query whether a type exists in a symbol table.
+ *
+ * \param tab the symbol table
+ * \param typ the type
+ * \param idptr a pointer to store the type id if it exists, or NULL
+ *
+ * \returns non-zero if the type exists in the table; zero otherwise
+ */
 int symtab_has_type(const struct symtab *tab, const struct text *typ,
 		    int *idptr);
 

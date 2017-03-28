@@ -26,129 +26,129 @@
 #include "token.h"
 
 
-static void typebuf_clear_kind(struct typebuf *buf);
-static int typebuf_set_kind(struct typebuf *buf, int kind);
+static void typemap_clear_kind(struct typemap *map);
+static int typemap_set_kind(struct typemap *map, int kind);
 
-static int typebuf_reserve(struct typebuf *buf, size_t size);
-static int typebuf_set_ascii(struct typebuf *buf, const struct text *tok);
-static int typebuf_set_utf32(struct typebuf *buf, const uint32_t *ptr,
-			    const uint32_t *end);
+static int typemap_reserve(struct typemap *map, size_t size);
+static int typemap_set_ascii(struct typemap *map, const struct text *tok);
+static int typemap_set_utf32(struct typemap *map, const uint32_t *ptr,
+			     const uint32_t *end);
 
-int typebuf_init(struct typebuf *buf, int kind)
+int typemap_init(struct typemap *map, int kind)
 {
 	int err;
 
-	buf->text.ptr = NULL;
-	buf->code = NULL;
-	buf->size_max = 0;
+	map->text.ptr = NULL;
+	map->code = NULL;
+	map->size_max = 0;
 
-	typebuf_clear_kind(buf);
-	err = typebuf_set_kind(buf, kind);
+	typemap_clear_kind(map);
+	err = typemap_set_kind(map, kind);
 
 	return err;
 }
 
 
-void typebuf_destroy(struct typebuf *buf)
+void typemap_destroy(struct typemap *map)
 {
-	free(buf->code);
-	free(buf->text.ptr);
+	free(map->code);
+	free(map->text.ptr);
 }
 
 
-void typebuf_clear_kind(struct typebuf *buf)
+void typemap_clear_kind(struct typemap *map)
 {
 	uint_fast8_t ch;
 
-	buf->map_type = UDECOMP_NORMAL | UCASEFOLD_NONE;
+	map->map_type = UDECOMP_NORMAL | UCASEFOLD_NONE;
 
 	for (ch = 0; ch < 0x80; ch++) {
-		buf->ascii_map[ch] = ch;
+		map->ascii_map[ch] = ch;
 	}
 
-	buf->kind = 0;
+	map->kind = 0;
 }
 
 
-int typebuf_set_kind(struct typebuf *buf, int kind)
+int typemap_set_kind(struct typemap *map, int kind)
 {
 	int_fast8_t ch;
 
-	if (buf->kind == kind) {
+	if (map->kind == kind) {
 		return 0;
 	}
 
-	typebuf_clear_kind(buf);
+	typemap_clear_kind(map);
 
 	if (kind & TYPE_COMPAT) {
-		buf->map_type = UDECOMP_ALL;
+		map->map_type = UDECOMP_ALL;
 	}
 
 	if (kind & TYPE_CASEFOLD) {
 		for (ch = 'A'; ch <= 'Z'; ch++) {
-			buf->ascii_map[ch] = ch + ('a' - 'A');
+			map->ascii_map[ch] = ch + ('a' - 'A');
 		}
 
-		buf->map_type |= UCASEFOLD_ALL;
+		map->map_type |= UCASEFOLD_ALL;
 	}
 
 	if (kind & TYPE_QUOTFOLD) {
-		buf->ascii_map['"'] = '\'';
+		map->ascii_map['"'] = '\'';
 	}
 
 	if (kind & TYPE_RMCC) {
 		for (ch = 0x00; ch <= 0x08; ch++) {
-			buf->ascii_map[ch] = -1;
+			map->ascii_map[ch] = -1;
 		}
 		for (ch = 0x0E; ch <= 0x1F; ch++) {
-			buf->ascii_map[ch] = -1;
+			map->ascii_map[ch] = -1;
 		}
-		buf->ascii_map[0x7F] = -1;
+		map->ascii_map[0x7F] = -1;
 	}
 
 	if (kind & TYPE_RMWS) {
 		for (ch = 0x09; ch <= 0x0D; ch++) {
-			buf->ascii_map[ch] = -1;
+			map->ascii_map[ch] = -1;
 		}
-		buf->ascii_map[' '] = -1;
+		map->ascii_map[' '] = -1;
 	}
 
-	buf->kind = kind;
+	map->kind = kind;
 
 	return 0;
 }
 
 
-int typebuf_reserve(struct typebuf *buf, size_t size)
+int typemap_reserve(struct typemap *map, size_t size)
 {
-	uint8_t *ptr = buf->text.ptr;
-	uint32_t *code = buf->code;
+	uint8_t *ptr = map->text.ptr;
+	uint32_t *code = map->code;
 
-	if (buf->size_max >= size) {
+	if (map->size_max >= size) {
 		return 0;
 	}
 
 	if (!(ptr = xrealloc(ptr, size))) {
 		goto error_nomem;
 	}
-	buf->text.ptr = ptr;
+	map->text.ptr = ptr;
 
 	if (!(code = xrealloc(code, size * UNICODE_DECOMP_MAX))) {
 		goto error_nomem;
 	}
-	buf->code = code;
+	map->code = code;
 
-	buf->size_max = size;
+	map->size_max = size;
 	return 0;
 
 error_nomem:
-	syslog(LOG_ERR, "failed allocating buffer");
+	syslog(LOG_ERR, "failed allocating type map buffer");
 	return ERROR_NOMEM;
 }
 
 
 
-int typebuf_set(struct typebuf *buf, const struct text *tok)
+int typemap_set(struct typemap *map, const struct text *tok)
 {
 	struct text_iter it;
 	size_t size = TEXT_SIZE(tok);
@@ -156,22 +156,22 @@ int typebuf_set(struct typebuf *buf, const struct text *tok)
 	int err;
 
 	if (TEXT_IS_ASCII(tok)) {
-		err = typebuf_set_ascii(buf, tok);
+		err = typemap_set_ascii(map, tok);
 		return err;
 	}
 
-	if ((err = typebuf_reserve(buf, size + 1))) {
+	if ((err = typemap_reserve(map, size + 1))) {
 		goto error;
 	}
 
-	dst = buf->code;
+	dst = map->code;
 	text_iter_make(&it, tok);
 	while (text_iter_advance(&it)) {
-		unicode_map(buf->map_type, it.current, &dst);
+		unicode_map(map->map_type, it.current, &dst);
 	}
-	unicode_order(buf->code, dst - buf->code);
+	unicode_order(map->code, dst - map->code);
 
-	err = typebuf_set_utf32(buf, buf->code, dst);
+	err = typemap_set_utf32(map, map->code, dst);
 	return err;
 
 error:
@@ -180,15 +180,15 @@ error:
 }
 
 
-int typebuf_set_utf32(struct typebuf *buf, const uint32_t *ptr,
+int typemap_set_utf32(struct typemap *map, const uint32_t *ptr,
 		     const uint32_t *end)
 {
-	bool fold_dash = buf->kind & TYPE_DASHFOLD;
-	bool fold_quot = buf->kind & TYPE_QUOTFOLD;
-	bool rm_cc = buf->kind & TYPE_RMCC;
-	bool rm_di = buf->kind & TYPE_RMDI;
-	bool rm_ws = buf->kind & TYPE_RMWS;
-	uint8_t *dst = buf->text.ptr;
+	bool fold_dash = map->kind & TYPE_DASHFOLD;
+	bool fold_quot = map->kind & TYPE_QUOTFOLD;
+	bool rm_cc = map->kind & TYPE_RMCC;
+	bool rm_di = map->kind & TYPE_RMDI;
+	bool rm_ws = map->kind & TYPE_RMWS;
+	uint8_t *dst = map->text.ptr;
 	uint32_t code;
 	int8_t ch;
 	bool utf8 = false;
@@ -197,7 +197,7 @@ int typebuf_set_utf32(struct typebuf *buf, const uint32_t *ptr,
 		code = *ptr++;
 
 		if (code <= 0x7F) {
-			ch = buf->ascii_map[code];
+			ch = map->ascii_map[code];
 			if (ch >= 0) {
 				*dst++ = (uint8_t)ch;
 			}
@@ -405,16 +405,16 @@ int typebuf_set_utf32(struct typebuf *buf, const uint32_t *ptr,
 	}
 
 	*dst = '\0'; // not necessary, but helps with debugging
-	buf->text.attr = TEXT_SIZE_MASK & (dst - buf->text.ptr);
+	map->text.attr = TEXT_SIZE_MASK & (dst - map->text.ptr);
 	if (utf8) {
-		buf->text.attr |= TEXT_UTF8_BIT;
+		map->text.attr |= TEXT_UTF8_BIT;
 	}
 
 	return 0;
 }
 
 
-int typebuf_set_ascii(struct typebuf *buf, const struct text *tok)
+int typemap_set_ascii(struct typemap *map, const struct text *tok)
 {
 	struct text_iter it;
 	size_t size = TEXT_SIZE(tok);
@@ -424,22 +424,22 @@ int typebuf_set_ascii(struct typebuf *buf, const struct text *tok)
 
 	assert(TEXT_IS_ASCII(tok));
 
-	if ((err = typebuf_reserve(buf, size + 1))) {
+	if ((err = typemap_reserve(map, size + 1))) {
 		goto error;
 	}
 
-	dst = buf->text.ptr;
+	dst = map->text.ptr;
 
 	text_iter_make(&it, tok);
 	while (text_iter_advance(&it)) {
-		ch = buf->ascii_map[it.current];
+		ch = map->ascii_map[it.current];
 		if (ch >= 0) {
 			*dst++ = (uint8_t)ch;
 		}
 	}
 
 	*dst = '\0'; // not necessary, but helps with debugging
-	buf->text.attr = TEXT_SIZE_MASK & (dst - buf->text.ptr);
+	map->text.attr = TEXT_SIZE_MASK & (dst - map->text.ptr);
 	return 0;
 
 error:

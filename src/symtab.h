@@ -44,7 +44,7 @@ struct symtab_type {
  * Symbol table.
  */
 struct symtab {
-	struct typebuf typebuf;		/**< type buffer, for normalizing
+	struct typemap typemap;		/**< type map, for normalizing
 					  tokens to types */
 	struct table type_table;	/**< type hash table */
 	struct table token_table;	/**< token hash table */

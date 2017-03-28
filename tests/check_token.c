@@ -27,21 +27,21 @@
 struct text *get_type(const struct text *tok, int flags)
 {
 	struct text *typ;
-	struct typebuf buf;
+	struct typemap map;
 	size_t size;
 
-	ck_assert(!typebuf_init(&buf, flags));
-	ck_assert(!typebuf_set(&buf, tok));
-	size = TEXT_SIZE(&buf.text);
+	ck_assert(!typemap_init(&map, flags));
+	ck_assert(!typemap_set(&map, tok));
+	size = TEXT_SIZE(&map.text);
 
 	typ = alloc(sizeof(*typ));
 
 	typ->ptr = alloc(size + 1);
-	memcpy(typ->ptr, buf.text.ptr, size);
+	memcpy(typ->ptr, map.text.ptr, size);
 	typ->ptr[size] = '\0';
-	typ->attr = buf.text.attr;
+	typ->attr = map.text.attr;
 
-	typebuf_destroy(&buf);
+	typemap_destroy(&map);
 
 	return typ;
 }

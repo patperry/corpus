@@ -154,8 +154,10 @@ enum type_kind {
 	TYPE_RMWS     = (1 << 6)  /**< remove whitespace */
 };
 
-
-struct typebuf {
+/**
+ * Type map, for normalizing tokens to types.
+ */
+struct typemap {
 	int8_t ascii_map[128];
 	struct text text;
 	uint32_t *code;
@@ -164,9 +166,9 @@ struct typebuf {
 	int map_type;
 };
 
-int typebuf_init(struct typebuf *buf, int kind);
-void typebuf_destroy(struct typebuf *buf);
-int typebuf_set(struct typebuf *buf, const struct text *tok);
+int typemap_init(struct typemap *map, int kind);
+void typemap_destroy(struct typemap *map);
+int typemap_set(struct typemap *map, const struct text *tok);
 
 unsigned token_hash(const struct text *tok);
 int token_equals(const struct text *tok1, const struct text *tok2);

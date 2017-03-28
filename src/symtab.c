@@ -40,9 +40,9 @@ int symtab_init(struct symtab *tab, int type_kind)
 {
 	int err;
 
-	if ((err = typebuf_init(&tab->typebuf, type_kind))) {
+	if ((err = typemap_init(&tab->typemap, type_kind))) {
 		syslog(LOG_ERR, "failed allocating type buffer");
-		goto error_typebuf;
+		goto error_typemap;
 	}
 
 	if ((err = table_init(&tab->type_table))) {
@@ -68,8 +68,8 @@ int symtab_init(struct symtab *tab, int type_kind)
 error_token_table:
 	table_destroy(&tab->type_table);
 error_type_table:
-	typebuf_destroy(&tab->typebuf);
-error_typebuf:
+	typemap_destroy(&tab->typemap);
+error_typemap:
 	syslog(LOG_ERR, "failed initializing symbol table");
 	return ERROR_NOMEM;
 }
@@ -82,7 +82,7 @@ void symtab_destroy(struct symtab *tab)
 	free(tab->types);
 	table_destroy(&tab->token_table);
 	table_destroy(&tab->type_table);
-	typebuf_destroy(&tab->typebuf);
+	typemap_destroy(&tab->typemap);
 }
 
 
@@ -171,12 +171,12 @@ int symtab_add_token(struct symtab *tab, const struct text *tok, int *idptr)
 		token_id = tab->ntoken;
 
 		// compute the type
-		if ((err = typebuf_set(&tab->typebuf, tok))) {
+		if ((err = typemap_set(&tab->typemap, tok))) {
 			goto error;
 		}
 
 		// add the type
-		if ((err = symtab_add_type(tab, &tab->typebuf.text,
+		if ((err = symtab_add_type(tab, &tab->typemap.text,
 					   &type_id))) {
 			goto error;
 		}

@@ -23,6 +23,17 @@
 #include "xalloc.h"
 #include "table.h"
 
+/*
+ * The hash table implementation is based on
+ *
+ *       src/sparsehash/internal/densehashtable.h
+ *
+ * from the Google SparseHash library (BSD 3-Clause License):
+ *
+ *       https://github.com/sparsehash/sparsehash
+ */
+
+
 /* Maximum occupy percentage before we resize. Must be in (0, 1]. */
 #define LOAD_FACTOR	0.75
 

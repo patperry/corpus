@@ -23,10 +23,6 @@
 #include "xalloc.h"
 #include "table.h"
 
-
-#define MIN(x, y) ((x) > (y) ? (x) : (y))
-
-
 /* Maximum occupy percentage before we resize. Must be in (0, 1]. */
 #define LOAD_FACTOR	0.75
 
@@ -48,6 +44,7 @@
 /* Maximum number of occupied buckets. */
 #define TABLE_COUNT_MAX	(int)(LOAD_FACTOR * TABLE_SIZE_MAX)
 
+static int table_next_empty(const struct table *tab, unsigned hash);
 
 // The smallest size a hash table can be while holding 'count' elements
 static unsigned table_size_min(int count, unsigned size_min)
@@ -79,7 +76,7 @@ int table_init(struct table *tab)
 		goto error_nomem;
 	}
 
-	tab->max_count = (int)(LOAD_FACTOR * size);
+	tab->capacity = (int)(LOAD_FACTOR * size);
 	tab->mask = size - 1;
 	table_clear(tab);
 
@@ -88,6 +85,38 @@ int table_init(struct table *tab)
 error_nomem:
 	syslog(LOG_ERR, "failed allocating table");
 	return ERROR_NOMEM;
+}
+
+
+int table_reinit(struct table *tab, int min_capacity)
+{
+	int *items = tab->items;
+	unsigned size = tab->mask + 1;
+	int capacity = tab->capacity;
+
+	if (min_capacity > capacity) {
+		size = table_size_min(min_capacity, size);
+		capacity = (int)(LOAD_FACTOR * size);
+
+		if ((size_t)size > SIZE_MAX / sizeof(*items)) {
+			syslog(LOG_ERR, "table size (%d) exceeds maximum (%zu)",
+			       size, (size_t)(SIZE_MAX / sizeof(*items)));
+			return ERROR_OVERFLOW;
+		}
+
+		if (!(items = xrealloc(items, size * sizeof(*items)))) {
+			syslog(LOG_ERR, "failed allocating table");
+			return ERROR_NOMEM;
+		}
+
+		tab->items = items;
+		tab->capacity = capacity;
+		tab->mask = size - 1;
+	}
+
+	table_clear(tab);
+
+	return 0;
 }
 
 
@@ -107,48 +136,12 @@ void table_clear(struct table *tab)
 }
 
 
-int table_grow(struct table *tab, int count, int nadd)
+void table_add(struct table *tab, unsigned hash, int item)
 {
-	int *items = tab->items;
-	int max_count = tab->max_count;
-	unsigned size = tab->mask + 1;
+	int index;
 
-	if (count > INT_MAX - nadd) {
-		syslog(LOG_ERR, "table item count exceeds maximum (%d)",
-		       TABLE_COUNT_MAX);
-		return ERROR_OVERFLOW;
-	}
-	count = count + nadd;
-
-	if (count <= max_count) {
-		return 0;
-	}
-
-	if (count > TABLE_COUNT_MAX) {
-		syslog(LOG_ERR, "table item count (%d) exceeds maximum (%d)",
-		       count, TABLE_COUNT_MAX);
-		return ERROR_OVERFLOW;
-	}
-
-	size = table_size_min(count, size);
-	max_count = (int)(LOAD_FACTOR * size);
-
-	if ((size_t)size > SIZE_MAX / sizeof(*items)) {
-		syslog(LOG_ERR, "table size (%d) exceeds maximum (%zu)",
-		       size, (size_t)(SIZE_MAX / sizeof(*items)));
-		return ERROR_OVERFLOW;
-	}
-
-	if (!(items = xrealloc(items, size * sizeof(*items)))) {
-		syslog(LOG_ERR, "failed allocating table");
-		return ERROR_NOMEM;
-	}
-
-	tab->items = items;
-	tab->max_count = max_count;
-	tab->mask = size - 1;
-
-	return 0;
+	index = table_next_empty(tab, hash);
+	tab->items[index] = item;
 }
 
 

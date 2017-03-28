@@ -34,7 +34,7 @@
  */
 struct table {
 	int *items;	/**< indices of the items in the table */
-	int max_count;	/**< maximum capacity of the table */
+	int capacity;	/**< maximum capacity of the table */
 	unsigned mask;	/**< bitwise mask for indexing into the `items` array */
 };
 
@@ -45,8 +45,49 @@ struct table_probe {
 	unsigned mask;   /**< hash table indexing mask */
 	unsigned nprobe; /**< number of previous probes */
 	unsigned hash;	 /**< starting hash value */
-	int current;
+	int current;     /**< current index in the probe sequence */
 };
+
+/**
+ * Initialize a new hash table.
+ *
+ * \param tab the table
+ *
+ * \returns 0 on success
+ */
+int table_init(struct table *tab);
+
+/**
+ * Replace a hash table with a new empty table with a given minimum capacity.
+ *
+ * \param tab the previously-initialized table
+ * \param min_capacity the minimum capacity for the new table
+ *
+ * \returns 0 on success; nonzero on failure. On failure, the `tab` object
+ * is left unchanged.
+ */
+int table_reinit(struct table *tab, int min_capacity);
+
+/**
+ * Release a hash table's resources.
+ *
+ * \param tab the table
+ */
+void table_destroy(struct table *tab);
+
+/**
+ * Set all hash table items to #TABLE_ITEM_EMPTY.
+ */
+void table_clear(struct table *tab);
+
+/**
+ * Associate an item with the given hash code.
+ *
+ * \param tab a table with at least one empty cell
+ * \param hash the hash code
+ * \param a non-negative item
+ */
+void table_add(struct table *tab, unsigned hash, int item);
 
 /**
  * Start a new hash table probe at the given hash code.
@@ -107,22 +148,5 @@ static inline int table_probe_advance(struct table_probe *probe)
 	return 1;
 }
 
-/**
- * Initialize a new hash table.
- */
-int table_init(struct table *tab);
-
-/**
- * Release a hash table's resources.
- */
-void table_destroy(struct table *tab);
-
-/**
- * Set all hash table items to #TABLE_ITEM_EMPTY.
- */
-void table_clear(struct table *tab);
-
-int table_grow(struct table *tab, int count, int nadd);
-int table_next_empty(const struct table *tab, unsigned hash);
 
 #endif /* TABLE_H */

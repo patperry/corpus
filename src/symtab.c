@@ -122,7 +122,7 @@ int symtab_has_tok(const struct symtab *tab, const struct text *tok, int *tok_id
 {
 	struct table_probe probe;
 	const int *table = tab->tok_table.items;
-	uint64_t hash = tok_hash(tok);
+	unsigned hash = tok_hash(tok);
 	int tok_id;
 	bool found = false;
 
@@ -152,7 +152,7 @@ int symtab_has_typ(const struct symtab *tab, const struct text *typ, int *typ_id
 {
 	struct table_probe probe;
 	const int *items = tab->typ_table.items;
-	uint64_t hash = tok_hash(typ);
+	unsigned hash = tok_hash(typ);
 	int typ_id;
 	bool found = false;
 
@@ -207,8 +207,8 @@ int symtab_add_tok(struct symtab *tab, const struct text *tok, int *tok_idp)
 		}
 
 		// grow the token table if necessary
-		if (tok_id == tab->tok_table.max_count) {
-			if ((err = table_grow(&tab->tok_table, tok_id, 1))) {
+		if (tok_id == tab->tok_table.capacity) {
+			if ((err = table_reinit(&tab->tok_table, tok_id + 1))) {
 				goto error;
 			}
 			rehash = true;
@@ -273,8 +273,8 @@ int symtab_add_typ(struct symtab *tab, const struct text *typ, int *typ_idp)
 		}
 
 		// grow the type table if necessary
-		if (typ_id == tab->typ_table.max_count) {
-			if ((err = table_grow(&tab->typ_table, typ_id, 1))) {
+		if (typ_id == tab->typ_table.capacity) {
+			if ((err = table_reinit(&tab->typ_table, typ_id + 1))) {
 				goto error;
 			}
 			rehash = true;
@@ -373,15 +373,14 @@ void symtab_rehash_toks(struct symtab *tab)
 {
 	const struct symtab_tok *toks = tab->toks;
 	struct table *tok_table = &tab->tok_table;
-	int pos, i, n = tab->ntok;
-	uint64_t hash;
+	int i, n = tab->ntok;
+	unsigned hash;
 
 	table_clear(tok_table);
 
 	for (i = 0; i < n; i++) {
 		hash = tok_hash(&toks[i].text);
-		pos = table_next_empty(tok_table, hash);
-		tok_table->items[pos] = i;
+		table_add(tok_table, hash, i);
 	}
 }
 
@@ -390,15 +389,14 @@ void symtab_rehash_typs(struct symtab *tab)
 {
 	const struct symtab_typ *typs = tab->typs;
 	struct table *typ_table = &tab->typ_table;
-	int pos, i, n = tab->ntyp;
-	uint64_t hash;
+	int i, n = tab->ntyp;
+	unsigned hash;
 
 	table_clear(typ_table);
 
 	for (i = 0; i < n; i++) {
 		hash = tok_hash(&typs[i].text);
-		pos = table_next_empty(typ_table, hash);
-		typ_table->items[pos] = i;
+		table_add(typ_table, hash, i);
 	}
 }
 

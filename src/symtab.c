@@ -14,16 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * The hash table implementation is based on
- *
- *       src/sparsehash/internal/densehashtable.h
- *
- * from the Google SparseHash library (BSD 3-Clause License):
- *
- *       https://github.com/sparsehash/sparsehash
- */
-
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -37,7 +27,6 @@
 #include "token.h"
 #include "xalloc.h"
 #include "symtab.h"
-
 
 static int symtab_grow_toks(struct symtab *tab, int nadd);
 static int symtab_grow_typs(struct symtab *tab, int nadd);

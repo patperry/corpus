@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Patrick O. Perry.
+ * Copyright 2017 Patrick O. Perry.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,46 +28,46 @@
 #include "xalloc.h"
 #include "symtab.h"
 
-static int symtab_grow_toks(struct symtab *tab, int nadd);
-static int symtab_grow_typs(struct symtab *tab, int nadd);
-static void symtab_rehash_toks(struct symtab *tab);
-static void symtab_rehash_typs(struct symtab *tab);
+static int symtab_grow_tokens(struct symtab *tab, int nadd);
+static int symtab_grow_types(struct symtab *tab, int nadd);
+static void symtab_rehash_tokens(struct symtab *tab);
+static void symtab_rehash_types(struct symtab *tab);
 
-static int typ_add_tok(struct symtab_typ *typ, int tok_id);
+static int type_add_token(struct symtab_type *type, int token_id);
 
 
-int symtab_init(struct symtab *tab, int typ_flags)
+int symtab_init(struct symtab *tab, int type_kind)
 {
 	int err;
 
-	if ((err = typebuf_init(&tab->typebuf, typ_flags))) {
+	if ((err = typebuf_init(&tab->typebuf, type_kind))) {
 		syslog(LOG_ERR, "failed allocating type buffer");
 		goto error_typebuf;
 	}
 
-	if ((err = table_init(&tab->typ_table))) {
+	if ((err = table_init(&tab->type_table))) {
 		syslog(LOG_ERR, "failed allocating type table");
-		goto error_typ_table;
+		goto error_type_table;
 	}
 
-	if ((err = table_init(&tab->tok_table))) {
+	if ((err = table_init(&tab->token_table))) {
 		syslog(LOG_ERR, "failed allocating token table");
-		goto error_tok_table;
+		goto error_token_table;
 	}
 
-	tab->typs = NULL;
-	tab->ntyp_max = 0;
-	tab->ntyp = 0;
+	tab->types = NULL;
+	tab->ntype_max = 0;
+	tab->ntype = 0;
 
-	tab->toks = NULL;
-	tab->ntok_max = 0;
-	tab->ntok = 0;
+	tab->tokens = NULL;
+	tab->ntoken_max = 0;
+	tab->ntoken = 0;
 
 	return 0;
 
-error_tok_table:
-	table_destroy(&tab->typ_table);
-error_typ_table:
+error_token_table:
+	table_destroy(&tab->type_table);
+error_type_table:
 	typebuf_destroy(&tab->typebuf);
 error_typebuf:
 	syslog(LOG_ERR, "failed initializing symbol table");
@@ -78,95 +78,97 @@ error_typebuf:
 void symtab_destroy(struct symtab *tab)
 {
 	symtab_clear(tab);
-	free(tab->toks);
-	free(tab->typs);
-	table_destroy(&tab->tok_table);
-	table_destroy(&tab->typ_table);
+	free(tab->tokens);
+	free(tab->types);
+	table_destroy(&tab->token_table);
+	table_destroy(&tab->type_table);
 	typebuf_destroy(&tab->typebuf);
 }
 
 
 void symtab_clear(struct symtab *tab)
 {
-	int ntok = tab->ntok;
-	int ntyp = tab->ntyp;
+	int ntoken = tab->ntoken;
+	int ntype = tab->ntype;
 
-	while (ntok-- > 0) {
-		text_destroy(&tab->toks[ntok].text);
+	while (ntoken-- > 0) {
+		text_destroy(&tab->tokens[ntoken].text);
 	}
-	tab->ntok = 0;
+	tab->ntoken = 0;
 
-	while (ntyp-- > 0) {
-		text_destroy(&tab->typs[ntyp].text);
-		free(tab->typs[ntyp].tok_ids);
+	while (ntype-- > 0) {
+		text_destroy(&tab->types[ntype].text);
+		free(tab->types[ntype].token_ids);
 	}
-	tab->ntyp = 0;
+	tab->ntype = 0;
 
-	table_clear(&tab->tok_table);
-	table_clear(&tab->typ_table);
+	table_clear(&tab->token_table);
+	table_clear(&tab->type_table);
 }
 
 
-int symtab_has_tok(const struct symtab *tab, const struct text *tok, int *tok_idp)
+int symtab_has_token(const struct symtab *tab, const struct text *tok,
+		     int *idptr)
 {
 	struct table_probe probe;
 	unsigned hash = tok_hash(tok);
-	int tok_id;
+	int token_id;
 	bool found;
 
-	table_probe_make(&probe, &tab->tok_table, hash);
+	table_probe_make(&probe, &tab->token_table, hash);
 	while (table_probe_advance(&probe)) {
-		tok_id = probe.current;
-		if (tok_equals(tok, &tab->toks[tok_id].text)) {
+		token_id = probe.current;
+		if (tok_equals(tok, &tab->tokens[token_id].text)) {
 			found = true;
 			goto out;
 		}
 	}
 	found = false;
 out:
-	if (tok_idp) {
-		*tok_idp = found ? tok_id : probe.index;
+	if (idptr) {
+		*idptr = found ? token_id : probe.index;
 	}
 
 	return found;
 }
 
 
-int symtab_has_typ(const struct symtab *tab, const struct text *typ, int *typ_idp)
+int symtab_has_type(const struct symtab *tab, const struct text *typ,
+		    int *idptr)
 {
 	struct table_probe probe;
 	unsigned hash = tok_hash(typ);
-	int typ_id;
+	int type_id;
 	bool found;
 
-	table_probe_make(&probe, &tab->typ_table, hash);
+	table_probe_make(&probe, &tab->type_table, hash);
 	while (table_probe_advance(&probe)) {
-		typ_id = probe.current;
-		if (tok_equals(typ, &tab->typs[typ_id].text)) {
+		type_id = probe.current;
+		if (tok_equals(typ, &tab->types[type_id].text)) {
 			found = true;
 			goto out;
 		}
 	}
 	found = false;
 out:
-	if (typ_idp) {
-		*typ_idp = found ? typ_id : probe.index;
+	if (idptr) {
+		*idptr = found ? type_id : probe.index;
 	}
 
 	return found;
 }
 
 
-int symtab_add_tok(struct symtab *tab, const struct text *tok, int *tok_idp)
+int symtab_add_token(struct symtab *tab, const struct text *tok, int *idptr)
 {
-	int pos, tok_id, typ_id;
+	int pos, token_id, type_id;
 	bool rehash = false;
 	int err;
 
-	if (symtab_has_tok(tab, tok, &pos)) {
-		tok_id = pos;
+	if (symtab_has_token(tab, tok, &pos)) {
+		token_id = pos;
 	} else {
-		tok_id = tab->ntok;
+		token_id = tab->ntoken;
 
 		// compute the type
 		if ((err = typebuf_set(&tab->typebuf, tok))) {
@@ -174,139 +176,142 @@ int symtab_add_tok(struct symtab *tab, const struct text *tok, int *tok_idp)
 		}
 
 		// add the type
-		if ((err = symtab_add_typ(tab, &tab->typebuf.text, &typ_id))) {
+		if ((err = symtab_add_type(tab, &tab->typebuf.text,
+					   &type_id))) {
 			goto error;
 		}
 
 		// grow the token array if necessary
-		if (tok_id == tab->ntok_max) {
-			if ((err = symtab_grow_toks(tab, 1))) {
+		if (token_id == tab->ntoken_max) {
+			if ((err = symtab_grow_tokens(tab, 1))) {
 				goto error;
 			}
 		}
 
 		// grow the token table if necessary
-		if (tok_id == tab->tok_table.capacity) {
-			if ((err = table_reinit(&tab->tok_table, tok_id + 1))) {
+		if (token_id == tab->token_table.capacity) {
+			if ((err = table_reinit(&tab->token_table,
+						token_id + 1))) {
 				goto error;
 			}
 			rehash = true;
 		}
 
 		// allocate storage for the token
-		if ((err = text_init_copy(&tab->toks[tok_id].text, tok))) {
+		if ((err = text_init_copy(&tab->tokens[token_id].text, tok))) {
 			goto error;
 		}
 
 		// set the type
-		tab->toks[tok_id].typ_id = typ_id;
+		tab->tokens[token_id].type_id = type_id;
 
 		// add the token to the type
-		if ((err = typ_add_tok(&tab->typs[typ_id], tok_id))) {
-			text_destroy(&tab->toks[tok_id].text);
+		if ((err = type_add_token(&tab->types[type_id], token_id))) {
+			text_destroy(&tab->tokens[token_id].text);
 			goto error;
 		}
 
 		// update the count
-		tab->ntok++;
+		tab->ntoken++;
 
 		// set the bucket
 		if (rehash) {
-			symtab_rehash_toks(tab);
+			symtab_rehash_tokens(tab);
 		} else {
-			tab->tok_table.items[pos] = tok_id;
+			tab->token_table.items[pos] = token_id;
 		}
 	}
 
-	if (tok_idp) {
-		*tok_idp = tok_id;
+	if (idptr) {
+		*idptr = token_id;
 	}
 
 	return 0;
 
 error:
 	if (rehash) {
-		symtab_rehash_toks(tab);
+		symtab_rehash_tokens(tab);
 	}
 	syslog(LOG_ERR, "failed adding token to symbol table");
 	return err;
 }
 
 
-int symtab_add_typ(struct symtab *tab, const struct text *typ, int *typ_idp)
+int symtab_add_type(struct symtab *tab, const struct text *typ, int *idptr)
 {
-	int pos, typ_id;
+	int pos, type_id;
 	bool rehash = false;
 	int err;
 
-	if (symtab_has_typ(tab, typ, &pos)) {
-		typ_id = pos;
+	if (symtab_has_type(tab, typ, &pos)) {
+		type_id = pos;
 	} else {
-		typ_id = tab->ntyp;
+		type_id = tab->ntype;
 
 		// grow the type array if necessary
-		if (typ_id == tab->ntyp_max) {
-			if ((err = symtab_grow_typs(tab, 1))) {
+		if (type_id == tab->ntype_max) {
+			if ((err = symtab_grow_types(tab, 1))) {
 				goto error;
 			}
 		}
 
 		// grow the type table if necessary
-		if (typ_id == tab->typ_table.capacity) {
-			if ((err = table_reinit(&tab->typ_table, typ_id + 1))) {
+		if (type_id == tab->type_table.capacity) {
+			if ((err = table_reinit(&tab->type_table,
+						type_id + 1))) {
 				goto error;
 			}
 			rehash = true;
 		}
 
 		// allocate storage for the type's text
-		if ((err = text_init_copy(&tab->typs[typ_id].text, typ))) {
+		if ((err = text_init_copy(&tab->types[type_id].text, typ))) {
 			goto error;
 		}
 
 		// initialize type's the token array
-		tab->typs[typ_id].tok_ids = NULL;
-		tab->typs[typ_id].ntok = 0;
+		tab->types[type_id].token_ids = NULL;
+		tab->types[type_id].ntoken = 0;
 
 		// update the count
-		tab->ntyp++;
+		tab->ntype++;
 
 		// set the bucket
 		if (rehash) {
-			symtab_rehash_typs(tab);
+			symtab_rehash_types(tab);
 		} else {
-			tab->typ_table.items[pos] = typ_id;
+			tab->type_table.items[pos] = type_id;
 		}
 	}
 
-	if (typ_idp) {
-		*typ_idp = typ_id;
+	if (idptr) {
+		*idptr = type_id;
 	}
 
 	return 0;
 
 error:
 	if (rehash) {
-		symtab_rehash_typs(tab);
+		symtab_rehash_types(tab);
 	}
 	syslog(LOG_ERR, "failed adding type to symbol table");
 	return err;
 }
 
 
-int symtab_grow_toks(struct symtab *tab, int nadd)
+int symtab_grow_tokens(struct symtab *tab, int nadd)
 {
-	void *base = tab->toks;
-	int size = tab->ntok_max;
+	void *base = tab->tokens;
+	int size = tab->ntoken_max;
 	int err;
 
-	if ((err = array_grow(&base, &size, sizeof(*tab->toks),
-			      tab->ntok, nadd))) {
+	if ((err = array_grow(&base, &size, sizeof(*tab->tokens),
+			      tab->ntoken, nadd))) {
 		syslog(LOG_ERR, "failed allocating token array");
 		return err;
 	}
 
-	if (tab->ntok > INT_MAX - nadd) {
+	if (tab->ntoken > INT_MAX - nadd) {
 		syslog(LOG_ERR, "token count exceeds maximum (%d)", INT_MAX);
 		return ERROR_OVERFLOW;
 	}
@@ -315,25 +320,25 @@ int symtab_grow_toks(struct symtab *tab, int nadd)
 		size = INT_MAX;
 	}
 
-	tab->toks = base;
-	tab->ntok_max = size;
+	tab->tokens = base;
+	tab->ntoken_max = size;
 	return 0;
 }
 
 
-int symtab_grow_typs(struct symtab *tab, int nadd)
+int symtab_grow_types(struct symtab *tab, int nadd)
 {
-	void *base = tab->typs;
-	int size = tab->ntyp_max;
+	void *base = tab->types;
+	int size = tab->ntype_max;
 	int err;
 
-	if ((err = array_grow(&base, &size, sizeof(*tab->typs),
-			      tab->ntyp, nadd))) {
+	if ((err = array_grow(&base, &size, sizeof(*tab->types),
+			      tab->ntype, nadd))) {
 		syslog(LOG_ERR, "failed allocating type array");
 		return err;
 	}
 
-	if (tab->ntyp > INT_MAX - nadd) {
+	if (tab->ntype > INT_MAX - nadd) {
 		syslog(LOG_ERR, "type count exceeds maximum (%d)", INT_MAX);
 		return ERROR_OVERFLOW;
 	}
@@ -342,57 +347,57 @@ int symtab_grow_typs(struct symtab *tab, int nadd)
 		size = INT_MAX;
 	}
 
-	tab->typs = base;
-	tab->ntyp_max = size;
+	tab->types = base;
+	tab->ntype_max = size;
 	return 0;
 }
 
 
-void symtab_rehash_toks(struct symtab *tab)
+void symtab_rehash_tokens(struct symtab *tab)
 {
-	const struct symtab_tok *toks = tab->toks;
-	struct table *tok_table = &tab->tok_table;
-	int i, n = tab->ntok;
+	const struct symtab_token *tokens = tab->tokens;
+	struct table *token_table = &tab->token_table;
+	int i, n = tab->ntoken;
 	unsigned hash;
 
-	table_clear(tok_table);
+	table_clear(token_table);
 
 	for (i = 0; i < n; i++) {
-		hash = tok_hash(&toks[i].text);
-		table_add(tok_table, hash, i);
+		hash = tok_hash(&tokens[i].text);
+		table_add(token_table, hash, i);
 	}
 }
 
 
-void symtab_rehash_typs(struct symtab *tab)
+void symtab_rehash_types(struct symtab *tab)
 {
-	const struct symtab_typ *typs = tab->typs;
-	struct table *typ_table = &tab->typ_table;
-	int i, n = tab->ntyp;
+	const struct symtab_type *types = tab->types;
+	struct table *type_table = &tab->type_table;
+	int i, n = tab->ntype;
 	unsigned hash;
 
-	table_clear(typ_table);
+	table_clear(type_table);
 
 	for (i = 0; i < n; i++) {
-		hash = tok_hash(&typs[i].text);
-		table_add(typ_table, hash, i);
+		hash = tok_hash(&types[i].text);
+		table_add(type_table, hash, i);
 	}
 }
 
 
 
-int typ_add_tok(struct symtab_typ *typ, int tok_id)
+int type_add_token(struct symtab_type *typ, int tok_id)
 {
-	int *tok_ids = typ->tok_ids;
-	int ntok = typ->ntok;
+	int *tok_ids = typ->token_ids;
+	int ntok = typ->ntoken;
 
 	if (!(tok_ids = xrealloc(tok_ids, (ntok + 1) * sizeof(*tok_ids)))) {
 		return ERROR_NOMEM;
 	}
 
 	tok_ids[ntok] = tok_id;
-	typ->tok_ids = tok_ids;
-	typ->ntok = ntok + 1;
+	typ->token_ids = tok_ids;
+	typ->ntoken = ntok + 1;
 
 	return 0;
 }

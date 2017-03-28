@@ -42,34 +42,34 @@ void teardown_symtab(void)
 }
 
 
-int has_typ(const struct text *typ)
+int has_type(const struct text *typ)
 {
-	int ntok = tab.ntok;
-	int ntyp = tab.ntyp;
-	int i, typ_id;
+	int ntoken = tab.ntoken;
+	int ntype = tab.ntype;
+	int i, type_id;
 	int ans;
 
 	// after searching for a type
-	ans = symtab_has_typ(&tab, typ, &typ_id);
+	ans = symtab_has_type(&tab, typ, &type_id);
 
 	// it should leave the token count unchanged
-	ck_assert_int_eq(tab.ntok, ntok);
+	ck_assert_int_eq(tab.ntoken, ntoken);
 
 	// it should leave the type count unchanged
-	ck_assert_int_eq(tab.ntyp, ntyp);
+	ck_assert_int_eq(tab.ntype, ntype);
 
 	if (ans) {
 		// when the return value is true
 		//   it should return a valid type id
-		ck_assert_int_lt(typ_id, tab.ntyp);
+		ck_assert_int_lt(type_id, tab.ntype);
 
 		// it should return a type id matching the query
-		ck_assert_tok_eq(&tab.typs[typ_id].text, typ);
+		ck_assert_tok_eq(&tab.types[type_id].text, typ);
 	} else {
 		// when the return value is 'false'
 		//   the type should not be in the table
-		for (i = 0; i < tab.ntyp; i++) {
-			ck_assert_tok_ne(&tab.typs[i].text, typ);
+		for (i = 0; i < tab.ntype; i++) {
+			ck_assert_tok_ne(&tab.types[i].text, typ);
 		}
 	}
 
@@ -77,34 +77,34 @@ int has_typ(const struct text *typ)
 }
 
 
-int has_tok(const struct text *tok)
+int has_token(const struct text *tok)
 {
-	int ntok = tab.ntok;
-	int ntyp = tab.ntyp;
+	int ntoken = tab.ntoken;
+	int ntype = tab.ntype;
 	int i, tok_id;
 	int ans;
 
 	// after searching for a token
-	ans = symtab_has_tok(&tab, tok, &tok_id);
+	ans = symtab_has_token(&tab, tok, &tok_id);
 
 	// it should leave the token count unchanged
-	ck_assert_int_eq(tab.ntok, ntok);
+	ck_assert_int_eq(tab.ntoken, ntoken);
 
 	// it should leave the type count unchanged
-	ck_assert_int_eq(tab.ntyp, ntyp);
+	ck_assert_int_eq(tab.ntype, ntype);
 
 	if (ans) {
 		// when the return value is true
 		//   it should return a valid token id
-		ck_assert_int_lt(tok_id, tab.ntok);
+		ck_assert_int_lt(tok_id, tab.ntoken);
 
 		// it should return a token id matching the query
-		ck_assert_tok_eq(&tab.toks[tok_id].text, tok);
+		ck_assert_tok_eq(&tab.tokens[tok_id].text, tok);
 	} else {
 		// when the return value is 'false'
 		//   the token should not be in the table
-		for (i = 0; i < tab.ntok; i++) {
-			ck_assert_tok_ne(&tab.toks[i].text, tok);
+		for (i = 0; i < tab.ntoken; i++) {
+			ck_assert_tok_ne(&tab.tokens[i].text, tok);
 		}
 	}
 
@@ -113,164 +113,164 @@ int has_tok(const struct text *tok)
 
 
 
-int add_typ(const struct text *typ)
+int add_type(const struct text *typ)
 {
-	int typ_id;
-	int ntok = tab.ntok;
-	int ntyp = tab.ntyp;
-	bool had_typ = symtab_has_typ(&tab, typ, NULL);
+	int type_id;
+	int ntoken = tab.ntoken;
+	int ntype = tab.ntype;
+	bool had_type = symtab_has_type(&tab, typ, NULL);
 
 	// after adding a type
-	symtab_add_typ(&tab, typ, &typ_id);
+	symtab_add_type(&tab, typ, &type_id);
 
 	// it should leave the token count unchanged
-	ck_assert_int_eq(tab.ntok, ntok);
+	ck_assert_int_eq(tab.ntoken, ntoken);
 
-	if (had_typ) {
+	if (had_type) {
 		// when the type already existed,
 		//   it should leave the type count unchanged
-		ck_assert_int_eq(tab.ntyp, ntyp);
+		ck_assert_int_eq(tab.ntype, ntype);
 	} else {
 		// otherwise,
 		//   it should increment the type count
-		ck_assert_int_eq(tab.ntyp, ntyp + 1);
+		ck_assert_int_eq(tab.ntype, ntype + 1);
 	}
 
 	// it should return a valid id
-	ck_assert_int_lt(typ_id, tab.ntyp);
+	ck_assert_int_lt(type_id, tab.ntype);
 
 	// it should return an id matching the insert
-	ck_assert_tok_eq(&tab.typs[typ_id].text, typ);
+	ck_assert_tok_eq(&tab.types[type_id].text, typ);
 
-	if (!had_typ) {
+	if (!had_type) {
 		// when the type is new
 		//   it should have an empty token set
-		ck_assert_int_eq(tab.typs[typ_id].ntok, 0);
+		ck_assert_int_eq(tab.types[type_id].ntoken, 0);
 	}
 
-	return typ_id;
+	return type_id;
 }
 
 
-int add_tok(const struct text *tok)
+int add_token(const struct text *tok)
 {
-	int i, tok_id, typ_id;
-	int ntok = tab.ntok;
-	int ntyp = tab.ntyp;
-	int typ_ntok;
-	bool had_tok = symtab_has_tok(&tab, tok, &tok_id);
+	int i, token_id, type_id;
+	int ntoken = tab.ntoken;
+	int ntype = tab.ntype;
+	int type_ntoken;
+	bool had_token = symtab_has_token(&tab, tok, &token_id);
 
-	if (had_tok) {
-		typ_id = tab.toks[tok_id].typ_id;
-		typ_ntok = tab.typs[typ_id].ntok;
+	if (had_token) {
+		type_id = tab.tokens[token_id].type_id;
+		type_ntoken = tab.types[type_id].ntoken;
 	} else {
-		typ_ntok = 0;
+		type_ntoken = 0;
 	}
 
 	// after adding a token
-	symtab_add_tok(&tab, tok, &tok_id);
+	symtab_add_token(&tab, tok, &token_id);
 
-	if (had_tok) {
+	if (had_token) {
 		// when the token already existed,
 		//   it should leave the token count unchanged
-		ck_assert_int_eq(tab.ntok, ntok);
+		ck_assert_int_eq(tab.ntoken, ntoken);
 
 		//   it should leave the type count unchanged
-		ck_assert_int_eq(tab.ntyp, ntyp);
+		ck_assert_int_eq(tab.ntype, ntype);
 
 		//   it should leave the type's token count unchanged
-		ck_assert_int_eq(tab.typs[typ_id].ntok, typ_ntok);
+		ck_assert_int_eq(tab.types[type_id].ntoken, type_ntoken);
 	} else {
 		// otherwise,
 		//   it should increment the token count
-		ck_assert_int_eq(tab.ntok, ntok + 1);
+		ck_assert_int_eq(tab.ntoken, ntoken + 1);
 	}
 
 	// the returned token
 	// (a) should have a valid id
-	ck_assert_int_lt(tok_id, tab.ntok);
+	ck_assert_int_lt(token_id, tab.ntoken);
 
 	// (b) should match the insert
-	ck_assert_tok_eq(&tab.toks[tok_id].text, tok);
+	ck_assert_tok_eq(&tab.tokens[token_id].text, tok);
 
 	// (c) should should have a valid type id
-	ck_assert_int_lt(tab.toks[tok_id].typ_id, tab.ntyp);
+	ck_assert_int_lt(tab.tokens[token_id].type_id, tab.ntype);
 
 	// (d) should be a member of the indicated type
-	typ_id = tab.toks[tok_id].typ_id;
-	for (i = 0; i < tab.typs[typ_id].ntok; i++) {
-		if (tab.typs[typ_id].tok_ids[i] == tok_id) {
+	type_id = tab.tokens[token_id].type_id;
+	for (i = 0; i < tab.types[type_id].ntoken; i++) {
+		if (tab.types[type_id].token_ids[i] == token_id) {
 			break;
 		}
 	}
-	ck_assert_int_lt(i, tab.typs[typ_id].ntok);
+	ck_assert_int_lt(i, tab.types[type_id].ntoken);
 
 	// (e) it should only appear once in the types token set
-	for (i = i + 1; i < tab.typs[typ_id].ntok; i++) {
-		if (tab.typs[typ_id].tok_ids[i] == tok_id) {
+	for (i = i + 1; i < tab.types[type_id].ntoken; i++) {
+		if (tab.types[type_id].token_ids[i] == token_id) {
 			break;
 		}
 	}
-	ck_assert_int_eq(i, tab.typs[typ_id].ntok);
+	ck_assert_int_eq(i, tab.types[type_id].ntoken);
 
-	return tok_id;
+	return token_id;
 }
 
 
 START_TEST(test_empty_init)
 {
-	ck_assert_int_eq(tab.ntyp, 0);
-	ck_assert_int_eq(tab.ntok, 0);
+	ck_assert_int_eq(tab.ntype, 0);
+	ck_assert_int_eq(tab.ntoken, 0);
 }
 END_TEST
 
 
 START_TEST(test_empty_has_typ)
 {
-	ck_assert(!has_typ(T("")));
-	ck_assert(!has_typ(T("foo")));
-	ck_assert(!has_typ(T("bar")));
+	ck_assert(!has_type(T("")));
+	ck_assert(!has_type(T("foo")));
+	ck_assert(!has_type(T("bar")));
 }
 END_TEST
 
 
 START_TEST(test_empty_has_tok)
 {
-	ck_assert(!has_tok(T("")));
-	ck_assert(!has_tok(T("foo")));
-	ck_assert(!has_tok(T("bar")));
+	ck_assert(!has_token(T("")));
+	ck_assert(!has_token(T("foo")));
+	ck_assert(!has_token(T("bar")));
 }
 END_TEST
 
 
 START_TEST(test_add_typ)
 {
-	add_typ(T("type"));
-	ck_assert(has_typ(T("type")));
+	add_type(T("type"));
+	ck_assert(has_type(T("type")));
 }
 END_TEST
 
 
 START_TEST(test_add_tok)
 {
-	add_tok(T("token"));
-	ck_assert(has_tok(T("token")));
+	add_token(T("token"));
+	ck_assert(has_token(T("token")));
 }
 END_TEST
 
 
 START_TEST(test_add_empty_typ)
 {
-	add_typ(T(""));
-	ck_assert(has_typ(T("")));
+	add_type(T(""));
+	ck_assert(has_type(T("")));
 }
 END_TEST
 
 
 START_TEST(test_add_empty_tok)
 {
-	add_tok(T(""));
-	ck_assert(has_tok(T("")));
+	add_token(T(""));
+	ck_assert(has_token(T("")));
 }
 END_TEST
 
@@ -278,8 +278,8 @@ END_TEST
 START_TEST(test_twice_add_typ)
 {
 	int id1, id2;
-	id1 = add_typ(T("repeated type"));
-	id2 = add_typ(T("repeated type"));
+	id1 = add_type(T("repeated type"));
+	id2 = add_type(T("repeated type"));
 	ck_assert_int_eq(id1, id2);
 }
 END_TEST
@@ -288,8 +288,8 @@ END_TEST
 START_TEST(test_twice_add_tok)
 {
 	int id1, id2;
-	id1 = add_tok(T("repeated token"));
-	id2 = add_tok(T("repeated token"));
+	id1 = add_token(T("repeated token"));
+	id2 = add_token(T("repeated token"));
 	ck_assert_int_eq(id1, id2);
 }
 END_TEST
@@ -304,12 +304,12 @@ START_TEST(test_many_add_typ)
 	for (i = 0; i < n; i++) {
 		sprintf(buf, "type %d", i);
 		typ = T(buf);
-		add_typ(typ);
+		add_type(typ);
 
 		for (j = 0; j <= i; j++) {
 			sprintf(buf, "type %d", i);
 			typ = T(buf);
-			ck_assert(has_typ(typ));
+			ck_assert(has_type(typ));
 		}
 	}
 }
@@ -325,12 +325,12 @@ START_TEST(test_many_add_tok)
 	for (i = 0; i < n; i++) {
 		sprintf(buf, "token %d", i);
 		tok = T(buf);
-		add_tok(tok);
+		add_token(tok);
 
 		for (j = 0; j <= i; j++) {
 			sprintf(buf, "token %d", i);
 			tok = T(buf);
-			ck_assert(has_tok(tok));
+			ck_assert(has_token(tok));
 		}
 	}
 }
@@ -339,19 +339,19 @@ END_TEST
 
 START_TEST(test_casefold)
 {
-	int tok_id1 = add_tok(T("CrAzY_CaSiNg"));
-	int tok_id2 = add_tok(T("CRAZY_casing"));
-	int tok_id3 = add_tok(T("CRAZY_CASING"));
-	int typ_id1 = tab.toks[tok_id1].typ_id;
-	int typ_id2 = tab.toks[tok_id2].typ_id;
-	int typ_id3 = tab.toks[tok_id3].typ_id;
+	int tok_id1 = add_token(T("CrAzY_CaSiNg"));
+	int tok_id2 = add_token(T("CRAZY_casing"));
+	int tok_id3 = add_token(T("CRAZY_CASING"));
+	int typ_id1 = tab.tokens[tok_id1].type_id;
+	int typ_id2 = tab.tokens[tok_id2].type_id;
+	int typ_id3 = tab.tokens[tok_id3].type_id;
 
-	ck_assert(has_tok(T("CrAzY_CaSiNg")));
-	ck_assert(has_tok(T("CRAZY_casing")));
-	ck_assert(has_tok(T("CRAZY_CASING")));
-	ck_assert(has_typ(T("crazy_casing")));
+	ck_assert(has_token(T("CrAzY_CaSiNg")));
+	ck_assert(has_token(T("CRAZY_casing")));
+	ck_assert(has_token(T("CRAZY_CASING")));
+	ck_assert(has_type(T("crazy_casing")));
 
-	ck_assert_tok_eq(&tab.typs[typ_id1].text, T("crazy_casing"));
+	ck_assert_tok_eq(&tab.types[typ_id1].text, T("crazy_casing"));
 	ck_assert_int_eq(typ_id1, typ_id2);
 	ck_assert_int_eq(typ_id1, typ_id3);
 }

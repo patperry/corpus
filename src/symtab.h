@@ -20,42 +20,39 @@
 /**
  * \file symtab.h
  *
- * Symbol table.
+ * Symbol table, assigning integer IDs to tokens and types.
  */
 
-#include <stdint.h>
-
-struct text;
-
-struct symtab_tok {
+struct symtab_token {
 	struct text text;
-	int typ_id;
+	int type_id;
 };
 
-struct symtab_typ {
+struct symtab_type {
 	struct text text;
-	int *tok_ids;
-	int ntok;
+	int *token_ids;
+	int ntoken;
 };
-
 
 struct symtab {
 	struct typebuf typebuf;
-	struct table typ_table;
-	struct table tok_table;
-	struct symtab_typ *typs;
-	struct symtab_tok *toks;
-	int ntyp, ntyp_max;
-	int ntok, ntok_max;
+	struct table type_table;
+	struct table token_table;
+	struct symtab_type *types;
+	struct symtab_token *tokens;
+	int ntype, ntype_max;
+	int ntoken, ntoken_max;
 };
 
-int symtab_init(struct symtab *tab, int typ_flags);
+int symtab_init(struct symtab *tab, int type_kind);
 void symtab_destroy(struct symtab *tab);
 void symtab_clear(struct symtab *tab);
 
-int symtab_add_tok(struct symtab *tab, const struct text *tok, int *tok_idp);
-int symtab_add_typ(struct symtab *tab, const struct text *tok, int *typ_idp);
-int symtab_has_tok(const struct symtab *tab, const struct text *tok, int *tok_idp);
-int symtab_has_typ(const struct symtab *tab, const struct text *typ, int *typ_idp);
+int symtab_add_token(struct symtab *tab, const struct text *tok, int *idptr);
+int symtab_add_type(struct symtab *tab, const struct text *typ, int *idptr);
+int symtab_has_token(const struct symtab *tab, const struct text *tok,
+		     int *idptr);
+int symtab_has_type(const struct symtab *tab, const struct text *typ,
+		    int *idptr);
 
 #endif /* SYMTAB_H */

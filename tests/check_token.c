@@ -55,26 +55,26 @@ struct text *casefold(const struct text *tok)
 
 START_TEST(test_equals)
 {
-	ck_assert(tok_equals(S("hello"), S("hello")));
-	ck_assert(tok_equals(S("hello"), T("hello")));
+	ck_assert(token_equals(S("hello"), S("hello")));
+	ck_assert(token_equals(S("hello"), T("hello")));
 
-	ck_assert(tok_equals(S(""), S("")));
-	ck_assert(tok_equals(S(""), T("")));
+	ck_assert(token_equals(S(""), S("")));
+	ck_assert(token_equals(S(""), T("")));
 }
 END_TEST
 
 
 START_TEST(test_not_equals)
 {
-	ck_assert(!tok_equals(S("foo"), S("bar")));
+	ck_assert(!token_equals(S("foo"), S("bar")));
 }
 END_TEST
 
 
 START_TEST(test_equals_esc)
 {
-	ck_assert(!tok_equals(S("\n"), T("\\n")));
-	ck_assert(!tok_equals(S("\\n"), T("\\n")));
+	ck_assert(!token_equals(S("\n"), T("\\n")));
+	ck_assert(!token_equals(S("\\n"), T("\\n")));
 }
 END_TEST
 

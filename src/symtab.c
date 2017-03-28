@@ -111,14 +111,14 @@ int symtab_has_token(const struct symtab *tab, const struct text *tok,
 		     int *idptr)
 {
 	struct table_probe probe;
-	unsigned hash = tok_hash(tok);
+	unsigned hash = token_hash(tok);
 	int token_id;
 	bool found;
 
 	table_probe_make(&probe, &tab->token_table, hash);
 	while (table_probe_advance(&probe)) {
 		token_id = probe.current;
-		if (tok_equals(tok, &tab->tokens[token_id].text)) {
+		if (token_equals(tok, &tab->tokens[token_id].text)) {
 			found = true;
 			goto out;
 		}
@@ -137,14 +137,14 @@ int symtab_has_type(const struct symtab *tab, const struct text *typ,
 		    int *idptr)
 {
 	struct table_probe probe;
-	unsigned hash = tok_hash(typ);
+	unsigned hash = token_hash(typ);
 	int type_id;
 	bool found;
 
 	table_probe_make(&probe, &tab->type_table, hash);
 	while (table_probe_advance(&probe)) {
 		type_id = probe.current;
-		if (tok_equals(typ, &tab->types[type_id].text)) {
+		if (token_equals(typ, &tab->types[type_id].text)) {
 			found = true;
 			goto out;
 		}
@@ -363,7 +363,7 @@ void symtab_rehash_tokens(struct symtab *tab)
 	table_clear(token_table);
 
 	for (i = 0; i < n; i++) {
-		hash = tok_hash(&tokens[i].text);
+		hash = token_hash(&tokens[i].text);
 		table_add(token_table, hash, i);
 	}
 }
@@ -379,7 +379,7 @@ void symtab_rehash_types(struct symtab *tab)
 	table_clear(type_table);
 
 	for (i = 0; i < n; i++) {
-		hash = tok_hash(&types[i].text);
+		hash = token_hash(&types[i].text);
 		table_add(type_table, hash, i);
 	}
 }

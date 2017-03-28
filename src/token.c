@@ -449,7 +449,7 @@ error:
 
 
 // Dan Bernstein's djb2 XOR hash: http://www.cse.yorku.ca/~oz/hash.html
-unsigned tok_hash(const struct text *tok)
+unsigned token_hash(const struct text *tok)
 {
 	const uint8_t *ptr = tok->ptr;
 	const uint8_t *end = ptr + TEXT_SIZE(tok);
@@ -465,14 +465,14 @@ unsigned tok_hash(const struct text *tok)
 }
 
 
-int tok_equals(const struct text *t1, const struct text *t2)
+int token_equals(const struct text *t1, const struct text *t2)
 {
 	return ((t1->attr & ~TEXT_UTF8_BIT) == (t2->attr & ~TEXT_UTF8_BIT)
 			&& !memcmp(t1->ptr, t2->ptr, TEXT_SIZE(t2)));
 }
 
 
-int compare_typ(const struct text *typ1, const struct text *typ2)
+int compare_type(const struct text *typ1, const struct text *typ2)
 {
 	size_t n1 = TEXT_SIZE(typ1);
 	size_t n2 = TEXT_SIZE(typ2);

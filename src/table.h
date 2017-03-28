@@ -23,9 +23,6 @@
  * Hash table, providing O(1) element access and insertion.
  */
 
-#include <stddef.h>
-#include <stdint.h>
-
 /** Code for empty table cells. */
 #define TABLE_ITEM_EMPTY (-1)
 

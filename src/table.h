@@ -26,7 +26,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-/** Code for empty buckets. */
+/** Code for empty table cells. */
 #define TABLE_ITEM_EMPTY (-1)
 
 /**
@@ -148,6 +148,5 @@ static inline int table_probe_advance(struct table_probe *probe)
 
 	return 1;
 }
-
 
 #endif /* TABLE_H */

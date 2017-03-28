@@ -29,26 +29,6 @@
 /** Code for empty buckets. */
 #define TABLE_ITEM_EMPTY (-1)
 
-/** Linear probing:
- *
- *     h(k,i) = h(k) + i
- */
-#define TABLE_PROBE_JUMP_LIN(nprobe)	(1)
-
-/** Quadratic probing:
- *
- *     h(k,i) = h(k) + 0.5 i + 0.5 i^2
- *
- * When the table size "m" is a power of 2, the values h(k,i) % m
- * are all distinct for i = 0, 1, ..., m - 1
- *
- *     https://en.wikipedia.org/wiki/Quadratic_probing
- */
-#define TABLE_PROBE_JUMP_QUAD(nprobe)	(nprobe)
-
-/** Hash table probing method */
-#define TABLE_PROBE_JUMP(nprobe) TABLE_PROBE_JUMP_QUAD(nprobe)
-
 /**
  * Hash table buckets.
  */

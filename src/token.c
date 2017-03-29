@@ -38,8 +38,8 @@ int typemap_init(struct typemap *map, int kind)
 {
 	int err;
 
-	map->text.ptr = NULL;
-	map->code = NULL;
+	map->type.ptr = NULL;
+	map->codes = NULL;
 	map->size_max = 0;
 
 	typemap_clear_kind(map);
@@ -51,8 +51,8 @@ int typemap_init(struct typemap *map, int kind)
 
 void typemap_destroy(struct typemap *map)
 {
-	free(map->code);
-	free(map->text.ptr);
+	free(map->codes);
+	free(map->type.ptr);
 }
 
 
@@ -60,7 +60,7 @@ void typemap_clear_kind(struct typemap *map)
 {
 	uint_fast8_t ch;
 
-	map->map_type = UDECOMP_NORMAL | UCASEFOLD_NONE;
+	map->charmap_type = UDECOMP_NORMAL | UCASEFOLD_NONE;
 
 	for (ch = 0; ch < 0x80; ch++) {
 		map->ascii_map[ch] = ch;
@@ -81,7 +81,7 @@ int typemap_set_kind(struct typemap *map, int kind)
 	typemap_clear_kind(map);
 
 	if (kind & TYPE_COMPAT) {
-		map->map_type = UDECOMP_ALL;
+		map->charmap_type = UDECOMP_ALL;
 	}
 
 	if (kind & TYPE_CASEFOLD) {
@@ -89,7 +89,7 @@ int typemap_set_kind(struct typemap *map, int kind)
 			map->ascii_map[ch] = ch + ('a' - 'A');
 		}
 
-		map->map_type |= UCASEFOLD_ALL;
+		map->charmap_type |= UCASEFOLD_ALL;
 	}
 
 	if (kind & TYPE_QUOTFOLD) {
@@ -121,8 +121,8 @@ int typemap_set_kind(struct typemap *map, int kind)
 
 int typemap_reserve(struct typemap *map, size_t size)
 {
-	uint8_t *ptr = map->text.ptr;
-	uint32_t *code = map->code;
+	uint8_t *ptr = map->type.ptr;
+	uint32_t *codes = map->codes;
 
 	if (map->size_max >= size) {
 		return 0;
@@ -131,12 +131,12 @@ int typemap_reserve(struct typemap *map, size_t size)
 	if (!(ptr = xrealloc(ptr, size))) {
 		goto error_nomem;
 	}
-	map->text.ptr = ptr;
+	map->type.ptr = ptr;
 
-	if (!(code = xrealloc(code, size * UNICODE_DECOMP_MAX))) {
+	if (!(codes = xrealloc(codes, size * UNICODE_DECOMP_MAX))) {
 		goto error_nomem;
 	}
-	map->code = code;
+	map->codes = codes;
 
 	map->size_max = size;
 	return 0;
@@ -164,14 +164,14 @@ int typemap_set(struct typemap *map, const struct text *tok)
 		goto error;
 	}
 
-	dst = map->code;
+	dst = map->codes;
 	text_iter_make(&it, tok);
 	while (text_iter_advance(&it)) {
-		unicode_map(map->map_type, it.current, &dst);
+		unicode_map(map->charmap_type, it.current, &dst);
 	}
-	unicode_order(map->code, dst - map->code);
+	unicode_order(map->codes, dst - map->codes);
 
-	err = typemap_set_utf32(map, map->code, dst);
+	err = typemap_set_utf32(map, map->codes, dst);
 	return err;
 
 error:
@@ -188,7 +188,7 @@ int typemap_set_utf32(struct typemap *map, const uint32_t *ptr,
 	bool rm_cc = map->kind & TYPE_RMCC;
 	bool rm_di = map->kind & TYPE_RMDI;
 	bool rm_ws = map->kind & TYPE_RMWS;
-	uint8_t *dst = map->text.ptr;
+	uint8_t *dst = map->type.ptr;
 	uint32_t code;
 	int8_t ch;
 	bool utf8 = false;
@@ -405,9 +405,9 @@ int typemap_set_utf32(struct typemap *map, const uint32_t *ptr,
 	}
 
 	*dst = '\0'; // not necessary, but helps with debugging
-	map->text.attr = TEXT_SIZE_MASK & (dst - map->text.ptr);
+	map->type.attr = TEXT_SIZE_MASK & (dst - map->type.ptr);
 	if (utf8) {
-		map->text.attr |= TEXT_UTF8_BIT;
+		map->type.attr |= TEXT_UTF8_BIT;
 	}
 
 	return 0;
@@ -428,7 +428,7 @@ int typemap_set_ascii(struct typemap *map, const struct text *tok)
 		goto error;
 	}
 
-	dst = map->text.ptr;
+	dst = map->type.ptr;
 
 	text_iter_make(&it, tok);
 	while (text_iter_advance(&it)) {
@@ -439,7 +439,7 @@ int typemap_set_ascii(struct typemap *map, const struct text *tok)
 	}
 
 	*dst = '\0'; // not necessary, but helps with debugging
-	map->text.attr = TEXT_SIZE_MASK & (dst - map->text.ptr);
+	map->type.attr = TEXT_SIZE_MASK & (dst - map->type.ptr);
 	return 0;
 
 error:

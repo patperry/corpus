@@ -106,7 +106,8 @@ void encode_utf8(uint32_t code, uint8_t **bufptr);
 
 /**
  * Unicode character decomposition mappings. The compatibility mappings are
- * defined in *TR44* Sec. 5.7.3 Table 14.
+ * defined in [UAX #44 Sec. 5.7.3 Character Decomposition Maps]
+ * (http://www.unicode.org/reports/tr44/#Character_Decomposition_Mappings).
  */
 enum udecomp_type {
 	UDECOMP_NORMAL = 0,          /**< normalization (required for NFD) */

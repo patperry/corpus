@@ -176,7 +176,7 @@ int symtab_add_token(struct symtab *tab, const struct text *tok, int *idptr)
 		}
 
 		// add the type
-		if ((err = symtab_add_type(tab, &tab->typemap.text,
+		if ((err = symtab_add_type(tab, &tab->typemap.type,
 					   &type_id))) {
 			goto error;
 		}

@@ -20,134 +20,57 @@
 /**
  * \file token.h
  *
- * Token and type utilities.
+ * Tokens and types.
  */
 
 #include <stddef.h>
 #include <stdint.h>
 
-/*
- * Type Normalization
- * ------------------
+/**
+ * Type map descriptor. At a minimum, convert all tokens to
+ * decomposed normal form (NFD). Optionally, apply compatibility maps for
+ * NFKD normal and/or apply other transformations:
  *
- * 1. Decompose to NFD or NFKD normalization form.
+ *  + #TYPE_COMPAT: apply all compatibility maps required for
+ *  	[NFKD normal form](http://unicode.org/reports/tr15/#Norm_Forms)
  *
- *     Source: http://unicode.org/reports/tr15/
+ *  + #TYPE_CASEFOLD: perform case folding, in most languages (including
+ *  	English) mapping uppercase characters to their lowercase equivalents,
+ *  	but also performing other normalizations like mapping the
+ *  	German Eszett (&szlig;) to "ss"; see
+ *  	_The Unicode Standard_ Sec. 5.18 "Case Mappings"
+ *  	and the
+ *  	[Case Mapping FAQ](http://unicode.org/faq/casemap_charprop.html)
+ *  	for more information
  *
- *     Defaults to NFKD; specify `TYPE_NOCOMPAT` for NFD
+ *  + #TYPE_DASHFOLD: dash fold, replace em-dashes, negative signs, and
+ *  	anything with the [Dash=Yes](http://unicode.org/reports/tr44/#Dash)
+ *  	property with a dash (`-`)
  *
+ *  + #TYPE_QUOTFOLD: quote fold, replace double quotes, apostrophes, and
+ *      anything with the
+ *  	[Quotation Mark=Yes](http://unicode.org/reports/tr44/#Quotation_Mark)
+ *  	property with a single quote (`'`)
  *
- * 2. Perform case folding.
+ *  + #TYPE_RMCC: remove non-whitespace control codes (Cc) like
+ *  	non-printable ASCII codes; these are defined in
+ *  	_The Unicode Standard_ Sec. 23.1 "Control Codes"
  *
- * 	'A' -> 'a'
- * 	'B' -> 'b'
- * 	U+00DF -> 'ss'
- * 	etc.
+ *  + #TYPE_RMDI: remove default ignorables (DI) like soft hyphens and
+ *  	zero-width spaces, anything with the
+ *  	[Default_Ignorable_Code_Point=Yes]
+ *  	(http://www.unicode.org/reports/tr44/#Default_Ignorable_Code_Point)
+ *  	property
  *
- * 	Source: UnicodeStandard-8.0, Sec. 5.18, p. 236
- * 	http://unicode.org/faq/casemap_charprop.html
- *
- *	Disabled with `TYPE_NOFOLD_CASE`
- *
- *
- * 3. Perform dash folding.
- *
- * 	Replace with U+002D (-):
- *
- *		U+2212 MINUS SIGN
- *		U+2E3A TWO-EM DASH
- *		U+2E3B THREE-EM DASH
- *		U+301C WAVE DASH
- *
- *		+ anything else with "Dash=Yes" property
- *
- *	Source: http://unicode.org/Public/UNIDATA/PropList.txt
- *		http://unicode.org/reports/tr44/#Dash
- *
- *	Disabled with `TYPE_NOFOLD_DASH`
- *
- *
- * 4. Perform quote folding.
- *
- * 	Replace with U+0027 ('):
- *
- *		U+0022 QUOTATION MARK (")
- *		U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
- *		U+00BB RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
- * 		U+2018 LEFT SINGLE QUOTATION MARK
- * 		U+2019 RIGHT SINGLE QUOTATION MARK
- * 		U+201A SINGLE LOW-9 QUOTATION MARK
- *		U+201B SINGLE HIGH-REVERSED-9 QUOTATION MARK
- *		U+201C LEFT DOUBLE QUOTATION MARK
- *		U+201D RIGHT DOUBLE QUOTATION MARK
- *		U+201E DOUBLE LOW-9 QUOTATION MARK
- *		U+201F DOUBLE HIGH-REVERSED-9 QUOTATION MARK
- *
- * 		+ anything else with "Quotation Mark=Yes" property
- *
- *	Source: http://unicode.org/Public/UNIDATA/PropList.txt
- *		http://unicode.org/reports/tr44/#Quotation_Mark
- *
- *	Disabled with `TYPE_NOFOLD_QUOT`
- *
- *
- * 5. Remove non-whitespace control characters (Cc).
- *
- *	U+0000..U+0008	(C0)
- *	U+000E..U+001F	(C0)
- *	U+007F		(delete)
- *	U+0080..U+0084	(C1)
- *	U+0086..U+009F	(C1)
- *
- *	Source:
- *	UnicodeStandard-8.0, Sec. 23.1, p. 808
- *
- *	Disabled with `TYPE_KEEP_CC`
- *
- *
- * 6. Remove default ignorable code points (DI).
- *
- *	U+00AD	SOFT HYPHEN
- *	U+200B	ZERO WIDTH SPACE
- *	U+FEFF	ZERO WIDTH NO-BREAK SPACE
- *
- *	+ anything else with "Default_Ignorable_Code_Point=Yes" property
- *
- *	Source: http://unicode.org/Public/UNIDATA/DerivedCoreProperties.txt
- *	UnicodeStandard-8.0, Sec. 5.21, p. 253
- *	http://www.unicode.org/reports/tr44/#Default_Ignorable_Code_Point
- *
- *	Disabled with `TYPE_KEEP_DI`
- *
- *
- * 7. Remove white space (WS).
- *
- *	U+0009..U+000D	(control-0009>..<control-000D>)
- *	U+0020		SPACE
- *	U+0085		<control-0085>
- * 	U+00A0		NO-BREAK SPACE
- *	U+1680		OGHAM SPACE MARK
- *	U+2000..U+200A	EN QUAD..HAIR SPACE
- *	U+2028		LINE SEPARATOR
- *	U+2029		PARAGRAPH SEPARATOR
- *	U+202F		NARROW NO-BREAK SPACE
- *	U+205F		MEDIUM MATHEMATICAL SPACE
- *	U+3000		IDEOGRAPHIC SPACE
- *
- *	(anything with White_Space=Yes)
- *
- *	Source:
- *	http://www.unicode.org/reports/tr44/#White_Space
- *	http://unicode.org/Public/UNIDATA/PropList.txt
- *
- *	Disabled with `TYPE_KEEP_WS`
+ *  + #TYPE_RMWS: remove whitespace (WS), anything with the
+ *  	[White_Space=Yes](http://www.unicode.org/reports/tr44/#White_Space)
+ *  	property
  */
-
 enum type_kind {
 	TYPE_NORMAL   = 0,        /**< apply decomposition mappings */
 	TYPE_COMPAT   = (1 << 0), /**< apply compatibility mappings */
 	TYPE_CASEFOLD = (1 << 1), /**< perform case folding */
-	TYPE_DASHFOLD = (1 << 2), /**< replace dashes with `'-'` */
+	TYPE_DASHFOLD = (1 << 2), /**< replace dashes with `-` */
 	TYPE_QUOTFOLD = (1 << 3), /**< replace quotes with `'` */
 	TYPE_RMCC     = (1 << 4), /**< remove non-whitespace control characters */
 	TYPE_RMDI     = (1 << 5), /**< remove default ignorables */
@@ -158,20 +81,76 @@ enum type_kind {
  * Type map, for normalizing tokens to types.
  */
 struct typemap {
-	int8_t ascii_map[128];
-	struct text text;
-	uint32_t *code;
-	size_t size_max;
-	int kind;
-	int map_type;
+	struct text type;	/**< type of the token given to the most
+				  recent typemap_set() call */
+	int8_t ascii_map[128];	/**< a lookup table for the mappings of ASCII
+				  characters; -1 indicates deletion */
+	uint32_t *codes;	/**< buffer for intermediate UTF-32 decoding */
+	size_t size_max;	/**< token size maximum; normalizing a larger
+				 	token will force a reallocation */
+	int kind;		/**< the type map kind descriptor, a bit mask
+				  of #type_kind values */
+	int charmap_type;	/**< the unicode map type, a bit mask of
+				  #udecomp_type and #ucasefold_type values */
 };
 
+/**
+ * Initialize a new type map of the specified kind.
+ *
+ * \param map the type map
+ * \param kind a bitmask of #type_kind values, specifying the map type.
+ *
+ * \returns 0 on success
+ */
 int typemap_init(struct typemap *map, int kind);
+
+/**
+ * Release the resources associated with a type map.
+ * 
+ * \param map the type map
+ */
 void typemap_destroy(struct typemap *map);
+
+/**
+ * Given a token, set a map to the corresponding type.
+ *
+ * \param map the type map
+ * \param tok the token
+ *
+ * \returns 0 on success
+ */
 int typemap_set(struct typemap *map, const struct text *tok);
 
+/**
+ * Compute a hash code from a token.
+ *
+ * \param tok the token
+ *
+ * \returns the hash code.
+ */
 unsigned token_hash(const struct text *tok);
+
+/**
+ * Test whether two tokens are equal (bitwise). Bitwise equality is more
+ * stringent than decoding to the same value.
+ *
+ * \param tok1 the first token
+ * \param tok2 the second token
+ *
+ * \returns non-zero if the tokens are equal, zero otherwise
+ */
 int token_equals(const struct text *tok1, const struct text *tok2);
+
+/**
+ * Compare two types.
+ *
+ * \param typ1 archetype for the first type
+ * \param typ2 archetype for the second type
+ *
+ * \returns zero if the two archetypes are identical; a negative value
+ * 	if the first value is less than the second; a positive value
+ * 	if the first value is greater than the second
+ */
 int compare_type(const struct text *typ1, const struct text *typ2);
 
 #endif /* TOKEN_H */

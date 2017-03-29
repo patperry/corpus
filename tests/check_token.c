@@ -32,14 +32,14 @@ struct text *get_type(const struct text *tok, int flags)
 
 	ck_assert(!typemap_init(&map, flags));
 	ck_assert(!typemap_set(&map, tok));
-	size = TEXT_SIZE(&map.text);
+	size = TEXT_SIZE(&map.type);
 
 	typ = alloc(sizeof(*typ));
 
 	typ->ptr = alloc(size + 1);
-	memcpy(typ->ptr, map.text.ptr, size);
+	memcpy(typ->ptr, map.type.ptr, size);
 	typ->ptr[size] = '\0';
-	typ->attr = map.text.attr;
+	typ->attr = map.type.attr;
 
 	typemap_destroy(&map);
 

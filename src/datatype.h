@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef TYPEMGR_H
-#define TYPEMGR_H
+#ifndef DATATYPE_H
+#define DATATYPE_H
+
+/**
+ * \file datatype.h
+ *
+ * Data types and type checking.
+ */
 
 enum atom_type {
 	ATOM_NULL = 0,
@@ -35,23 +41,19 @@ struct record_type {
 	int nfield;
 };
 
-struct symtab {
+struct datatyper {
 	int dummy;
 };
 
-struct typemgr {
-	struct symtab fields;
-};
+int datatyper_init(struct datatyper *t);
+void datatyper_destroy(struct datatyper *t);
 
-int typemgr_init(struct typemgr *t);
-void typemgr_destroy(struct typemgr *t);
+int datatyper_add_name(struct datatyper *t, uint8_t *ptr, size_t len);
+int datatyper_add_array(struct datatyper *t, int type_id, int length,
+			int *idptr);
+int datatyper_add_record(struct datatyper *t, int *field_types,
+			 int *field_names, int nfield, int *idptr);
 
-int typemgr_add_name(struct typemgr *t, uint8_t *ptr, size_t len);
-int typemgr_add_array(struct typemgr *t, int type_id, int length, int *idptr);
-int typemgr_add_record(struct typemgr *t, int *field_types, int *field_names,
-			int nfield, int *idptr);
+int datatyper_scan(struct datatyper *t, const uint8_t *ptr, size_t len);
 
-int typemgr_scan(struct typemgr *t, const uint8_t **bufptr,
-		 const uint8_t *end, int *type_id);
-
-#endif /* TYPEMGR_H */
+#endif /* DATATYPE_H */

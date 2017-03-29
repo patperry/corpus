@@ -43,7 +43,7 @@ void teardown_datatype(void)
 }
 
 
-int scan(const char *str)
+int type(const char *str)
 {
 	size_t n = strlen(str);
 	int id;
@@ -56,36 +56,54 @@ int scan(const char *str)
 
 int is_null(const char *str)
 {
-	return (scan(str) == DATATYPE_NULL);
+	return (type(str) == DATATYPE_NULL);
 }
 
 
 int is_bool(const char *str)
 {
-	return (scan(str) == DATATYPE_BOOL);
+	return (type(str) == DATATYPE_BOOL);
 }
 
 
 int is_number(const char *str)
 {
-	return (scan(str) == DATATYPE_NUMBER);
+	return (type(str) == DATATYPE_NUMBER);
 }
 
 
 int is_text(const char *str)
 {
-	return (scan(str) == DATATYPE_TEXT);
+	return (type(str) == DATATYPE_TEXT);
+}
+
+
+int is_array(const char *str, int element_id, int length)
+{
+	int id = type(str);
+	const struct datatype *t = &typer.types[id];
+
+	return (t->kind == DATATYPE_ARRAY
+			&& t->meta.array.type_id == element_id
+			&& t->meta.array.length == length);
+}
+
+int A(int element_id, int length)
+{
+	int id;
+	ck_assert(!datatyper_add_array(&typer, element_id, length, &id));
+	return id;
 }
 
 
 START_TEST(test_valid_null)
 {
 	ck_assert(is_null("null"));
-	ck_assert(is_null(""));
-	ck_assert(is_null("   "));
 	ck_assert(is_null("  null"));
 	ck_assert(is_null("    null "));
 	ck_assert(is_null("null   "));
+	ck_assert(is_null(""));
+	ck_assert(is_null("   "));
 }
 END_TEST
 
@@ -175,6 +193,29 @@ START_TEST(test_invalid_text)
 END_TEST
 
 
+START_TEST(test_valid_array)
+{
+	ck_assert(is_array("[]", DATATYPE_NULL, 0));
+	ck_assert(is_array("[\"hello\"]", DATATYPE_TEXT, 1));
+	ck_assert(is_array("[1, 2, 3]", DATATYPE_NUMBER, 3));
+	ck_assert(is_array("[[1], [2], [3]]", A(DATATYPE_NUMBER, 1), 3));
+}
+END_TEST
+
+
+START_TEST(test_invalid_array)
+{
+	ck_assert(!is_array("[null, ]", DATATYPE_NULL, 2));
+}
+END_TEST
+
+
+START_TEST(test_union)
+{
+
+}
+END_TEST
+
 Suite *datatype_suite(void)
 {
 	Suite *s;
@@ -205,6 +246,17 @@ Suite *datatype_suite(void)
         tcase_add_checked_fixture(tc, setup_datatype, teardown_datatype);
 	tcase_add_test(tc, test_valid_text);
 	tcase_add_test(tc, test_invalid_text);
+	suite_add_tcase(s, tc);
+
+	tc = tcase_create("array");
+        tcase_add_checked_fixture(tc, setup_datatype, teardown_datatype);
+	tcase_add_test(tc, test_valid_array);
+	tcase_add_test(tc, test_invalid_array);
+	suite_add_tcase(s, tc);
+
+	tc = tcase_create("union");
+        tcase_add_checked_fixture(tc, setup_datatype, teardown_datatype);
+	tcase_add_test(tc, test_union);
 	suite_add_tcase(s, tc);
 
 	return s;

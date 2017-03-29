@@ -109,8 +109,8 @@ tests/%.o: tests/%.c
 .PHONY: all check clean doc
 
 src/array.o: src/array.c src/errcode.h src/xalloc.h src/array.h
-src/datatype.o: src/datatype.c src/errcode.h src/table.h src/text.h \
-	src/token.h src/symtab.h src/datatype.h
+src/datatype.o: src/datatype.c src/array.h src/errcode.h src/table.h \
+	src/text.h src/token.h src/symtab.h src/xalloc.h src/datatype.h
 src/filebuf.o: src/filebuf.c src/array.h src/errcode.h src/xalloc.h \
     src/filebuf.h
 src/symtab.o: src/symtab.c src/array.h src/errcode.h src/table.h src/text.h \

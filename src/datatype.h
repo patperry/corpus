@@ -26,24 +26,23 @@
 #include <stdint.h>
 
 enum datatype_kind {
-	DATATYPE_ERROR = -1,
+	DATATYPE_ANY = -1,
 	DATATYPE_NULL = 0,
 	DATATYPE_BOOL,
 	DATATYPE_NUMBER,
 	DATATYPE_TEXT,
 	DATATYPE_ARRAY,
-	DATATYPE_RECORD,
-	DATATYPE_ANY
+	DATATYPE_RECORD
 };
 
 struct datatype_array {
-	int element_type;
+	int type_id;
 	int length;
 };
 
 struct datatype_record {
-	int *field_types;
-	int *field_names;
+	int *name_ids;
+	int *type_ids;
 	int nfield;
 };
 
@@ -52,7 +51,7 @@ struct datatype {
 	union {
 		struct datatype_array array;
 		struct datatype_record record;
-	} t;
+	} meta;
 };
 
 struct datatyper {
@@ -61,17 +60,29 @@ struct datatyper {
 	int ntype, ntype_max;
 };
 
-int datatyper_init(struct datatyper *t);
-void datatyper_destroy(struct datatyper *t);
-void datatyper_clear(struct datatyper *t);
+int datatyper_init(struct datatyper *typer);
+void datatyper_destroy(struct datatyper *typer);
+void datatyper_clear(struct datatyper *typer);
 
-int datatyper_add_name(struct datatyper *t, struct text *name, int *idptr);
-int datatyper_add_array(struct datatyper *t, int type_id, int length,
-			int *idptr);
-int datatyper_add_record(struct datatyper *t, const int *type_ids,
+int datatyper_add_name(struct datatyper *typer, const struct text *name,
+		       int *idptr);
+int datatyper_has_name(const struct datatyper *typer, const struct text *name,
+		       int *idptr);
+
+int datatyper_add_array(struct datatyper *typer, int type_id,
+			int length, int *idptr);
+int datatyper_has_array(const struct datatyper *typer, int type_id,
+			int length, int *idptr);
+
+int datatyper_add_record(struct datatyper *typer, const int *type_ids,
+			 const int *name_ids, int nfield, int *idptr);
+int datatyper_has_record(const struct datatyper *typer, const int *type_ids,
 			 const int *name_ids, int nfield, int *idptr);
 
-int datatyper_scan(struct datatyper *t, const uint8_t *ptr, size_t len,
+int datatyper_add_union(struct datatyper *typer, int type_id1, int type_id2,
+			int *idptr);
+
+int datatyper_scan(struct datatyper *typer, const uint8_t *ptr, size_t len,
 		   int *idptr);
 
 #endif /* DATATYPE_H */

@@ -464,14 +464,16 @@ int scan_array(struct datatyper *typer, const uint8_t **bufptr,
 		case ',':
 			ptr++;
 			scan_spaces(&ptr, end);
+
 			if ((err = scan_value(typer, &ptr, end, &next_id))) {
 				goto error;
 			}
-			if (cur_id == DATATYPE_NULL) {
-				cur_id = next_id;
-			} else if (cur_id != next_id) {
-				cur_id = DATATYPE_ANY;
+
+			if ((err = datatyper_union(typer, cur_id, next_id,
+							&cur_id))) {
+				goto error;
 			}
+
 			length++;
 			break;
 		default:

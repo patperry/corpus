@@ -20,7 +20,7 @@
 /**
  * \file text.h
  *
- * Text data type and utility functions.
+ * UTF-8 encoded text, optionally with JSON-compatible backslash (`\`) escapes.
  */
 
 #include <limits.h>

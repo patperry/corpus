@@ -20,7 +20,7 @@
 /**
  * \file token.h
  *
- * Tokens and types.
+ * Tokens and normalization to types.
  */
 
 #include <stddef.h>

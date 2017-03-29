@@ -28,6 +28,10 @@
 
 #define NUM_ATOMIC	4
 
+static int datatyper_union_array(struct datatyper *typer, int type_id1,
+				 int type_id2, int *idptr);
+static int datatyper_union_record(struct datatyper *typer, int type_id1,
+				  int type_id2, int *idptr);
 static int datatyper_grow_types(struct datatyper *typer, int nadd);
 
 // compound types
@@ -178,6 +182,98 @@ out:
 		*idptr = id;
 	}
 	return found;
+}
+
+
+int datatyper_union(struct datatyper *typer, int type_id1, int type_id2,
+		    int *idptr)
+{
+	int kind1, kind2;
+	int id;
+	int err = 0;
+
+	if (type_id1 == DATATYPE_NULL || type_id1 == type_id2) {
+		id = type_id2;
+		goto out;
+	} else if (type_id2 == DATATYPE_NULL) {
+		id = type_id1;
+		goto out;
+	} else if (type_id1 == DATATYPE_ANY || type_id2 == DATATYPE_ANY) {
+		id = DATATYPE_ANY;
+		goto out;
+	}
+
+	// if we got here, then neither kind is Null or Any
+	kind1 = typer->types[type_id1].kind;
+	kind2 = typer->types[type_id2].kind;
+
+	if (kind1 != kind2) {
+		id = DATATYPE_ANY;
+	} else if (kind1 == DATATYPE_ARRAY) {
+		err = datatyper_union_array(typer, type_id1, type_id2, &id);
+	} else if (kind1 == DATATYPE_RECORD) {
+		err = datatyper_union_record(typer, type_id1, type_id2, &id);
+	} else {
+		id = DATATYPE_ANY;
+	}
+
+out:
+	if (idptr) {
+		*idptr = id;
+	}
+	return err;
+}
+
+
+int datatyper_union_array(struct datatyper *typer, int type_id1, int type_id2,
+			  int *idptr)
+{
+	const struct datatype_array *t1, *t2;
+	int len;
+	int elt, id;
+	int err;
+
+	t1 = &typer->types[type_id1].meta.array;
+	t2 = &typer->types[type_id2].meta.array;
+
+	if ((err = datatyper_union(typer, t1->type_id, t2->type_id, &elt))) {
+		goto error;
+	}
+
+	if (t1->length == t2->length) {
+		len = t1->length;
+	} else {
+		len = -1;
+	}
+
+	if ((err = datatyper_add_array(typer, elt, len, &id))) {
+		goto error;
+	}
+
+	goto out;
+
+error:
+	syslog(LOG_ERR, "failed computing union of array type");
+	id = DATATYPE_ANY;
+
+out:
+	if (idptr) {
+		*idptr = id;
+	}
+
+	return err;
+}
+
+
+int datatyper_union_record(struct datatyper *typer, int type_id1,
+			   int type_id2, int *idptr)
+{
+	int id = DATATYPE_ANY;
+	(void)typer;
+	(void)type_id1;
+	(void)type_id2;
+	*idptr = id;
+	return 0;
 }
 
 

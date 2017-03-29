@@ -79,8 +79,8 @@ int datatyper_add_record(struct datatyper *typer, const int *type_ids,
 int datatyper_has_record(const struct datatyper *typer, const int *type_ids,
 			 const int *name_ids, int nfield, int *idptr);
 
-int datatyper_add_union(struct datatyper *typer, int type_id1, int type_id2,
-			int *idptr);
+int datatyper_union(struct datatyper *typer, int type_id1, int type_id2,
+		    int *idptr);
 
 int datatyper_scan(struct datatyper *typer, const uint8_t *ptr, size_t len,
 		   int *idptr);

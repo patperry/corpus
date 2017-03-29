@@ -28,6 +28,11 @@
 
 struct datatyper typer;
 
+const int Null = DATATYPE_NULL;
+const int Bool = DATATYPE_BOOL;
+const int Number = DATATYPE_NUMBER;
+const int Text = DATATYPE_TEXT;
+const int Any = DATATYPE_ANY;
 
 void setup_datatype(void)
 {
@@ -88,10 +93,18 @@ int is_array(const char *str, int element_id, int length)
 			&& t->meta.array.length == length);
 }
 
-int A(int element_id, int length)
+int Array(int element_id, int length)
 {
 	int id;
 	ck_assert(!datatyper_add_array(&typer, element_id, length, &id));
+	return id;
+}
+
+
+int get_union (int id1, int id2)
+{
+	int id;
+	ck_assert(!datatyper_union(&typer, id1, id2, &id));
 	return id;
 }
 
@@ -195,26 +208,59 @@ END_TEST
 
 START_TEST(test_valid_array)
 {
-	ck_assert(is_array("[]", DATATYPE_NULL, 0));
-	ck_assert(is_array("[\"hello\"]", DATATYPE_TEXT, 1));
-	ck_assert(is_array("[1, 2, 3]", DATATYPE_NUMBER, 3));
-	ck_assert(is_array("[[1], [2], [3]]", A(DATATYPE_NUMBER, 1), 3));
+	ck_assert(is_array("[]", Null, 0));
+	ck_assert(is_array("[\"hello\"]", Text, 1));
+	ck_assert(is_array("[1, 2, 3]", Number, 3));
+	ck_assert(is_array("[[1], [2], [3]]", Array(Number, 1), 3));
 }
 END_TEST
 
 
 START_TEST(test_invalid_array)
 {
-	ck_assert(!is_array("[null, ]", DATATYPE_NULL, 2));
+	ck_assert(!is_array("[null, ]", Null, 2));
 }
 END_TEST
 
 
-START_TEST(test_union)
+START_TEST(test_union_null)
 {
-
+	ck_assert_int_eq(get_union(Null, Null), Null);
+	ck_assert_int_eq(get_union(Null, Number), Number);
+	ck_assert_int_eq(get_union(Number, Null), Number);
+	ck_assert_int_eq(get_union(Array(Number, 5), Null), Array(Number, 5));
 }
 END_TEST
+
+
+START_TEST(test_union_any)
+{
+	ck_assert_int_eq(get_union(Null, Any), Any);
+	ck_assert_int_eq(get_union(Text, Number), Any);
+	ck_assert_int_eq(get_union(Any, Number), Any);
+	ck_assert_int_eq(get_union(Array(Number, 5), Text), Any);
+}
+END_TEST
+
+
+START_TEST(test_union_array)
+{
+	ck_assert_int_eq(get_union(Array(Null, 3), Array(Text, 3)),
+			 Array(Text, 3));
+	ck_assert_int_eq(get_union(Array(Text, 0), Array(Text, 3)),
+			 Array(Text, -1));
+	ck_assert_int_eq(get_union(Array(Array(Bool, 2), 5),
+				   Array(Array(Null, 2), 5)),
+			 Array(Array(Bool, 2), 5));
+	ck_assert_int_eq(get_union(Array(Array(Bool, 2), 5),
+				   Array(Array(Null, 0), 5)),
+			 Array(Array(Bool, -1), 5));
+	ck_assert_int_eq(get_union(Array(Array(Bool, 2), 5),
+				   Array(Array(Null, 0), 4)),
+			 Array(Array(Bool, -1), -1));
+}
+END_TEST
+
 
 Suite *datatype_suite(void)
 {
@@ -256,7 +302,9 @@ Suite *datatype_suite(void)
 
 	tc = tcase_create("union");
         tcase_add_checked_fixture(tc, setup_datatype, teardown_datatype);
-	tcase_add_test(tc, test_union);
+	tcase_add_test(tc, test_union_null);
+	tcase_add_test(tc, test_union_any);
+	tcase_add_test(tc, test_union_array);
 	suite_add_tcase(s, tc);
 
 	return s;

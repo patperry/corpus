@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
+#include <assert.h>
 #include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <syslog.h>
 #include "array.h"
 #include "errcode.h"
@@ -28,6 +31,10 @@
 
 #define NUM_ATOMIC	4
 
+static int buffer_init(struct schema_buffer *buf);
+static void buffer_destroy(struct schema_buffer *buf);
+static int buffer_grow(struct schema_buffer *buf, int nadd);
+
 static int schema_has_array(const struct schema *s, int type_id, int length,
 			    int *idptr);
 static int schema_has_record(const struct schema *s, const int *type_ids,
@@ -38,6 +45,8 @@ static int schema_union_record(struct schema *s, int id1, int id2, int *idptr);
 static int schema_grow_types(struct schema *s, int nadd);
 
 // compound types
+static int scan_field(struct schema *s, const uint8_t **bufptr,
+		      const uint8_t *end, int *name_idptr, int *type_idptr);
 static int scan_value(struct schema *s, const uint8_t **bufptr,
 		      const uint8_t *end, int *idptr);
 static int scan_array(struct schema *s, const uint8_t **bufptr,
@@ -49,7 +58,8 @@ static int scan_record(struct schema *s, const uint8_t **bufptr,
 static int scan_null(const uint8_t **bufptr, const uint8_t *end);
 static int scan_false(const uint8_t **bufptr, const uint8_t *end);
 static int scan_true(const uint8_t **bufptr, const uint8_t *end);
-static int scan_text(const uint8_t **bufptr, const uint8_t *end);
+static int scan_text(const uint8_t **bufptr, const uint8_t *end,
+		     struct text *text);
 static int scan_number(uint_fast8_t c, const uint8_t **bufptr,
 		       const uint8_t *end);
 static int scan_infinity(const uint8_t **bufptr, const uint8_t *end);
@@ -63,10 +73,64 @@ static int scan_chars(const char *str, unsigned len, const uint8_t **bufptr,
 static int scan_char(char c, const uint8_t **bufptr, const uint8_t *end);
 
 
+int buffer_init(struct schema_buffer *buf)
+{
+	buf->type_ids = NULL;
+	buf->name_ids = NULL;
+	buf->nfield = 0;
+	buf->nfield_max = 0;
+	return 0;
+}
+
+
+void buffer_destroy(struct schema_buffer *buf)
+{
+	free(buf->name_ids);
+	free(buf->type_ids);
+}
+
+
+int buffer_grow(struct schema_buffer *buf, int nadd)
+{
+	void *tbase = buf->type_ids;
+	int *nbase = buf->name_ids;
+	int size = buf->nfield_max;
+	int err;
+
+	if ((err = array_grow(&tbase, &size, sizeof(buf->type_ids),
+			      buf->nfield, nadd))) {
+		syslog(LOG_ERR, "failed allocating schema buffer");
+		return err;
+	}
+	buf->type_ids = tbase;
+
+	if (size) {
+		if (!(nbase = xrealloc(nbase, size * sizeof(*nbase)))) {
+			syslog(LOG_ERR, "failed allocating schema buffer");
+			return ERROR_NOMEM;
+		}
+		buf->name_ids = nbase;
+	}
+
+	if (buf->nfield > INT_MAX - nadd) {
+		syslog(LOG_ERR, "schema buffer size exceeds maximum (%d)",
+		       INT_MAX);
+		return ERROR_OVERFLOW;
+	}
+
+	buf->nfield_max = size;
+	return 0;
+}
+
+
 int schema_init(struct schema *s)
 {
 	int i, n;
 	int err;
+
+	if ((err = buffer_init(&s->buffer))) {
+		goto error_buffer;
+	}
 
 	if ((err = symtab_init(&s->names, 0))) {
 		goto error_names;
@@ -89,6 +153,8 @@ int schema_init(struct schema *s)
 error_types:
 	symtab_destroy(&s->names);
 error_names:
+	buffer_destroy(&s->buffer);
+error_buffer:
 	return err;
 }
 
@@ -98,6 +164,7 @@ void schema_destroy(struct schema *s)
 	schema_clear(s);
 	free(s->types);
 	symtab_destroy(&s->names);
+	buffer_destroy(&s->buffer);
 }
 
 
@@ -176,6 +243,7 @@ int schema_array(struct schema *s, int type_id, int length, int *idptr)
 
 error:
 	syslog(LOG_ERR, "failed adding array type");
+	id = DATATYPE_ANY;
 
 out:
 	if (idptr) {
@@ -216,18 +284,90 @@ out:
 int schema_record(struct schema *s, const int *type_ids, const int *name_ids,
 		  int nfield, int *idptr)
 {
-	int id = DATATYPE_ANY;
-	int err = 0;
+	struct datatype *t;
+	int id;
+	int err;
 
-	(void)s;
-	(void)type_ids;
-	(void)name_ids;
-	(void)nfield;
+	if (schema_has_record(s, type_ids, name_ids, nfield, &id)) {
+		syslog(LOG_DEBUG, "record exists");
+		err = 0;
+		goto out;
+	}
 
+	// grow types array if necessary
+	if (s->ntype == s->ntype_max) {
+		if ((err = schema_grow_types(s, 1))) {
+			goto error;
+		}
+	}
+
+	// add the new type
+	id = s->ntype;
+	t = &s->types[id];
+	t->kind = DATATYPE_RECORD;
+	if (nfield == 0) {
+		t->meta.record.type_ids = NULL;
+		t->meta.record.name_ids = NULL;
+	} else {
+		t->meta.record.type_ids = xmalloc(nfield * sizeof(*type_ids));
+		t->meta.record.name_ids = xmalloc(nfield * sizeof(*name_ids));
+		if (!t->meta.record.type_ids || !t->meta.record.type_ids) {
+			free(t->meta.record.type_ids);
+			free(t->meta.record.name_ids);
+			err = ERROR_NOMEM;
+			goto error;
+		}
+		memcpy(t->meta.record.type_ids, type_ids,
+			nfield * sizeof(*type_ids));
+		memcpy(t->meta.record.name_ids, name_ids,
+			nfield * sizeof(*name_ids));
+	}
+	t->meta.record.nfield = nfield;
+	s->ntype++;
+
+	err = 0;
+	goto out;
+
+error:
+	syslog(LOG_ERR, "failed adding record type");
+	id = DATATYPE_ANY;
+
+out:
 	if (idptr) {
 		*idptr = id;
 	}
 	return err;
+}
+
+
+int schema_has_record(const struct schema *s, const int *type_ids,
+		      const int *name_ids, int nfield, int *idptr)
+{
+	const struct datatype *t;
+	int id = s->ntype;
+	int found;
+
+	while (id-- > 0) {
+		t = &s->types[id];
+		if (t->kind != DATATYPE_RECORD) {
+			continue;
+		}
+		if (t->meta.record.nfield == nfield
+			&& memcmp(t->meta.record.type_ids, type_ids,
+				  nfield * sizeof(type_ids)) == 0
+			&& memcmp(t->meta.record.name_ids, name_ids,
+				  nfield * sizeof(name_ids)) == 0) {
+			found = 1;
+			goto out;
+		}
+	}
+	found = 0;
+	id = -1;
+out:
+	if (idptr) {
+		*idptr = id;
+	}
+	return found;
 }
 
 
@@ -343,6 +483,114 @@ int schema_grow_types(struct schema *s, int nadd)
 }
 
 
+int write_datatype(FILE *stream, const struct schema *s, int id)
+{
+	const struct text *name;
+	const struct datatype *t;
+	int name_id, type_id;
+	int i, n;
+	int err;
+
+	if (id < 0) {
+		if (fprintf(stream, "any") < 0) {
+			goto error_os;
+		}
+		err = 0;
+		goto out;
+	}
+
+	t = &s->types[id];
+
+	switch (t->kind) {
+	case DATATYPE_NULL:
+		if (fprintf(stream, "null") < 0) {
+			goto error_os;
+		}
+		break;
+
+	case DATATYPE_BOOL:
+		if (fprintf(stream, "bool") < 0) {
+			goto error_os;
+		}
+		break;
+
+	case DATATYPE_NUMBER:
+		if (fprintf(stream, "number") < 0) {
+			goto error_os;
+		}
+		break;
+
+	case DATATYPE_TEXT:
+		if (fprintf(stream, "text") < 0) {
+			goto error_os;
+		}
+		break;
+
+	case DATATYPE_ARRAY:
+		if (fprintf(stream, "[") < 0) {
+			goto error_os;
+		}
+		if ((err = write_datatype(stream, s, t->meta.array.type_id))) {
+			goto error;
+		}
+		if (t->meta.array.length >= 0) {
+			if (fprintf(stream, "; %d",
+				    t->meta.array.length) < 0) {
+				goto error_os;
+			}
+		}
+		if (fprintf(stream, "] (#%d)", id) < 0) {
+			goto error_os;
+		}
+		break;
+
+	case DATATYPE_RECORD:
+		if (fprintf(stream, "{") < 0) {
+			goto error_os;
+		}
+
+		n = t->meta.record.nfield;
+		for (i = 0; i < n; i++) {
+			if (i > 0 && fprintf(stream, ", ") < 0) {
+				goto error_os;
+			}
+
+			name_id = t->meta.record.name_ids[i];
+			name = &s->names.types[name_id].text;
+			if (fprintf(stream, "\"%.*s\": ",
+				    (unsigned)TEXT_SIZE(name),
+				    name->ptr) < 0) {
+				goto error_os;
+			}
+
+			type_id = t->meta.record.type_ids[i];
+			if ((err = write_datatype(stream, s, type_id))) {
+				goto error;
+			}
+		}
+
+		if (fprintf(stream, "} (#%d)", id) < 0) {
+			goto error_os;
+		}
+		break;
+
+	default:
+		syslog(LOG_ERR, "internal error: invalid datatype kind");
+		err = ERROR_INTERNAL;
+		goto error;
+	}
+
+	err = 0;
+	goto out;
+
+error_os:
+	err = ERROR_OS;
+error:
+out:
+	return err;
+}
+
+
 int schema_scan(struct schema *s, const uint8_t *ptr, size_t len, int *idptr)
 {
 	const uint8_t *input = ptr;
@@ -389,21 +637,15 @@ out:
 int scan_value(struct schema *s, const uint8_t **bufptr,
 	       const uint8_t *end, int *idptr)
 {
+	struct text text;
 	const uint8_t *ptr = *bufptr;
 	uint_fast8_t ch;
 	int err, id;
-
-	if (ptr == end) {
-		syslog(LOG_ERR, "missing value");
-		err = ERROR_INVAL;
-		goto error;
-	}
 
 	ch = *ptr++;
 	switch (ch) {
 	case 'n':
 		if ((err = scan_null(&ptr, end))) {
-			syslog(LOG_ERR, "failed parsing 'null' constant");
 			goto error;
 		}
 		id = DATATYPE_NULL;
@@ -411,7 +653,6 @@ int scan_value(struct schema *s, const uint8_t **bufptr,
 
 	case 'f':
 		if ((err = scan_false(&ptr, end))) {
-			syslog(LOG_ERR, "failed parsing 'false' constant");
 			goto error;
 		}
 		id = DATATYPE_BOOL;
@@ -419,15 +660,13 @@ int scan_value(struct schema *s, const uint8_t **bufptr,
 
 	case 't':
 		if ((err = scan_true(&ptr, end))) {
-			syslog(LOG_ERR, "failed parsing 'true' constant");
 			goto error;
 		}
 		id = DATATYPE_BOOL;
 		break;
 
 	case '"':
-		if ((err = scan_text(&ptr, end))) {
-			syslog(LOG_ERR, "failed parsing text literal");
+		if ((err = scan_text(&ptr, end, &text))) {
 			goto error;
 		}
 		id = DATATYPE_TEXT;
@@ -435,21 +674,18 @@ int scan_value(struct schema *s, const uint8_t **bufptr,
 
 	case '[':
 		if ((err = scan_array(s, &ptr, end, &id))) {
-			syslog(LOG_ERR, "failed parsing array");
 			goto error;
 		}
 		break;
 
 	case '{':
 		if ((err = scan_record(s, &ptr, end, &id))) {
-			syslog(LOG_ERR, "failed parsing record");
 			goto error;
 		}
 		break;
 
 	default:
 		if ((err = scan_number(ch, &ptr, end))) {
-			syslog(LOG_ERR, "failed parsing number literal");
 			goto error;
 		}
 		id = DATATYPE_NUMBER;
@@ -484,7 +720,9 @@ int scan_array(struct schema *s, const uint8_t **bufptr,
 
 	// handle empty array
 	scan_spaces(&ptr, end);
-	if (*ptr == ']') {
+	if (ptr == end) {
+		goto error_inval_noclose;
+	} else if (*ptr == ']') {
 		goto close;
 	}
 
@@ -505,10 +743,14 @@ int scan_array(struct schema *s, const uint8_t **bufptr,
 			goto close;
 		case ',':
 			ptr++;
+
 			scan_spaces(&ptr, end);
+			if (ptr == end) {
+				goto error_inval_noval;
+			}
 
 			if ((err = scan_value(s, &ptr, end, &next_id))) {
-				goto error;
+				goto error_inval_val;
 			}
 
 			if ((err = schema_union(s, cur_id, next_id,
@@ -528,12 +770,23 @@ close:
 	goto out;
 
 error_inval_noclose:
-	syslog(LOG_ERR, "no closing bracket (]) at end of array value");
+	syslog(LOG_ERR, "no closing bracket (]) at end of array");
+	err = ERROR_INVAL;
+	goto error;
+
+error_inval_noval:
+	syslog(LOG_ERR, "missing value at index %d in array", length);
+	err = ERROR_INVAL;
+	goto error;
+
+error_inval_val:
+	syslog(LOG_ERR, "failed parsing value at index %d in array", length);
 	err = ERROR_INVAL;
 	goto error;
 
 error_inval_nocomma:
-	syslog(LOG_ERR, "missing comma (,) in array value");
+	syslog(LOG_ERR, "missing comma (,) after index %d in array",
+	       length);
 	err = ERROR_INVAL;
 	goto error;
 
@@ -550,11 +803,176 @@ out:
 int scan_record(struct schema *s, const uint8_t **bufptr,
 		const uint8_t *end, int *idptr)
 {
-	(void)s;
-	(void)bufptr;
-	(void)end;
-	(void)idptr;
-	return 0;
+	const uint8_t *ptr = *bufptr;
+	int name_id, type_id, id;
+	int fstart;
+	int nfield;
+	int err;
+
+	fstart = s->buffer.nfield;
+	nfield = 0;
+
+	scan_spaces(&ptr, end);
+	if (ptr == end) {
+		goto error_inval_noclose;
+	}
+
+	// handle empty record
+	if (*ptr == '}') {
+		goto close;
+	}
+
+	if (s->buffer.nfield == s->buffer.nfield_max) {
+		if ((err = buffer_grow(&s->buffer, 1))) {
+			goto error;
+		}
+	}
+	s->buffer.nfield++;
+
+	if ((err = scan_field(s, &ptr, end, &name_id, &type_id))) {
+		goto error;
+	}
+
+	s->buffer.name_ids[fstart + nfield] = name_id;
+	s->buffer.type_ids[fstart + nfield] = type_id;
+	nfield++;
+
+	while (1) {
+		scan_spaces(&ptr, end);
+		if (ptr == end) {
+			goto error_inval_noclose;
+		}
+
+		switch (*ptr) {
+		case '}':
+			goto close;
+
+		case ',':
+			ptr++;
+			scan_spaces(&ptr, end);
+
+			if (s->buffer.nfield == s->buffer.nfield_max) {
+				if ((err = buffer_grow(&s->buffer, 1))) {
+					goto error;
+				}
+			}
+			s->buffer.nfield++;
+
+			if ((err = scan_field(s, &ptr, end, &name_id,
+					      &type_id))) {
+				goto error;
+			}
+
+			s->buffer.name_ids[fstart + nfield] = name_id;
+			s->buffer.type_ids[fstart + nfield] = type_id;
+			nfield++;
+
+			break;
+
+		default:
+			goto error_inval_nocomma;
+		}
+	}
+close:
+	ptr++; // skip over closing bracket (})
+
+	err = schema_record(s, s->buffer.type_ids + fstart,
+			    s->buffer.name_ids + fstart, nfield, &id);
+	goto out;
+
+error_inval_noclose:
+	syslog(LOG_ERR, "no closing bracket (}) at end of record");
+	err = ERROR_INVAL;
+	goto error;
+
+error_inval_nocomma:
+	syslog(LOG_ERR, "missing comma (,) in record");
+	err = ERROR_INVAL;
+	goto error;
+
+error:
+	id = -1;
+
+out:
+	s->buffer.nfield = fstart;
+	*bufptr = ptr;
+	*idptr = id;
+	return err;
+}
+
+
+int scan_field(struct schema *s, const uint8_t **bufptr, const uint8_t *end,
+	       int *name_idptr, int *type_idptr)
+{
+	struct text name;
+	const uint8_t *ptr = *bufptr;
+	int err, name_id, type_id;
+
+	// leading "
+	if (*ptr != '"') {
+		goto error_inval_noname;
+	}
+	ptr++;
+
+	// field name
+	if ((err = scan_text(&ptr, end, &name))) {
+		goto error;
+	}
+	if ((err = schema_name(s, &name, &name_id))) {
+		goto error;
+	}
+
+	// colon
+	scan_spaces(&ptr, end);
+	if (ptr == end || *ptr != ':') {
+		goto error_inval_nocolon;
+	}
+	ptr++;
+
+	// field value
+	scan_spaces(&ptr, end);
+	if (ptr == end) {
+		goto error_inval_noval;
+	}
+	if ((err = scan_value(s, &ptr, end, &type_id))) {
+		goto error_inval_val;
+	}
+
+	err = 0;
+	goto out;
+
+error_inval_noname:
+	syslog(LOG_ERR, "missing field name in record");
+	err = ERROR_INVAL;
+	goto error;
+
+error_inval_nocolon:
+	syslog(LOG_ERR, "missing colon after field name \"%.*s\" in record",
+	       (unsigned)TEXT_SIZE(&name), name.ptr);
+	err = ERROR_INVAL;
+	goto error;
+
+error_inval_noval:
+	syslog(LOG_ERR, "missing value for field \"%.*s\" in record",
+	       (unsigned)TEXT_SIZE(&name), name.ptr);
+	err = ERROR_INVAL;
+	goto error;
+
+error_inval_val:
+	syslog(LOG_ERR, "failed parsing value for field \"%.*s\" in record",
+	       (unsigned)TEXT_SIZE(&name), name.ptr);
+	err = ERROR_INVAL;
+	goto error;
+
+error:
+	name_id = -1;
+	type_id = -1;
+
+out:
+	*bufptr = ptr;
+	*name_idptr = name_id;
+	*type_idptr = type_id;
+	return err;
 }
 
 
@@ -697,11 +1115,11 @@ int scan_infinity(const uint8_t **bufptr, const uint8_t *end)
 }
 
 
-int scan_text(const uint8_t **bufptr, const uint8_t *end)
+int scan_text(const uint8_t **bufptr, const uint8_t *end,
+	      struct text *text)
 {
 	const uint8_t *input = *bufptr;
 	const uint8_t *ptr = input;
-	struct text text;
 	uint_fast8_t ch;
 	int err;
 
@@ -724,7 +1142,7 @@ error_noclose:
 	goto out;
 
 close:
-	if ((err = text_assign(&text, input, ptr - input, 0))) {
+	if ((err = text_assign(text, input, ptr - input, 0))) {
 		err = ERROR_INVAL;
 		goto out;
 	}

@@ -41,8 +41,8 @@ struct datatype_array {
 };
 
 struct datatype_record {
-	int *name_ids;
 	int *type_ids;
+	int *name_ids;
 	int nfield;
 };
 
@@ -54,7 +54,14 @@ struct datatype {
 	} meta;
 };
 
+struct schema_buffer {
+	int *type_ids;
+	int *name_ids;
+	int nfield, nfield_max;
+};
+
 struct schema {
+	struct schema_buffer buffer;
 	struct symtab names;
 	struct datatype *types;
 	int ntype, ntype_max;
@@ -74,5 +81,8 @@ int schema_record(struct schema *s, const int *type_ids, const int *name_ids,
 int schema_union(struct schema *s, int id1, int id2, int *idptr);
 
 int schema_scan(struct schema *s, const uint8_t *ptr, size_t len, int *idptr);
+
+
+int write_datatype(FILE *stream, const struct schema *s, int id);
 
 #endif /* DATATYPE_H */

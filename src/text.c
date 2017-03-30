@@ -438,7 +438,7 @@ error_inval_low:
 	syslog(LOG_ERR,
 		"invalid UTF-16 low surrogate (\\u%.*s)"
 	        " after high surrogate escape code (\\u%.*s)",
-		4, input - 6, 4, input);
+		4, input, 4, input - 6);
 	goto error_inval;
 
 error_inval_nohigh:

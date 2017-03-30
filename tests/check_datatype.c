@@ -17,6 +17,7 @@
 #include <check.h>
 #include <stdarg.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
@@ -99,6 +100,24 @@ int is_text(const char *str)
 {
 	return (get_type(str) == DATATYPE_TEXT);
 }
+
+
+int assert_types_equal(int id1, int id2)
+{
+	if (id1 != id2) {
+		printf("unequal types: ");
+		write_datatype(stdout, &schema, id1);
+		printf(" != ");
+		write_datatype(stdout, &schema, id2);
+		printf("\n");
+		return 0;
+	}
+	return 1;
+}
+
+#define ck_assert_typ_eq(X, Y) do { \
+	ck_assert(assert_types_equal(X, Y)); \
+} while (0)
 
 
 int Array(int length, int element_id)
@@ -270,7 +289,7 @@ END_TEST
 START_TEST(test_valid_record)
 {
 	ck_assert(get_type("{}") == Record(0));
-	ck_assert(get_type("{\"a\":\"b\"}") == Record(1, "a", Text));
+	ck_assert_typ_eq(get_type("{\"a\":\"b\"}"), Record(1, "a", Text));
 	ck_assert(get_type("{\"x\":1, \"y\":true}")
 		  == Record(2, "x", Number, "y", Bool));
 
@@ -281,12 +300,24 @@ START_TEST(test_valid_record)
 END_TEST
 
 
+START_TEST(test_equal_record)
+{
+	ck_assert(Record(1, "a", Text) == Record(1, "a", Text));
+	ck_assert(Record(2, "x", Number, "y", Bool)
+		  == Record(2, "x", Number, "y", Bool));
+	ck_assert(Record(2, "x", Number, "y", Bool)
+		  == Record(2, "y", Bool, "x", Number));
+}
+END_TEST
+
+
 START_TEST(test_nested_record)
 {
-	ck_assert(get_type("{ \"outer_a\": true, \
-			      \"outer_b\": { \"re\": 0, \"im\": null } }")
-			   == Record(2, "outer_a", Bool, "outer_b",
+	assert_types_equal(get_type("{ \"outer_a\": true, \
+			      \"outer_b\": { \"re\": 0, \"im\": null } }"),
+			   Record(2, "outer_a", Bool, "outer_b",
 				     Record(2, "re", Number, "im", Null)));
+
 }
 END_TEST
 
@@ -296,6 +327,7 @@ START_TEST(test_invalid_record)
 	ck_assert(is_error("{ \"hello\": }"));
 	ck_assert(is_error("{ \"a\":1, }"));
 	ck_assert(is_error("{ \"x\":,\"y\":null }"));
+	ck_assert(is_error("{ \"1\":\"duplicate\", \"1\":\"duplicate\" }"));
 }
 END_TEST
 
@@ -375,6 +407,7 @@ Suite *datatype_suite(void)
 	tc = tcase_create("record");
         tcase_add_checked_fixture(tc, setup_datatype, teardown_datatype);
 	tcase_add_test(tc, test_valid_record);
+	tcase_add_test(tc, test_equal_record);
 	tcase_add_test(tc, test_nested_record);
 	tcase_add_test(tc, test_invalid_record);
 	suite_add_tcase(s, tc);

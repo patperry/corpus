@@ -23,6 +23,7 @@
  * Data types and type checking.
  */
 
+#include <stdio.h>
 #include <stdint.h>
 
 enum datatype_kind {

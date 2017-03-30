@@ -354,9 +354,9 @@ int schema_has_record(const struct schema *s, const int *type_ids,
 		}
 		if (t->meta.record.nfield == nfield
 			&& memcmp(t->meta.record.type_ids, type_ids,
-				  nfield * sizeof(type_ids)) == 0
+				  nfield * sizeof(*type_ids)) == 0
 			&& memcmp(t->meta.record.name_ids, name_ids,
-				  nfield * sizeof(name_ids)) == 0) {
+				  nfield * sizeof(*name_ids)) == 0) {
 			found = 1;
 			goto out;
 		}

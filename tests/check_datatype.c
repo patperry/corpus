@@ -101,7 +101,7 @@ int is_text(const char *str)
 }
 
 
-int Array(int element_id, int length)
+int Array(int length, int element_id)
 {
 	int id;
 	ck_assert(!schema_array(&schema, element_id, length, &id));
@@ -252,10 +252,10 @@ END_TEST
 
 START_TEST(test_valid_array)
 {
-	ck_assert(get_type("[]") == Array(Null, 0));
-	ck_assert(get_type("[\"hello\"]") == Array(Text, 1));
-	ck_assert(get_type("[1, 2, 3]") == Array(Number, 3));
-	ck_assert(get_type("[[1], [2], [3]]") == Array(Array(Number, 1), 3));
+	ck_assert(get_type("[]") == Array(0, Null));
+	ck_assert(get_type("[\"hello\"]") == Array(1, Text));
+	ck_assert(get_type("[1, 2, 3]") == Array(3, Number));
+	ck_assert(get_type("[[1], [2], [3]]") == Array(3, Array(1, Number)));
 }
 END_TEST
 
@@ -267,12 +267,45 @@ START_TEST(test_invalid_array)
 END_TEST
 
 
+START_TEST(test_valid_record)
+{
+	ck_assert(get_type("{}") == Record(0));
+	ck_assert(get_type("{\"a\":\"b\"}") == Record(1, "a", Text));
+	ck_assert(get_type("{\"x\":1, \"y\":true}")
+		  == Record(2, "x", Number, "y", Bool));
+
+	// field order doesn't matter
+	ck_assert(get_type("{\"y\":false, \"x\":-1e14}")
+		  == Record(2, "x", Number, "y", Bool));
+}
+END_TEST
+
+
+START_TEST(test_nested_record)
+{
+	ck_assert(get_type("{ \"outer_a\": true, \
+			      \"outer_b\": { \"re\": 0, \"im\": null } }")
+			   == Record(2, "outer_a", Bool, "outer_b",
+				     Record(2, "re", Number, "im", Null)));
+}
+END_TEST
+
+
+START_TEST(test_invalid_record)
+{
+	ck_assert(is_error("{ \"hello\": }"));
+	ck_assert(is_error("{ \"a\":1, }"));
+	ck_assert(is_error("{ \"x\":,\"y\":null }"));
+}
+END_TEST
+
+
 START_TEST(test_union_null)
 {
 	ck_assert(Union(Null, Null) == Null);
 	ck_assert(Union(Null, Number) == Number);
 	ck_assert(Union(Number, Null) == Number);
-	ck_assert(Union(Array(Number, 5), Null) == Array(Number, 5));
+	ck_assert(Union(Array(5, Number), Null) == Array(5, Number));
 }
 END_TEST
 
@@ -282,21 +315,21 @@ START_TEST(test_union_any)
 	ck_assert(Union(Null, Any) == Any);
 	ck_assert(Union(Text, Number) == Any);
 	ck_assert(Union(Any, Number) == Any);
-	ck_assert(Union(Array(Number, 5), Text) == Any);
+	ck_assert(Union(Array(5, Number), Text) == Any);
 }
 END_TEST
 
 
 START_TEST(test_union_array)
 {
-	ck_assert(Union(Array(Null, 3), Array(Text, 3)) == Array(Text, 3));
-	ck_assert(Union(Array(Text, 0), Array(Text, 3)) == Array(Text, -1));
-	ck_assert(Union(Array(Array(Bool, 2), 5), Array(Array(Null, 2), 5))
-		  == Array(Array(Bool, 2), 5));
-	ck_assert(Union(Array(Array(Bool, 2), 5), Array(Array(Null, 0), 5))
-		  == Array(Array(Bool, -1), 5));
-	ck_assert(Union(Array(Array(Bool, 2), 5), Array(Array(Null, 0), 4))
-		  == Array(Array(Bool, -1), -1));
+	ck_assert(Union(Array(3, Null), Array(3, Text)) == Array(3, Text));
+	ck_assert(Union(Array(0, Text), Array(3, Text)) == Array(-1, Text));
+	ck_assert(Union(Array(5, Array(2, Bool)), Array(5, Array(2, Null)))
+		  == Array(5, Array(2, Bool)));
+	ck_assert(Union(Array(5, Array(2, Bool)), Array(5, Array(0, Null)))
+		  == Array(5, Array(-1, Bool)));
+	ck_assert(Union(Array(5, Array(2, Bool)), Array(4, Array(0, Null)))
+		  == Array(-1, Array(-1, Bool)));
 }
 END_TEST
 
@@ -337,6 +370,13 @@ Suite *datatype_suite(void)
         tcase_add_checked_fixture(tc, setup_datatype, teardown_datatype);
 	tcase_add_test(tc, test_valid_array);
 	tcase_add_test(tc, test_invalid_array);
+	suite_add_tcase(s, tc);
+
+	tc = tcase_create("record");
+        tcase_add_checked_fixture(tc, setup_datatype, teardown_datatype);
+	tcase_add_test(tc, test_valid_record);
+	tcase_add_test(tc, test_nested_record);
+	tcase_add_test(tc, test_invalid_record);
 	suite_add_tcase(s, tc);
 
 	tc = tcase_create("union");

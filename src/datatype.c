@@ -662,8 +662,11 @@ int scan_infinity(const uint8_t **bufptr, const uint8_t *end)
 
 int scan_text(const uint8_t **bufptr, const uint8_t *end)
 {
-	const uint8_t *ptr = *bufptr;
+	const uint8_t *input = *bufptr;
+	const uint8_t *ptr = input;
+	struct text text;
 	uint_fast8_t ch;
+	int err;
 
 	while (ptr != end) {
 		ch = *ptr;
@@ -680,12 +683,20 @@ int scan_text(const uint8_t **bufptr, const uint8_t *end)
 
 error_noclose:
 	syslog(LOG_ERR, "no trailing quote (\") at end of text value");
-	return ERROR_INVAL;
+	err = ERROR_INVAL;
+	goto out;
 
 close:
+	if ((err = text_assign(&text, input, ptr - input, 0))) {
+		err = ERROR_INVAL;
+		goto out;
+	}
+
 	ptr++; // skip over close quote
+	err = 0;
+out:
 	*bufptr = ptr;
-	return 0;
+	return err;
 }
 
 

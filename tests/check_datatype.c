@@ -202,6 +202,20 @@ START_TEST(test_invalid_text)
 {
 	ck_assert(!is_text("hello"));
 	ck_assert(!is_text("\"hello\" world"));
+
+	ck_assert(!is_text("\"invalid utf-8 \xBF\""));
+	ck_assert(!is_text("\"invalid utf-8 \xC2\x7F\""));
+	ck_assert(!is_text("\"invalid escape \\a\""));
+	ck_assert(!is_text("\"missing escape \\\""));
+	ck_assert(!is_text("\"ends early \\u007\""));
+	ck_assert(!is_text("\"non-hex value \\u0G7F\""));
+	ck_assert(!is_text("\"\\uD800 high surrogate\""));
+	ck_assert(!is_text("\"\\uDBFF high surrogate\""));
+	ck_assert(!is_text("\"\\uD800\\uDC0G invalid hex\""));
+	ck_assert(!is_text("\"\\uDC00 low surrogate\""));
+	ck_assert(!is_text("\"\\uDFFF low surrogate\""));
+	ck_assert(!is_text("\"\\uD84 incomplete\""));
+	ck_assert(!is_text("\"\\uD804\\u2603 invalid low\""));
 }
 END_TEST
 

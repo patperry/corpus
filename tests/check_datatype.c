@@ -26,7 +26,7 @@
 #include "../src/datatype.h"
 #include "testutil.h"
 
-struct datatyper typer;
+struct schema schema;
 
 const int Null = DATATYPE_NULL;
 const int Bool = DATATYPE_BOOL;
@@ -37,13 +37,13 @@ const int Any = DATATYPE_ANY;
 void setup_datatype(void)
 {
 	setup();
-	datatyper_init(&typer);
+	schema_init(&schema);
 }
 
 
 void teardown_datatype(void)
 {
-	datatyper_destroy(&typer);
+	schema_destroy(&schema);
 	teardown();
 }
 
@@ -53,7 +53,7 @@ int type(const char *str)
 	size_t n = strlen(str);
 	int id;
 
-	datatyper_scan(&typer, (const uint8_t *)str, n, &id);
+	schema_scan(&schema, (const uint8_t *)str, n, &id);
 
 	return id;
 }
@@ -86,7 +86,7 @@ int is_text(const char *str)
 int is_array(const char *str, int element_id, int length)
 {
 	int id = type(str);
-	const struct datatype *t = &typer.types[id];
+	const struct datatype *t = &schema.types[id];
 
 	return (t->kind == DATATYPE_ARRAY
 			&& t->meta.array.type_id == element_id
@@ -96,7 +96,7 @@ int is_array(const char *str, int element_id, int length)
 int Array(int element_id, int length)
 {
 	int id;
-	ck_assert(!datatyper_add_array(&typer, element_id, length, &id));
+	ck_assert(!schema_array(&schema, element_id, length, &id));
 	return id;
 }
 
@@ -104,7 +104,7 @@ int Array(int element_id, int length)
 int get_union (int id1, int id2)
 {
 	int id;
-	ck_assert(!datatyper_union(&typer, id1, id2, &id));
+	ck_assert(!schema_union(&schema, id1, id2, &id));
 	return id;
 }
 

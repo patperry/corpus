@@ -28,18 +28,25 @@
 
 #define NUM_ATOMIC	4
 
-static int datatyper_union_array(struct datatyper *typer, int type_id1,
-				 int type_id2, int *idptr);
-static int datatyper_union_record(struct datatyper *typer, int type_id1,
-				  int type_id2, int *idptr);
-static int datatyper_grow_types(struct datatyper *typer, int nadd);
+static int schema_has_name(const struct schema *s, const struct text *name,
+			   int *idptr);
+static int schema_has_array(const struct schema *s, int type_id, int length,
+			    int *idptr);
+static int schema_has_record(const struct schema *s, const int *type_ids,
+			     const int *name_ids, int nfield, int *idptr);
+
+static int schema_union_array(struct schema *s, int type_id1, int type_id2,
+			      int *idptr);
+static int schema_union_record(struct schema *s, int type_id1, int type_id2,
+			       int *idptr);
+static int schema_grow_types(struct schema *s, int nadd);
 
 // compound types
-static int scan_value(struct datatyper *typer, const uint8_t **bufptr,
+static int scan_value(struct schema *s, const uint8_t **bufptr,
 		      const uint8_t *end, int *idptr);
-static int scan_array(struct datatyper *typer, const uint8_t **bufptr,
+static int scan_array(struct schema *s, const uint8_t **bufptr,
 		      const uint8_t *end, int *idptr);
-static int scan_record(struct datatyper *typer, const uint8_t **bufptr,
+static int scan_record(struct schema *s, const uint8_t **bufptr,
 		       const uint8_t *end, int *idptr);
 
 // literals
@@ -60,88 +67,88 @@ static int scan_chars(const char *str, unsigned len, const uint8_t **bufptr,
 static int scan_char(char c, const uint8_t **bufptr, const uint8_t *end);
 
 
-int datatyper_init(struct datatyper *typer)
+int schema_init(struct schema *s)
 {
 	int i, n;
 	int err;
 
-	if ((err = symtab_init(&typer->names, 0))) {
+	if ((err = symtab_init(&s->names, 0))) {
 		goto error_names;
 	}
 
 	// initialize primitive types
 	n = NUM_ATOMIC;
-	if (!(typer->types = xmalloc(n * sizeof(*typer->types)))) {
+	if (!(s->types = xmalloc(n * sizeof(*s->types)))) {
 		goto error_types;
 	}
-	typer->ntype = n;
-	typer->ntype_max = n;
+	s->ntype = n;
+	s->ntype_max = n;
 
 	for (i = 0; i < n; i++) {
-		typer->types[i].kind = i;
+		s->types[i].kind = i;
 	}
 
 	return 0;
 
 error_types:
-	symtab_destroy(&typer->names);
+	symtab_destroy(&s->names);
 error_names:
 	return err;
 }
 
 
-void datatyper_destroy(struct datatyper *typer)
+void schema_destroy(struct schema *s)
 {
-	datatyper_clear(typer);
-	free(typer->types);
-	symtab_destroy(&typer->names);
+	schema_clear(s);
+	free(s->types);
+	symtab_destroy(&s->names);
 }
 
 
-void datatyper_clear(struct datatyper *typer)
+void schema_clear(struct schema *s)
 {
 	const struct datatype *t;
-	int i = typer->ntype;
+	int i = s->ntype;
 
 	while (i-- > 0) {
-		t = &typer->types[i];
+		t = &s->types[i];
 		if (t->kind == DATATYPE_RECORD) {
 			free(t->meta.record.name_ids);
 			free(t->meta.record.type_ids);
 		}
 	}
-	typer->ntype = NUM_ATOMIC;
+	s->ntype = NUM_ATOMIC;
 
-	symtab_clear(&typer->names);
+	symtab_clear(&s->names);
 }
 
 
-int datatyper_add_array(struct datatyper *typer, int type_id, int length,
+int schema_array(struct schema *s, int type_id, int length,
 			int *idptr)
 {
 	struct datatype *t;
 	int id;
 	int err;
 
-	if (datatyper_has_array(typer, type_id, length, &id)) {
+	if (schema_has_array(s, type_id, length, &id)) {
 		err = 0;
 		goto out;
 	}
 
 	// grow types array if necessary
-	if (typer->ntype == typer->ntype_max) {
-		if ((err = datatyper_grow_types(typer, 1))) {
+	if (s->ntype == s->ntype_max) {
+		if ((err = schema_grow_types(s, 1))) {
 			goto error;
 		}
 	}
 
 	// add the new type
-	id = typer->ntype;
-	t = &typer->types[id];
+	id = s->ntype;
+	t = &s->types[id];
 	t->kind = DATATYPE_ARRAY;
 	t->meta.array.type_id = type_id;
 	t->meta.array.length = length;
-	typer->ntype++;
+	s->ntype++;
 
 	err = 0;
 	goto out;
@@ -157,15 +164,15 @@ out:
 }
 
 
-int datatyper_has_array(const struct datatyper *typer, int type_id,
+int schema_has_array(const struct schema *s, int type_id,
 			int length, int *idptr)
 {
 	const struct datatype *t;
-	int id = typer->ntype;
+	int id = s->ntype;
 	int found;
 
 	while (id-- > 0) {
-		t = &typer->types[id];
+		t = &s->types[id];
 		if (t->kind != DATATYPE_ARRAY) {
 			continue;
 		}
@@ -185,7 +192,7 @@ out:
 }
 
 
-int datatyper_union(struct datatyper *typer, int type_id1, int type_id2,
+int schema_union(struct schema *s, int type_id1, int type_id2,
 		    int *idptr)
 {
 	int kind1, kind2;
@@ -204,15 +211,15 @@ int datatyper_union(struct datatyper *typer, int type_id1, int type_id2,
 	}
 
 	// if we got here, then neither kind is Null or Any
-	kind1 = typer->types[type_id1].kind;
-	kind2 = typer->types[type_id2].kind;
+	kind1 = s->types[type_id1].kind;
+	kind2 = s->types[type_id2].kind;
 
 	if (kind1 != kind2) {
 		id = DATATYPE_ANY;
 	} else if (kind1 == DATATYPE_ARRAY) {
-		err = datatyper_union_array(typer, type_id1, type_id2, &id);
+		err = schema_union_array(s, type_id1, type_id2, &id);
 	} else if (kind1 == DATATYPE_RECORD) {
-		err = datatyper_union_record(typer, type_id1, type_id2, &id);
+		err = schema_union_record(s, type_id1, type_id2, &id);
 	} else {
 		id = DATATYPE_ANY;
 	}
@@ -225,7 +232,7 @@ out:
 }
 
 
-int datatyper_union_array(struct datatyper *typer, int type_id1, int type_id2,
+int schema_union_array(struct schema *s, int type_id1, int type_id2,
 			  int *idptr)
 {
 	const struct datatype_array *t1, *t2;
@@ -233,10 +240,10 @@ int datatyper_union_array(struct datatyper *typer, int type_id1, int type_id2,
 	int elt, id;
 	int err;
 
-	t1 = &typer->types[type_id1].meta.array;
-	t2 = &typer->types[type_id2].meta.array;
+	t1 = &s->types[type_id1].meta.array;
+	t2 = &s->types[type_id2].meta.array;
 
-	if ((err = datatyper_union(typer, t1->type_id, t2->type_id, &elt))) {
+	if ((err = schema_union(s, t1->type_id, t2->type_id, &elt))) {
 		goto error;
 	}
 
@@ -246,7 +253,7 @@ int datatyper_union_array(struct datatyper *typer, int type_id1, int type_id2,
 		len = -1;
 	}
 
-	if ((err = datatyper_add_array(typer, elt, len, &id))) {
+	if ((err = schema_array(s, elt, len, &id))) {
 		goto error;
 	}
 
@@ -265,11 +272,11 @@ out:
 }
 
 
-int datatyper_union_record(struct datatyper *typer, int type_id1,
+int schema_union_record(struct schema *s, int type_id1,
 			   int type_id2, int *idptr)
 {
 	int id = DATATYPE_ANY;
-	(void)typer;
+	(void)s;
 	(void)type_id1;
 	(void)type_id2;
 	*idptr = id;
@@ -277,30 +284,30 @@ int datatyper_union_record(struct datatyper *typer, int type_id1,
 }
 
 
-int datatyper_grow_types(struct datatyper *typer, int nadd)
+int schema_grow_types(struct schema *s, int nadd)
 {
-	void *base = typer->types;
-	int size = typer->ntype_max;
+	void *base = s->types;
+	int size = s->ntype_max;
 	int err;
 
-	if ((err = array_grow(&base, &size, sizeof(*typer->types),
-			      typer->ntype, nadd))) {
+	if ((err = array_grow(&base, &size, sizeof(*s->types),
+			      s->ntype, nadd))) {
 		syslog(LOG_ERR, "failed allocating type array");
 		return err;
 	}
 
-	if (typer->ntype > INT_MAX - nadd) {
+	if (s->ntype > INT_MAX - nadd) {
 		syslog(LOG_ERR, "type count exceeds maximum (%d)", INT_MAX);
 		return ERROR_OVERFLOW;
 	}
 
-	typer->types = base;
-	typer->ntype_max = size;
+	s->types = base;
+	s->ntype_max = size;
 	return 0;
 }
 
 
-int datatyper_scan(struct datatyper *typer, const uint8_t *ptr, size_t len,
+int schema_scan(struct schema *s, const uint8_t *ptr, size_t len,
 		   int *idptr)
 {
 	const uint8_t *input = ptr;
@@ -316,7 +323,7 @@ int datatyper_scan(struct datatyper *typer, const uint8_t *ptr, size_t len,
 		goto success;
 	}
 
-	if ((err = scan_value(typer, &ptr, end, &id))) {
+	if ((err = scan_value(s, &ptr, end, &id))) {
 		goto error;
 	}
 
@@ -344,7 +351,7 @@ out:
 }
 
 
-int scan_value(struct datatyper *typer, const uint8_t **bufptr,
+int scan_value(struct schema *s, const uint8_t **bufptr,
 	       const uint8_t *end, int *idptr)
 {
 	const uint8_t *ptr = *bufptr;
@@ -392,14 +399,14 @@ int scan_value(struct datatyper *typer, const uint8_t **bufptr,
 		break;
 
 	case '[':
-		if ((err = scan_array(typer, &ptr, end, &id))) {
+		if ((err = scan_array(s, &ptr, end, &id))) {
 			syslog(LOG_ERR, "failed parsing array");
 			goto error;
 		}
 		break;
 
 	case '{':
-		if ((err = scan_record(typer, &ptr, end, &id))) {
+		if ((err = scan_record(s, &ptr, end, &id))) {
 			syslog(LOG_ERR, "failed parsing record");
 			goto error;
 		}
@@ -429,7 +436,7 @@ out:
 }
 
 
-int scan_array(struct datatyper *typer, const uint8_t **bufptr,
+int scan_array(struct schema *s, const uint8_t **bufptr,
 	       const uint8_t *end, int *idptr)
 {
 	const uint8_t *ptr = *bufptr;
@@ -447,7 +454,7 @@ int scan_array(struct datatyper *typer, const uint8_t **bufptr,
 	}
 
 	// read first element, replacing cur_id
-	if ((err = scan_value(typer, &ptr, end, &cur_id))) {
+	if ((err = scan_value(s, &ptr, end, &cur_id))) {
 		goto error;
 	}
 	length++;
@@ -465,11 +472,11 @@ int scan_array(struct datatyper *typer, const uint8_t **bufptr,
 			ptr++;
 			scan_spaces(&ptr, end);
 
-			if ((err = scan_value(typer, &ptr, end, &next_id))) {
+			if ((err = scan_value(s, &ptr, end, &next_id))) {
 				goto error;
 			}
 
-			if ((err = datatyper_union(typer, cur_id, next_id,
+			if ((err = schema_union(s, cur_id, next_id,
 							&cur_id))) {
 				goto error;
 			}
@@ -482,7 +489,7 @@ int scan_array(struct datatyper *typer, const uint8_t **bufptr,
 	}
 close:
 	ptr++;
-	err = datatyper_add_array(typer, cur_id, length, &id);
+	err = schema_array(s, cur_id, length, &id);
 	goto out;
 
 error_inval_noclose:
@@ -505,10 +512,10 @@ out:
 }
 
 
-int scan_record(struct datatyper *typer, const uint8_t **bufptr,
+int scan_record(struct schema *s, const uint8_t **bufptr,
 		const uint8_t *end, int *idptr)
 {
-	(void)typer;
+	(void)s;
 	(void)bufptr;
 	(void)end;
 	(void)idptr;

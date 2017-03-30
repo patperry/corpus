@@ -54,35 +54,25 @@ struct datatype {
 	} meta;
 };
 
-struct datatyper {
+struct schema {
 	struct symtab names;
 	struct datatype *types;
 	int ntype, ntype_max;
 };
 
-int datatyper_init(struct datatyper *typer);
-void datatyper_destroy(struct datatyper *typer);
-void datatyper_clear(struct datatyper *typer);
+int schema_init(struct schema *s);
+void schema_destroy(struct schema *s);
+void schema_clear(struct schema *s);
 
-int datatyper_add_name(struct datatyper *typer, const struct text *name,
-		       int *idptr);
-int datatyper_has_name(const struct datatyper *typer, const struct text *name,
-		       int *idptr);
+int schema_name(struct schema *s, const struct text *name, int *idptr);
 
-int datatyper_add_array(struct datatyper *typer, int type_id,
-			int length, int *idptr);
-int datatyper_has_array(const struct datatyper *typer, int type_id,
-			int length, int *idptr);
+int schema_array(struct schema *s, int type_id, int length, int *idptr);
 
-int datatyper_add_record(struct datatyper *typer, const int *type_ids,
-			 const int *name_ids, int nfield, int *idptr);
-int datatyper_has_record(const struct datatyper *typer, const int *type_ids,
-			 const int *name_ids, int nfield, int *idptr);
+int schema_record(struct schema *s, const int *type_ids, const int *name_ids,
+		  int nfield, int *idptr);
 
-int datatyper_union(struct datatyper *typer, int type_id1, int type_id2,
-		    int *idptr);
+int schema_union(struct schema *s, int type_id1, int type_id2, int *idptr);
 
-int datatyper_scan(struct datatyper *typer, const uint8_t *ptr, size_t len,
-		   int *idptr);
+int schema_scan(struct schema *s, const uint8_t *ptr, size_t len, int *idptr);
 
 #endif /* DATATYPE_H */

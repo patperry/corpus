@@ -71,7 +71,7 @@ int schema_array(struct schema *s, int type_id, int length, int *idptr);
 int schema_record(struct schema *s, const int *type_ids, const int *name_ids,
 		  int nfield, int *idptr);
 
-int schema_union(struct schema *s, int type_id1, int type_id2, int *idptr);
+int schema_union(struct schema *s, int id1, int id2, int *idptr);
 
 int schema_scan(struct schema *s, const uint8_t *ptr, size_t len, int *idptr);
 

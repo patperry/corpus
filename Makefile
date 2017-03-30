@@ -123,8 +123,8 @@ src/unicode.o: src/unicode.c src/unicode/casefold.h src/unicode/combining.h \
     src/unicode/decompose.h src/errcode.h src/unicode.h
 src/xalloc.o: src/xalloc.c src/xalloc.h
 
-tests/check_datatype.o: tests/check_datatype.c src/table.h src/text.h \
-	src/token.h src/symtab.h src/datatype.h tests/testutil.h
+tests/check_datatype.o: tests/check_datatype.c src/errcode.h src/table.h \
+	src/text.h src/token.h src/symtab.h src/datatype.h tests/testutil.h
 tests/check_symtab.o: tests/check_symtab.c src/table.h src/text.h src/token.h \
 	src/symtab.h tests/testutil.h
 tests/check_text.o: tests/check_text.c src/text.h src/unicode.h tests/testutil.h

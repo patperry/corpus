@@ -28,17 +28,13 @@
 
 #define NUM_ATOMIC	4
 
-static int schema_has_name(const struct schema *s, const struct text *name,
-			   int *idptr);
 static int schema_has_array(const struct schema *s, int type_id, int length,
 			    int *idptr);
 static int schema_has_record(const struct schema *s, const int *type_ids,
 			     const int *name_ids, int nfield, int *idptr);
 
-static int schema_union_array(struct schema *s, int type_id1, int type_id2,
-			      int *idptr);
-static int schema_union_record(struct schema *s, int type_id1, int type_id2,
-			       int *idptr);
+static int schema_union_array(struct schema *s, int id1, int id2, int *idptr);
+static int schema_union_record(struct schema *s, int id1, int id2, int *idptr);
 static int schema_grow_types(struct schema *s, int nadd);
 
 // compound types
@@ -123,8 +119,33 @@ void schema_clear(struct schema *s)
 }
 
 
-int schema_array(struct schema *s, int type_id, int length,
-			int *idptr)
+int schema_name(struct schema *s, const struct text *name, int *idptr)
+{
+	int tokid, id;
+	int err;
+
+	if ((err = symtab_add_token(&s->names, name, &tokid))) {
+		goto error;
+	}
+
+	id = s->names.tokens[tokid].type_id;
+	err = 0;
+	goto out;
+
+error:
+	syslog(LOG_ERR, "failed adding name to schema");
+	id = -1;
+
+out:
+	if (idptr) {
+		*idptr = id;
+	}
+
+	return err;
+}
+
+
+int schema_array(struct schema *s, int type_id, int length, int *idptr)
 {
 	struct datatype *t;
 	int id;
@@ -164,8 +185,8 @@ out:
 }
 
 
-int schema_has_array(const struct schema *s, int type_id,
-			int length, int *idptr)
+int schema_has_array(const struct schema *s, int type_id, int length,
+		     int *idptr)
 {
 	const struct datatype *t;
 	int id = s->ntype;
@@ -192,34 +213,51 @@ out:
 }
 
 
-int schema_union(struct schema *s, int type_id1, int type_id2,
-		    int *idptr)
+int schema_record(struct schema *s, const int *type_ids, const int *name_ids,
+		  int nfield, int *idptr)
+{
+	int id = DATATYPE_ANY;
+	int err = 0;
+
+	(void)s;
+	(void)type_ids;
+	(void)name_ids;
+	(void)nfield;
+
+	if (idptr) {
+		*idptr = id;
+	}
+	return err;
+}
+
+
+int schema_union(struct schema *s, int id1, int id2, int *idptr)
 {
 	int kind1, kind2;
 	int id;
 	int err = 0;
 
-	if (type_id1 == DATATYPE_NULL || type_id1 == type_id2) {
-		id = type_id2;
+	if (id1 == DATATYPE_NULL || id1 == id2) {
+		id = id2;
 		goto out;
-	} else if (type_id2 == DATATYPE_NULL) {
-		id = type_id1;
+	} else if (id2 == DATATYPE_NULL) {
+		id = id1;
 		goto out;
-	} else if (type_id1 == DATATYPE_ANY || type_id2 == DATATYPE_ANY) {
+	} else if (id1 == DATATYPE_ANY || id2 == DATATYPE_ANY) {
 		id = DATATYPE_ANY;
 		goto out;
 	}
 
 	// if we got here, then neither kind is Null or Any
-	kind1 = s->types[type_id1].kind;
-	kind2 = s->types[type_id2].kind;
+	kind1 = s->types[id1].kind;
+	kind2 = s->types[id2].kind;
 
 	if (kind1 != kind2) {
 		id = DATATYPE_ANY;
 	} else if (kind1 == DATATYPE_ARRAY) {
-		err = schema_union_array(s, type_id1, type_id2, &id);
+		err = schema_union_array(s, id1, id2, &id);
 	} else if (kind1 == DATATYPE_RECORD) {
-		err = schema_union_record(s, type_id1, type_id2, &id);
+		err = schema_union_record(s, id1, id2, &id);
 	} else {
 		id = DATATYPE_ANY;
 	}
@@ -232,16 +270,15 @@ out:
 }
 
 
-int schema_union_array(struct schema *s, int type_id1, int type_id2,
-			  int *idptr)
+int schema_union_array(struct schema *s, int id1, int id2, int *idptr)
 {
 	const struct datatype_array *t1, *t2;
 	int len;
 	int elt, id;
 	int err;
 
-	t1 = &s->types[type_id1].meta.array;
-	t2 = &s->types[type_id2].meta.array;
+	t1 = &s->types[id1].meta.array;
+	t2 = &s->types[id2].meta.array;
 
 	if ((err = schema_union(s, t1->type_id, t2->type_id, &elt))) {
 		goto error;
@@ -272,13 +309,12 @@ out:
 }
 
 
-int schema_union_record(struct schema *s, int type_id1,
-			   int type_id2, int *idptr)
+int schema_union_record(struct schema *s, int id1, int id2, int *idptr)
 {
 	int id = DATATYPE_ANY;
 	(void)s;
-	(void)type_id1;
-	(void)type_id2;
+	(void)id1;
+	(void)id2;
 	*idptr = id;
 	return 0;
 }
@@ -307,8 +343,7 @@ int schema_grow_types(struct schema *s, int nadd)
 }
 
 
-int schema_scan(struct schema *s, const uint8_t *ptr, size_t len,
-		   int *idptr)
+int schema_scan(struct schema *s, const uint8_t *ptr, size_t len, int *idptr)
 {
 	const uint8_t *input = ptr;
 	const uint8_t *end = ptr + len;
@@ -655,10 +690,12 @@ int scan_nan(const uint8_t **bufptr, const uint8_t *end)
 	return scan_chars("aN", 2, bufptr, end);
 }
 
+
 int scan_infinity(const uint8_t **bufptr, const uint8_t *end)
 {
 	return scan_chars("nfinity", 7, bufptr, end);
 }
+
 
 int scan_text(const uint8_t **bufptr, const uint8_t *end)
 {
@@ -704,7 +741,6 @@ int scan_true(const uint8_t **bufptr, const uint8_t *end)
 {
 	return scan_chars("rue", 3, bufptr, end);
 }
-
 
 
 int scan_false(const uint8_t **bufptr, const uint8_t *end)

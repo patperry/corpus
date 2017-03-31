@@ -14,51 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef DATATYPE_H
-#define DATATYPE_H
+#ifndef SCHEMA_H
+#define SCHEMA_H
 
 /**
- * \file datatype.h
+ * \file schema.h
  *
- * Data types and type checking.
+ * Data schema, mapping data types to integer IDs.
  */
 
 #include <stdio.h>
-#include <stdint.h>
-
-enum datatype_kind {
-	DATATYPE_ANY = -1,
-	DATATYPE_NULL = 0,
-	DATATYPE_BOOL,
-	DATATYPE_NUMBER,
-	DATATYPE_TEXT,
-	DATATYPE_ARRAY,
-	DATATYPE_RECORD
-};
-
-struct datatype_array {
-	int type_id;
-	int length;
-};
-
-struct datatype_record {
-	int *type_ids;
-	int *name_ids;
-	int nfield;
-};
-
-struct datatype {
-	int kind;
-	union {
-		struct datatype_array array;
-		struct datatype_record record;
-	} meta;
-};
 
 struct schema_buffer {
 	int *type_ids;
 	int *name_ids;
-	int nfield, nfield_max;
+	int nfield;
+	int nfield_max;
 };
 
 struct schema_sorter {
@@ -71,7 +42,8 @@ struct schema {
 	struct schema_sorter sorter;
 	struct symtab names;
 	struct datatype *types;
-	int ntype, ntype_max;
+	int ntype;
+	int ntype_max;
 };
 
 int schema_init(struct schema *s);
@@ -87,9 +59,10 @@ int schema_record(struct schema *s, const int *type_ids, const int *name_ids,
 
 int schema_union(struct schema *s, int id1, int id2, int *idptr);
 
-int schema_scan(struct schema *s, const uint8_t *ptr, size_t len, int *idptr);
-
-
 int write_datatype(FILE *stream, const struct schema *s, int id);
 
-#endif /* DATATYPE_H */
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+int schema_buffer_grow(struct schema_buffer *buf, int nadd);
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
+
+#endif /* SCHEMA_H */

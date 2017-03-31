@@ -2,7 +2,7 @@ project.xcworkspace
 xcuserdata
 /data/ucd
 /doc/html
-/tests/check_datatype
+/tests/check_data
 /tests/check_symtab
 /tests/check_text
 /tests/check_token

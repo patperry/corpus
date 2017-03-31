@@ -15,14 +15,14 @@ CHECK_LIBS = `pkg-config --libs check`
 UNICODE = http://www.unicode.org/Public/8.0.0
 
 CORPUS_A = libcorpus.a
-LIB_O	= src/array.o src/datatype.o src/filebuf.o src/symtab.o src/table.o \
-		  src/text.o src/token.o src/unicode.o src/xalloc.o
+LIB_O	= src/array.o src/data.o src/filebuf.o src/schema.o src/symtab.o \
+		  src/table.o src/text.o src/token.o src/unicode.o src/xalloc.o
 
 DATA    = data/ucd/CaseFolding.txt data/ucd/UnicodeData.txt
 
-TESTS_T = tests/check_datatype tests/check_symtab tests/check_text \
+TESTS_T = tests/check_data tests/check_symtab tests/check_text \
 		  tests/check_token tests/check_unicode
-TESTS_O = tests/check_datatype.o tests/check_symtab.o tests/check_text.o \
+TESTS_O = tests/check_data.o tests/check_symtab.o tests/check_text.o \
 		  tests/check_token.o tests/check_unicode.o tests/testutil.o
 
 TESTS_DATA = data/ucd/NormalizationTest.txt
@@ -72,7 +72,7 @@ src/unicode/decompose.h: util/gen-decompose.py \
 
 # Tests
 #
-tests/check_datatype: tests/check_datatype.o tests/testutil.o $(CORPUS_A)
+tests/check_data: tests/check_data.o tests/testutil.o $(CORPUS_A)
 	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS) $^
 
 tests/check_symtab: tests/check_symtab.o tests/testutil.o $(CORPUS_A)
@@ -109,10 +109,12 @@ tests/%.o: tests/%.c
 .PHONY: all check clean doc
 
 src/array.o: src/array.c src/errcode.h src/xalloc.h src/array.h
-src/datatype.o: src/datatype.c src/array.h src/errcode.h src/table.h \
-	src/text.h src/token.h src/symtab.h src/xalloc.h src/datatype.h
+src/data.o: src/data.c src/errcode.h src/table.h src/text.h src/token.h \
+	src/symtab.h src/schema.h src/data.h
 src/filebuf.o: src/filebuf.c src/array.h src/errcode.h src/xalloc.h \
     src/filebuf.h
+src/schema.o: src/schema.c src/array.h src/errcode.h src/table.h src/text.h \
+	src/token.h src/symtab.h src/xalloc.h src/data.h src/schema.h
 src/symtab.o: src/symtab.c src/array.h src/errcode.h src/table.h src/text.h \
 	src/token.h src/xalloc.h src/symtab.h
 src/table.o: src/table.c src/errcode.h src/xalloc.h src/table.h
@@ -121,10 +123,11 @@ src/token.o: src/token.c src/errcode.h src/text.h src/unicode.h src/xalloc.h \
     src/token.h
 src/unicode.o: src/unicode.c src/unicode/casefold.h src/unicode/combining.h \
     src/unicode/decompose.h src/errcode.h src/unicode.h
+src/value.o: src/value.c src/value.h
 src/xalloc.o: src/xalloc.c src/xalloc.h
 
-tests/check_datatype.o: tests/check_datatype.c src/errcode.h src/table.h \
-	src/text.h src/token.h src/symtab.h src/datatype.h tests/testutil.h
+tests/check_data.o: tests/check_data.c src/errcode.h src/table.h src/text.h \
+	src/token.h src/symtab.h src/data.h src/schema.h tests/testutil.h
 tests/check_symtab.o: tests/check_symtab.c src/table.h src/text.h src/token.h \
 	src/symtab.h tests/testutil.h
 tests/check_text.o: tests/check_text.c src/text.h src/unicode.h tests/testutil.h

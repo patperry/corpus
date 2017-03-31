@@ -26,7 +26,8 @@
 #include "../src/text.h"
 #include "../src/token.h"
 #include "../src/symtab.h"
-#include "../src/datatype.h"
+#include "../src/data.h"
+#include "../src/schema.h"
 #include "testutil.h"
 
 struct schema schema;
@@ -37,14 +38,14 @@ const int Number = DATATYPE_NUMBER;
 const int Text = DATATYPE_TEXT;
 const int Any = DATATYPE_ANY;
 
-void setup_datatype(void)
+void setup_data(void)
 {
 	setup();
 	schema_init(&schema);
 }
 
 
-void teardown_datatype(void)
+void teardown_data(void)
 {
 	schema_destroy(&schema);
 	teardown();
@@ -61,18 +62,18 @@ int get_name(const char *str)
 
 int get_type(const char *str)
 {
+	struct data d;
 	size_t n = strlen(str);
-	int id;
-	ck_assert(!schema_scan(&schema, (const uint8_t *)str, n, &id));
-	return id;
+	ck_assert(!data_assign(&d, &schema, (const uint8_t *)str, n));
+	return d.type_id;
 }
 
 
 int is_error(const char *str)
 {
+	struct data d;
 	size_t n = strlen(str);
-	int err, id;
-	err = schema_scan(&schema, (const uint8_t *)str, n, &id);
+	int err = data_assign(&d, &schema, (const uint8_t *)str, n);
 	ck_assert(err == ERROR_INVAL || err == 0);
 	return (err != 0);
 }
@@ -379,46 +380,46 @@ START_TEST(test_union_record)
 END_TEST 
 
 
-Suite *datatype_suite(void)
+Suite *data_suite(void)
 {
 	Suite *s;
 	TCase *tc;
 
-	s = suite_create("datatype");
+	s = suite_create("data");
 
 	tc = tcase_create("null");
-        tcase_add_checked_fixture(tc, setup_datatype, teardown_datatype);
+        tcase_add_checked_fixture(tc, setup_data, teardown_data);
 	tcase_add_test(tc, test_valid_null);
 	tcase_add_test(tc, test_invalid_null);
 	suite_add_tcase(s, tc);
 
 	tc = tcase_create("bool");
-        tcase_add_checked_fixture(tc, setup_datatype, teardown_datatype);
+        tcase_add_checked_fixture(tc, setup_data, teardown_data);
 	tcase_add_test(tc, test_valid_bool);
 	tcase_add_test(tc, test_invalid_bool);
 	suite_add_tcase(s, tc);
 
 	tc = tcase_create("number");
-        tcase_add_checked_fixture(tc, setup_datatype, teardown_datatype);
+        tcase_add_checked_fixture(tc, setup_data, teardown_data);
 	tcase_add_test(tc, test_valid_number);
 	tcase_add_test(tc, test_valid_nonfinite);
 	tcase_add_test(tc, test_invalid_number);
 	suite_add_tcase(s, tc);
 
 	tc = tcase_create("text");
-        tcase_add_checked_fixture(tc, setup_datatype, teardown_datatype);
+        tcase_add_checked_fixture(tc, setup_data, teardown_data);
 	tcase_add_test(tc, test_valid_text);
 	tcase_add_test(tc, test_invalid_text);
 	suite_add_tcase(s, tc);
 
 	tc = tcase_create("array");
-        tcase_add_checked_fixture(tc, setup_datatype, teardown_datatype);
+        tcase_add_checked_fixture(tc, setup_data, teardown_data);
 	tcase_add_test(tc, test_valid_array);
 	tcase_add_test(tc, test_invalid_array);
 	suite_add_tcase(s, tc);
 
 	tc = tcase_create("record");
-        tcase_add_checked_fixture(tc, setup_datatype, teardown_datatype);
+        tcase_add_checked_fixture(tc, setup_data, teardown_data);
 	tcase_add_test(tc, test_valid_record);
 	tcase_add_test(tc, test_equal_record);
 	tcase_add_test(tc, test_nested_record);
@@ -426,7 +427,7 @@ Suite *datatype_suite(void)
 	suite_add_tcase(s, tc);
 
 	tc = tcase_create("union");
-        tcase_add_checked_fixture(tc, setup_datatype, teardown_datatype);
+        tcase_add_checked_fixture(tc, setup_data, teardown_data);
 	tcase_add_test(tc, test_union_null);
 	tcase_add_test(tc, test_union_any);
 	tcase_add_test(tc, test_union_array);
@@ -443,11 +444,11 @@ int main(void)
 	Suite *s;
 	SRunner *sr;
 
-	openlog("check_datatype", LOG_CONS | LOG_PERROR | LOG_PID, LOG_USER);
+	openlog("check_data", LOG_CONS | LOG_PERROR | LOG_PID, LOG_USER);
         setlogmask(LOG_UPTO(LOG_INFO));
         setlogmask(LOG_UPTO(LOG_DEBUG));
 
-	s = datatype_suite();
+	s = data_suite();
 	sr = srunner_create(s);
 
 	srunner_run_all(sr, CK_NORMAL);

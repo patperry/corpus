@@ -366,6 +366,19 @@ START_TEST(test_union_array)
 END_TEST
 
 
+START_TEST(test_union_record)
+{
+	ck_assert(Union(Record(0), Record(1, "a", Number))
+		  == Record(1, "a", Number));
+	ck_assert(Union(Record(1, "a", Text), Record(1, "a", Number))
+		  == Record(1, "a", Any));
+	ck_assert(Union(Record(2, "a", Text, "b", Null),
+			Record(2, "b", Number, "c", Bool))
+		  == Record(3, "a", Text, "b", Number, "c", Bool));
+}
+END_TEST 
+
+
 Suite *datatype_suite(void)
 {
 	Suite *s;
@@ -417,6 +430,7 @@ Suite *datatype_suite(void)
 	tcase_add_test(tc, test_union_null);
 	tcase_add_test(tc, test_union_any);
 	tcase_add_test(tc, test_union_array);
+	tcase_add_test(tc, test_union_record);
 	suite_add_tcase(s, tc);
 
 	return s;

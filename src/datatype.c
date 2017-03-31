@@ -555,7 +555,7 @@ int schema_union_array(struct schema *s, int id1, int id2, int *idptr)
 	goto out;
 
 error:
-	syslog(LOG_ERR, "failed computing union of array type");
+	syslog(LOG_ERR, "failed computing union of array types");
 	id = DATATYPE_ANY;
 
 out:
@@ -569,12 +569,88 @@ out:
 
 int schema_union_record(struct schema *s, int id1, int id2, int *idptr)
 {
+	const struct datatype_record *t1, *t2;
+	int fstart, i1, i2, n1, n2, name_id, type_id, nfield;
 	int id = DATATYPE_ANY;
-	(void)s;
-	(void)id1;
-	(void)id2;
-	*idptr = id;
-	return 0;
+	int err;
+
+	fstart = s->buffer.nfield;
+	t1 = &s->types[id1].meta.record;
+	t2 = &s->types[id2].meta.record;
+	n1 = t1->nfield;
+	n2 = t2->nfield;
+
+	nfield = 0;
+	i1 = 0;
+	i2 = 0;
+
+	while (i1 < n1 && i2 < n2) {
+		if (t1->name_ids[i1] == t2->name_ids[i2]) {
+			name_id = t1->name_ids[i1];
+			if ((err = schema_union(s, t1->type_ids[i1],
+						t2->type_ids[i2], &type_id))) {
+				goto error;
+			}
+			i1++;
+			i2++;
+		} else if (t1->name_ids[i1] < t2->name_ids[i2]) {
+			name_id = t1->name_ids[i1];
+			type_id = t1->type_ids[i1];
+			i1++;
+		} else {
+			name_id = t2->name_ids[i2];
+			type_id = t2->type_ids[i2];
+			i2++;
+		}
+		if ((err = buffer_grow(&s->buffer, 1))) {
+			goto error;
+		}
+
+		s->buffer.nfield++;
+		s->buffer.name_ids[fstart + nfield] = name_id;
+		s->buffer.type_ids[fstart + nfield] = type_id;
+		nfield++;
+	}
+
+	if (i1 < n1) {
+		if ((err = buffer_grow(&s->buffer, n1 - i1))) {
+			goto error;
+		}
+		s->buffer.nfield += n1 - i1;
+		memcpy(s->buffer.name_ids + fstart + nfield,
+			t1->name_ids + i1, (n1 - i1) * sizeof(*t1->name_ids));
+		memcpy(s->buffer.type_ids + fstart + nfield,
+			t1->type_ids + i1, (n1 - i1) * sizeof(*t1->type_ids));
+		nfield += n1 - i1;
+	}
+
+	if (i2 < n2) {
+		if ((err = buffer_grow(&s->buffer, n2 - i2))) {
+			goto error;
+		}
+		s->buffer.nfield += n2 - i2;
+		memcpy(s->buffer.name_ids + fstart + nfield,
+			t2->name_ids + i2, (n2 - i2) * sizeof(*t2->name_ids));
+		memcpy(s->buffer.type_ids + fstart + nfield,
+			t2->type_ids + i2, (n2 - i2) * sizeof(*t2->type_ids));
+		nfield += n2 - i2;
+	}
+
+	err = schema_record(s, s->buffer.type_ids + fstart,
+			    s->buffer.name_ids + fstart, nfield, &id);
+	goto out;
+
+error:
+	syslog(LOG_ERR, "failed computing union of record types");
+	id = DATATYPE_ANY;
+	goto out;
+
+out:
+	if (idptr) {
+		*idptr = id;
+	}
+	s->buffer.nfield = fstart;
+	return err;
 }
 
 

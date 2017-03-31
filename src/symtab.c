@@ -112,8 +112,8 @@ int symtab_has_token(const struct symtab *tab, const struct text *tok,
 {
 	struct table_probe probe;
 	unsigned hash = token_hash(tok);
-	int token_id;
-	bool found;
+	int token_id = -1;
+	bool found = false;
 
 	table_probe_make(&probe, &tab->token_table, hash);
 	while (table_probe_advance(&probe)) {
@@ -123,7 +123,7 @@ int symtab_has_token(const struct symtab *tab, const struct text *tok,
 			goto out;
 		}
 	}
-	found = false;
+
 out:
 	if (idptr) {
 		*idptr = found ? token_id : probe.index;
@@ -138,8 +138,8 @@ int symtab_has_type(const struct symtab *tab, const struct text *typ,
 {
 	struct table_probe probe;
 	unsigned hash = token_hash(typ);
-	int type_id;
-	bool found;
+	int type_id = -1;
+	bool found = false;
 
 	table_probe_make(&probe, &tab->type_table, hash);
 	while (table_probe_advance(&probe)) {
@@ -149,7 +149,7 @@ int symtab_has_type(const struct symtab *tab, const struct text *typ,
 			goto out;
 		}
 	}
-	found = false;
+
 out:
 	if (idptr) {
 		*idptr = found ? type_id : probe.index;

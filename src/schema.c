@@ -352,7 +352,7 @@ int schema_record(struct schema *s, const int *type_ids, const int *name_ids,
 	did_copy = 1;
 
 	for (i = 0; i < nfield; i++) {
-		index = s->sorter.idptrs[i] - name_ids;
+		index = (int)(s->sorter.idptrs[i] - name_ids);
 		s->buffer.type_ids[fstart + i] = type_ids[index];
 		s->buffer.name_ids[fstart + i] = name_ids[index];
 
@@ -410,7 +410,7 @@ error_duplicate:
 		(int)TEXT_SIZE(&s->names.types[name_ids[index]].text),
 		s->names.types[name_ids[index]].text.ptr);
 	err = ERROR_INVAL;
-	goto out;
+	goto error;
 
 error:
 	syslog(LOG_ERR, "failed adding record type");

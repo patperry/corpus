@@ -19,6 +19,9 @@ LIB_O	= lib/strntod_c.o src/array.o src/data.o src/filebuf.o src/schema.o \
 		  src/symtab.o src/table.o src/text.o src/token.o src/unicode.o \
 		  src/xalloc.o
 
+CORPUS_T = corpus
+CORPUS_O = src/main.o
+
 DATA    = data/ucd/CaseFolding.txt data/ucd/UnicodeData.txt
 
 TESTS_T = tests/check_data tests/check_symtab tests/check_text \
@@ -28,15 +31,22 @@ TESTS_O = tests/check_data.o tests/check_symtab.o tests/check_text.o \
 
 TESTS_DATA = data/ucd/NormalizationTest.txt
 
-ALL_O = $(LIB_O)
-ALL_T = $(CORPUS_A)
+ALL_O = $(LIB_O) $(CORPUS_O)
+ALL_T = $(CORPUS_A) $(CORPUS_T)
 ALL_A = $(CORPUS_A)
+
+
+# Products
 
 all: $(ALL_T)
 
 $(CORPUS_A): $(LIB_O)
 	$(AR) $@ $(LIB_O)
 	$(RANLIB) $@
+
+$(CORPUS_T): $(CORPUS_O) $(CORPUS_A)
+	$(CC) -o $@ $(LDFLAGS) $(CORPUS_O) $(CORPUS_A) $(LIBS)
+
 
 # Data
 
@@ -72,7 +82,7 @@ src/unicode/decompose.h: util/gen-decompose.py \
 
 
 # Tests
-#
+
 tests/check_data: tests/check_data.o tests/testutil.o $(CORPUS_A)
 	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS) $^
 
@@ -98,6 +108,8 @@ clean:
 
 check: $(TESTS_T) $(TESTS_T:=.test)
 
+data: $(DATA) $(TESTS_DATA)
+
 doc:
 	doxygen
 
@@ -107,13 +119,15 @@ doc:
 tests/%.o: tests/%.c
 	$(CC) -c $(CFLAGS) $(CHECK_CFLAGS) $(CPPFLAGS) $< -o $@
 
-.PHONY: all check clean doc
+.PHONY: all check clean data doc
+
 
 src/array.o: src/array.c src/errcode.h src/xalloc.h src/array.h
 src/data.o: src/data.c src/errcode.h src/table.h src/text.h src/token.h \
 	src/symtab.h src/schema.h src/data.h
 src/filebuf.o: src/filebuf.c src/array.h src/errcode.h src/xalloc.h \
     src/filebuf.h
+src/main.o: src/main.c
 src/schema.o: src/schema.c src/array.h src/errcode.h src/table.h src/text.h \
 	src/token.h src/symtab.h src/xalloc.h src/data.h src/schema.h
 src/symtab.o: src/symtab.c src/array.h src/errcode.h src/table.h src/text.h \

@@ -80,7 +80,7 @@ struct datatype {
 struct data {
 	union {
 		int bool_;		/**< value for #DATATYPE_BOOL */
-		double number		/**< value for #DATATYPE_NUMBER */
+		double number;		/**< value for #DATATYPE_NUMBER */
 		struct text text; 	/**< value for #DATATYPE_TEXT */
 		uint8_t *blob;		/**< value for #DATATYPE_ARRAY or
 						#DATATYPE_RECORD */

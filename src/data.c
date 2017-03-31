@@ -15,6 +15,7 @@
  */
 
 #include <ctype.h>
+#include <math.h>
 #include <syslog.h>
 #include "errcode.h"
 #include "table.h"
@@ -23,6 +24,8 @@
 #include "symtab.h"
 #include "schema.h"
 #include "data.h"
+
+double strntod_c(const char *string, size_t maxlen, char **endPtr);
 
 // compound types
 static int scan_field(struct schema *s, const uint8_t **bufptr,
@@ -40,8 +43,9 @@ static int scan_false(const uint8_t **bufptr, const uint8_t *end);
 static int scan_true(const uint8_t **bufptr, const uint8_t *end);
 static int scan_text(const uint8_t **bufptr, const uint8_t *end,
 		     struct text *text);
-static int scan_number(uint_fast8_t c, const uint8_t **bufptr,
-		       const uint8_t *end);
+static int decode_number(const uint8_t **bufptr, const uint8_t *end,
+		         double *valptr);
+static int scan_number(const uint8_t **bufptr, const uint8_t *end);
 static int scan_infinity(const uint8_t **bufptr, const uint8_t *end);
 static int scan_nan(const uint8_t **bufptr, const uint8_t *end);
 
@@ -53,12 +57,12 @@ static int scan_chars(const char *str, unsigned len, const uint8_t **bufptr,
 static int scan_char(char c, const uint8_t **bufptr, const uint8_t *end);
 
 
-
 int data_assign(struct data *d, struct schema *s, const uint8_t *ptr,
 		size_t size)
 {
 	const uint8_t *input = ptr;
 	const uint8_t *end = ptr + size;
+	uint_fast8_t ch;
 	int err, id;
 
 	// skip over leading whitespace
@@ -66,12 +70,65 @@ int data_assign(struct data *d, struct schema *s, const uint8_t *ptr,
 
 	// treat the empty string as null
 	if (ptr == end) {
-		id = DATATYPE_NULL;
+		d->type_id = DATATYPE_NULL;
 		goto success;
 	}
 
-	if ((err = scan_value(s, &ptr, end, &id))) {
-		goto error;
+	ch = *ptr++;
+	switch (ch) {
+	case 'n':
+		if ((err = scan_null(&ptr, end))) {
+			goto error;
+		}
+		d->type_id = DATATYPE_NULL;
+		break;
+
+	case 'f':
+		if ((err = scan_false(&ptr, end))) {
+			goto error;
+		}
+		d->value.bool_ = 0;
+		d->type_id = DATATYPE_BOOL;
+		break;
+
+	case 't':
+		if ((err = scan_true(&ptr, end))) {
+			goto error;
+		}
+		d->value.bool_ = 1;
+		d->type_id = DATATYPE_BOOL;
+		break;
+
+	case '"':
+		if ((err = scan_text(&ptr, end, &d->value.text))) {
+			goto error;
+		}
+		d->type_id = DATATYPE_TEXT;
+		break;
+
+	case '[':
+		d->value.blob = (uint8_t *)ptr;
+		if ((err = scan_array(s, &ptr, end, &id))) {
+			goto error;
+		}
+		d->type_id = id;
+		break;
+
+	case '{':
+		d->value.blob = (uint8_t *)ptr;
+		if ((err = scan_record(s, &ptr, end, &id))) {
+			goto error;
+		}
+		d->type_id = id;
+		break;
+
+	default:
+		ptr--;
+		if ((err = decode_number(&ptr, end, &d->value.number))) {
+			goto error;
+		}
+		d->type_id = DATATYPE_NUMBER;
+		break;
 	}
 
 	scan_spaces(&ptr, end);
@@ -87,11 +144,10 @@ success:
 error:
 	syslog(LOG_ERR, "failed parsing value (%.*s)", (unsigned)size, input);
 	err = ERROR_INVAL;
-	id = -1;
+	d->type_id = DATATYPE_ANY;
 	goto out;
 
 out:
-	d->type_id = id;
 	return err;
 }
 
@@ -147,7 +203,8 @@ int scan_value(struct schema *s, const uint8_t **bufptr, const uint8_t *end,
 		break;
 
 	default:
-		if ((err = scan_number(ch, &ptr, end))) {
+		ptr--;
+		if ((err = scan_number(&ptr, end))) {
 			goto error;
 		}
 		id = DATATYPE_NUMBER;
@@ -438,15 +495,19 @@ out:
 }
 
 
-int scan_number(uint_fast8_t ch, const uint8_t **bufptr, const uint8_t *end)
+int scan_number(const uint8_t **bufptr, const uint8_t *end)
 {
 	const uint8_t *ptr = *bufptr;
+	uint_fast8_t ch;
 	int err;
 
-	// skip over optional negative sign
-	if (ch == '-') {
+	ch = *ptr++;
+
+	// skip over optional sign
+	if (ch == '-' || ch == '+') {
 		if (ptr == end) {
-			syslog(LOG_ERR, "missing number after negative sign");
+			syslog(LOG_ERR, "missing number after (%c) sign",
+				(char)ch);
 			goto error_inval;
 		}
 		ch = *ptr++;
@@ -455,7 +516,6 @@ int scan_number(uint_fast8_t ch, const uint8_t **bufptr, const uint8_t *end)
 	// parse integer part, Infinity, or NaN
 	switch (ch) {
 	case '0':
-		break;
 	case '1':
 	case '2':
 	case '3':
@@ -467,16 +527,23 @@ int scan_number(uint_fast8_t ch, const uint8_t **bufptr, const uint8_t *end)
 	case '9':
 		scan_digits(&ptr, end);
 		break;
+
+	case '.':
+		ptr--;
+		break;
+
 	case 'I':
 		if ((err = scan_infinity(&ptr, end))) {
 			goto error_inval;
 		}
 		break;
+
 	case 'N':
 		if ((err = scan_nan(&ptr, end))) {
 			goto error_inval;
 		}
 		break;
+
 	default:
 		goto error_inval_start;
 	}
@@ -489,14 +556,6 @@ int scan_number(uint_fast8_t ch, const uint8_t **bufptr, const uint8_t *end)
 	// look ahead for optional fractional part
 	if (*ptr == '.') {
 		ptr++;
-		if (ptr == end) {
-			syslog(LOG_ERR, "missing number after decimal point");
-			goto error_inval;
-		}
-		ch = *ptr++;
-		if (!isdigit(ch)) {
-			goto error_inval_char;
-		}
 		scan_digits(&ptr, end);
 	}
 
@@ -522,7 +581,7 @@ int scan_number(uint_fast8_t ch, const uint8_t **bufptr, const uint8_t *end)
 			ch = *ptr++;
 		}
 
-		// mantissa
+		// exponent
 		if (!isdigit(ch)) {
 			goto error_inval_char;
 		}
@@ -554,6 +613,84 @@ error_inval_char:
 
 error_inval_exp:
 	syslog(LOG_ERR, "missing exponent at end of number");
+	goto error_inval;
+
+error_inval:
+	err = ERROR_INVAL;
+
+out:
+	*bufptr = ptr;
+	return err;
+}
+
+
+int decode_number(const uint8_t **bufptr, const uint8_t *end, double *valptr)
+{
+	const uint8_t *begin = *bufptr;
+	const uint8_t *ptr = begin;
+	uint_fast8_t ch;
+	double val;
+	int err;
+	int neg = 0;
+
+	val = strntod_c((char *)begin, end - begin, (char **)&ptr);
+	if (ptr != begin) {
+		*valptr = val;
+		err = 0;
+		goto out;
+	}
+
+	ptr = begin;
+	ch = *ptr++;
+
+	// skip over optional sign
+	if (ch == '-') {
+		if (ptr == end) {
+			syslog(LOG_ERR, "missing number after negative sign");
+			goto error_inval;
+		}
+		neg = 1;
+		ch = *ptr++;
+	} else if (ch == '+') {
+		if (ptr == end) {
+			syslog(LOG_ERR, "missing number after positive sign");
+			goto error_inval;
+		}
+		ch = *ptr++;
+	}
+
+	// parse integer part, Infinity, or NaN
+	switch (ch) {
+	case 'I':
+		if ((err = scan_infinity(&ptr, end))) {
+			goto error_inval;
+		}
+		*valptr = neg ? -INFINITY : INFINITY;
+		break;
+
+	case 'N':
+		if ((err = scan_nan(&ptr, end))) {
+			goto error_inval;
+		}
+		*valptr = NAN;
+		break;
+
+	default:
+		goto error_inval_start;
+		break;
+	}
+
+	err = 0;
+	goto out;
+
+error_inval_start:
+	if (isprint(ch)) {
+		syslog(LOG_ERR, "invalid character (%c) at start of value",
+		       (char)ch);
+	} else {
+		syslog(LOG_ERR, "invalid character (0x%02x) at start of value",
+		       (unsigned char)ch);
+	}
 	goto error_inval;
 
 error_inval:

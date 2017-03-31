@@ -15,6 +15,8 @@
  */
 
 #include <check.h>
+#include <float.h>
+#include <math.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -29,6 +31,9 @@
 #include "../src/data.h"
 #include "../src/schema.h"
 #include "testutil.h"
+
+#define STR_VALUE(x) #x
+#define STRING(x) STR_VALUE(x)
 
 struct schema schema;
 
@@ -91,9 +96,33 @@ int is_bool(const char *str)
 }
 
 
+int decode_bool(const char *str)
+{
+	struct data d;
+	size_t n = strlen(str);
+
+	ck_assert(!data_assign(&d, &schema, (const uint8_t *)str, n));
+	ck_assert(d.type_id == DATATYPE_BOOL);
+
+	return d.value.bool_;
+}
+
+
 int is_number(const char *str)
 {
 	return (get_type(str) == DATATYPE_NUMBER);
+}
+
+
+double decode_number(const char *str)
+{
+	struct data d;
+	size_t n = strlen(str);
+
+	ck_assert(!data_assign(&d, &schema, (const uint8_t *)str, n));
+	ck_assert(d.type_id == DATATYPE_NUMBER);
+
+	return d.value.number;
 }
 
 
@@ -203,6 +232,21 @@ START_TEST(test_invalid_bool)
 END_TEST
 
 
+START_TEST(test_decode_bool)
+{
+	ck_assert_int_eq(decode_bool("true"), 1);
+	ck_assert_int_eq(decode_bool("  true"), 1);
+	ck_assert_int_eq(decode_bool(" true "), 1);
+	ck_assert_int_eq(decode_bool("true  "), 1);
+
+	ck_assert_int_eq(decode_bool("false"), 0);
+	ck_assert_int_eq(decode_bool("  false"), 0);
+	ck_assert_int_eq(decode_bool(" false "), 0);
+	ck_assert_int_eq(decode_bool("false  "), 0);
+}
+END_TEST
+
+
 START_TEST(test_valid_number)
 {
 	ck_assert(is_number("31337"));
@@ -214,6 +258,13 @@ START_TEST(test_valid_number)
 	ck_assert(is_number("1e17"));
 	ck_assert(is_number("2.02e-07"));
 	ck_assert(is_number("5.0e+006"));
+
+	// not valid JSON, but accept anyway
+	ck_assert(is_number("+1"));
+	ck_assert(is_number("01"));
+	ck_assert(is_number("1."));
+	ck_assert(is_number(".1"));
+	ck_assert(is_number("-.1"));
 }
 END_TEST
 
@@ -222,8 +273,10 @@ START_TEST(test_valid_nonfinite)
 {
 	ck_assert(is_number("Infinity"));
 	ck_assert(is_number("-Infinity"));
+	ck_assert(is_number("+Infinity"));
 	ck_assert(is_number("NaN"));
 	ck_assert(is_number("-NaN"));
+	ck_assert(is_number("+NaN"));
 }
 END_TEST
 
@@ -231,12 +284,152 @@ END_TEST
 START_TEST(test_invalid_number)
 {
 	ck_assert(is_error("1a"));
-	ck_assert(is_error("+1"));
 	ck_assert(is_error("-"));
-	ck_assert(is_error("01"));
-	ck_assert(is_error("1."));
-	ck_assert(is_error(".1"));
-	ck_assert(is_error("-.1"));
+	ck_assert(is_error("1e"));
+	ck_assert(is_error("1E+"));
+
+	ck_assert(is_error("[1a]"));
+	ck_assert(is_error("[-]"));
+	ck_assert(is_error("[1e]"));
+	ck_assert(is_error("[1E+]"));
+}
+END_TEST
+
+
+START_TEST(test_valid_nested_number)
+{
+	ck_assert(get_type("[31337]") == Array(1, Number));
+	ck_assert(get_type("[123]") == Array(1, Number));
+	ck_assert(get_type("[-1]") == Array(1, Number));
+	ck_assert(get_type("[0]") == Array(1, Number));
+	ck_assert(get_type("[99]") == Array(1, Number));
+	ck_assert(get_type("[0.1]") == Array(1, Number));
+	ck_assert(get_type("[1e17]") == Array(1, Number));
+	ck_assert(get_type("[2.02e-07]") == Array(1, Number));
+	ck_assert(get_type("[5.0e+006]") == Array(1, Number));
+
+	// not valid JSON, but accept anyway
+	ck_assert(get_type("[+1]") == Array(1, Number));
+	ck_assert(get_type("[01]") == Array(1, Number));
+	ck_assert(get_type("[1.]") == Array(1, Number));
+	ck_assert(get_type("[.1]") == Array(1, Number));
+	ck_assert(get_type("[-.1]") == Array(1, Number));
+}
+END_TEST
+
+
+START_TEST(test_decode_number)
+{
+	ck_assert(decode_number("1") == 1);
+	ck_assert(decode_number("-1.0") == -1.0);
+	ck_assert(decode_number("314E-2") == 314E-2);
+
+	ck_assert(decode_number(STRING(DBL_MAX)) == DBL_MAX);
+	ck_assert(decode_number(STRING(DBL_MIN)) == DBL_MIN);
+	ck_assert(decode_number(STRING(DBL_EPSILON)) == DBL_EPSILON);
+}
+END_TEST
+
+
+START_TEST(test_decode_zero)
+{
+	ck_assert(decode_number("0") == 0);
+	ck_assert(decode_number("-0") == 0);
+	ck_assert(copysign(1, decode_number("-0") == -1));
+
+	// https://bugs.r-project.org/bugzilla/show_bug.cgi?id=15976
+	ck_assert(decode_number("0E4932") == 0);
+	ck_assert(decode_number("0E4933") == 0);
+	ck_assert(decode_number("0E-4932") == 0);
+	ck_assert(decode_number("0E-4933") == 0);
+
+	ck_assert(decode_number("-0e9999") == 0);
+	ck_assert(copysign(1, decode_number("-0e9999")) == -1);
+}
+END_TEST
+
+
+START_TEST(test_decode_huge_exponent)
+{
+	// https://bugs.r-project.org/bugzilla/show_bug.cgi?id=16358
+	ck_assert(decode_number("1e99") == 1e99);
+	ck_assert(decode_number("1e99999999999") == INFINITY);
+	ck_assert(decode_number("1e999999999999") == INFINITY);
+	ck_assert(decode_number("1e9999999999999") == INFINITY);
+	ck_assert(decode_number("1e99999999999999") == INFINITY);
+	ck_assert(decode_number("-1e99") == -1e99);
+	ck_assert(decode_number("-1e99999999999") == -INFINITY);
+	ck_assert(decode_number("-1e999999999999") == -INFINITY);
+	ck_assert(decode_number("-1e9999999999999") == -INFINITY);
+	ck_assert(decode_number("-1e99999999999999") == -INFINITY);
+}
+END_TEST
+
+
+START_TEST(test_decode_huge_mantissa)
+{
+	char buf[10240];
+	int i, ndig = 9999;
+
+	ck_assert(decode_number("144115188075855877")
+		  == 144115188075855877);
+	ck_assert(decode_number("2.328306436538696289075e+22")
+		  == 2.328306436538696289075e+22);
+
+	buf[0] = '1';
+	for (i = 0; i < ndig; i++) {
+		buf[i + 1] = '0';
+	}
+	buf[ndig + 1] = 'e';
+	buf[ndig + 2] = '-';
+	buf[ndig + 3] = '9';
+	buf[ndig + 4] = '9';
+	buf[ndig + 5] = '9';
+	buf[ndig + 6] = '9';
+	buf[ndig + 7] = '\0';
+	ck_assert(decode_number(buf) == 1);
+
+	buf[0] = '.';
+	buf[ndig] = '1';
+	buf[ndig + 2] = '+';
+	ck_assert(decode_number(buf) == 1);
+}
+END_TEST
+
+
+START_TEST(test_decode_leading_zeroes)
+{
+	ck_assert(decode_number("0000000000000000000001") == 1);
+	ck_assert(decode_number("0000000000000000000001.0") == 1);
+	ck_assert(decode_number(".0000000000000000000001") == 1e-22);
+	ck_assert(decode_number("00000000.000000000000001") == 1e-15);
+}
+END_TEST
+
+
+START_TEST(test_decode_subnormal)
+{
+	ck_assert(decode_number("123456789012345678e-300")
+		  == 123456789012345678e-300);
+
+	ck_assert(decode_number("123456789012345679e-300")
+		  == 123456789012345679e-300);
+
+	ck_assert(decode_number("4.940656458412465441766e-324")
+		  == DBL_EPSILON * DBL_MIN);
+
+	ck_assert(decode_number("2.2250738585072012e-308")
+		  == 2.2250738585072012e-308);
+}
+END_TEST
+
+
+START_TEST(test_decode_nonfinite)
+{
+	ck_assert(decode_number("Infinity") == INFINITY);
+	ck_assert(decode_number("-Infinity") == -INFINITY);
+	ck_assert(isnan(decode_number("NaN")));
+	ck_assert(isnan(decode_number("-NaN")));
 }
 END_TEST
 
@@ -397,6 +590,7 @@ Suite *data_suite(void)
         tcase_add_checked_fixture(tc, setup_data, teardown_data);
 	tcase_add_test(tc, test_valid_bool);
 	tcase_add_test(tc, test_invalid_bool);
+	tcase_add_test(tc, test_decode_bool);
 	suite_add_tcase(s, tc);
 
 	tc = tcase_create("number");
@@ -404,6 +598,14 @@ Suite *data_suite(void)
 	tcase_add_test(tc, test_valid_number);
 	tcase_add_test(tc, test_valid_nonfinite);
 	tcase_add_test(tc, test_invalid_number);
+	tcase_add_test(tc, test_valid_nested_number);
+	tcase_add_test(tc, test_decode_number);
+	tcase_add_test(tc, test_decode_zero);
+	tcase_add_test(tc, test_decode_huge_exponent);
+	tcase_add_test(tc, test_decode_huge_mantissa);
+	tcase_add_test(tc, test_decode_leading_zeroes);
+	tcase_add_test(tc, test_decode_subnormal);
+	tcase_add_test(tc, test_decode_nonfinite);
 	suite_add_tcase(s, tc);
 
 	tc = tcase_create("text");

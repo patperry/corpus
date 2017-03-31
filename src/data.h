@@ -28,45 +28,78 @@
 
 struct schema;
 
+/**
+ * A basic data type.
+ */
 enum datatype_kind {
-	DATATYPE_ANY = -1,
-	DATATYPE_NULL = 0,
-	DATATYPE_BOOL,
-	DATATYPE_NUMBER,
-	DATATYPE_TEXT,
-	DATATYPE_ARRAY,
-	DATATYPE_RECORD
+	DATATYPE_ANY = -1,	/**< universal (top), supertype of all others */
+	DATATYPE_NULL = 0,	/**< empty (bottom), subtype of all others */
+	DATATYPE_BOOL,		/**< boolean (true/false) value */
+	DATATYPE_NUMBER,	/**< floating-point number */
+	DATATYPE_TEXT,		/**< unicode text */
+	DATATYPE_ARRAY,		/**< array type */
+	DATATYPE_RECORD		/**< record type */
 };
 
+/**
+ * An array type, of fixed or variable length. Array elements all have the
+ * same type.
+ */
 struct datatype_array {
-	int type_id;
-	int length;
+	int type_id;	/**< the element type */
+	int length;	/**< the length (-1 for variable) */
 };
 
+/**
+ * A record type, with named fields. The fields are not ordered, so that
+ * we consider `{"a": 1, "b": true}` and `{"b": false, "a": 0}` to have the
+ * same type.
+ */
 struct datatype_record {
-	int *type_ids;
-	int *name_ids;
-	int nfield;
+	int *type_ids;	/**< the field types */
+	int *name_ids;	/**< the field names */
+	int nfield;	/**< the number of fields */
 };
 
+/**
+ * A data type.
+ */
 struct datatype {
-	int kind;
+	int kind;	/**< the kind of data type, a #datatype_kind value */
 	union {
 		struct datatype_array array;
+			/**< metadata for kind #DATATYPE_ARRAY */
 		struct datatype_record record;
-	} meta;
+			/**< metadata for kind #DATATYPE_RECORD */
+	} meta;		/**< the data type's metadata */
 };
 
+/**
+ * A typed data value.
+ */
 struct data {
 	union {
-		int bool_;
-		double number;
-		struct text text;
-		uint8_t *blob;
-	} value;
-	int type_id;
+		int bool_;		/**< value for #DATATYPE_BOOL */
+		double number		/**< value for #DATATYPE_NUMBER */
+		struct text text; 	/**< value for #DATATYPE_TEXT */
+		uint8_t *blob;		/**< value for #DATATYPE_ARRAY or
+						#DATATYPE_RECORD */
+	} value;			/**< the data value */
+	int type_id;			/**< the data type ID */
 };
 
+/**
+ * Assign a data value by parsing input in JavaScript Object Notation (JSON)
+ * format.
+ *
+ * \param d the data value
+ * \param s a schema to store the type information
+ * \param ptr input, UTF-8 encoded characters
+ * \param size size the input length, in bytes
+ *
+ * \returns 0 on success, nonzero for invalid input (a parse error), memory
+ * 	allocation failure, or overflow error
+ */
 int data_assign(struct data *d, struct schema *s, const uint8_t *ptr,
 		size_t size);
 

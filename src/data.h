@@ -34,7 +34,7 @@ struct schema;
 enum datatype_kind {
 	DATATYPE_ANY = -1,	/**< universal (top), supertype of all others */
 	DATATYPE_NULL = 0,	/**< empty (bottom), subtype of all others */
-	DATATYPE_BOOL,		/**< boolean (true/false) value */
+	DATATYPE_BOOLEAN,	/**< boolean (true/false) value */
 	DATATYPE_NUMBER,	/**< floating-point number */
 	DATATYPE_TEXT,		/**< unicode text */
 	DATATYPE_ARRAY,		/**< array type */
@@ -79,7 +79,7 @@ struct datatype {
  */
 struct data {
 	union {
-		int bool_;		/**< value for #DATATYPE_BOOL */
+		int boolean;		/**< value for #DATATYPE_BOOLEAN */
 		double number;		/**< value for #DATATYPE_NUMBER */
 		struct text text; 	/**< value for #DATATYPE_TEXT */
 		uint8_t *blob;		/**< value for #DATATYPE_ARRAY or

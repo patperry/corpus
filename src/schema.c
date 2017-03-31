@@ -672,8 +672,8 @@ int write_datatype(FILE *stream, const struct schema *s, int id)
 		}
 		break;
 
-	case DATATYPE_BOOL:
-		if (fprintf(stream, "bool") < 0) {
+	case DATATYPE_BOOLEAN:
+		if (fprintf(stream, "boolean") < 0) {
 			goto error_os;
 		}
 		break;

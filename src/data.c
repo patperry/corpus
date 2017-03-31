@@ -87,16 +87,16 @@ int data_assign(struct data *d, struct schema *s, const uint8_t *ptr,
 		if ((err = scan_false(&ptr, end))) {
 			goto error;
 		}
-		d->value.bool_ = 0;
-		d->type_id = DATATYPE_BOOL;
+		d->value.boolean = 0;
+		d->type_id = DATATYPE_BOOLEAN;
 		break;
 
 	case 't':
 		if ((err = scan_true(&ptr, end))) {
 			goto error;
 		}
-		d->value.bool_ = 1;
-		d->type_id = DATATYPE_BOOL;
+		d->value.boolean = 1;
+		d->type_id = DATATYPE_BOOLEAN;
 		break;
 
 	case '"':
@@ -173,14 +173,14 @@ int scan_value(struct schema *s, const uint8_t **bufptr, const uint8_t *end,
 		if ((err = scan_false(&ptr, end))) {
 			goto error;
 		}
-		id = DATATYPE_BOOL;
+		id = DATATYPE_BOOLEAN;
 		break;
 
 	case 't':
 		if ((err = scan_true(&ptr, end))) {
 			goto error;
 		}
-		id = DATATYPE_BOOL;
+		id = DATATYPE_BOOLEAN;
 		break;
 
 	case '"':

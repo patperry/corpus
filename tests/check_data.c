@@ -38,7 +38,7 @@
 struct schema schema;
 
 const int Null = DATATYPE_NULL;
-const int Bool = DATATYPE_BOOL;
+const int Boolean = DATATYPE_BOOLEAN;
 const int Number = DATATYPE_NUMBER;
 const int Text = DATATYPE_TEXT;
 const int Any = DATATYPE_ANY;
@@ -90,21 +90,21 @@ int is_null(const char *str)
 }
 
 
-int is_bool(const char *str)
+int is_boolean(const char *str)
 {
-	return (get_type(str) == DATATYPE_BOOL);
+	return (get_type(str) == DATATYPE_BOOLEAN);
 }
 
 
-int decode_bool(const char *str)
+int decode_boolean(const char *str)
 {
 	struct data d;
 	size_t n = strlen(str);
 
 	ck_assert(!data_assign(&d, &schema, (const uint8_t *)str, n));
-	ck_assert(d.type_id == DATATYPE_BOOL);
+	ck_assert(d.type_id == DATATYPE_BOOLEAN);
 
-	return d.value.bool_;
+	return d.value.boolean;
 }
 
 
@@ -211,19 +211,19 @@ START_TEST(test_invalid_null)
 END_TEST
 
 
-START_TEST(test_valid_bool)
+START_TEST(test_valid_boolean)
 {
-	ck_assert(is_bool("false"));
-	ck_assert(is_bool("true"));
+	ck_assert(is_boolean("false"));
+	ck_assert(is_boolean("true"));
 
-	ck_assert(is_bool("  true"));
-	ck_assert(is_bool("    true "));
-	ck_assert(is_bool("false   "));
+	ck_assert(is_boolean("  true"));
+	ck_assert(is_boolean("    true "));
+	ck_assert(is_boolean("false   "));
 }
 END_TEST
 
 
-START_TEST(test_invalid_bool)
+START_TEST(test_invalid_boolean)
 {
 	ck_assert(is_error("tru"));
 	ck_assert(is_error("true1"));
@@ -232,17 +232,17 @@ START_TEST(test_invalid_bool)
 END_TEST
 
 
-START_TEST(test_decode_bool)
+START_TEST(test_decode_boolean)
 {
-	ck_assert_int_eq(decode_bool("true"), 1);
-	ck_assert_int_eq(decode_bool("  true"), 1);
-	ck_assert_int_eq(decode_bool(" true "), 1);
-	ck_assert_int_eq(decode_bool("true  "), 1);
+	ck_assert_int_eq(decode_boolean("true"), 1);
+	ck_assert_int_eq(decode_boolean("  true"), 1);
+	ck_assert_int_eq(decode_boolean(" true "), 1);
+	ck_assert_int_eq(decode_boolean("true  "), 1);
 
-	ck_assert_int_eq(decode_bool("false"), 0);
-	ck_assert_int_eq(decode_bool("  false"), 0);
-	ck_assert_int_eq(decode_bool(" false "), 0);
-	ck_assert_int_eq(decode_bool("false  "), 0);
+	ck_assert_int_eq(decode_boolean("false"), 0);
+	ck_assert_int_eq(decode_boolean("  false"), 0);
+	ck_assert_int_eq(decode_boolean(" false "), 0);
+	ck_assert_int_eq(decode_boolean("false  "), 0);
 }
 END_TEST
 
@@ -485,11 +485,11 @@ START_TEST(test_valid_record)
 	ck_assert(get_type("{}") == Record(0));
 	ck_assert_typ_eq(get_type("{\"a\":\"b\"}"), Record(1, "a", Text));
 	ck_assert(get_type("{\"x\":1, \"y\":true}")
-		  == Record(2, "x", Number, "y", Bool));
+		  == Record(2, "x", Number, "y", Boolean));
 
 	// field order doesn't matter
 	ck_assert(get_type("{\"y\":false, \"x\":-1e14}")
-		  == Record(2, "x", Number, "y", Bool));
+		  == Record(2, "x", Number, "y", Boolean));
 }
 END_TEST
 
@@ -497,10 +497,10 @@ END_TEST
 START_TEST(test_equal_record)
 {
 	ck_assert(Record(1, "a", Text) == Record(1, "a", Text));
-	ck_assert(Record(2, "x", Number, "y", Bool)
-		  == Record(2, "x", Number, "y", Bool));
-	ck_assert(Record(2, "x", Number, "y", Bool)
-		  == Record(2, "y", Bool, "x", Number));
+	ck_assert(Record(2, "x", Number, "y", Boolean)
+		  == Record(2, "x", Number, "y", Boolean));
+	ck_assert(Record(2, "x", Number, "y", Boolean)
+		  == Record(2, "y", Boolean, "x", Number));
 }
 END_TEST
 
@@ -509,7 +509,7 @@ START_TEST(test_nested_record)
 {
 	assert_types_equal(get_type("{ \"outer_a\": true, \
 			      \"outer_b\": { \"re\": 0, \"im\": null } }"),
-			   Record(2, "outer_a", Bool, "outer_b",
+			   Record(2, "outer_a", Boolean, "outer_b",
 				     Record(2, "re", Number, "im", Null)));
 
 }
@@ -550,12 +550,12 @@ START_TEST(test_union_array)
 {
 	ck_assert(Union(Array(3, Null), Array(3, Text)) == Array(3, Text));
 	ck_assert(Union(Array(0, Text), Array(3, Text)) == Array(-1, Text));
-	ck_assert(Union(Array(5, Array(2, Bool)), Array(5, Array(2, Null)))
-		  == Array(5, Array(2, Bool)));
-	ck_assert(Union(Array(5, Array(2, Bool)), Array(5, Array(0, Null)))
-		  == Array(5, Array(-1, Bool)));
-	ck_assert(Union(Array(5, Array(2, Bool)), Array(4, Array(0, Null)))
-		  == Array(-1, Array(-1, Bool)));
+	ck_assert(Union(Array(5, Array(2, Boolean)), Array(5, Array(2, Null)))
+		  == Array(5, Array(2, Boolean)));
+	ck_assert(Union(Array(5, Array(2, Boolean)), Array(5, Array(0, Null)))
+		  == Array(5, Array(-1, Boolean)));
+	ck_assert(Union(Array(5, Array(2, Boolean)), Array(4, Array(0, Null)))
+		  == Array(-1, Array(-1, Boolean)));
 }
 END_TEST
 
@@ -567,8 +567,8 @@ START_TEST(test_union_record)
 	ck_assert(Union(Record(1, "a", Text), Record(1, "a", Number))
 		  == Record(1, "a", Any));
 	ck_assert(Union(Record(2, "a", Text, "b", Null),
-			Record(2, "b", Number, "c", Bool))
-		  == Record(3, "a", Text, "b", Number, "c", Bool));
+			Record(2, "b", Number, "c", Boolean))
+		  == Record(3, "a", Text, "b", Number, "c", Boolean));
 }
 END_TEST 
 
@@ -586,11 +586,11 @@ Suite *data_suite(void)
 	tcase_add_test(tc, test_invalid_null);
 	suite_add_tcase(s, tc);
 
-	tc = tcase_create("bool");
+	tc = tcase_create("boolean");
         tcase_add_checked_fixture(tc, setup_data, teardown_data);
-	tcase_add_test(tc, test_valid_bool);
-	tcase_add_test(tc, test_invalid_bool);
-	tcase_add_test(tc, test_decode_bool);
+	tcase_add_test(tc, test_valid_boolean);
+	tcase_add_test(tc, test_invalid_boolean);
+	tcase_add_test(tc, test_decode_boolean);
 	suite_add_tcase(s, tc);
 
 	tc = tcase_create("number");

@@ -35,6 +35,11 @@ static int buffer_init(struct schema_buffer *buf);
 static void buffer_destroy(struct schema_buffer *buf);
 static int buffer_grow(struct schema_buffer *buf, int nadd);
 
+static int sorter_init(struct schema_sorter *sort);
+static void sorter_destroy(struct schema_sorter *sort);
+static int sorter_sort(struct schema_sorter *sort, const int *ptr, int n);
+static int sorter_reserve(struct schema_sorter *sort, int nfield);
+
 static int schema_has_array(const struct schema *s, int type_id, int length,
 			    int *idptr);
 static int schema_has_record(const struct schema *s, const int *type_ids,
@@ -43,6 +48,8 @@ static int schema_has_record(const struct schema *s, const int *type_ids,
 static int schema_union_array(struct schema *s, int id1, int id2, int *idptr);
 static int schema_union_record(struct schema *s, int id1, int id2, int *idptr);
 static int schema_grow_types(struct schema *s, int nadd);
+
+static int is_sorted(const int *ids, int n);
 
 // compound types
 static int scan_field(struct schema *s, const uint8_t **bufptr,
@@ -97,7 +104,7 @@ int buffer_grow(struct schema_buffer *buf, int nadd)
 	int size = buf->nfield_max;
 	int err;
 
-	if ((err = array_grow(&tbase, &size, sizeof(buf->type_ids),
+	if ((err = array_grow(&tbase, &size, sizeof(*buf->type_ids),
 			      buf->nfield, nadd))) {
 		syslog(LOG_ERR, "failed allocating schema buffer");
 		return err;
@@ -123,6 +130,70 @@ int buffer_grow(struct schema_buffer *buf, int nadd)
 }
 
 
+int sorter_init(struct schema_sorter *sort)
+{
+	sort->idptrs = NULL;
+	sort->size = 0;
+	return 0;
+}
+
+
+void sorter_destroy(struct schema_sorter *sort)
+{
+	free(sort->idptrs);
+}
+
+
+static int idptr_cmp(const void *x1, const void *x2)
+{
+	int id1 = **(const int **)x1;
+	int id2 = **(const int **)x2;
+	return id1 - id2;
+}
+
+
+int sorter_sort(struct schema_sorter *sort, const int *ptr, int n)
+{
+	int i;
+	int err;
+
+	if ((err = sorter_reserve(sort, n))) {
+		goto out;
+	}
+
+	for (i = 0; i < n; i++) {
+		sort->idptrs[i] = ptr + i;
+	}
+
+	qsort(sort->idptrs, n, sizeof(*sort->idptrs), idptr_cmp);
+out:
+	return err;
+}
+
+
+int sorter_reserve(struct schema_sorter *sort, int length)
+{
+	void *base = sort->idptrs;
+	int n = sort->size;
+	int nadd;
+	int err;
+
+	if (n >= length) {
+		return 0;
+	}
+
+	nadd = length - n;
+
+	if ((err = array_grow(&base, &n, sizeof(*sort->idptrs), n, nadd))) {
+		syslog(LOG_ERR, "failed allocating schema sorter");
+		return err;
+	}
+	sort->idptrs = base;
+	sort->size = n;
+	return 0;
+}
+
+
 int schema_init(struct schema *s)
 {
 	int i, n;
@@ -130,6 +201,10 @@ int schema_init(struct schema *s)
 
 	if ((err = buffer_init(&s->buffer))) {
 		goto error_buffer;
+	}
+
+	if ((err = sorter_init(&s->sorter))) {
+		goto error_sorter;
 	}
 
 	if ((err = symtab_init(&s->names, 0))) {
@@ -153,6 +228,8 @@ int schema_init(struct schema *s)
 error_types:
 	symtab_destroy(&s->names);
 error_names:
+	sorter_destroy(&s->sorter);
+error_sorter:
 	buffer_destroy(&s->buffer);
 error_buffer:
 	return err;
@@ -164,6 +241,7 @@ void schema_destroy(struct schema *s)
 	schema_clear(s);
 	free(s->types);
 	symtab_destroy(&s->names);
+	sorter_destroy(&s->sorter);
 	buffer_destroy(&s->buffer);
 }
 
@@ -285,11 +363,41 @@ int schema_record(struct schema *s, const int *type_ids, const int *name_ids,
 		  int nfield, int *idptr)
 {
 	struct datatype *t;
-	int id;
+	int i, id, index, fstart, did_copy = 0;
 	int err;
 
+	if (is_sorted(name_ids, nfield)) {
+		goto sorted;
+	}
+
+	if ((err = sorter_sort(&s->sorter, name_ids, nfield))) {
+		goto error;
+	}
+
+	if ((err = buffer_grow(&s->buffer, nfield))) {
+		goto error;
+	}
+
+	fstart = s->buffer.nfield;
+	s->buffer.nfield += nfield;
+	did_copy = 1;
+
+	for (i = 0; i < nfield; i++) {
+		index = s->sorter.idptrs[i] - name_ids;
+		s->buffer.type_ids[fstart + i] = type_ids[index];
+		s->buffer.name_ids[fstart + i] = name_ids[index];
+
+		if (i > 0 && s->buffer.name_ids[fstart + i] ==
+				s->buffer.name_ids[fstart + i - 1]) {
+			goto error_duplicate;
+		}
+	}
+
+	type_ids = s->buffer.type_ids + fstart;
+	name_ids = s->buffer.name_ids + fstart;
+
+sorted:
 	if (schema_has_record(s, type_ids, name_ids, nfield, &id)) {
-		syslog(LOG_DEBUG, "record exists");
 		err = 0;
 		goto out;
 	}
@@ -328,11 +436,21 @@ int schema_record(struct schema *s, const int *type_ids, const int *name_ids,
 	err = 0;
 	goto out;
 
+error_duplicate:
+	syslog(LOG_ERR, "duplicate field name \"%.*s\" in record",
+		(int)TEXT_SIZE(&s->names.types[name_ids[index]].text),
+		s->names.types[name_ids[index]].text.ptr);
+	err = ERROR_INVAL;
+	goto out;
+
 error:
 	syslog(LOG_ERR, "failed adding record type");
 	id = DATATYPE_ANY;
 
 out:
+	if (did_copy) {
+		s->buffer.nfield = fstart;
+	}
 	if (idptr) {
 		*idptr = id;
 	}
@@ -588,6 +706,22 @@ error_os:
 error:
 out:
 	return err;
+}
+
+
+int is_sorted(const int *ids, int n)
+{
+	int i;
+
+	if (n > 1) {
+		for (i = 0; i < n - 1; i++) {
+			if (ids[i] >= ids[i+1]) {
+				return 0;
+			}
+		}
+	}
+
+	return 1;
 }
 
 

@@ -61,8 +61,14 @@ struct schema_buffer {
 	int nfield, nfield_max;
 };
 
+struct schema_sorter {
+	const int **idptrs;
+	int size;
+};
+
 struct schema {
 	struct schema_buffer buffer;
+	struct schema_sorter sorter;
 	struct symtab names;
 	struct datatype *types;
 	int ntype, ntype_max;

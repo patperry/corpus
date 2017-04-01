@@ -25,6 +25,11 @@
 
 #include <stdio.h>
 
+int bool_assign(int *valptr, const uint8_t *ptr, size_t size, int nullval);
+int int_assign(int *valptr, const uint8_t *ptr, size_t size, int nullval);
+int double_assign(double *valptr, const uint8_t *ptr, size_t size,
+		  double nullval);
+
 /**
  * Used internally to store record (name,type) field descriptors.
  */
@@ -124,6 +129,8 @@ int schema_record(struct schema *s, const int *type_ids, const int *name_ids,
  * \returns 0 on success
  */
 int schema_union(struct schema *s, int id1, int id2, int *idptr);
+
+int schema_scan(struct schema *s, const uint8_t *ptr, size_t size, int *idptr);
 
 /**
  * Write a textual representation of a data type to the specified stream.

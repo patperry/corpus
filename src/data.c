@@ -15,6 +15,7 @@
  */
 
 #include <ctype.h>
+#include <inttypes.h>
 #include <math.h>
 #include <syslog.h>
 #include "errcode.h"
@@ -26,6 +27,7 @@
 #include "data.h"
 
 double strntod_c(const char *string, size_t maxlen, char **endPtr);
+intmax_t strntoimax(const char *string, size_t maxlen, char **endptr);
 
 // compound types
 static int scan_field(struct schema *s, const uint8_t **bufptr,
@@ -43,9 +45,7 @@ static int scan_false(const uint8_t **bufptr, const uint8_t *end);
 static int scan_true(const uint8_t **bufptr, const uint8_t *end);
 static int scan_text(const uint8_t **bufptr, const uint8_t *end,
 		     struct text *text);
-static int decode_number(const uint8_t **bufptr, const uint8_t *end,
-		         double *valptr);
-static int scan_number(const uint8_t **bufptr, const uint8_t *end);
+static int scan_numeric(const uint8_t **bufptr, const uint8_t *end, int *idptr);
 static int scan_infinity(const uint8_t **bufptr, const uint8_t *end);
 static int scan_nan(const uint8_t **bufptr, const uint8_t *end);
 
@@ -57,9 +57,9 @@ static int scan_chars(const char *str, unsigned len, const uint8_t **bufptr,
 static int scan_char(char c, const uint8_t **bufptr, const uint8_t *end);
 
 
-int data_assign(struct data *d, struct schema *s, const uint8_t *ptr,
-		size_t size)
+int schema_scan(struct schema *s, const uint8_t *ptr, size_t size, int *idptr)
 {
+	struct text text;
 	const uint8_t *input = ptr;
 	const uint8_t *end = ptr + size;
 	uint_fast8_t ch;
@@ -70,7 +70,7 @@ int data_assign(struct data *d, struct schema *s, const uint8_t *ptr,
 
 	// treat the empty string as null
 	if (ptr == end) {
-		d->type_id = DATATYPE_NULL;
+		id = DATATYPE_NULL;
 		goto success;
 	}
 
@@ -80,54 +80,47 @@ int data_assign(struct data *d, struct schema *s, const uint8_t *ptr,
 		if ((err = scan_null(&ptr, end))) {
 			goto error;
 		}
-		d->type_id = DATATYPE_NULL;
+		id = DATATYPE_NULL;
 		break;
 
 	case 'f':
 		if ((err = scan_false(&ptr, end))) {
 			goto error;
 		}
-		d->value.boolean = 0;
-		d->type_id = DATATYPE_BOOLEAN;
+		id = DATATYPE_BOOLEAN;
 		break;
 
 	case 't':
 		if ((err = scan_true(&ptr, end))) {
 			goto error;
 		}
-		d->value.boolean = 1;
-		d->type_id = DATATYPE_BOOLEAN;
+		id = DATATYPE_BOOLEAN;
 		break;
 
 	case '"':
-		if ((err = scan_text(&ptr, end, &d->value.text))) {
+		if ((err = scan_text(&ptr, end, &text))) {
 			goto error;
 		}
-		d->type_id = DATATYPE_TEXT;
+		id = DATATYPE_TEXT;
 		break;
 
 	case '[':
-		d->value.blob = (uint8_t *)ptr;
 		if ((err = scan_array(s, &ptr, end, &id))) {
 			goto error;
 		}
-		d->type_id = id;
 		break;
 
 	case '{':
-		d->value.blob = (uint8_t *)ptr;
 		if ((err = scan_record(s, &ptr, end, &id))) {
 			goto error;
 		}
-		d->type_id = id;
 		break;
 
 	default:
 		ptr--;
-		if ((err = decode_number(&ptr, end, &d->value.number))) {
+		if ((err = scan_numeric(&ptr, end, &id))) {
 			goto error;
 		}
-		d->type_id = DATATYPE_NUMBER;
 		break;
 	}
 
@@ -144,10 +137,12 @@ success:
 error:
 	syslog(LOG_ERR, "failed parsing value (%.*s)", (unsigned)size, input);
 	err = ERROR_INVAL;
-	d->type_id = DATATYPE_ANY;
 	goto out;
 
 out:
+	if (idptr) {
+		*idptr = id;
+	}
 	return err;
 }
 
@@ -204,10 +199,9 @@ int scan_value(struct schema *s, const uint8_t **bufptr, const uint8_t *end,
 
 	default:
 		ptr--;
-		if ((err = scan_number(&ptr, end))) {
+		if ((err = scan_numeric(&ptr, end, &id))) {
 			goto error;
 		}
-		id = DATATYPE_NUMBER;
 		break;
 	}
 
@@ -495,12 +489,14 @@ out:
 }
 
 
-int scan_number(const uint8_t **bufptr, const uint8_t *end)
+int scan_numeric(const uint8_t **bufptr, const uint8_t *end, int *idptr)
 {
 	const uint8_t *ptr = *bufptr;
 	uint_fast8_t ch;
+	int id;
 	int err;
 
+	id = DATATYPE_INTEGER;
 	ch = *ptr++;
 
 	// skip over optional sign
@@ -533,12 +529,14 @@ int scan_number(const uint8_t **bufptr, const uint8_t *end)
 		break;
 
 	case 'I':
+		id = DATATYPE_REAL;
 		if ((err = scan_infinity(&ptr, end))) {
 			goto error_inval;
 		}
 		break;
 
 	case 'N':
+		id = DATATYPE_REAL;
 		if ((err = scan_nan(&ptr, end))) {
 			goto error_inval;
 		}
@@ -555,6 +553,7 @@ int scan_number(const uint8_t **bufptr, const uint8_t *end)
 
 	// look ahead for optional fractional part
 	if (*ptr == '.') {
+		id = DATATYPE_REAL;
 		ptr++;
 		scan_digits(&ptr, end);
 	}
@@ -566,6 +565,7 @@ int scan_number(const uint8_t **bufptr, const uint8_t *end)
 
 	// look ahead for optional exponent
 	if (*ptr == 'e' || *ptr == 'E') {
+		id = DATATYPE_REAL;
 		ptr++;
 		if (ptr == end) {
 			goto error_inval_exp;
@@ -574,7 +574,6 @@ int scan_number(const uint8_t **bufptr, const uint8_t *end)
 
 		// optional sign
 		if (ch == '-' || ch == '+') {
-			ptr++;
 			if (ptr == end) {
 				goto error_inval_exp;
 			}
@@ -620,20 +619,64 @@ error_inval:
 
 out:
 	*bufptr = ptr;
+	*idptr = id;
 	return err;
 }
 
 
-int decode_number(const uint8_t **bufptr, const uint8_t *end, double *valptr)
+int bool_assign(int *valptr, const uint8_t *ptr, size_t size, int nullval)
 {
-	const uint8_t *begin = *bufptr;
-	const uint8_t *ptr = begin;
+	const uint8_t *end = ptr + size;
+	int val;
+	int err;
+
+	scan_spaces(&ptr, end);
+
+	if (ptr == end || *ptr == 'n') {
+		val = nullval;
+		err = 0;
+		goto out;
+	} else if (*ptr == 't') {
+		val = 1;
+	} else {
+		val = 0;
+	}
+	err = 0;
+out:
+	*valptr = val;
+	return err;
+}
+
+
+int int_assign(int *valptr, const uint8_t *ptr, size_t size, int nullval)
+{
+	(void)ptr;
+	(void)size;
+	(void)nullval;
+	*valptr = 0;
+	return 0;
+}
+
+
+int double_assign(double *valptr, const uint8_t *ptr, size_t size,
+		  double nullval)
+{
+	const uint8_t *end = ptr + size;
+	const uint8_t *begin;
 	uint_fast8_t ch;
 	double val;
 	int err;
 	int neg = 0;
 
-	val = strntod_c((char *)begin, end - begin, (char **)&ptr);
+	scan_spaces(&ptr, end);
+	if (ptr == end) {
+		*valptr = nullval;
+		err = 0;
+		goto out;
+	}
+
+	begin = ptr;
+	val = strntod_c((char *)ptr, end - ptr, (char **)&ptr);
 	if (ptr != begin) {
 		*valptr = val;
 		err = 0;
@@ -675,6 +718,13 @@ int decode_number(const uint8_t **bufptr, const uint8_t *end, double *valptr)
 		*valptr = NAN;
 		break;
 
+	case 'n':
+		if ((err = scan_null(&ptr, end))) {
+			goto error_inval;
+		}
+		*valptr = nullval;
+		break;
+
 	default:
 		goto error_inval_start;
 		break;
@@ -697,7 +747,6 @@ error_inval:
 	err = ERROR_INVAL;
 
 out:
-	*bufptr = ptr;
 	return err;
 }
 

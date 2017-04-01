@@ -35,7 +35,8 @@ enum datatype_kind {
 	DATATYPE_ANY = -1,	/**< universal (top), supertype of all others */
 	DATATYPE_NULL = 0,	/**< empty (bottom), subtype of all others */
 	DATATYPE_BOOLEAN,	/**< boolean (true/false) value */
-	DATATYPE_NUMBER,	/**< floating-point number */
+	DATATYPE_INTEGER,	/**< integer-valued number */
+	DATATYPE_REAL,		/**< real-valued floating point number */
 	DATATYPE_TEXT,		/**< unicode text */
 	DATATYPE_ARRAY,		/**< array type */
 	DATATYPE_RECORD		/**< record type */
@@ -80,7 +81,8 @@ struct datatype {
 struct data {
 	union {
 		int boolean;		/**< value for #DATATYPE_BOOLEAN */
-		double number;		/**< value for #DATATYPE_NUMBER */
+		double number;		/**< value for #DATATYPE_INTEGER or 
+					  DATATYPE_REAL */
 		struct text text; 	/**< value for #DATATYPE_TEXT */
 		uint8_t *blob;		/**< value for #DATATYPE_ARRAY or
 						#DATATYPE_RECORD */

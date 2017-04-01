@@ -15,9 +15,9 @@ CHECK_LIBS = `pkg-config --libs check`
 UNICODE = http://www.unicode.org/Public/8.0.0
 
 CORPUS_A = libcorpus.a
-LIB_O	= lib/strntod_c.o src/array.o src/data.o src/filebuf.o src/schema.o \
-		  src/symtab.o src/table.o src/text.o src/token.o src/unicode.o \
-		  src/xalloc.o
+LIB_O	= lib/strntod_c.o lib/strntoimax.o src/array.o src/data.o \
+		  src/filebuf.o src/schema.o src/symtab.o src/table.o src/text.o \
+		  src/token.o src/unicode.o src/xalloc.o
 
 CORPUS_T = corpus
 CORPUS_O = src/main.o

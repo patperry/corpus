@@ -27,7 +27,7 @@
 #include "data.h"
 #include "schema.h"
 
-#define NUM_ATOMIC	4
+#define NUM_ATOMIC	5
 
 static int schema_buffer_init(struct schema_buffer *buf);
 static void schema_buffer_destroy(struct schema_buffer *buf);
@@ -464,15 +464,34 @@ int schema_union(struct schema *s, int id1, int id2, int *idptr)
 	int id;
 	int err = 0;
 
-	if (id1 == DATATYPE_NULL || id1 == id2) {
-		id = id2;
-		goto out;
-	} else if (id2 == DATATYPE_NULL) {
+	if (id1 == id2 || id2 == DATATYPE_NULL) {
 		id = id1;
 		goto out;
-	} else if (id1 == DATATYPE_ANY || id2 == DATATYPE_ANY) {
+	}
+
+	if (id1 == DATATYPE_ANY || id2 == DATATYPE_ANY) {
 		id = DATATYPE_ANY;
 		goto out;
+	}
+
+	switch (id1) {
+	case DATATYPE_NULL:
+		id = id2;
+		goto out;
+
+	case DATATYPE_INTEGER:
+		if (id2 == DATATYPE_REAL) {
+			id = DATATYPE_REAL;
+			goto out;
+		}
+		break;
+
+	case DATATYPE_REAL:
+		if (id2 == DATATYPE_INTEGER) {
+			id = DATATYPE_REAL;
+			goto out;
+		}
+		break;
 	}
 
 	// if we got here, then neither kind is Null or Any
@@ -678,8 +697,14 @@ int write_datatype(FILE *stream, const struct schema *s, int id)
 		}
 		break;
 
-	case DATATYPE_NUMBER:
-		if (fprintf(stream, "number") < 0) {
+	case DATATYPE_INTEGER:
+		if (fprintf(stream, "integer") < 0) {
+			goto error_os;
+		}
+		break;
+
+	case DATATYPE_REAL:
+		if (fprintf(stream, "real") < 0) {
 			goto error_os;
 		}
 		break;

@@ -16,8 +16,8 @@ UNICODE = http://www.unicode.org/Public/8.0.0
 
 CORPUS_A = libcorpus.a
 LIB_O	= lib/strntod_c.o lib/strntoimax.o src/array.o src/data.o \
-		  src/filebuf.o src/schema.o src/symtab.o src/table.o src/text.o \
-		  src/token.o src/unicode.o src/xalloc.o
+		  src/datatype.o src/filebuf.o src/symtab.o src/table.o \
+		  src/text.o src/token.o src/unicode.o src/xalloc.o
 
 CORPUS_T = corpus
 CORPUS_O = src/main.o
@@ -124,12 +124,12 @@ tests/%.o: tests/%.c
 
 src/array.o: src/array.c src/errcode.h src/xalloc.h src/array.h
 src/data.o: src/data.c src/errcode.h src/table.h src/text.h src/token.h \
-	src/symtab.h src/schema.h src/data.h
+	src/symtab.h src/datatype.h src/data.h
+src/datatype.o: src/datatype.c src/array.h src/errcode.h src/table.h \
+	src/text.h src/token.h src/symtab.h src/xalloc.h src/data.h src/datatype.h
 src/filebuf.o: src/filebuf.c src/array.h src/errcode.h src/xalloc.h \
     src/filebuf.h
 src/main.o: src/main.c
-src/schema.o: src/schema.c src/array.h src/errcode.h src/table.h src/text.h \
-	src/token.h src/symtab.h src/xalloc.h src/data.h src/schema.h
 src/symtab.o: src/symtab.c src/array.h src/errcode.h src/table.h src/text.h \
 	src/token.h src/xalloc.h src/symtab.h
 src/table.o: src/table.c src/errcode.h src/xalloc.h src/table.h
@@ -142,7 +142,7 @@ src/value.o: src/value.c src/value.h
 src/xalloc.o: src/xalloc.c src/xalloc.h
 
 tests/check_data.o: tests/check_data.c src/errcode.h src/table.h src/text.h \
-	src/token.h src/symtab.h src/data.h src/schema.h tests/testutil.h
+	src/token.h src/symtab.h src/data.h src/datatype.h tests/testutil.h
 tests/check_symtab.o: tests/check_symtab.c src/table.h src/text.h src/token.h \
 	src/symtab.h tests/testutil.h
 tests/check_text.o: tests/check_text.c src/text.h src/unicode.h tests/testutil.h

@@ -26,7 +26,7 @@
 #include "symtab.h"
 #include "xalloc.h"
 #include "data.h"
-#include "schema.h"
+#include "datatype.h"
 
 #define NUM_ATOMIC	5
 
@@ -771,7 +771,7 @@ int write_datatype(FILE *stream, const struct schema *s, int id)
 				goto error_os;
 			}
 		}
-		if (fprintf(stream, "] (#%d)", id) < 0) {
+		if (fprintf(stream, "]") < 0) {
 			goto error_os;
 		}
 		break;
@@ -801,7 +801,7 @@ int write_datatype(FILE *stream, const struct schema *s, int id)
 			}
 		}
 
-		if (fprintf(stream, "} (#%d)", id) < 0) {
+		if (fprintf(stream, "}") < 0) {
 			goto error_os;
 		}
 		break;

@@ -20,60 +20,13 @@
 /**
  * \file data.h
  *
- * Data types and values.
+ * Data values.
  */
 
 #include <stddef.h>
 #include <stdint.h>
 
 struct schema;
-
-/**
- * A basic data type.
- */
-enum datatype_kind {
-	DATATYPE_ANY = -1,	/**< universal (top), supertype of all others */
-	DATATYPE_NULL = 0,	/**< empty (bottom), subtype of all others */
-	DATATYPE_BOOLEAN,	/**< boolean (true/false) value */
-	DATATYPE_INTEGER,	/**< integer-valued number */
-	DATATYPE_REAL,		/**< real-valued floating point number */
-	DATATYPE_TEXT,		/**< unicode text */
-	DATATYPE_ARRAY,		/**< array type */
-	DATATYPE_RECORD		/**< record type */
-};
-
-/**
- * An array type, of fixed or variable length. Array elements all have the
- * same type.
- */
-struct datatype_array {
-	int type_id;	/**< the element type */
-	int length;	/**< the length (-1 for variable) */
-};
-
-/**
- * A record type, with named fields. The fields are not ordered, so that
- * we consider `{"a": 1, "b": true}` and `{"b": false, "a": 0}` to have the
- * same type.
- */
-struct datatype_record {
-	int *type_ids;	/**< the field types */
-	int *name_ids;	/**< the field names */
-	int nfield;	/**< the number of fields */
-};
-
-/**
- * A data type.
- */
-struct datatype {
-	int kind;	/**< the kind of data type, a #datatype_kind value */
-	union {
-		struct datatype_array array;
-			/**< metadata for kind #DATATYPE_ARRAY */
-		struct datatype_record record;
-			/**< metadata for kind #DATATYPE_RECORD */
-	} meta;		/**< the data type's metadata */
-};
 
 /**
  * A typed data value.
@@ -89,6 +42,10 @@ struct data {
 	} value;			/**< the data value */
 	int type_id;			/**< the data type ID */
 };
+
+int bool_assign(int *valptr, const uint8_t *ptr, size_t size);
+int int_assign(int *valptr, const uint8_t *ptr, size_t size);
+int double_assign(double *valptr, const uint8_t *ptr, size_t size);
 
 /**
  * Assign a data value by parsing input in JavaScript Object Notation (JSON)

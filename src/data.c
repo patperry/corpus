@@ -25,7 +25,7 @@
 #include "text.h"
 #include "token.h"
 #include "symtab.h"
-#include "schema.h"
+#include "datatype.h"
 #include "data.h"
 
 double strntod_c(const char *string, size_t maxlen, char **endPtr);

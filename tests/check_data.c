@@ -29,7 +29,7 @@
 #include "../src/token.h"
 #include "../src/symtab.h"
 #include "../src/data.h"
-#include "../src/schema.h"
+#include "../src/datatype.h"
 #include "testutil.h"
 
 #define STR_VALUE(x) #x

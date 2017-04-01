@@ -14,20 +14,63 @@
  * limitations under the License.
  */
 
-#ifndef SCHEMA_H
-#define SCHEMA_H
+#ifndef DATATYPE_H
+#define DATATYPE_H
 
 /**
- * \file schema.h
+ * \file datatype.h
  *
- * Data schema, mapping data types to integer IDs.
+ * Data types and data schema.
  */
 
 #include <stdio.h>
 
-int bool_assign(int *valptr, const uint8_t *ptr, size_t size);
-int int_assign(int *valptr, const uint8_t *ptr, size_t size);
-int double_assign(double *valptr, const uint8_t *ptr, size_t size);
+/**
+ * A basic data type.
+ */
+enum datatype_kind {
+	DATATYPE_ANY = -1,	/**< universal (top), supertype of all others */
+	DATATYPE_NULL = 0,	/**< empty (bottom), subtype of all others */
+	DATATYPE_BOOLEAN,	/**< boolean (true/false) value */
+	DATATYPE_INTEGER,	/**< integer-valued number */
+	DATATYPE_REAL,		/**< real-valued floating point number */
+	DATATYPE_TEXT,		/**< unicode text */
+	DATATYPE_ARRAY,		/**< array type */
+	DATATYPE_RECORD		/**< record type */
+};
+
+/**
+ * An array type, of fixed or variable length. Array elements all have the
+ * same type.
+ */
+struct datatype_array {
+	int type_id;	/**< the element type */
+	int length;	/**< the length (-1 for variable) */
+};
+
+/**
+ * A record type, with named fields. The fields are not ordered, so that
+ * we consider `{"a": 1, "b": true}` and `{"b": false, "a": 0}` to have the
+ * same type.
+ */
+struct datatype_record {
+	int *type_ids;	/**< the field types */
+	int *name_ids;	/**< the field names */
+	int nfield;	/**< the number of fields */
+};
+
+/**
+ * A data type.
+ */
+struct datatype {
+	int kind;	/**< the kind of data type, a #datatype_kind value */
+	union {
+		struct datatype_array array;
+			/**< metadata for kind #DATATYPE_ARRAY */
+		struct datatype_record record;
+			/**< metadata for kind #DATATYPE_RECORD */
+	} meta;		/**< the data type's metadata */
+};
 
 /**
  * Used internally to store record (name,type) field descriptors.
@@ -48,7 +91,7 @@ struct schema_sorter {
 };
 
 /**
- * A collection of data types.
+ * Data schema, mapping data types to integer IDs.
  */
 struct schema {
 	struct schema_buffer buffer;	/**< internal field buffer */
@@ -129,6 +172,16 @@ int schema_record(struct schema *s, const int *type_ids, const int *name_ids,
  */
 int schema_union(struct schema *s, int id1, int id2, int *idptr);
 
+/**
+ * Scan an input value and add its data type to the schema.
+ *
+ * \param s the schema
+ * \param ptr the input buffer
+ * \param size the size (in bytes) of the input buffer
+ * \param idptr on exit, a pointer to the value's type ID
+ *
+ * \returns 0 on success
+ */
 int schema_scan(struct schema *s, const uint8_t *ptr, size_t size, int *idptr);
 
 /**
@@ -142,4 +195,4 @@ int schema_scan(struct schema *s, const uint8_t *ptr, size_t size, int *idptr);
  */
 int write_datatype(FILE *stream, const struct schema *s, int id);
 
-#endif /* SCHEMA_H */
+#endif /* DATATYPE_H */

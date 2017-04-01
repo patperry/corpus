@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <ctype.h>
+#include <errno.h>
 #include <inttypes.h>
 #include <stddef.h>
 
@@ -21,12 +23,69 @@
 intmax_t strntoimax(const char *string, size_t maxlen, char **endptr)
 {
 	const char *ptr = string;
-	intmax_t val = 0;
+	const char *end = ptr + maxlen;
+	uintmax_t uval, uval1;
+	intmax_t val;
+	unsigned dig;
+	int overflow, neg;
 
-	(void)maxlen;
+	// strip off leading whitespace
+	while (ptr < end && isspace(*ptr)) {
+		ptr++;
+	}
+
+	// check for leading sign
+	if (ptr < end && *ptr == '-') {
+		neg = 1;
+		ptr++;
+	} else {
+		if (ptr < end && *ptr == '+') {
+			ptr++;
+		}
+		neg = 0;
+	}
+
+	// read the absolute value
+	uval = 0;
+	overflow = 0;
+
+	while (ptr < end && isdigit(*ptr)) {
+		dig = (*ptr) - '0';
+		uval1 = 10 * uval + dig;
+		if (uval1 < uval) {
+			overflow = 1;
+		}
+		uval = uval1;
+		ptr++;
+	}
+
+	// cast to signed
+	if (overflow) {
+		val = neg ? INTMAX_MIN : INTMAX_MAX;
+	} else if (uval > INTMAX_MAX) {
+		if (neg) {
+			if (uval - INTMAX_MAX != -(INTMAX_MIN + INTMAX_MAX)) {
+				overflow = 1;
+			}
+			val = INTMAX_MIN;
+		} else {
+			overflow = 1;
+			val = INTMAX_MAX;
+		}
+	} else {
+		val = (intmax_t)uval;
+		if (neg) {
+			val = -val;
+		}
+	}
 
 	if (endptr) {
 		*endptr = (char *)ptr;
 	}
+
+	if (overflow) {
+		errno = ERANGE;
+	}
+
 	return val;
 }

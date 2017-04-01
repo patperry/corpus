@@ -25,10 +25,9 @@
 
 #include <stdio.h>
 
-int bool_assign(int *valptr, const uint8_t *ptr, size_t size, int nullval);
-int int_assign(int *valptr, const uint8_t *ptr, size_t size, int nullval);
-int double_assign(double *valptr, const uint8_t *ptr, size_t size,
-		  double nullval);
+int bool_assign(int *valptr, const uint8_t *ptr, size_t size);
+int int_assign(int *valptr, const uint8_t *ptr, size_t size);
+int double_assign(double *valptr, const uint8_t *ptr, size_t size);
 
 /**
  * Used internally to store record (name,type) field descriptors.
@@ -142,17 +141,5 @@ int schema_scan(struct schema *s, const uint8_t *ptr, size_t size, int *idptr);
  * \returns 0 on success
  */
 int write_datatype(FILE *stream, const struct schema *s, int id);
-
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-/**
- * Grow a schema's field buffer to accommodate more elements.
- *
- * \param buf the field buffer
- * \param nadd the number of new elements to accomodate
- *
- * \returns 0 on success
- */
-int schema_buffer_grow(struct schema_buffer *buf, int nadd);
-#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
 #endif /* SCHEMA_H */

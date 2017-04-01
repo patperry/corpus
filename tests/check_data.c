@@ -104,7 +104,7 @@ int decode_boolean(const char *str)
 	size_t n = strlen(str);
 
 	ck_assert(is_boolean(str));
-	ck_assert(!bool_assign(&val, (const uint8_t *)str, n, -1));
+	ck_assert(!bool_assign(&val, (const uint8_t *)str, n));
 
 	return val;
 }
@@ -116,16 +116,19 @@ int is_integer(const char *str)
 }
 
 
-double decode_int(const char *str)
+int decode_int(const char *str)
 {
 	int val;
 	size_t n = strlen(str);
+	int err;
 
 	ck_assert(is_integer(str));
-	ck_assert(!int_assign(&val, (const uint8_t *)str, n, INT_MIN));
+	err = int_assign(&val, (const uint8_t *)str, n);
+	ck_assert(err == 0 || err == ERROR_OVERFLOW);
 
 	return val;
 }
+
 
 
 int is_real(const char *str)
@@ -145,9 +148,11 @@ double decode_double(const char *str)
 {
 	double val;
 	size_t n = strlen(str);
+	int err;
 
 	ck_assert(is_numeric(str));
-	ck_assert(!double_assign(&val, (const uint8_t *)str, n, NAN));
+	err = double_assign(&val, (const uint8_t *)str, n);
+	ck_assert(err == 0 || err == ERROR_OVERFLOW);
 
 	return val;
 }
@@ -342,6 +347,29 @@ START_TEST(test_valid_nested_number)
 	ck_assert(get_type("[1.]") == Array(1, Real));
 	ck_assert(get_type("[.1]") == Array(1, Real));
 	ck_assert(get_type("[-.1]") == Array(1, Real));
+}
+END_TEST
+
+
+START_TEST(test_decode_int)
+{
+	ck_assert(decode_int("0") == 0);
+	ck_assert(decode_int("1") == 1);
+	ck_assert(decode_int("-1") == -1);
+
+	ck_assert(decode_int("-0") == 0);
+	ck_assert(decode_int("+0") == 0);
+
+	ck_assert(decode_int("123456789") == 123456789);
+	ck_assert(decode_int("-987654321") == -987654321);
+
+	// overflow, underflow
+	ck_assert(decode_int("2147483647") == INT_MAX);
+	ck_assert(decode_int("-2147483648") == INT_MIN);
+	ck_assert(decode_int("9223372036854775807") == INT_MAX);
+	ck_assert(decode_int("-9223372036854775808") == INT_MIN);
+	ck_assert(decode_int("+99999999999999999999999") == INT_MAX);
+	ck_assert(decode_int("-99999999999999999999999") == INT_MIN);
 }
 END_TEST
 
@@ -639,6 +667,7 @@ Suite *data_suite(void)
 	tcase_add_test(tc, test_invalid_number);
 	tcase_add_test(tc, test_valid_nested_number);
 	tcase_add_test(tc, test_decode_number);
+	tcase_add_test(tc, test_decode_int);
 	tcase_add_test(tc, test_decode_zero);
 	tcase_add_test(tc, test_decode_huge_exponent);
 	tcase_add_test(tc, test_decode_huge_mantissa);

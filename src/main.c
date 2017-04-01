@@ -45,6 +45,74 @@ void version()
 }
 
 
+void usage_scan(int status)
+{
+	printf("\
+Usage:\t%s scan [options] <path>\n\
+\n\
+Description:\n\
+\tDetermine the types of the data values in an input file.  If you do\n\
+\tnot specify one of the format options (-j or -t), then use the file\n\
+\textension to determine the input format.\n\
+\n\
+Options:\n\
+\t-j\t\tParses input in JSON Lines format.\n\
+\t-o <path>\tSaves output at the given path.\n\
+\t-t\t\tParses input in Tab Separated Value (TSV) format.\n\
+", PROGRAM_NAME);
+
+	exit(status);
+}
+
+
+int main_scan(int argc, char * const argv[], int help)
+{
+	const char *output = NULL;
+	const char *input = NULL;
+	int json = 0;
+	int tsv = 0;
+	int ch;
+
+	if (help) {
+		usage_scan(EXIT_SUCCESS);
+	}
+
+	while ((ch = getopt(argc, argv, "jo:t")) != -1) {
+		switch (ch) {
+		case 'j':
+			json = 1;
+			break;
+		case 'o':
+			output = optarg;
+			break;
+		case 't':
+			tsv = 1;
+			break;
+		default:
+			usage_scan(EXIT_FAILURE);
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
+
+	if (argc == 0) {
+		fprintf(stderr, "No input file specified.\n\n");
+		usage_scan(EXIT_FAILURE);
+	} else if (argc > 1) {
+		fprintf(stderr, "Too many input files specified.\n\n");
+		usage_scan(EXIT_FAILURE);
+	}
+
+	input = argv[0];
+	printf("input: %s\n", input);
+	printf("output: %s\n", output ? output : "(stdout)");
+
+	//usage_scan(EXIT_FAILURE);
+	return 0;
+}
+
+
 int main(int argc, char * const argv[])
 {
 	int help = 0;
@@ -65,14 +133,16 @@ int main(int argc, char * const argv[])
 
 	argc -= optind;
 	argv += optind;
+	optreset = 1;
+	optind = 1;
 
 	if (argc == 0) {
 		usage(EXIT_FAILURE);
 	} else if (strcmp(argv[0], "scan") != 0) {
-		fprintf(stderr, "Unrecognized command '%s'\n",
+		fprintf(stderr, "Unrecognized command '%s'.\n\n",
 			argv[0]);
 		usage(EXIT_FAILURE);
 	}
 
-	return 0;
+	return main_scan(argc, argv, help);
 }

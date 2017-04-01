@@ -64,13 +64,19 @@ Options:\n\
 	exit(status);
 }
 
+enum file_type {
+	FILE_NONE = 0,
+	FILE_JSONL,
+	FILE_TSV
+};
+
 
 int main_scan(int argc, char * const argv[], int help)
 {
 	const char *output = NULL;
 	const char *input = NULL;
-	int json = 0;
-	int tsv = 0;
+	const char *ext;
+	int type = FILE_NONE;
 	int ch;
 
 	if (help) {
@@ -80,13 +86,13 @@ int main_scan(int argc, char * const argv[], int help)
 	while ((ch = getopt(argc, argv, "jo:t")) != -1) {
 		switch (ch) {
 		case 'j':
-			json = 1;
+			type = FILE_JSONL;
 			break;
 		case 'o':
 			output = optarg;
 			break;
 		case 't':
-			tsv = 1;
+			type = FILE_TSV;
 			break;
 		default:
 			usage_scan(EXIT_FAILURE);
@@ -105,7 +111,24 @@ int main_scan(int argc, char * const argv[], int help)
 	}
 
 	input = argv[0];
-	printf("input: %s\n", input);
+
+	if (!type) {
+		if ((ext = strrchr(input, '.')) == NULL) {
+			// no file extension; assume json lines
+			type = FILE_JSONL;
+		} else if (!strcmp(ext, ".tsv")) {
+			type = FILE_TSV;
+		} else if (!strcmp(ext, ".json") || !strcmp(ext, ".jsonl")) {
+			type = FILE_JSONL;
+		} else {
+			fprintf(stderr, "Unrecognized file extension '%s'.\n",
+				ext);
+			usage_scan(EXIT_FAILURE);
+		}
+	}
+
+	printf("input:  %s\n", input);
+	printf("format: %s\n", type == FILE_JSONL ? "jsonl" : "tsv");
 	printf("output: %s\n", output ? output : "(stdout)");
 
 	//usage_scan(EXIT_FAILURE);

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
@@ -375,8 +376,11 @@ int schema_record(struct schema *s, const int *type_ids, const int *name_ids,
 		  int nfield, int *idptr)
 {
 	struct datatype *t;
-	int i, id, index, fstart, did_copy = 0;
+	int i, id, index, fstart, did_copy;
 	int err;
+
+	did_copy = 0;
+	fstart = -1;
 
 	if (is_sorted(name_ids, nfield)) {
 		goto sorted;
@@ -389,6 +393,7 @@ int schema_record(struct schema *s, const int *type_ids, const int *name_ids,
 	if ((err = schema_buffer_grow(&s->buffer, nfield))) {
 		goto error;
 	}
+
 
 	fstart = s->buffer.nfield;
 	s->buffer.nfield += nfield;
@@ -461,6 +466,7 @@ error:
 
 out:
 	if (did_copy) {
+		assert(fstart >= 0);
 		s->buffer.nfield = fstart;
 	}
 	if (idptr) {
@@ -903,6 +909,7 @@ success:
 
 error:
 	syslog(LOG_ERR, "failed parsing value (%.*s)", (unsigned)size, input);
+	id = DATATYPE_ANY;
 	err = ERROR_INVAL;
 	goto out;
 

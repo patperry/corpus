@@ -17,8 +17,9 @@
 		88351CEF1E8DB64F001DA3A8 /* xalloc.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CE51E8DB64F001DA3A8 /* xalloc.c */; };
 		884A369C1E8EE3DF00465CE7 /* data.c in Sources */ = {isa = PBXBuildFile; fileRef = 884A36971E8EE3DF00465CE7 /* data.c */; };
 		884A369D1E8EE3DF00465CE7 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 884A36991E8EE3DF00465CE7 /* main.c */; };
-		884A369E1E8EE3DF00465CE7 /* schema.c in Sources */ = {isa = PBXBuildFile; fileRef = 884A369A1E8EE3DF00465CE7 /* schema.c */; };
 		884A36A11E8EE43500465CE7 /* strntod_c.c in Sources */ = {isa = PBXBuildFile; fileRef = 884A36A01E8EE43500465CE7 /* strntod_c.c */; };
+		88EE9C801E9000A400B1FEBA /* datatype.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EE9C7E1E9000A400B1FEBA /* datatype.c */; };
+		88EE9C821E9000BB00B1FEBA /* strntoimax.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EE9C811E9000BB00B1FEBA /* strntoimax.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -60,9 +61,10 @@
 		884A36971E8EE3DF00465CE7 /* data.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = data.c; path = src/data.c; sourceTree = "<group>"; };
 		884A36981E8EE3DF00465CE7 /* data.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = data.h; path = src/data.h; sourceTree = "<group>"; };
 		884A36991E8EE3DF00465CE7 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = src/main.c; sourceTree = "<group>"; };
-		884A369A1E8EE3DF00465CE7 /* schema.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = schema.c; path = src/schema.c; sourceTree = "<group>"; };
-		884A369B1E8EE3DF00465CE7 /* schema.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = schema.h; path = src/schema.h; sourceTree = "<group>"; };
 		884A36A01E8EE43500465CE7 /* strntod_c.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = strntod_c.c; path = lib/strntod_c.c; sourceTree = "<group>"; };
+		88EE9C7E1E9000A400B1FEBA /* datatype.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = datatype.c; path = src/datatype.c; sourceTree = "<group>"; };
+		88EE9C7F1E9000A400B1FEBA /* datatype.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = datatype.h; path = src/datatype.h; sourceTree = "<group>"; };
+		88EE9C811E9000BB00B1FEBA /* strntoimax.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = strntoimax.c; path = lib/strntoimax.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -102,12 +104,12 @@
 				88351CD51E8DB64F001DA3A8 /* array.h */,
 				884A36971E8EE3DF00465CE7 /* data.c */,
 				884A36981E8EE3DF00465CE7 /* data.h */,
+				88EE9C7E1E9000A400B1FEBA /* datatype.c */,
+				88EE9C7F1E9000A400B1FEBA /* datatype.h */,
 				88351CD81E8DB64F001DA3A8 /* errcode.h */,
 				88351CD91E8DB64F001DA3A8 /* filebuf.c */,
 				88351CDA1E8DB64F001DA3A8 /* filebuf.h */,
 				884A36991E8EE3DF00465CE7 /* main.c */,
-				884A369A1E8EE3DF00465CE7 /* schema.c */,
-				884A369B1E8EE3DF00465CE7 /* schema.h */,
 				88351CDB1E8DB64F001DA3A8 /* symtab.c */,
 				88351CDC1E8DB64F001DA3A8 /* symtab.h */,
 				88351CDD1E8DB64F001DA3A8 /* table.c */,
@@ -147,6 +149,7 @@
 			isa = PBXGroup;
 			children = (
 				884A36A01E8EE43500465CE7 /* strntod_c.c */,
+				88EE9C811E9000BB00B1FEBA /* strntoimax.c */,
 			);
 			name = lib;
 			sourceTree = "<group>";
@@ -215,11 +218,12 @@
 				884A36A11E8EE43500465CE7 /* strntod_c.c in Sources */,
 				88351CE71E8DB64F001DA3A8 /* array.c in Sources */,
 				88351CEE1E8DB64F001DA3A8 /* unicode.c in Sources */,
+				88EE9C821E9000BB00B1FEBA /* strntoimax.c in Sources */,
 				88351CEC1E8DB64F001DA3A8 /* text.c in Sources */,
-				884A369E1E8EE3DF00465CE7 /* schema.c in Sources */,
 				88351CEF1E8DB64F001DA3A8 /* xalloc.c in Sources */,
 				88351CE91E8DB64F001DA3A8 /* filebuf.c in Sources */,
 				884A369C1E8EE3DF00465CE7 /* data.c in Sources */,
+				88EE9C801E9000A400B1FEBA /* datatype.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

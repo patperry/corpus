@@ -394,16 +394,18 @@ int schema_record(struct schema *s, const int *type_ids, const int *name_ids,
 
 		if (base <= type_ids && type_ids <= top) {
 			on_stack = 1;
-			argstart = type_ids - base;
+			argstart = (int)(type_ids - base);
 			assert(argstart == name_ids - s->buffer.name_ids);
 		} else {
 			on_stack = 0;
+			argstart = -1;
 		}
 
 		if ((err = schema_buffer_grow(&s->buffer, nfield))) {
 			goto error;
 		}
 		if (on_stack && s->buffer.type_ids != base) {
+			assert(argstart != -1);
 			type_ids = s->buffer.type_ids + argstart;
 			name_ids = s->buffer.name_ids + argstart;
 		}

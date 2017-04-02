@@ -185,6 +185,7 @@ int sorter_reserve(struct schema_sorter *sort, int length)
 		syslog(LOG_ERR, "failed allocating schema sorter");
 		return err;
 	}
+
 	sort->idptrs = base;
 	sort->size = n;
 	return 0;
@@ -386,14 +387,32 @@ int schema_record(struct schema *s, const int *type_ids, const int *name_ids,
 		goto sorted;
 	}
 
+	if (s->buffer.nfield > s->buffer.nfield_max - nfield) {
+		const int *base = s->buffer.type_ids;
+		const int *top = base + s->buffer.nfield;
+		int argstart, on_stack;
+
+		if (base <= type_ids && type_ids <= top) {
+			on_stack = 1;
+			argstart = type_ids - base;
+			assert(argstart == name_ids - s->buffer.name_ids);
+		} else {
+			on_stack = 0;
+		}
+
+		if ((err = schema_buffer_grow(&s->buffer, nfield))) {
+			goto error;
+		}
+		if (on_stack && s->buffer.type_ids != base) {
+			type_ids = s->buffer.type_ids + argstart;
+			name_ids = s->buffer.name_ids + argstart;
+		}
+	}
+	assert(s->buffer.nfield + nfield <= s->buffer.nfield_max);
+
 	if ((err = sorter_sort(&s->sorter, name_ids, nfield))) {
 		goto error;
 	}
-
-	if ((err = schema_buffer_grow(&s->buffer, nfield))) {
-		goto error;
-	}
-
 
 	fstart = s->buffer.nfield;
 	s->buffer.nfield += nfield;
@@ -466,7 +485,6 @@ error:
 
 out:
 	if (did_copy) {
-		assert(fstart >= 0);
 		s->buffer.nfield = fstart;
 	}
 	if (idptr) {
@@ -607,37 +625,36 @@ out:
 
 int schema_union_record(struct schema *s, int id1, int id2, int *idptr)
 {
-	const struct datatype_record *t1, *t2;
-	int fstart, i1, i2, n1, n2, name_id, type_id, nfield;
+	const struct datatype_record t1 = s->types[id1].meta.record;
+	const struct datatype_record t2 = s->types[id2].meta.record;
+	int fstart = s->buffer.nfield;
+	int i1, i2, n1, n2, name_id, type_id, nfield;
 	int id = DATATYPE_ANY;
 	int err;
 
-	fstart = s->buffer.nfield;
-	t1 = &s->types[id1].meta.record;
-	t2 = &s->types[id2].meta.record;
-	n1 = t1->nfield;
-	n2 = t2->nfield;
+	n1 = t1.nfield;
+	n2 = t2.nfield;
 
 	nfield = 0;
 	i1 = 0;
 	i2 = 0;
 
 	while (i1 < n1 && i2 < n2) {
-		if (t1->name_ids[i1] == t2->name_ids[i2]) {
-			name_id = t1->name_ids[i1];
-			if ((err = schema_union(s, t1->type_ids[i1],
-						t2->type_ids[i2], &type_id))) {
+		if (t1.name_ids[i1] == t2.name_ids[i2]) {
+			name_id = t1.name_ids[i1];
+			if ((err = schema_union(s, t1.type_ids[i1],
+						t2.type_ids[i2], &type_id))) {
 				goto error;
 			}
 			i1++;
 			i2++;
-		} else if (t1->name_ids[i1] < t2->name_ids[i2]) {
-			name_id = t1->name_ids[i1];
-			type_id = t1->type_ids[i1];
+		} else if (t1.name_ids[i1] < t2.name_ids[i2]) {
+			name_id = t1.name_ids[i1];
+			type_id = t1.type_ids[i1];
 			i1++;
 		} else {
-			name_id = t2->name_ids[i2];
-			type_id = t2->type_ids[i2];
+			name_id = t2.name_ids[i2];
+			type_id = t2.type_ids[i2];
 			i2++;
 		}
 		if ((err = schema_buffer_grow(&s->buffer, 1))) {
@@ -656,9 +673,9 @@ int schema_union_record(struct schema *s, int id1, int id2, int *idptr)
 		}
 		s->buffer.nfield += n1 - i1;
 		memcpy(s->buffer.name_ids + fstart + nfield,
-			t1->name_ids + i1, (n1 - i1) * sizeof(*t1->name_ids));
+			t1.name_ids + i1, (n1 - i1) * sizeof(*t1.name_ids));
 		memcpy(s->buffer.type_ids + fstart + nfield,
-			t1->type_ids + i1, (n1 - i1) * sizeof(*t1->type_ids));
+			t1.type_ids + i1, (n1 - i1) * sizeof(*t1.type_ids));
 		nfield += n1 - i1;
 	}
 
@@ -668,9 +685,9 @@ int schema_union_record(struct schema *s, int id1, int id2, int *idptr)
 		}
 		s->buffer.nfield += n2 - i2;
 		memcpy(s->buffer.name_ids + fstart + nfield,
-			t2->name_ids + i2, (n2 - i2) * sizeof(*t2->name_ids));
+			t2.name_ids + i2, (n2 - i2) * sizeof(*t2.name_ids));
 		memcpy(s->buffer.type_ids + fstart + nfield,
-			t2->type_ids + i2, (n2 - i2) * sizeof(*t2->type_ids));
+			t2.type_ids + i2, (n2 - i2) * sizeof(*t2.type_ids));
 		nfield += n2 - i2;
 	}
 
@@ -1098,8 +1115,8 @@ int scan_record(struct schema *s, const uint8_t **bufptr,
 	int nfield;
 	int err;
 
-	fstart = s->buffer.nfield;
 	nfield = 0;
+	fstart = s->buffer.nfield;
 
 	scan_spaces(&ptr, end);
 	if (ptr == end) {
@@ -1111,17 +1128,17 @@ int scan_record(struct schema *s, const uint8_t **bufptr,
 		goto close;
 	}
 
+	if ((err = scan_field(s, &ptr, end, &name_id, &type_id))) {
+		goto error;
+	}
+
 	if (s->buffer.nfield == s->buffer.nfield_max) {
 		if ((err = schema_buffer_grow(&s->buffer, 1))) {
 			goto error;
 		}
 	}
+
 	s->buffer.nfield++;
-
-	if ((err = scan_field(s, &ptr, end, &name_id, &type_id))) {
-		goto error;
-	}
-
 	s->buffer.name_ids[fstart + nfield] = name_id;
 	s->buffer.type_ids[fstart + nfield] = type_id;
 	nfield++;
@@ -1140,18 +1157,18 @@ int scan_record(struct schema *s, const uint8_t **bufptr,
 			ptr++;
 			scan_spaces(&ptr, end);
 
-			if (s->buffer.nfield == s->buffer.nfield_max) {
-				if ((err = schema_buffer_grow(&s->buffer, 1))) {
-					goto error;
-				}
-			}
-			s->buffer.nfield++;
-
 			if ((err = scan_field(s, &ptr, end, &name_id,
 					      &type_id))) {
 				goto error;
 			}
 
+			if (s->buffer.nfield == s->buffer.nfield_max) {
+				if ((err = schema_buffer_grow(&s->buffer, 1))) {
+					goto error;
+				}
+			}
+
+			s->buffer.nfield++;
 			s->buffer.name_ids[fstart + nfield] = name_id;
 			s->buffer.type_ids[fstart + nfield] = type_id;
 			nfield++;

@@ -14,13 +14,26 @@
  * limitations under the License.
  */
 
+#include <inttypes.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+#include <syslog.h>
+
+#include "errcode.h"
+#include "filebuf.h"
+#include "table.h"
+#include "text.h"
+#include "token.h"
+#include "symtab.h"
+#include "datatype.h"
+
 #define PROGRAM_NAME	"corpus"
 #define PROGRAM_VERSION	"0.1"
+
 
 void usage(int status)
 {
@@ -38,7 +51,7 @@ Commands:\n\
 }
 
 
-void version()
+void version(void)
 {
 	printf("%s version %s\n", PROGRAM_NAME, PROGRAM_VERSION);
 	exit(EXIT_SUCCESS);
@@ -57,6 +70,7 @@ Description:\n\
 \n\
 Options:\n\
 \t-j\t\tParses input in JSON Lines format.\n\
+\t-l\t\tPrints type information for each line.\n\
 \t-o <path>\tSaves output at the given path.\n\
 \t-t\t\tParses input in Tab Separated Value (TSV) format.\n\
 ", PROGRAM_NAME);
@@ -73,20 +87,27 @@ enum file_type {
 
 int main_scan(int argc, char * const argv[], int help)
 {
+	struct schema schema;
+	struct filebuf buf;
 	const char *output = NULL;
 	const char *input = NULL;
 	const char *ext;
-	int type = FILE_NONE;
-	int ch;
+	FILE *stream;
+	enum file_type type = FILE_NONE;
+	int ch, err, i, id, type_id;
+	int lines = 0;
 
 	if (help) {
 		usage_scan(EXIT_SUCCESS);
 	}
 
-	while ((ch = getopt(argc, argv, "jo:t")) != -1) {
+	while ((ch = getopt(argc, argv, "jlo:t")) != -1) {
 		switch (ch) {
 		case 'j':
 			type = FILE_JSONL;
+			break;
+		case 'l':
+			lines = 1;
 			break;
 		case 'o':
 			output = optarg;
@@ -127,22 +148,93 @@ int main_scan(int argc, char * const argv[], int help)
 		}
 	}
 
-	printf("input:  %s\n", input);
-	printf("format: %s\n", type == FILE_JSONL ? "jsonl" : "tsv");
-	printf("output: %s\n", output ? output : "(stdout)");
+	if (output) {
+		if (!(stream = fopen(output, "w"))) {
+			perror("Failed opening output file");
+			err = ERROR_OS;
+			goto error_output;
+		}
+	} else {
+		stream = stdout;
+	}
 
-	//usage_scan(EXIT_FAILURE);
-	return 0;
+	fprintf(stream, "file:   %s\n", input);
+	fprintf(stream, "format: %s\n", type == FILE_JSONL ? "jsonl" : "tsv");
+	fprintf(stream, "--\n");
+
+	if ((err = schema_init(&schema))) {
+		goto error_schema;
+	}
+
+	if ((err = filebuf_init(&buf, input))) {
+		goto error_filebuf;
+	}
+
+	type_id = DATATYPE_NULL;
+
+	while (filebuf_advance(&buf)) {
+		for (i = 0; i < buf.nline; i++) {
+			if ((err = schema_scan(&schema, buf.lines[i].ptr,
+						buf.lines[i].size, &id))) {
+				goto error_scan;
+			}
+
+			if (lines) {
+				fprintf(stream, "%"PRId64"\t",
+					1 + buf.offset + i);
+				write_datatype(stream, &schema, id);
+				fprintf(stream, "\n");
+			}
+
+			if ((err = schema_union(&schema, type_id, id,
+							&type_id))) {
+				goto error_scan;
+			}
+		}
+	}
+
+	if ((err = buf.error)) {
+		perror("Failed scanning input file");
+		goto error_scan;
+	}
+
+	if (lines) {
+		fprintf(stream, "--\n");
+	}
+	write_datatype(stream, &schema, type_id);
+	fprintf(stream, "\n");
+	err = 0;
+
+error_scan:
+	filebuf_destroy(&buf);
+error_filebuf:
+	schema_destroy(&schema);
+error_schema:
+	if (output && fclose(stream) == EOF) {
+		perror("Failed closing output file");
+		err = ERROR_OS;
+	}
+error_output:
+	if (err) {
+		fprintf(stderr, "An error occurred.\n");
+	}
+	return err;
 }
 
 
 int main(int argc, char * const argv[])
 {
-	int help = 0;
+	int help = 0, debug = 0;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "hv")) != -1) {
+	openlog(PROGRAM_NAME, LOG_CONS | LOG_PERROR | LOG_PID, LOG_USER);
+        setlogmask(LOG_UPTO(LOG_INFO));
+
+	while ((ch = getopt(argc, argv, "dhv")) != -1) {
 		switch (ch) {
+		case 'd':
+			debug = 1;
+			break;
 		case 'h':
 			help = 1;
 			break;
@@ -158,6 +250,10 @@ int main(int argc, char * const argv[])
 	argv += optind;
 	optreset = 1;
 	optind = 1;
+
+	if (debug) {
+        	setlogmask(LOG_UPTO(LOG_DEBUG));
+	}
 
 	if (argc == 0) {
 		usage(EXIT_FAILURE);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Patrick O. Perry.
+ * Copyright 2017 Patrick O. Perry.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,61 +14,79 @@
  * limitations under the License.
  */
 
+#define _FILE_OFFSET_BITS 64	// enable large file support
+
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <syslog.h>
 #include <unistd.h>
-
 #include "array.h"
 #include "errcode.h"
 #include "xalloc.h"
 #include "filebuf.h"
 
-static int filebuf_init_lines(struct filebuf *file);
-static void filebuf_destroy_lines(struct filebuf *file);
-static void filebuf_view_clear(struct filebuf_view *view);
+
+static int filebuf_grow_lines(struct filebuf *buf, int nadd)
+{
+	void *base = buf->lines;
+	int size = buf->nline_max;
+	int err;
+
+	if ((err = array_grow(&base, &size, sizeof(*buf->lines),
+			      buf->nline, nadd))) {
+		syslog(LOG_ERR, "failed allocating lines array");
+		return err;
+	}
+
+	if (buf->nline > INT_MAX - nadd) {
+		syslog(LOG_ERR, "line count exceeds maximum (%d)", INT_MAX);
+		return ERROR_OVERFLOW;
+	}
+
+	buf->lines = base;
+	buf->nline_max = size;
+	return 0;
+}
 
 
-int filebuf_init(struct filebuf *file, const char *filename)
+int filebuf_init(struct filebuf *buf, const char *file_name)
 {
 	struct stat stat;
 	long page_size;
 	int access, err;
 
-	assert(filename);
+	assert(file_name);
 
-	if (!(file->filename = xstrdup(filename))) {
+	if (!(buf->file_name = xstrdup(file_name))) {
 		err = ERROR_NOMEM;
-		syslog(LOG_ERR, "failed copying file name `%s'", filename);
+		syslog(LOG_ERR, "failed copying file name (%s)", file_name);
 		goto strdup_fail;
 	}
 
 	access = O_RDONLY;
 
-	if ((file->fd = open(file->filename, access)) < 0) {
+	if ((buf->fd = open(buf->file_name, access)) < 0) {
 		err = ERROR_OS;
-		syslog(LOG_ERR, "failed opening file `%s': %s",
-		       file->filename, strerror(errno));
+		syslog(LOG_ERR, "failed opening file (%s): %s",
+		       buf->file_name, strerror(errno));
 		goto open_fail;
 	}
 
-	if (fstat(file->fd, &stat) < 0) {
+	if (fstat(buf->fd, &stat) < 0) {
 		err = ERROR_OS;
-		syslog(LOG_ERR,
-		       "failed determining size of file `%s': %s",
-		       file->filename, strerror(errno));
+		syslog(LOG_ERR, "failed determining size of file (%s): %s",
+		       buf->file_name, strerror(errno));
 		goto fstat_fail;
 	}
-	file->size = stat.st_size;
-	syslog(LOG_DEBUG, "file has size %"PRIu64" bytes",
-		(uint64_t)file->size);
+	buf->file_size = (uint64_t)stat.st_size;
+	syslog(LOG_DEBUG, "file has size %"PRIu64" bytes", buf->file_size);
 
 	if ((page_size = sysconf(_SC_PAGESIZE)) < 0) {
 		err = ERROR_OS;
@@ -77,277 +95,171 @@ int filebuf_init(struct filebuf *file, const char *filename)
 		goto sysconf_fail;
 	}
 	assert(page_size > 0);
-	file->page_size = (size_t)page_size;
+	buf->page_size = (size_t)page_size;
 
-	if ((err = filebuf_init_lines(file))) {
-		goto lines_fail;
-	}
-	return 0;
+	buf->map_addr = NULL;
+	buf->map_size = 0;
+	buf->map_pad = 0;
+	buf->map_offset = 0;
+
+	buf->lines = NULL;
+	buf->nline = 0;
+	buf->nline_max = 0;
+	buf->offset = 0;
+
+	err = 0;
+	goto out;
 
 sysconf_fail:
-lines_fail:
 fstat_fail:
-	close(file->fd);
+	close(buf->fd);
 open_fail:
-	free(file->filename);
+	free(buf->file_name);
 strdup_fail:
 	syslog(LOG_ERR, "failed initializing file buffer");
+out:
+	buf->error = err;
 	return err;
 }
 
 
-void filebuf_destroy(struct filebuf *file)
+void filebuf_destroy(struct filebuf *buf)
 {
-	filebuf_destroy_lines(file);
-	close(file->fd);
-	free(file->filename);
+	if (buf->map_addr) {
+		syslog(LOG_DEBUG, "unmaping %zu bytes from address %p",
+		       buf->map_size, buf->map_addr);
+		munmap(buf->map_addr, buf->map_size);
+	}
+
+	free(buf->lines);
+	close(buf->fd);
+	free(buf->file_name);
 }
 
 
-int filebuf_init_lines(struct filebuf *file)
+int filebuf_advance(struct filebuf *buf)
 {
-	off_t *line_ends = NULL;
-	int nline = 0;
-	int nline_max = 0;
-
-	const char *begin, *ptr, *end;
-	void *addr, *addr_new, *base;
-	size_t chunk, size;
-	off_t off;
-	char ch;
-	int err, flags;
-
-	// determine chunk size
-	if ((uint64_t)file->size <= SIZE_MAX) {
-		chunk = (size_t)file->size;
-	} else {
-		chunk = 4096 * file->page_size;
-	}
-
-	ch = '\n';
-	off = 0;
-	addr = NULL;
-
-	while (off < file->size) {
-		// map file segment to memory
-		flags = MAP_SHARED;
-		if (off != 0) {
-			flags |= MAP_FIXED;
-		}
-
-		syslog(LOG_DEBUG, "mapping file segment at offset %"PRId64
-		       ", length %zu", (int64_t)off, chunk);
-		addr_new = mmap(addr, chunk, PROT_READ, flags, file->fd, off);
-		if (addr_new == MAP_FAILED) {
-			err = ERROR_OS;
-			syslog(LOG_ERR, "failed %smapping file `%s': %s",
-			       off == 0 ? "" : "re-", file->filename,
-			       strerror(errno));
-
-			if (off == 0) {
-				goto error_mmap;
-			} else {
-				goto error_remmap;
-			}
-		} else {
-			syslog(LOG_DEBUG, "mapped %zu bytes to address %p",
-			       (size_t)chunk, addr_new);
-			addr = addr_new;
-		}
-
-		// determine chunk size
-		if (file->size - off < (off_t)chunk) {
-			size = (size_t)(file->size - off);
-		} else {
-			size = chunk;
-		}
-		madvise(addr, size, MADV_SEQUENTIAL | MADV_WILLNEED);
-
-		// scan for newlines
-		begin = addr;
-		ptr = begin;
-		end = ptr + size;
-		while (ptr != end) {
-			ch = *ptr++;
-			if (ch != '\n') {
-				continue;
-			}
-
-			if (nline == nline_max) {
-				//syslog(LOG_DEBUG, "growing lines array");
-				base = line_ends;
-				err = array_grow(&base, &nline_max,
-						 sizeof(*line_ends), nline, 1);
-				if (err) {
-					goto error_array_grow;
-				}
-				line_ends = base;
-			}
-			line_ends[nline] = off + (ptr - begin);
-			nline++;
-
-			//syslog(LOG_DEBUG,
-			//       "found line %zu ending at offset %"PRIu64,
-			//       nline, (uint64_t)line_ends[nline - 1]);
-		}
-
-		// advance to the next chunk
-		off += chunk;
-	}
-	if (ch != '\n') {
-		syslog(LOG_WARNING,
-		       "file does not end in newline; discarding last line");
-	}
-
-	// store the line_ends array, shrinking if possible
-	file->line_ends = line_ends;
-	file->nline = nline;
-	if (nline < nline_max) {
-		line_ends = realloc(line_ends, nline * sizeof(*line_ends));
-		// if the realloc fails, keep the original array
-		if (line_ends) {
-			file->line_ends = line_ends;
-		}
-	}
-
-	if (addr != NULL) {
-		syslog(LOG_DEBUG, "unmapping %zu bytes from address %p",
-		       chunk, addr);
-		munmap(addr, chunk);
-	}
-	return 0;
-
-error_array_grow:
-error_remmap:
-	syslog(LOG_DEBUG, "unmaping %zu bytes from address %p", chunk, addr);
-	munmap(addr, chunk);
-error_mmap:
-	free(line_ends);
-	syslog(LOG_ERR, "failed initializing line array");
-	return err;
-}
-
-
-
-void filebuf_destroy_lines(struct filebuf *file)
-{
-	free(file->line_ends);
-}
-
-
-int filebuf_view_init(struct filebuf_view *view, const struct filebuf *file)
-{
-	view->file = file;
-	view->addr = NULL;
-	view->length = 0;
-	filebuf_view_clear(view);
-	return 0;
-}
-
-
-void filebuf_view_clear(struct filebuf_view *view)
-{
-	if (view->addr != NULL) {
-		syslog(LOG_DEBUG, "unmapping %zu bytes from address %p",
-		       view->length, view->addr);
-		munmap(view->addr, view->length);
-	}
-	view->addr = NULL;
-	view->length = 0;
-	view->begin = NULL;
-	view->end = NULL;
-	view->lines_begin = 0;
-	view->lines_end = 0;
-}
-
-
-void filebuf_view_destroy(struct filebuf_view *view)
-{
-	filebuf_view_clear(view);
-}
-
-
-int filebuf_view_set(struct filebuf_view *view, int lines_begin, int lines_end)
-{
-	const struct filebuf *file = view->file;
 	void *addr;
-	size_t pad, length;
-	off_t offset, view_begin, view_end;
-	int err, flags;
+	const struct filebuf_line *prev;
+	const uint8_t *begin, *ptr, *end;
+	size_t pad, size, length;
+	off_t offset, start;
+	int flags, eof, err;
+	uint8_t ch;
 
-	assert(0 <= lines_begin);
-	assert(lines_begin <= lines_end);
-	assert(lines_end <= view->file->nline);
-
-	// determine view begin
-	if (lines_begin == 0) {
-		view_begin = 0;
+	if (buf->nline > 0) {
+		buf->offset += buf->nline;
+		prev = &buf->lines[buf->nline - 1];
+		start = (buf->map_offset
+				+ (prev->ptr + prev->size
+					- (uint8_t *)buf->map_addr));
+		pad = (size_t)(start % buf->page_size);
+		offset = start - pad;
+		size = buf->map_size;
+		flags = MAP_SHARED | MAP_FIXED;
 	} else {
-		view_begin = file->line_ends[lines_begin - 1];
-	}
-
-	// determine view end
-	if (lines_end == 0) {
-		view_end = 0;
-	} else {
-		view_end = file->line_ends[lines_end - 1];
-	}
-
-	// align to page size
-	pad = (size_t)(view_begin % (file->page_size));
-	offset = view_begin - pad;
-
-	// determine length
-	if ((uint64_t)(view_end - offset) > (uint64_t)SIZE_MAX) {
-		syslog(LOG_ERR, "file view size (%"PRIu64" bytes)"
-		       " exceeds maximum (%zu bytes)",
-		       (uint64_t)(view_end - offset), (size_t)SIZE_MAX);
-		err = ERROR_OVERFLOW;
-		goto error;
-	}
-	length = (size_t)(view_end - offset);
-
-	// determine flags
-	flags = MAP_SHARED;
-	if (view->addr) {
-	// if a mapping already exists
-		if (view->length < length) {
-		// remove the old mapping if it is too small
-			filebuf_view_clear(view);
+		offset = buf->map_offset;
+		pad = buf->map_pad;
+		if (buf->map_size == 0) {
+			size = 2 * buf->page_size;
 		} else {
-		// otherwise, re-use the address space
-			flags |= MAP_FIXED;
+			if (buf->map_size < SIZE_MAX / 2) {
+				size = 2 * buf->map_size;
+			} else if (buf->map_size != SIZE_MAX) {
+				size = SIZE_MAX;
+			} else {
+				syslog(LOG_ERR,
+				       "file line size exceeds maximum"
+				       " (%zu bytes)",
+				       (size_t)(SIZE_MAX - buf->page_size + 1));
+				err = ERROR_OVERFLOW;
+				goto error;
+			}
+			syslog(LOG_DEBUG,
+			       "unmapping %zu bytes from address %p",
+			       buf->map_size, buf->map_addr);
+			munmap(buf->map_addr, buf->map_size);
+			buf->map_addr = NULL;
 		}
+		flags = MAP_SHARED;
 	}
 
-	// set up the mapping
-	syslog(LOG_DEBUG, "mapping file segment at offset %"PRId64
-		", size %zu", (int64_t)offset, length);
-	addr = mmap(view->addr, length, PROT_READ, flags,
-		    file->fd, offset);
+	syslog(LOG_DEBUG, "mapping file segment at offset %"PRIu64
+		       ", length %zu", (uint64_t)offset, size);
 
-	// check for failure
+	addr = mmap(buf->map_addr, size, PROT_READ, flags, buf->fd, offset);
+
 	if (addr == MAP_FAILED) {
-		syslog(LOG_ERR, "failed %smapping view of file `%s': %s",
-		       view->addr ? "re-" : "", file->filename,
+		syslog(LOG_ERR, "failed %smapping file (%s): %s",
+		       buf->map_addr == NULL ? "" : "re-", buf->file_name,
 		       strerror(errno));
 		err = ERROR_OS;
 		goto error;
 	} else {
-		syslog(LOG_DEBUG, "mapped %zu bytes to address %p", length,
+		syslog(LOG_DEBUG, "mapped %zu bytes to address %p", size,
 		       addr);
+		buf->map_addr = addr;
+		buf->map_size = size;
+		buf->map_offset = offset;
+		buf->map_pad = pad;
 	}
 
-	view->addr = addr;
-	view->length = length;
-	view->begin = (const uint8_t *)addr + pad;
-	view->end = (const uint8_t *)addr + length;
-	view->lines_begin = lines_begin;
-	view->lines_end = lines_end;
-	return 0;
+	if (buf->file_size - offset < size) {
+		length = (size_t)(buf->file_size - offset - pad);
+		eof = 1;
+	} else {
+		length = size - pad;
+		eof = 0;
+	}
+
+	madvise(buf->map_addr, length, MADV_SEQUENTIAL | MADV_WILLNEED);
+
+	begin = (const uint8_t *)buf->map_addr + buf->map_pad;
+	ptr = begin;
+	end = ptr + length;
+
+	buf->nline = 0;
+
+	while (ptr != end) {
+		ch = *ptr++;
+		if (ch != '\n') {
+			continue;
+		}
+
+		if (buf->nline == buf->nline_max) {
+			if ((err = filebuf_grow_lines(buf, 1))) {
+				goto error;
+			}
+		}
+
+		buf->lines[buf->nline].ptr = begin;
+		buf->lines[buf->nline].size = ptr - begin;
+		buf->nline++;
+		begin = ptr;
+	}
+
+	if (begin < end && eof) {
+		if (buf->nline == buf->nline_max) {
+			if ((err = filebuf_grow_lines(buf, 1))) {
+				goto error;
+			}
+		}
+
+		buf->lines[buf->nline].ptr = begin;
+		buf->lines[buf->nline].size = end - begin;
+		buf->nline++;
+	}
+
+	err = 0;
 
 error:
-	syslog(LOG_ERR, "failed setting file view of lines [%d, %d)",
-	       lines_begin, lines_end);
-	return err;
+	buf->error = err;
+	return (err == 0 && length > 0);
+}
+
+
+int filebuf_reset(struct filebuf *buf)
+{
+	(void)buf;
+	return 0;
 }

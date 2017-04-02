@@ -1426,7 +1426,7 @@ int scan_text(const uint8_t **bufptr, const uint8_t *end,
 		ch = *ptr;
 		if (ch == '"') {
 			goto close;
-		} else if (ch == '\'') {
+		} else if (ch == '\\') {
 			if (ptr == end) {
 				goto error_noclose;
 			}

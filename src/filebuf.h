@@ -16,88 +16,56 @@
 #ifndef FILEBUF_H
 #define FILEBUF_H
 
+#include <stdint.h>
+
+struct filebuf_line {
+	const uint8_t *ptr;
+	size_t size;
+};
+
 /**
  * \file filebuf.h
  *
  * File buffer, for holding portions of a file in memory.
  */
 
-#define _FILE_OFFSET_BITS 64	/**< enable large file support */
-
-#include <stddef.h>
-#include <sys/types.h>
-
-/**
- * File buffer, with information about the file size and line offsets.
- */
 struct filebuf {
-	char *filename;		/**< file name */
-	off_t size;		/**< size of the file, in bytes */
-	int fd;			/**< file descriptor */
-	size_t page_size;	/**< memory page size */
-	off_t *line_ends;	/**< line ending offsets */
-	int nline;		/**< number of lines in the file */
-};
+	char *file_name;	/**< file name */
+	int fd;			/**< the file descriptor */
+	uint64_t file_size;	/**< file size, in bytes */
+	size_t page_size;	/**< memory page size, in bytes */
 
-/**
- * Memory view into a range of lines in a file.
- */
-struct filebuf_view {
-	const struct filebuf *file;	/**< underlying file */
-	void *addr;			/**< memory buffer address */
-	size_t length;			/**< memory buffer size */
+	void *map_addr;		/**< the memory-mapped address */
+	size_t map_size;	/**< the memory map size */
+	size_t map_pad;		/**< the amount of padding to skip at the
+				  start of the map */
+	int64_t map_offset;	/**< the file position */
 
-	const uint8_t *begin;		/**< pointer to start of first line */
-	const uint8_t *end;		/**< pointer to end of last line */
-	int lines_begin;		/**< index of first line */
-	int lines_end;			/**< index of last line */
+	int64_t offset;
+
+	struct filebuf_line *lines;
+	int nline, nline_max;
+	int error;
 };
 
 /**
  * Initialize a buffer for the specified file.
  *
- * \param file the buffer
- * \param filename the name of the file
+ * \param buf the buffer
+ * \param file_name the file name
  *
  * \returns 0 on success
  */
-int filebuf_init(struct filebuf *file, const char *filename);
+int filebuf_init(struct filebuf *buf, const char *file_name);
 
 /**
- * Release a buffer's resources. This should not get called until after
- * all views into the buffer have been destroyed via filebuf_view_destroy().
+ * Release a buffer's resources.
  *
- * \param file the buffer
+ * \param buf the buffer
  */
-void filebuf_destroy(struct filebuf *file);
+void filebuf_destroy(struct filebuf *buf);
 
-/**
- * Initialize a view into a file.
- *
- * \param view the view
- * \param file the file
- *
- * \returns 0 on success
- */
-int filebuf_view_init(struct filebuf_view *view, const struct filebuf *file);
-
-/**
- * Release a view's resources. This should get called before
- * filebuf_destroy().
- *
- * \param view the view
- */
-void filebuf_view_destroy(struct filebuf_view *view);
-
-/**
- * Reset the view to the given line range.
- *
- * \param view the view
- * \param lines_begin the first line in the range
- * \param lines_end the ending of the range
- *
- * \returns 0 on success
- */
-int filebuf_view_set(struct filebuf_view *view, int lines_begin, int lines_end);
+int filebuf_advance(struct filebuf *buf);
+int filebuf_reset(struct filebuf *buf);
 
 #endif /* FILEBUF_H */

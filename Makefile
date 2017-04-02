@@ -129,7 +129,8 @@ src/datatype.o: src/datatype.c src/array.h src/errcode.h src/table.h \
 	src/text.h src/token.h src/symtab.h src/xalloc.h src/data.h src/datatype.h
 src/filebuf.o: src/filebuf.c src/array.h src/errcode.h src/xalloc.h \
     src/filebuf.h
-src/main.o: src/main.c
+src/main.o: src/main.c src/errcode.h src/filebuf.h src/table.h src/text.h \
+	src/token.h src/symtab.h src/datatype.h
 src/symtab.o: src/symtab.c src/array.h src/errcode.h src/table.h src/text.h \
 	src/token.h src/xalloc.h src/symtab.h
 src/table.o: src/table.c src/errcode.h src/xalloc.h src/table.h

@@ -197,7 +197,6 @@ int filebuf_advance(struct filebuf *buf)
 		pad = 0;
 		offset = buf->map_offset;
 		size = buf->map_size;
-		addr = buf->map_addr;
 		goto map_ready;
 	} else {
 		// there is an existing map, but it isn't big enough
@@ -296,9 +295,9 @@ map_ready:
 
 	}
 
-	err = 0;
+	return (length > 0);
 
 error:
 	buf->error = err;
-	return (err == 0 && length > 0);
+	return 0;
 }

@@ -16,19 +16,27 @@
 #ifndef FILEBUF_H
 #define FILEBUF_H
 
-#include <stdint.h>
-
-struct filebuf_line {
-	const uint8_t *ptr;
-	size_t size;
-};
-
 /**
  * \file filebuf.h
  *
  * File buffer, for holding portions of a file in memory.
  */
 
+#include <stdint.h>
+
+/**
+ * A line in the file buffer.
+ */
+struct filebuf_line {
+	const uint8_t *ptr;	/**<  pointer to the first byte in the line */
+	size_t size;		/**< number of bytes in the line */
+};
+
+/**
+ * File buffer, holding contiguous ranges of lines in a file. Successive
+ * calls to filebuf_advance() update the #lines array and page through
+ * all lines in the file.
+ */
 struct filebuf {
 	char *file_name;	/**< file name */
 	int fd;			/**< the file descriptor */
@@ -41,11 +49,15 @@ struct filebuf {
 				  start of the map */
 	int64_t map_offset;	/**< the file position */
 
-	int64_t offset;
+	int64_t offset;		/**< the (0-based) index of the
+				 first line in the buffer */
 
 	struct filebuf_line *lines;
-	int nline, nline_max;
-	int error;
+				/**< an array of lines in the buffer */
+	int nline;		/**< the number of lines in the buffer */
+	int nline_max;		/**< the capacity of the #lines array */
+	int error;		/**< the error code from the last call
+				  to filebuf_advance() */
 };
 
 /**
@@ -65,7 +77,21 @@ int filebuf_init(struct filebuf *buf, const char *file_name);
  */
 void filebuf_destroy(struct filebuf *buf);
 
+/**
+ * Advance the buffer to the next portion of the file.
+ *
+ * \param buf the buffer
+ *
+ * \returns 0 if already at the end of the file, or an error occurs. In
+ * 	the event of an error, `buf->error` stores the error code.
+ */
 int filebuf_advance(struct filebuf *buf);
+
+/**
+ * Reset the buffer to the start of the file.
+ *
+ * \param buf the buffer
+ */
 void filebuf_reset(struct filebuf *buf);
 
 #endif /* FILEBUF_H */

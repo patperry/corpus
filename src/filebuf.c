@@ -105,7 +105,7 @@ int filebuf_init(struct filebuf *buf, const char *file_name)
 	buf->lines = NULL;
 	buf->nline = 0;
 	buf->nline_max = 0;
-	buf->offset = 0;
+	buf->offset = -1;
 
 	err = 0;
 	goto out;
@@ -137,6 +137,25 @@ void filebuf_destroy(struct filebuf *buf)
 }
 
 
+void filebuf_reset(struct filebuf *buf)
+{
+	buf->nline = 0;
+	buf->offset = -1;
+
+	if (buf->map_offset != 0) {
+		syslog(LOG_DEBUG, "unmapping %zu bytes from address %p",
+		        buf->map_size, buf->map_addr);
+		munmap(buf->map_addr, buf->map_size);
+		buf->map_addr = NULL;
+		buf->map_size = 0;
+		buf->map_offset = 0;
+		buf->map_pad = 0;
+	}
+
+	buf->error = 0;
+}
+
+
 int filebuf_advance(struct filebuf *buf)
 {
 	void *addr;
@@ -157,30 +176,49 @@ int filebuf_advance(struct filebuf *buf)
 		offset = start - pad;
 		size = buf->map_size;
 		flags = MAP_SHARED | MAP_FIXED;
+	} else if (buf->offset == -1 && buf->map_size == 0) {
+		// start a new map
+		buf->offset = 0; // start a new map
+
+		pad = 0;
+		offset = 0;
+		if (buf->file_size <= SIZE_MAX) {
+			size = buf->file_size;
+		} else {
+			size = 4096 * buf->page_size;
+		}
+		flags = MAP_SHARED;
+	} else if (buf->offset == -1 && buf->map_size > 0) {
+		// use an existing map, ignoring the old padding
+
+		assert(buf->map_offset == 0);
+
+		buf->offset = 0;
+		pad = 0;
+		offset = buf->map_offset;
+		size = buf->map_size;
+		addr = buf->map_addr;
+		goto map_ready;
 	} else {
+		// there is an existing map, but it isn't big enough
 		offset = buf->map_offset;
 		pad = buf->map_pad;
-		if (buf->map_size == 0) {
-			size = 2 * buf->page_size;
+		if (buf->map_size < SIZE_MAX / 2) {
+			size = 2 * buf->map_size;
+		} else if (buf->map_size != SIZE_MAX) {
+			size = SIZE_MAX;
 		} else {
-			if (buf->map_size < SIZE_MAX / 2) {
-				size = 2 * buf->map_size;
-			} else if (buf->map_size != SIZE_MAX) {
-				size = SIZE_MAX;
-			} else {
-				syslog(LOG_ERR,
-				       "file line size exceeds maximum"
-				       " (%zu bytes)",
-				       (size_t)(SIZE_MAX - buf->page_size + 1));
-				err = ERROR_OVERFLOW;
-				goto error;
-			}
-			syslog(LOG_DEBUG,
-			       "unmapping %zu bytes from address %p",
-			       buf->map_size, buf->map_addr);
-			munmap(buf->map_addr, buf->map_size);
-			buf->map_addr = NULL;
+			syslog(LOG_ERR, "file line size exceeds maximum"
+			       " (%zu bytes)",
+			       (size_t)(SIZE_MAX - buf->page_size + 1));
+			err = ERROR_OVERFLOW;
+			goto error;
 		}
+
+		syslog(LOG_DEBUG, "unmapping %zu bytes from address %p",
+		        buf->map_size, buf->map_addr);
+		munmap(buf->map_addr, buf->map_size);
+		buf->map_addr = NULL;
 		flags = MAP_SHARED;
 	}
 
@@ -203,6 +241,8 @@ int filebuf_advance(struct filebuf *buf)
 		buf->map_offset = offset;
 		buf->map_pad = pad;
 	}
+
+map_ready:
 
 	if (buf->file_size - offset < size) {
 		length = (size_t)(buf->file_size - offset - pad);
@@ -236,6 +276,11 @@ int filebuf_advance(struct filebuf *buf)
 		buf->lines[buf->nline].size = ptr - begin;
 		buf->nline++;
 		begin = ptr;
+
+		if (buf->nline == INT_MAX && ptr != end) {
+			eof = 0;
+			break;
+		}
 	}
 
 	if (begin < end && eof) {
@@ -248,6 +293,7 @@ int filebuf_advance(struct filebuf *buf)
 		buf->lines[buf->nline].ptr = begin;
 		buf->lines[buf->nline].size = end - begin;
 		buf->nline++;
+
 	}
 
 	err = 0;
@@ -255,11 +301,4 @@ int filebuf_advance(struct filebuf *buf)
 error:
 	buf->error = err;
 	return (err == 0 && length > 0);
-}
-
-
-int filebuf_reset(struct filebuf *buf)
-{
-	(void)buf;
-	return 0;
 }

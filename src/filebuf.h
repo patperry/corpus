@@ -66,6 +66,6 @@ int filebuf_init(struct filebuf *buf, const char *file_name);
 void filebuf_destroy(struct filebuf *buf);
 
 int filebuf_advance(struct filebuf *buf);
-int filebuf_reset(struct filebuf *buf);
+void filebuf_reset(struct filebuf *buf);
 
 #endif /* FILEBUF_H */

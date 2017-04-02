@@ -72,7 +72,7 @@ Options:\n\
 \t-j\t\tParses input in JSON Lines format.\n\
 \t-l\t\tPrints type information for each line.\n\
 \t-o <path>\tSaves output at the given path.\n\
-\t-t\t\tParses input in Tab Separated Value (TSV) format.\n\
+\t-t\t\tParses input in Tab Separated JSON (TSJ) format.\n\
 ", PROGRAM_NAME);
 
 	exit(status);
@@ -81,7 +81,7 @@ Options:\n\
 enum file_type {
 	FILE_NONE = 0,
 	FILE_JSONL,
-	FILE_TSV
+	FILE_TSJ
 };
 
 
@@ -113,7 +113,7 @@ int main_scan(int argc, char * const argv[], int help)
 			output = optarg;
 			break;
 		case 't':
-			type = FILE_TSV;
+			type = FILE_TSJ;
 			break;
 		default:
 			usage_scan(EXIT_FAILURE);
@@ -137,8 +137,8 @@ int main_scan(int argc, char * const argv[], int help)
 		if ((ext = strrchr(input, '.')) == NULL) {
 			// no file extension; assume json lines
 			type = FILE_JSONL;
-		} else if (!strcmp(ext, ".tsv")) {
-			type = FILE_TSV;
+		} else if (!strcmp(ext, ".tsj") || !strcmp(ext, ".tsv")) {
+			type = FILE_TSJ;
 		} else if (!strcmp(ext, ".json") || !strcmp(ext, ".jsonl")) {
 			type = FILE_JSONL;
 		} else {
@@ -146,6 +146,11 @@ int main_scan(int argc, char * const argv[], int help)
 				ext);
 			usage_scan(EXIT_FAILURE);
 		}
+	}
+
+	if (type == FILE_TSJ) {
+		fprintf(stderr, "TSJ parser is not yet implmented.\n");
+		exit(EXIT_FAILURE);
 	}
 
 	if (output) {

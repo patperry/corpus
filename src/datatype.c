@@ -48,6 +48,7 @@ static int schema_has_record(const struct schema *s, const int *type_ids,
 static int schema_union_array(struct schema *s, int id1, int id2, int *idptr);
 static int schema_union_record(struct schema *s, int id1, int id2, int *idptr);
 static int schema_grow_types(struct schema *s, int nadd);
+static void schema_rehash_records(struct schema *s);
 
 // compound types
 static int scan_field(struct schema *s, const uint8_t **bufptr,
@@ -75,6 +76,10 @@ static void scan_spaces(const uint8_t **bufptr, const uint8_t *end);
 static int scan_chars(const char *str, unsigned len, const uint8_t **bufptr,
 		      const uint8_t *end);
 static int scan_char(char c, const uint8_t **bufptr, const uint8_t *end);
+
+static unsigned record_hash(const struct datatype_record *t);
+static int record_equals(const struct datatype_record *t1,
+			 const struct datatype_record *t2);
 
 
 int schema_buffer_init(struct schema_buffer *buf)
@@ -209,12 +214,17 @@ int schema_init(struct schema *s)
 		goto error_names;
 	}
 
+	if ((err = table_init(&s->records))) {
+		goto error_records;
+	}
+
 	// initialize primitive types
 	n = NUM_ATOMIC;
 	if (!(s->types = xmalloc(n * sizeof(*s->types)))) {
 		goto error_types;
 	}
 	s->ntype = n;
+	s->nrecord = 0;
 	s->ntype_max = n;
 
 	for (i = 0; i < n; i++) {
@@ -224,6 +234,8 @@ int schema_init(struct schema *s)
 	return 0;
 
 error_types:
+	table_destroy(&s->records);
+error_records:
 	symtab_destroy(&s->names);
 error_names:
 	sorter_destroy(&s->sorter);
@@ -237,8 +249,10 @@ error_buffer:
 void schema_destroy(struct schema *s)
 {
 	schema_clear(s);
+
 	free(s->types);
 	symtab_destroy(&s->names);
+	table_destroy(&s->records);
 	sorter_destroy(&s->sorter);
 	schema_buffer_destroy(&s->buffer);
 }
@@ -257,7 +271,9 @@ void schema_clear(struct schema *s)
 		}
 	}
 	s->ntype = NUM_ATOMIC;
+	s->nrecord = 0;
 
+	table_clear(&s->records);
 	symtab_clear(&s->names);
 }
 
@@ -373,20 +389,41 @@ static int is_sorted(const int *ids, int n)
 }
 
 
+void schema_rehash_records(struct schema *s)
+{
+	const struct datatype_record *t;
+	int i, n = s->ntype;
+	unsigned hash;
+
+	table_clear(&s->records);
+
+	for (i = 0; i < n; i++) {
+		if (s->types[i].kind != DATATYPE_RECORD) {
+			continue;
+		}
+		t = &s->types[i].meta.record;
+		hash = record_hash(t);
+		table_add(&s->records, hash, i);
+	}
+}
+
+
 int schema_record(struct schema *s, const int *type_ids, const int *name_ids,
 		  int nfield, int *idptr)
 {
 	struct datatype *t;
-	int i, id, index, fstart, did_copy;
+	int i, id, index, fstart, did_copy, pos, rehash;
 	int err;
 
 	did_copy = 0;
+	rehash = 0;
 	fstart = -1;
 
 	if (is_sorted(name_ids, nfield)) {
 		goto sorted;
 	}
 
+	// make space for the name_ids on the stack
 	if (s->buffer.nfield > s->buffer.nfield_max - nfield) {
 		const int *base = s->buffer.type_ids;
 		const int *top = base + s->buffer.nfield;
@@ -412,6 +449,7 @@ int schema_record(struct schema *s, const int *type_ids, const int *name_ids,
 	}
 	assert(s->buffer.nfield + nfield <= s->buffer.nfield_max);
 
+	// sort the name ids
 	if ((err = sorter_sort(&s->sorter, name_ids, nfield))) {
 		goto error;
 	}
@@ -420,6 +458,7 @@ int schema_record(struct schema *s, const int *type_ids, const int *name_ids,
 	s->buffer.nfield += nfield;
 	did_copy = 1;
 
+	// push the sorted (name,type) pairs onto the stack
 	for (i = 0; i < nfield; i++) {
 		index = (int)(s->sorter.idptrs[i] - name_ids);
 		s->buffer.type_ids[fstart + i] = type_ids[index];
@@ -431,6 +470,7 @@ int schema_record(struct schema *s, const int *type_ids, const int *name_ids,
 		}
 	}
 
+	// switch to the stack for the types and names
 	type_ids = s->buffer.type_ids + fstart;
 	name_ids = s->buffer.name_ids + fstart;
 
@@ -439,6 +479,8 @@ sorted:
 		err = 0;
 		goto out;
 	}
+	pos = id;	// table position
+	id = s->ntype;	// new type id
 
 	// grow types array if necessary
 	if (s->ntype == s->ntype_max) {
@@ -447,8 +489,15 @@ sorted:
 		}
 	}
 
+	// grow the record table if necessary
+	if (s->nrecord == s->records.capacity) {
+		if ((err = table_reinit(&s->records, s->nrecord + 1))) {
+			goto error;
+		}
+		rehash = 1;
+	}
+
 	// add the new type
-	id = s->ntype;
 	t = &s->types[id];
 	t->kind = DATATYPE_RECORD;
 	if (nfield == 0) {
@@ -470,6 +519,14 @@ sorted:
 	}
 	t->meta.record.nfield = nfield;
 	s->ntype++;
+	s->nrecord++;
+
+	// set the table entry
+	if (rehash) {
+		schema_rehash_records(s);
+	} else {
+		s->records.items[pos] = id;
+	}
 
 	err = 0;
 	goto out;
@@ -484,6 +541,9 @@ error_duplicate:
 error:
 	syslog(LOG_ERR, "failed adding record type");
 	id = DATATYPE_ANY;
+	if (rehash) {
+		schema_rehash_records(s);
+	}
 
 out:
 	if (did_copy) {
@@ -496,32 +556,74 @@ out:
 }
 
 
+/* adapted from boost/functional/hash/hash.hpp (Boost License, Version 1.0) */
+static unsigned hash_combine(unsigned seed, unsigned hash)
+{
+	seed ^= hash + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+	return seed;
+}
+
+
+static unsigned record_hash(const struct datatype_record *t)
+{
+	int i;
+	unsigned hash = 0;
+
+	for (i = 0; i < t->nfield; i++) {
+		hash = hash_combine(hash, (unsigned)t->name_ids[i]);
+		hash = hash_combine(hash, (unsigned)t->type_ids[i]);
+	}
+
+	return hash;
+}
+
+
+static int record_equals(const struct datatype_record *t1,
+			 const struct datatype_record *t2)
+{
+	int n = t1->nfield;
+	int eq = 0;
+
+	if (t1->nfield != t2->nfield) {
+		eq = 0;
+	} else if (memcmp(t1->type_ids, t2->type_ids,
+				n * sizeof(*t1->type_ids))) {
+		eq = 0;
+	} else if (memcmp(t1->name_ids, t2->name_ids,
+				  n * sizeof(*t1->name_ids))) {
+		eq = 0;
+	} else {
+		eq = 1;
+	}
+
+	return eq;
+}
+
+
 int schema_has_record(const struct schema *s, const int *type_ids,
 		      const int *name_ids, int nfield, int *idptr)
 {
-	const struct datatype *t;
-	int id = s->ntype;
-	int found;
+	struct table_probe probe;
+	struct datatype_record key = {
+		.type_ids = (int *)type_ids,
+		.name_ids = (int *)name_ids,
+		.nfield = nfield
+	};
+	unsigned hash = record_hash(&key);
+	int id = -1;
+	int found = 0;
 
-	while (id-- > 0) {
-		t = &s->types[id];
-		if (t->kind != DATATYPE_RECORD) {
-			continue;
-		}
-		if (t->meta.record.nfield == nfield
-			&& memcmp(t->meta.record.type_ids, type_ids,
-				  nfield * sizeof(*type_ids)) == 0
-			&& memcmp(t->meta.record.name_ids, name_ids,
-				  nfield * sizeof(*name_ids)) == 0) {
+	table_probe_make(&probe, &s->records, hash);
+	while (table_probe_advance(&probe)) {
+		id = probe.current;
+		if (record_equals(&key, &s->types[id].meta.record)) {
 			found = 1;
 			goto out;
 		}
 	}
-	found = 0;
-	id = -1;
 out:
 	if (idptr) {
-		*idptr = id;
+		*idptr = found ? id : probe.index;
 	}
 	return found;
 }

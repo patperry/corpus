@@ -32,20 +32,10 @@ struct schema;
  * A typed data value.
  */
 struct data {
-	union {
-		int boolean;		/**< value for #DATATYPE_BOOLEAN */
-		double number;		/**< value for #DATATYPE_INTEGER or 
-					  DATATYPE_REAL */
-		struct text text; 	/**< value for #DATATYPE_TEXT */
-		uint8_t *blob;		/**< value for #DATATYPE_ARRAY or
-						#DATATYPE_RECORD */
-	} value;			/**< the data value */
-	int type_id;			/**< the data type ID */
+	const uint8_t *ptr;
+	size_t size;
+	int type_id;
 };
-
-int bool_assign(int *valptr, const uint8_t *ptr, size_t size);
-int int_assign(int *valptr, const uint8_t *ptr, size_t size);
-int double_assign(double *valptr, const uint8_t *ptr, size_t size);
 
 /**
  * Assign a data value by parsing input in JavaScript Object Notation (JSON)
@@ -61,5 +51,15 @@ int double_assign(double *valptr, const uint8_t *ptr, size_t size);
  */
 int data_assign(struct data *d, struct schema *s, const uint8_t *ptr,
 		size_t size);
+
+int data_bool(const struct data *d, int *valptr);
+int data_int(const struct data *d, int *valptr);
+int data_double(const struct data *d, double *valptr);
+int data_text(const struct data *d, struct text *valptr);
+
+int data_field(const struct data *d, const struct schema *s, int name_id,
+	       struct data *valptr);
+int data_item(const struct data *d, const struct schema *s, int index,
+	      struct data *valptr);
 
 #endif /* DATA_H */

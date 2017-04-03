@@ -100,11 +100,12 @@ int is_boolean(const char *str)
 
 int decode_boolean(const char *str)
 {
-	int val;
 	size_t n = strlen(str);
+	struct data data;
+	int val;
 
-	ck_assert(is_boolean(str));
-	ck_assert(!bool_assign(&val, (const uint8_t *)str, n));
+	ck_assert(!data_assign(&data, &schema, (uint8_t *)str, n));
+	ck_assert(!data_bool(&data, &val));
 
 	return val;
 }
@@ -118,17 +119,16 @@ int is_integer(const char *str)
 
 int decode_int(const char *str)
 {
-	int val;
 	size_t n = strlen(str);
-	int err;
+	struct data data;
+	int err, val;
 
-	ck_assert(is_integer(str));
-	err = int_assign(&val, (const uint8_t *)str, n);
+	ck_assert(!data_assign(&data, &schema, (uint8_t *)str, n));
+	err = data_int(&data, &val);
 	ck_assert(err == 0 || err == ERROR_OVERFLOW);
 
 	return val;
 }
-
 
 
 int is_real(const char *str)
@@ -146,12 +146,13 @@ int is_numeric(const char *str)
 
 double decode_double(const char *str)
 {
-	double val;
 	size_t n = strlen(str);
+	struct data data;
+	double val;
 	int err;
 
-	ck_assert(is_numeric(str));
-	err = double_assign(&val, (const uint8_t *)str, n);
+	ck_assert(!data_assign(&data, &schema, (uint8_t *)str, n));
+	err = data_double(&data, &val);
 	ck_assert(err == 0 || err == ERROR_OVERFLOW);
 
 	return val;

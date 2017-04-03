@@ -48,6 +48,7 @@ static int schema_has_record(const struct schema *s, const int *type_ids,
 static int schema_union_array(struct schema *s, int id1, int id2, int *idptr);
 static int schema_union_record(struct schema *s, int id1, int id2, int *idptr);
 static int schema_grow_types(struct schema *s, int nadd);
+static void schema_rehash_arrays(struct schema *s);
 static void schema_rehash_records(struct schema *s);
 
 // compound types
@@ -77,9 +78,14 @@ static int scan_chars(const char *str, unsigned len, const uint8_t **bufptr,
 		      const uint8_t *end);
 static int scan_char(char c, const uint8_t **bufptr, const uint8_t *end);
 
-static unsigned record_hash(const struct datatype_record *t);
+static int array_equals(const struct datatype_array *t1,
+			 const struct datatype_array *t2);
 static int record_equals(const struct datatype_record *t1,
 			 const struct datatype_record *t2);
+
+static unsigned array_hash(const struct datatype_array *t);
+static unsigned record_hash(const struct datatype_record *t);
+static unsigned hash_combine(unsigned seed, unsigned hash);
 
 
 int schema_buffer_init(struct schema_buffer *buf)
@@ -214,6 +220,10 @@ int schema_init(struct schema *s)
 		goto error_names;
 	}
 
+	if ((err = table_init(&s->arrays))) {
+		goto error_arrays;
+	}
+
 	if ((err = table_init(&s->records))) {
 		goto error_records;
 	}
@@ -224,6 +234,7 @@ int schema_init(struct schema *s)
 		goto error_types;
 	}
 	s->ntype = n;
+	s->narray = 0;
 	s->nrecord = 0;
 	s->ntype_max = n;
 
@@ -236,6 +247,8 @@ int schema_init(struct schema *s)
 error_types:
 	table_destroy(&s->records);
 error_records:
+	table_destroy(&s->arrays);
+error_arrays:
 	symtab_destroy(&s->names);
 error_names:
 	sorter_destroy(&s->sorter);
@@ -253,6 +266,7 @@ void schema_destroy(struct schema *s)
 	free(s->types);
 	symtab_destroy(&s->names);
 	table_destroy(&s->records);
+	table_destroy(&s->arrays);
 	sorter_destroy(&s->sorter);
 	schema_buffer_destroy(&s->buffer);
 }
@@ -271,8 +285,10 @@ void schema_clear(struct schema *s)
 		}
 	}
 	s->ntype = NUM_ATOMIC;
+	s->narray = 0;
 	s->nrecord = 0;
 
+	table_clear(&s->arrays);
 	table_clear(&s->records);
 	symtab_clear(&s->names);
 }
@@ -307,13 +323,17 @@ out:
 int schema_array(struct schema *s, int type_id, int length, int *idptr)
 {
 	struct datatype *t;
-	int id;
+	int id, pos, rehash;
 	int err;
+
+	rehash = 0;
 
 	if (schema_has_array(s, type_id, length, &id)) {
 		err = 0;
 		goto out;
 	}
+	pos = id;	// table id
+	id = s->ntype;	// new type id
 
 	// grow types array if necessary
 	if (s->ntype == s->ntype_max) {
@@ -322,13 +342,28 @@ int schema_array(struct schema *s, int type_id, int length, int *idptr)
 		}
 	}
 
+	// grow array table if necessary
+	if (s->narray == s->arrays.capacity) {
+		if ((err = table_reinit(&s->arrays, s->narray + 1))) {
+			goto error;
+		}
+		rehash = 1;
+	}
+
 	// add the new type
-	id = s->ntype;
 	t = &s->types[id];
 	t->kind = DATATYPE_ARRAY;
 	t->meta.array.type_id = type_id;
 	t->meta.array.length = length;
 	s->ntype++;
+	s->narray++;
+
+	// set the table entry
+	if (rehash) {
+		schema_rehash_arrays(s);
+	} else {
+		s->arrays.items[pos] = id;
+	}
 
 	err = 0;
 	goto out;
@@ -336,6 +371,9 @@ int schema_array(struct schema *s, int type_id, int length, int *idptr)
 error:
 	syslog(LOG_ERR, "failed adding array type");
 	id = DATATYPE_ANY;
+	if (rehash) {
+		schema_rehash_arrays(s);
+	}
 
 out:
 	if (idptr) {
@@ -348,26 +386,26 @@ out:
 int schema_has_array(const struct schema *s, int type_id, int length,
 		     int *idptr)
 {
-	const struct datatype *t;
-	int id = s->ntype;
-	int found;
+	struct table_probe probe;
+	struct datatype_array key = {
+		.type_id = type_id,
+		.length = length
+	};
+	unsigned hash = array_hash(&key);
+	int id = -1;
+	int found = 0;
 
-	while (id-- > 0) {
-		t = &s->types[id];
-		if (t->kind != DATATYPE_ARRAY) {
-			continue;
-		}
-		if (t->meta.array.type_id == type_id
-				&& t->meta.array.length == length) {
+	table_probe_make(&probe, &s->arrays, hash);
+	while (table_probe_advance(&probe)) {
+		id = probe.current;
+		if (array_equals(&key, &s->types[id].meta.array)) {
 			found = 1;
 			goto out;
 		}
 	}
-	found = 0;
-	id = -1;
 out:
 	if (idptr) {
-		*idptr = id;
+		*idptr = found ? id : probe.index;
 	}
 	return found;
 }
@@ -386,6 +424,25 @@ static int is_sorted(const int *ids, int n)
 	}
 
 	return 1;
+}
+
+
+void schema_rehash_arrays(struct schema *s)
+{
+	const struct datatype_array *t;
+	int i, n = s->ntype;
+	unsigned hash;
+
+	table_clear(&s->arrays);
+
+	for (i = 0; i < n; i++) {
+		if (s->types[i].kind != DATATYPE_ARRAY) {
+			continue;
+		}
+		t = &s->types[i].meta.array;
+		hash = array_hash(t);
+		table_add(&s->arrays, hash, i);
+	}
 }
 
 
@@ -553,50 +610,6 @@ out:
 		*idptr = id;
 	}
 	return err;
-}
-
-
-/* adapted from boost/functional/hash/hash.hpp (Boost License, Version 1.0) */
-static unsigned hash_combine(unsigned seed, unsigned hash)
-{
-	seed ^= hash + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-	return seed;
-}
-
-
-static unsigned record_hash(const struct datatype_record *t)
-{
-	int i;
-	unsigned hash = 0;
-
-	for (i = 0; i < t->nfield; i++) {
-		hash = hash_combine(hash, (unsigned)t->name_ids[i]);
-		hash = hash_combine(hash, (unsigned)t->type_ids[i]);
-	}
-
-	return hash;
-}
-
-
-static int record_equals(const struct datatype_record *t1,
-			 const struct datatype_record *t2)
-{
-	int n = t1->nfield;
-	int eq = 0;
-
-	if (t1->nfield != t2->nfield) {
-		eq = 0;
-	} else if (memcmp(t1->type_ids, t2->type_ids,
-				n * sizeof(*t1->type_ids))) {
-		eq = 0;
-	} else if (memcmp(t1->name_ids, t2->name_ids,
-				  n * sizeof(*t1->name_ids))) {
-		eq = 0;
-	} else {
-		eq = 1;
-	}
-
-	return eq;
 }
 
 
@@ -1675,3 +1688,72 @@ int scan_char(char c, const uint8_t **bufptr, const uint8_t *end)
 }
 
 
+int array_equals(const struct datatype_array *t1,
+		 const struct datatype_array *t2)
+{
+	int eq = 0;
+
+	if (t1->type_id != t2->type_id) {
+		eq = 0;
+	} else if (t1->length != t2->length) {
+		eq = 0;
+	} else {
+		eq = 1;
+	}
+
+	return eq;
+}
+
+
+int record_equals(const struct datatype_record *t1,
+		  const struct datatype_record *t2)
+{
+	int n = t1->nfield;
+	int eq = 0;
+
+	if (t1->nfield != t2->nfield) {
+		eq = 0;
+	} else if (memcmp(t1->type_ids, t2->type_ids,
+				n * sizeof(*t1->type_ids))) {
+		eq = 0;
+	} else if (memcmp(t1->name_ids, t2->name_ids,
+				  n * sizeof(*t1->name_ids))) {
+		eq = 0;
+	} else {
+		eq = 1;
+	}
+
+	return eq;
+}
+
+
+unsigned array_hash(const struct datatype_array *t)
+{
+	unsigned hash = 0;
+
+	hash = hash_combine(hash, (unsigned)t->type_id);
+	hash = hash_combine(hash, (unsigned)t->length);
+
+	return hash;
+}
+
+
+unsigned record_hash(const struct datatype_record *t)
+{
+	int i;
+	unsigned hash = 0;
+
+	for (i = 0; i < t->nfield; i++) {
+		hash = hash_combine(hash, (unsigned)t->name_ids[i]);
+		hash = hash_combine(hash, (unsigned)t->type_ids[i]);
+	}
+
+	return hash;
+}
+
+/* adapted from boost/functional/hash/hash.hpp (Boost License, Version 1.0) */
+unsigned hash_combine(unsigned seed, unsigned hash)
+{
+	seed ^= hash + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+	return seed;
+}

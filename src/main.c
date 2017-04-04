@@ -66,12 +66,10 @@ void usage_get(int status)
 Usage:\t%s get [options] <field> <path>\n\
 \n\
 Description:\n\
-\tExtract a field from a corpus.\n\
+\tExtract a field from a data set.\n\
 \n\
 Options:\n\
-\t-j\t\tParses input in JSON Lines format.\n\
 \t-o <path>\tSaves output at the given path.\n\
-\t-t\t\tParses input in Tab Separated JSON (TSJ) format.\n\
 ", PROGRAM_NAME);
 
 	exit(status);
@@ -84,15 +82,11 @@ void usage_scan(int status)
 Usage:\t%s scan [options] <path>\n\
 \n\
 Description:\n\
-\tDetermine the types of the data values in an input file.  If you do\n\
-\tnot specify one of the format options (-j or -t), then use the file\n\
-\textension to determine the input format.\n\
+\tDetermine the types of the data values in a JSON Lines input file.\n\
 \n\
 Options:\n\
-\t-j\t\tParses input in JSON Lines format.\n\
 \t-l\t\tPrints type information for each line.\n\
 \t-o <path>\tSaves output at the given path.\n\
-\t-t\t\tParses input in Tab Separated JSON (TSJ) format.\n\
 ", PROGRAM_NAME);
 
 	exit(status);
@@ -106,29 +100,18 @@ void version(void)
 }
 
 
-enum file_type get_type(const char *file_name)
+void check_ext(const char *file_name)
 {
-	enum file_type type = FILE_NONE;
 	const char *ext;
 
 	if ((ext = strrchr(file_name, '.')) == NULL) {
 		// no file extension; assume json lines
-		type = FILE_JSONL;
-	} else if (!strcmp(ext, ".tsj") || !strcmp(ext, ".tsv")) {
-		type = FILE_TSJ;
 	} else if (!strcmp(ext, ".json") || !strcmp(ext, ".jsonl")) {
-		type = FILE_JSONL;
+		// pass
 	} else {
 		fprintf(stderr, "Unrecognized file extension '%s'.\n", ext);
 		exit(EXIT_FAILURE);
 	}
-
-	if (type == FILE_TSJ) {
-		fprintf(stderr, "TSJ parser is not yet implmented.\n");
-		exit(EXIT_FAILURE);
-	}
-
-	return type;
 }
 
 
@@ -141,23 +124,16 @@ int main_get(int argc, char * const argv[], int help)
 	const char *output = NULL;
 	const char *field, *input;
 	FILE *stream;
-	enum file_type type = FILE_NONE;
 	int ch, err, i, name_id;
 
 	if (help) {
 		usage_get(EXIT_SUCCESS);
 	}
 
-	while ((ch = getopt(argc, argv, "jo:t")) != -1) {
+	while ((ch = getopt(argc, argv, "o:")) != -1) {
 		switch (ch) {
-		case 'j':
-			type = FILE_JSONL;
-			break;
 		case 'o':
 			output = optarg;
-			break;
-		case 't':
-			type = FILE_TSJ;
 			break;
 		default:
 			usage_scan(EXIT_FAILURE);
@@ -186,9 +162,7 @@ int main_get(int argc, char * const argv[], int help)
 		exit(EXIT_FAILURE);
 	}
 
-	if (!type) {
-		type = get_type(input);
-	}
+	check_ext(input);
 
 	if ((err = schema_init(&schema))) {
 		goto error_schema;
@@ -262,7 +236,6 @@ int main_scan(int argc, char * const argv[], int help)
 	const char *output = NULL;
 	const char *input = NULL;
 	FILE *stream;
-	enum file_type type = FILE_NONE;
 	int ch, err, i, id, type_id;
 	int lines = 0;
 
@@ -270,19 +243,13 @@ int main_scan(int argc, char * const argv[], int help)
 		usage_scan(EXIT_SUCCESS);
 	}
 
-	while ((ch = getopt(argc, argv, "jlo:t")) != -1) {
+	while ((ch = getopt(argc, argv, "lo:")) != -1) {
 		switch (ch) {
-		case 'j':
-			type = FILE_JSONL;
-			break;
 		case 'l':
 			lines = 1;
 			break;
 		case 'o':
 			output = optarg;
-			break;
-		case 't':
-			type = FILE_TSJ;
 			break;
 		default:
 			usage_scan(EXIT_FAILURE);
@@ -301,9 +268,7 @@ int main_scan(int argc, char * const argv[], int help)
 	}
 
 	input = argv[0];
-	if (!type) {
-		type = get_type(input);
-	}
+	check_ext(input);
 
 	if ((err = schema_init(&schema))) {
 		goto error_schema;
@@ -324,7 +289,7 @@ int main_scan(int argc, char * const argv[], int help)
 	}
 
 	fprintf(stream, "file:   %s\n", input);
-	fprintf(stream, "format: %s\n", type == FILE_JSONL ? "jsonl" : "tsv");
+	fprintf(stream, "format: %s\n", "JSON Lines");
 	fprintf(stream, "--\n");
 
 	type_id = DATATYPE_NULL;

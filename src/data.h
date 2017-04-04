@@ -37,6 +37,19 @@ struct data {
 	int type_id;
 };
 
+struct data_iter {
+	const struct schema *schema;
+	int array_item_type;
+	int array_length;
+	const uint8_t *array_ptr;
+
+	struct data current;
+	int index;
+};
+
+int data_iter_advance(struct data_iter *it);
+void data_iter_reset(struct data_iter *it);
+
 /**
  * Assign a data value by parsing input in JavaScript Object Notation (JSON)
  * format.
@@ -57,9 +70,10 @@ int data_int(const struct data *d, int *valptr);
 int data_double(const struct data *d, double *valptr);
 int data_text(const struct data *d, struct text *valptr);
 
+int data_items(const struct data *d, const struct schema *s,
+	       struct data_iter *valptr);
+
 int data_field(const struct data *d, const struct schema *s, int name_id,
 	       struct data *valptr);
-int data_item(const struct data *d, const struct schema *s, int index,
-	      struct data *valptr);
 
 #endif /* DATA_H */

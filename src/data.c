@@ -222,6 +222,116 @@ out:
 	return err;
 }
 
+
+static void data_iter_make(struct data_iter *it, const struct schema *s,
+			   const uint8_t *ptr,
+			   const struct datatype_array *type)
+{
+	it->schema = s;
+	it->array_item_type = type->type_id;
+	it->array_length = type->length;
+	it->array_ptr = ptr;
+	data_iter_reset(it);
+}
+
+
+void data_iter_reset(struct data_iter *it)
+{
+	it->index = -1;
+	it->current.ptr = NULL;
+	it->current.size = 0;
+	it->current.type_id = DATATYPE_NULL;
+}
+
+
+int data_iter_advance(struct data_iter *it)
+{
+	const uint8_t *ptr;
+	const uint8_t *end;
+
+	if (it->index == -1) {
+		ptr = it->array_ptr;
+		ptr++; // opening ([)
+
+		scan_spaces(&ptr);
+		if (*ptr == ']') {
+			it->index = 0;
+			goto end;
+		}
+	} else {
+		ptr = it->current.ptr + it->current.size;
+		scan_spaces(&ptr);
+		if (*ptr == ']') {
+			// if not already at the end of the array,
+			// increment the index
+			if (it->current.size > 0) {
+				it->index++;
+			}
+			goto end;
+		}
+
+		ptr++; // comma (,)
+		scan_spaces(&ptr);
+	}
+	end = ptr;
+	scan_value(&end);
+
+	if (it->array_item_type == DATATYPE_ANY) {
+		// this won't fail, because we already have enough
+		// space in the schema buffer to parse the array item
+		data_assign(&it->current, (struct schema *)it->schema,
+			    ptr, end - ptr);
+	} else {
+		it->current.ptr = ptr;
+		it->current.size = ptr - end;
+		it->current.type_id = it->array_item_type;
+	}
+	it->index++;
+	return 1;
+
+end:
+	it->current.ptr = ptr;
+	it->current.size = 0;
+	it->current.type_id = DATATYPE_NULL;
+	return 0;
+}
+
+
+int data_items(const struct data *d, const struct schema *s,
+	       struct data_iter *valptr)
+{
+	struct data_iter it;
+	const uint8_t *ptr = d->ptr;
+	int err;
+
+	if (d->type_id < 0 || s->types[d->type_id].kind != DATATYPE_ARRAY) {
+		goto nullval;
+	}
+
+	scan_spaces(&ptr);
+
+	data_iter_make(&it, s, ptr, &s->types[d->type_id].meta.array);
+	err = 0;
+	goto out;
+
+nullval:
+	it.schema = NULL;
+	it.array_item_type = DATATYPE_NULL;
+	it.array_length = -1;
+	it.array_ptr = NULL;
+	it.current.ptr = NULL;
+	it.current.size = 0;
+	it.current.type_id = DATATYPE_NULL;
+	it.index = -1;
+	err = ERROR_INVAL;
+out:
+	if (valptr) {
+		*valptr = it;
+	}
+	return err;
+}
+
+
 static int compare_int(const void *x1, const void *x2)
 {
 	int y1 = *(int *)x1;

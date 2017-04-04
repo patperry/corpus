@@ -295,6 +295,8 @@ map_ready:
 
 	}
 
+	madvise(buf->map_addr, length, MADV_SEQUENTIAL | MADV_WILLNEED);
+
 	return (length > 0);
 
 error:

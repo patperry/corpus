@@ -1554,13 +1554,15 @@ int scan_text(const uint8_t **bufptr, const uint8_t *end,
 	const uint8_t *input = *bufptr;
 	const uint8_t *ptr = input;
 	uint_fast8_t ch;
-	int err;
+	int err, flags;
 
+	flags = TEXT_NOESCAPE;
 	while (ptr != end) {
 		ch = *ptr;
 		if (ch == '"') {
 			goto close;
 		} else if (ch == '\\') {
+			flags = 0;
 			if (ptr == end) {
 				goto error_noclose;
 			}
@@ -1575,7 +1577,7 @@ error_noclose:
 	goto out;
 
 close:
-	if ((err = text_assign(text, input, ptr - input, 0))) {
+	if ((err = text_assign(text, input, ptr - input, flags))) {
 		err = ERROR_INVAL;
 		goto out;
 	}

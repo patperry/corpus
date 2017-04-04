@@ -19,6 +19,7 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <math.h>
+#include <stdlib.h>
 #include <syslog.h>
 #include "errcode.h"
 #include "table.h"
@@ -31,7 +32,11 @@
 double strntod_c(const char *string, size_t maxlen, char **endPtr);
 intmax_t strntoimax(const char *string, size_t maxlen, char **endptr);
 
-static void scan_spaces(const uint8_t **bufptr, const uint8_t *end);
+static void scan_value(const uint8_t **bufptr);
+static void scan_numeric(const uint8_t **bufptr);
+static void scan_text(const uint8_t **bufptr);
+static void scan_spaces(const uint8_t **bufptr);
+static void scan_spaces_safe(const uint8_t **bufptr, const uint8_t *end);
 
 
 int data_assign(struct data *d, struct schema *s, const uint8_t *ptr,
@@ -40,7 +45,7 @@ int data_assign(struct data *d, struct schema *s, const uint8_t *ptr,
 	const uint8_t *end = ptr + size;
 	int err, id;
 
-	scan_spaces(&ptr, end);
+	scan_spaces_safe(&ptr, end);
 
 	if ((err = schema_scan(s, ptr, end - ptr, &id))) {
 		goto error;
@@ -189,7 +194,6 @@ int data_text(const struct data *d, struct text *valptr)
 	if (d->type_id != DATATYPE_TEXT) {
 		goto nullval;
 	}
-	err = 0;
 
 	ptr = d->ptr;
 	end = ptr + d->size;
@@ -218,8 +222,270 @@ out:
 	return err;
 }
 
+static int compare_int(const void *x1, const void *x2)
+{
+	int y1 = *(int *)x1;
+	int y2 = *(int *)x2;
+	int ret;
 
-void scan_spaces(const uint8_t **bufptr, const uint8_t *end)
+	if (y1 < y2) {
+		ret = -1;
+	} else if (y1 > y2) {
+		ret = +1;
+	} else {
+		ret = 0;
+	}
+
+	return ret;
+}
+
+
+int data_field(const struct data *d, const struct schema *s, int name_id,
+	       struct data *valptr)
+{
+	const struct datatype_record *rec;
+	struct data val;
+	const uint8_t *begin;
+	const uint8_t *ptr = d->ptr;
+	const int *idptr;
+	struct text name;
+	int err, flags, id, type_id;
+
+	if (d->type_id < 0 || s->types[d->type_id].kind != DATATYPE_RECORD) {
+		goto nullval;
+	}
+
+	rec = &s->types[d->type_id].meta.record;
+	idptr = bsearch(&name_id, rec->name_ids, rec->nfield,
+			sizeof(*rec->name_ids), compare_int);
+	if (idptr == NULL) {
+		goto nullval;
+	}
+	type_id = rec->type_ids[idptr - rec->name_ids];
+
+	// {
+	ptr++;
+
+	// ws
+	scan_spaces(&ptr);
+
+	if (*ptr == '}') {
+		goto nullval;
+	}
+
+	while (1) {
+		// "
+		ptr++;
+
+		// name
+		begin = ptr;
+		flags = TEXT_NOESCAPE;
+		while (*ptr != '"') {
+			if (*ptr == '\\') {
+				flags = 0;
+				ptr++;
+			}
+			ptr++;
+		}
+		text_assign(&name, begin, ptr - begin, flags | TEXT_NOVALIDATE);
+
+		// the call to schema_name always succeeds and does not
+		// create a new name, because the field name already
+		// exists as part of the type
+		schema_name((struct schema *)s, &name, &id);
+
+		// "
+		ptr++;
+
+		// ws
+		scan_spaces(&ptr);
+
+		// :
+		ptr++;
+
+		// ws
+		scan_spaces(&ptr);
+
+		if (id == name_id) {
+			goto found;
+		}
+
+		// value
+		scan_value(&ptr);
+
+		// ws
+		scan_spaces(&ptr);
+
+		if (*ptr == '}') {
+			goto nullval;
+		}
+
+		// ,
+		ptr++;
+
+		// ws
+		scan_spaces(&ptr);
+	}
+found:
+	val.ptr = ptr;
+	scan_value(&ptr);
+	val.size = ptr - val.ptr;
+	val.type_id = type_id;
+	err = 0;
+	goto out;
+
+nullval:
+	val.ptr = NULL;
+	val.size = 0;
+	val.type_id = DATATYPE_NULL;
+	err = ERROR_INVAL;
+out:
+	if (valptr) {
+		*valptr = val;
+	}
+	return err;
+}
+
+
+void scan_value(const uint8_t **bufptr)
+{
+	const uint8_t *ptr = *bufptr;
+	uint_fast8_t ch;
+	int depth;
+
+	ch = *ptr++;
+	switch (ch) {
+	case 'n':
+		ptr += 3; // ull
+		break;
+
+	case 'f':
+		ptr += 4; // alse
+		break;
+
+	case 't':
+		ptr += 3; // rue
+		break;
+
+	case '"':
+		scan_text(&ptr);
+		break;
+
+	case '[':
+		depth = 1;
+		while (depth > 0) {
+			ch = *ptr++;
+			switch (ch) {
+			case '[':
+				depth++;
+				break;
+			case ']':
+				depth--;
+				break;
+			case '"':
+				scan_text(&ptr);
+				break;
+			default:
+				break;
+			}
+		}
+		break;
+
+	case '{':
+		depth = 1;
+		while (depth > 0) {
+			ch = *ptr++;
+			switch (ch) {
+			case '{':
+				depth++;
+				break;
+			case '}':
+				depth--;
+				break;
+			case '"':
+				scan_text(&ptr);
+				break;
+			default:
+				break;
+			}
+		}
+		break;
+
+	default:
+		ptr--;
+		scan_numeric(&ptr);
+		break;
+	}
+
+	*bufptr = ptr;
+}
+
+
+void scan_numeric(const uint8_t **bufptr)
+{
+	const uint8_t *ptr = *bufptr;
+
+	// leading sign
+	if (*ptr == '-' || *ptr == '+') {
+		ptr++;
+	}
+
+	if (isdigit(*ptr) || *ptr == '.') {
+		while (isdigit(*ptr)) {
+			ptr++;
+		}
+		if (*ptr == '.') {
+			ptr++;
+		}
+		while (isdigit(*ptr)) {
+			ptr++;
+		}
+		if (*ptr == 'e' || *ptr == 'E') {
+			ptr++;
+			if (*ptr == '-' || *ptr == '+') {
+				ptr++;
+			}
+			while (isdigit(*ptr)) {
+				ptr++;
+			}
+		}
+	} else if (*ptr == 'I') {
+		ptr += 8; // Infinity
+	} else {
+		ptr += 3; // NaN
+	}
+
+	*bufptr = ptr;
+}
+
+
+void scan_text(const uint8_t **bufptr)
+{
+	const uint8_t *ptr = *bufptr;
+
+	while (*ptr != '"') {
+		if (*ptr == '\\') {
+			ptr++;
+		}
+		ptr++;
+	}
+	ptr++; // trailing "
+
+	*bufptr = ptr;
+}
+
+
+void scan_spaces(const uint8_t **bufptr)
+{
+	const uint8_t *ptr = *bufptr;
+	while (isspace(*ptr)) {
+		ptr++;
+	}
+	*bufptr = ptr;
+}
+
+
+void scan_spaces_safe(const uint8_t **bufptr, const uint8_t *end)
 {
 	const uint8_t *ptr = *bufptr;
 	uint_fast8_t ch;

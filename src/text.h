@@ -47,11 +47,11 @@ struct text_iter {
 	uint32_t current;	/**< current character (UTF-32) */
 };
 
-/** Whether the text contains a non-ASCII UTF-8 character */
+/** Whether the text might contain a non-ASCII UTF-8 character */
 #define TEXT_UTF8_BIT	((size_t)1 << (CHAR_BIT * sizeof(size_t) - 1))
 
-/** Whether the text contains a backslash (`\`) that should be interpreted
- *  as an escape */
+/** Whether the text might contain a backslash (`\`) that should be
+ * interpreted as an escape */
 #define TEXT_ESC_BIT	((size_t)1 << (CHAR_BIT * sizeof(size_t) - 2))
 
 /** Size of the encoded text, in bytes; (decoded size) <= (encoded size) */
@@ -69,7 +69,7 @@ struct text_iter {
  */
 #define TEXT_IS_ASCII(text)	(((text)->attr & TEXT_UTF8_BIT) ? 0 : 1)
 
-/** Indicates whether the text contains a backslash (`\`) that should
+/** Indicates whether the text might contain a backslash (`\`) that should
  *  be interpreted as an escape code */
 #define TEXT_HAS_ESC(text)	(((text)->attr & TEXT_ESC_BIT) ? 1 : 0)
 

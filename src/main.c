@@ -30,9 +30,17 @@
 #include "token.h"
 #include "symtab.h"
 #include "datatype.h"
+#include "data.h"
 
 #define PROGRAM_NAME	"corpus"
 #define PROGRAM_VERSION	"0.1"
+
+
+enum file_type {
+	FILE_NONE = 0,
+	FILE_JSONL,
+	FILE_TSJ
+};
 
 
 void usage(int status)
@@ -44,17 +52,29 @@ Options:\n\
 \t-v\tPrints the version number.\n\
 \n\
 Commands:\n\
-\tscan\tDetermine the schema of a data file\n\
+\tget\tExtract a field from a data file.\n\
+\tscan\tDetermine the schema of a data file.\n\
 ", PROGRAM_NAME);
 
 	exit(status);
 }
 
 
-void version(void)
+void usage_get(int status)
 {
-	printf("%s version %s\n", PROGRAM_NAME, PROGRAM_VERSION);
-	exit(EXIT_SUCCESS);
+	printf("\
+Usage:\t%s get [options] <field> <path>\n\
+\n\
+Description:\n\
+\tExtract a field from a corpus.\n\
+\n\
+Options:\n\
+\t-j\t\tParses input in JSON Lines format.\n\
+\t-o <path>\tSaves output at the given path.\n\
+\t-t\t\tParses input in Tab Separated JSON (TSJ) format.\n\
+", PROGRAM_NAME);
+
+	exit(status);
 }
 
 
@@ -78,11 +98,161 @@ Options:\n\
 	exit(status);
 }
 
-enum file_type {
-	FILE_NONE = 0,
-	FILE_JSONL,
-	FILE_TSJ
-};
+
+void version(void)
+{
+	printf("%s version %s\n", PROGRAM_NAME, PROGRAM_VERSION);
+	exit(EXIT_SUCCESS);
+}
+
+
+enum file_type get_type(const char *file_name)
+{
+	enum file_type type = FILE_NONE;
+	const char *ext;
+
+	if ((ext = strrchr(file_name, '.')) == NULL) {
+		// no file extension; assume json lines
+		type = FILE_JSONL;
+	} else if (!strcmp(ext, ".tsj") || !strcmp(ext, ".tsv")) {
+		type = FILE_TSJ;
+	} else if (!strcmp(ext, ".json") || !strcmp(ext, ".jsonl")) {
+		type = FILE_JSONL;
+	} else {
+		fprintf(stderr, "Unrecognized file extension '%s'.\n", ext);
+		exit(EXIT_FAILURE);
+	}
+
+	if (type == FILE_TSJ) {
+		fprintf(stderr, "TSJ parser is not yet implmented.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	return type;
+}
+
+
+int main_get(int argc, char * const argv[], int help)
+{
+	struct data data, val;
+	struct text name;
+	struct schema schema;
+	struct filebuf buf;
+	const char *output = NULL;
+	const char *field, *input;
+	FILE *stream;
+	enum file_type type = FILE_NONE;
+	int ch, err, i, name_id;
+
+	if (help) {
+		usage_get(EXIT_SUCCESS);
+	}
+
+	while ((ch = getopt(argc, argv, "jo:t")) != -1) {
+		switch (ch) {
+		case 'j':
+			type = FILE_JSONL;
+			break;
+		case 'o':
+			output = optarg;
+			break;
+		case 't':
+			type = FILE_TSJ;
+			break;
+		default:
+			usage_scan(EXIT_FAILURE);
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
+
+	if (argc == 0) {
+		fprintf(stderr, "No field specified.\n\n");
+		usage_get(EXIT_FAILURE);
+	} else if (argc == 1) {
+		fprintf(stderr, "No input file specified.\n\n");
+		usage_get(EXIT_FAILURE);
+	} else if (argc > 2) {
+		fprintf(stderr, "Too many input files specified.\n\n");
+		usage_get(EXIT_FAILURE);
+	}
+
+	field = argv[0];
+	input = argv[1];
+
+	if (text_assign(&name, (uint8_t *)field, strlen(field), 0)) {
+		fprintf(stderr, "Invalid field name (%s)\n", field);
+		exit(EXIT_FAILURE);
+	}
+
+	if (!type) {
+		type = get_type(input);
+	}
+
+	if ((err = schema_init(&schema))) {
+		goto error_schema;
+	}
+
+	if ((err = filebuf_init(&buf, input))) {
+		goto error_filebuf;
+	}
+
+	if (output) {
+		if (!(stream = fopen(output, "w"))) {
+			perror("Failed opening output file");
+			err = ERROR_OS;
+			goto error_output;
+		}
+	} else {
+		stream = stdout;
+	}
+
+	if ((err = schema_name(&schema, &name, &name_id))) {
+		goto error_get;
+	}
+
+	while (filebuf_advance(&buf)) {
+		for (i = 0; i < buf.nline; i++) {
+			if ((err = data_assign(&data, &schema,
+						buf.lines[i].ptr,
+						buf.lines[i].size))) {
+				goto error_get;
+			}
+
+			if (data_field(&data, &schema, name_id, &val) == 0) {
+				// field exists
+				fprintf(stream, "%.*s\n", (int)val.size,
+					(char *)val.ptr);
+			} else {
+				// field is null
+				fprintf(stream, "null\n");
+			}
+		}
+	}
+
+	if ((err = buf.error)) {
+		perror("Failed parsing input file");
+		goto error_get;
+	}
+
+	err = 0;
+
+error_get:
+	if (output && fclose(stream) == EOF) {
+		perror("Failed closing output file");
+		err = ERROR_OS;
+	}
+error_output:
+	filebuf_destroy(&buf);
+error_filebuf:
+	schema_destroy(&schema);
+error_schema:
+	if (err) {
+		fprintf(stderr, "An error occurred.\n");
+	}
+	return err;
+}
 
 
 int main_scan(int argc, char * const argv[], int help)
@@ -91,7 +261,6 @@ int main_scan(int argc, char * const argv[], int help)
 	struct filebuf buf;
 	const char *output = NULL;
 	const char *input = NULL;
-	const char *ext;
 	FILE *stream;
 	enum file_type type = FILE_NONE;
 	int ch, err, i, id, type_id;
@@ -132,25 +301,16 @@ int main_scan(int argc, char * const argv[], int help)
 	}
 
 	input = argv[0];
-
 	if (!type) {
-		if ((ext = strrchr(input, '.')) == NULL) {
-			// no file extension; assume json lines
-			type = FILE_JSONL;
-		} else if (!strcmp(ext, ".tsj") || !strcmp(ext, ".tsv")) {
-			type = FILE_TSJ;
-		} else if (!strcmp(ext, ".json") || !strcmp(ext, ".jsonl")) {
-			type = FILE_JSONL;
-		} else {
-			fprintf(stderr, "Unrecognized file extension '%s'.\n",
-				ext);
-			usage_scan(EXIT_FAILURE);
-		}
+		type = get_type(input);
 	}
 
-	if (type == FILE_TSJ) {
-		fprintf(stderr, "TSJ parser is not yet implmented.\n");
-		exit(EXIT_FAILURE);
+	if ((err = schema_init(&schema))) {
+		goto error_schema;
+	}
+
+	if ((err = filebuf_init(&buf, input))) {
+		goto error_filebuf;
 	}
 
 	if (output) {
@@ -166,14 +326,6 @@ int main_scan(int argc, char * const argv[], int help)
 	fprintf(stream, "file:   %s\n", input);
 	fprintf(stream, "format: %s\n", type == FILE_JSONL ? "jsonl" : "tsv");
 	fprintf(stream, "--\n");
-
-	if ((err = schema_init(&schema))) {
-		goto error_schema;
-	}
-
-	if ((err = filebuf_init(&buf, input))) {
-		goto error_filebuf;
-	}
 
 	type_id = DATATYPE_NULL;
 
@@ -212,15 +364,15 @@ int main_scan(int argc, char * const argv[], int help)
 	err = 0;
 
 error_scan:
-	filebuf_destroy(&buf);
-error_filebuf:
-	schema_destroy(&schema);
-error_schema:
 	if (output && fclose(stream) == EOF) {
 		perror("Failed closing output file");
 		err = ERROR_OS;
 	}
 error_output:
+	filebuf_destroy(&buf);
+error_filebuf:
+	schema_destroy(&schema);
+error_schema:
 	if (err) {
 		fprintf(stderr, "An error occurred.\n");
 	}
@@ -230,7 +382,7 @@ error_output:
 
 int main(int argc, char * const argv[])
 {
-	int help = 0, debug = 0;
+	int help = 0, debug = 0, err = 0;
 	int ch;
 
 	openlog(PROGRAM_NAME, LOG_CONS | LOG_PERROR | LOG_PID, LOG_USER);
@@ -263,11 +415,14 @@ int main(int argc, char * const argv[])
 
 	if (argc == 0) {
 		usage(EXIT_FAILURE);
-	} else if (strcmp(argv[0], "scan") != 0) {
-		fprintf(stderr, "Unrecognized command '%s'.\n\n",
-			argv[0]);
+	} else if (!strcmp(argv[0], "get")) {
+		err = main_get(argc, argv, help);
+	} else if (!strcmp(argv[0], "scan")) {
+		err = main_scan(argc, argv, help);
+	} else {
+		fprintf(stderr, "Unrecognized command '%s'.\n\n", argv[0]);
 		usage(EXIT_FAILURE);
 	}
 
-	return main_scan(argc, argv, help);
+	return (err == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
 }

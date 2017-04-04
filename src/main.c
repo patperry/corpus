@@ -36,13 +36,6 @@
 #define PROGRAM_VERSION	"0.1"
 
 
-enum file_type {
-	FILE_NONE = 0,
-	FILE_JSONL,
-	FILE_TSJ
-};
-
-
 void usage(int status)
 {
 	printf("\
@@ -53,6 +46,7 @@ Options:\n\
 \n\
 Commands:\n\
 \tget\tExtract a field from a data file.\n\
+\ttokens\tTokenize text from from a data file.\n\
 \tscan\tDetermine the schema of a data file.\n\
 ", PROGRAM_NAME);
 
@@ -66,10 +60,34 @@ void usage_get(int status)
 Usage:\t%s get [options] <field> <path>\n\
 \n\
 Description:\n\
-\tExtract a field from a data set.\n\
+\tExtract a field from a data file.\n\
 \n\
 Options:\n\
 \t-o <path>\tSaves output at the given path.\n\
+", PROGRAM_NAME);
+
+	exit(status);
+}
+
+
+void usage_tokens(int status)
+{
+	printf("\
+Usage:\t%s tokens [options] <path>\n\
+\n\
+Description:\n\
+\tTokenize text from from a data file.\n\
+\n\
+Options:\n\
+\t-c\t\tKeeps original case instead of case folding.\n\
+\t-d\t\tKeeps dashes instead of replacing them with \"-\".\n\
+\t-f <field>\tGets text from the given field (defaults to \"text\").\n\
+\t-i\t\tKeeps default ignorable characters like soft hyphens.\n\
+\t-k\t\tDoes not perform compatibility decompositions (NFKD).\n\
+\t-o <path>\tSaves output at the given path.\n\
+\t-q\t\tKeeps quotes instead of replacing them with \"'\".\n\
+\t-w\t\tKeeps white space.\n\
+\t-x\t\tKeeps non-white-space control characters.\n\
 ", PROGRAM_NAME);
 
 	exit(status);
@@ -382,6 +400,8 @@ int main(int argc, char * const argv[])
 		usage(EXIT_FAILURE);
 	} else if (!strcmp(argv[0], "get")) {
 		err = main_get(argc, argv, help);
+	} else if (!strcmp(argv[0], "tokens")) {
+		usage_tokens(EXIT_FAILURE);
 	} else if (!strcmp(argv[0], "scan")) {
 		err = main_scan(argc, argv, help);
 	} else {

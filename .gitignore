@@ -8,3 +8,4 @@ xcuserdata
 /tests/check_text
 /tests/check_token
 /tests/check_unicode
+/tests/check_wordscan

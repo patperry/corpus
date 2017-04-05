@@ -48,10 +48,13 @@ void start(const struct text *text)
 
 const struct text *next(void)
 {
+	struct text *word;
 	if (!wordscan_advance(&scan)) {
 		return NULL;
 	}
-	return &scan.current;
+	word = alloc(sizeof(*word));
+	*word = scan.current;
+	return word;
 }
 
 

@@ -87,7 +87,8 @@ void text_iter_make(struct text_iter *it, const struct text *text)
 {
 	it->ptr = text->ptr;
 	it->end = it->ptr + TEXT_SIZE(text);
-	it->attr = text->attr;
+	it->text_attr = text->attr;
+	it->attr = 0;
 	it->current = -1;
 }
 
@@ -95,35 +96,47 @@ void text_iter_make(struct text_iter *it, const struct text *text)
 int text_iter_advance(struct text_iter *it)
 {
 	const uint8_t *ptr = it->ptr;
-	size_t attr = it->attr;
+	size_t text_attr = it->text_attr;
 	uint32_t code;
+	size_t attr;
+
 
 	if (ptr == it->end) {
 		goto at_end;
 	}
 
+	attr = 0;
 	code = *ptr++;
-	if (code == '\\' && (attr & TEXT_ESC_BIT)) {
+
+	if (code == '\\' && (text_attr & TEXT_ESC_BIT)) {
+		attr = TEXT_ESC_BIT;
 		decode_valid_escape(&ptr, &code);
-	} else if ((attr & TEXT_UTF8_BIT) && code >= 0x80) {
+		if (code >= 0x80) {
+			attr |= TEXT_UTF8_BIT;
+		}
+	} else if ((text_attr & TEXT_UTF8_BIT) && code >= 0x80) {
+		attr = TEXT_UTF8_BIT;
 		ptr--;
 		decode_utf8(&ptr, &code);
 	}
 
 	it->ptr = (uint8_t *)ptr;
 	it->current = code;
-
+	it->attr = attr;
 	return 1;
 
 at_end:
+	it->current = 0;
+	it->attr = 0;
 	return 0;
 }
 
 
 void text_iter_reset(struct text_iter *it)
 {
-	it->ptr = it->end - (it->attr & TEXT_SIZE_MASK);
+	it->ptr = it->end - (it->text_attr & TEXT_SIZE_MASK);
 	it->current = -1;
+	it->attr = 0;
 }
 
 

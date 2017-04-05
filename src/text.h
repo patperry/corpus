@@ -43,8 +43,9 @@ struct text {
 struct text_iter {
 	const uint8_t *ptr;	/**< current position in the text buffer*/
 	const uint8_t *end;	/**< end of the text buffer */
-	size_t attr;		/**< text attributes */
+	size_t text_attr;	/**< text attributes */
 	uint32_t current;	/**< current character (UTF-32) */
+	size_t attr;		/**< current character attributes */
 };
 
 /** Whether the text might contain a non-ASCII UTF-8 character */

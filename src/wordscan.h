@@ -48,8 +48,17 @@ enum word_type {
  */
 struct wordscan {
 	struct text text;	/**< the input text */
-	const uint8_t *ptr;	/**< the current position in the input text */
-	const uint8_t *end;	/**< the end of the input text */
+	size_t text_attr;	/**< the input text attributes */
+
+	uint32_t code;		/**< next code point */
+	size_t attr;		/**< next code's attributes */
+	int prop;		/**< next code's word break property */
+	const uint8_t *ptr;	/**< next code's start */
+
+	struct text_iter iter;	/**< an iterator over the input,
+				  positioned past next code */
+	int iter_prop;		/**< iterator code's word break property */
+	const uint8_t *iter_ptr;/**< iterator code's start */
 
 	struct text current;	/**< the current word */
 	enum word_type type;	/**< the type of the current word */

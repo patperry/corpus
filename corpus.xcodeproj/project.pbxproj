@@ -18,6 +18,7 @@
 		884A369C1E8EE3DF00465CE7 /* data.c in Sources */ = {isa = PBXBuildFile; fileRef = 884A36971E8EE3DF00465CE7 /* data.c */; };
 		884A369D1E8EE3DF00465CE7 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 884A36991E8EE3DF00465CE7 /* main.c */; };
 		884A36A11E8EE43500465CE7 /* strntod_c.c in Sources */ = {isa = PBXBuildFile; fileRef = 884A36A01E8EE43500465CE7 /* strntod_c.c */; };
+		886533651E958CA60089FD91 /* wordscan.c in Sources */ = {isa = PBXBuildFile; fileRef = 886533631E958CA60089FD91 /* wordscan.c */; };
 		88EE9C801E9000A400B1FEBA /* datatype.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EE9C7E1E9000A400B1FEBA /* datatype.c */; };
 		88EE9C821E9000BB00B1FEBA /* strntoimax.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EE9C811E9000BB00B1FEBA /* strntoimax.c */; };
 /* End PBXBuildFile section */
@@ -62,6 +63,9 @@
 		884A36981E8EE3DF00465CE7 /* data.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = data.h; path = src/data.h; sourceTree = "<group>"; };
 		884A36991E8EE3DF00465CE7 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = src/main.c; sourceTree = "<group>"; };
 		884A36A01E8EE43500465CE7 /* strntod_c.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = strntod_c.c; path = lib/strntod_c.c; sourceTree = "<group>"; };
+		886533631E958CA60089FD91 /* wordscan.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = wordscan.c; path = src/wordscan.c; sourceTree = "<group>"; };
+		886533641E958CA60089FD91 /* wordscan.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = wordscan.h; path = src/wordscan.h; sourceTree = "<group>"; };
+		886533661E958CB80089FD91 /* wordbreakprop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = wordbreakprop.h; path = src/unicode/wordbreakprop.h; sourceTree = "<group>"; };
 		88EE9C7E1E9000A400B1FEBA /* datatype.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = datatype.c; path = src/datatype.c; sourceTree = "<group>"; };
 		88EE9C7F1E9000A400B1FEBA /* datatype.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = datatype.h; path = src/datatype.h; sourceTree = "<group>"; };
 		88EE9C811E9000BB00B1FEBA /* strntoimax.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = strntoimax.c; path = lib/strntoimax.c; sourceTree = "<group>"; };
@@ -120,6 +124,8 @@
 				88351CE21E8DB64F001DA3A8 /* token.h */,
 				88351CE31E8DB64F001DA3A8 /* unicode.c */,
 				88351CE41E8DB64F001DA3A8 /* unicode.h */,
+				886533631E958CA60089FD91 /* wordscan.c */,
+				886533641E958CA60089FD91 /* wordscan.h */,
 				88351CE51E8DB64F001DA3A8 /* xalloc.c */,
 				88351CE61E8DB64F001DA3A8 /* xalloc.h */,
 			);
@@ -132,6 +138,7 @@
 				88351CF01E8DB677001DA3A8 /* casefold.h */,
 				88351CF11E8DB677001DA3A8 /* combining.h */,
 				88351CF21E8DB677001DA3A8 /* decompose.h */,
+				886533661E958CB80089FD91 /* wordbreakprop.h */,
 			);
 			name = unicode;
 			sourceTree = "<group>";
@@ -215,6 +222,7 @@
 				88351CEB1E8DB64F001DA3A8 /* table.c in Sources */,
 				88351CED1E8DB64F001DA3A8 /* token.c in Sources */,
 				88351CEA1E8DB64F001DA3A8 /* symtab.c in Sources */,
+				886533651E958CA60089FD91 /* wordscan.c in Sources */,
 				884A36A11E8EE43500465CE7 /* strntod_c.c in Sources */,
 				88351CE71E8DB64F001DA3A8 /* array.c in Sources */,
 				88351CEE1E8DB64F001DA3A8 /* unicode.c in Sources */,

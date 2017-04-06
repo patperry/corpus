@@ -23,6 +23,7 @@
  * Unicode sentence segmentation.
  */
 
+#include <stddef.h>
 #include <stdint.h>
 
 /**

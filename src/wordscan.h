@@ -23,23 +23,25 @@
  * Unicode word segmentation.
  */
 
+#include <stddef.h>
 #include <stdint.h>
 
 /**
- * A word type.
+ * The type of the first character in a word type.
  */
 enum word_type {
-	WORD_NONE = -1,	/**< at start or end of text */
-	WORD_NEWLINE = 0,
-	WORD_ZWJ, /**< emoji zwj sequence */
-	WORD_EBASE, /**< emoji modifier base */
-	WORD_ALETTER,
-	WORD_NUMERIC,
-	WORD_EXTEND,
-	WORD_HEBREW,
-	WORD_KATAKANA,
-	WORD_REGIONAL,
-	WORD_OTHER
+	WORD_NONE = -1,		/**< no letter, at start or end of text */
+	WORD_NEWLINE = 0,	/**< newline */
+	WORD_ZWJ,		/**< emoji zero-width-joiner */
+	WORD_EBASE,		/**< emoji modifier base */
+	WORD_ALETTER,		/**< alphabetic letter */
+	WORD_NUMERIC,		/**< numeric character */
+	WORD_EXTEND,		/**< connector punctuation */
+	WORD_HEBREW,		/**< Hebrew or general category
+				  "Other Letter" */
+	WORD_KATAKANA,		/**< Katakana letter */
+	WORD_REGIONAL,		/**< Regional indicator */
+	WORD_OTHER		/**< other character */
 };
 
 /**

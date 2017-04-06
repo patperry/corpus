@@ -23,7 +23,9 @@ LIB_O	= lib/strntod_c.o lib/strntoimax.o src/array.o src/data.o \
 CORPUS_T = corpus
 CORPUS_O = src/main.o
 
-DATA    = data/ucd/CaseFolding.txt data/ucd/UnicodeData.txt \
+DATA    = data/ucd/CaseFolding.txt \
+		  data/ucd/auxiliary/SentenceBreakProperty.txt \
+		  data/ucd/UnicodeData.txt \
 		  data/ucd/auxiliary/WordBreakProperty.txt
 
 TESTS_T = tests/check_data tests/check_symtab tests/check_text \
@@ -33,6 +35,7 @@ TESTS_O = tests/check_data.o tests/check_symtab.o tests/check_text.o \
 		  tests/testutil.o
 
 TESTS_DATA = data/ucd/NormalizationTest.txt \
+			 data/ucd/auxiliary/SentenceBreakTest.txt \
 			 data/ucd/auxiliary/WordBreakTest.txt
 
 ALL_O = $(LIB_O) $(CORPUS_O)
@@ -61,6 +64,14 @@ data/ucd/CaseFolding.txt:
 data/ucd/NormalizationTest.txt:
 	$(MKDIR_P) data/ucd
 	$(CURL) -o $@ $(UNICODE)/ucd/NormalizationTest.txt
+
+data/ucd/auxiliary/SentenceBreakProperty.txt:
+	$(MKDIR_P) data/ucd/auxiliary
+	$(CURL) -o $@ $(UNICODE)/ucd/auxiliary/SentenceBreakProperty.txt
+
+data/ucd/auxiliary/SentenceBreakTest.txt:
+	$(MKDIR_P) data/ucd/auxiliary
+	$(CURL) -o $@ $(UNICODE)/ucd/auxiliary/SentenceBreakTest.txt
 
 data/ucd/UnicodeData.txt:
 	$(MKDIR_P) data/ucd
@@ -91,6 +102,11 @@ src/unicode/decompose.h: util/gen-decompose.py \
 		data/ucd/UnicodeData.txt
 	$(MKDIR_P) src/unicode
 	./util/gen-decompose.py > $@
+
+src/unicode/sentbreakprop.h: util/gen-sentbreak.py \
+		data/ucd/auxiliary/SentenceBreakProperty.txt
+	$(MKDIR_P) src/unicode
+	./util/gen-sentbreak.py > $@
 
 src/unicode/wordbreakprop.h: util/gen-wordbreak.py \
 		data/ucd/auxiliary/WordBreakProperty.txt

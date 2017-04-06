@@ -4,11 +4,7 @@ Todo
 C library
 ---------
 
-Text segmentation according to [UAX #29][uax29]:
-
- - sentences.
-
-Update type normalizer (dash, quote folding) to Unicode 10.0.
+Word count matrix ("dfm" in quanteda lingo).
 
 
 R interface
@@ -37,4 +33,11 @@ Bootstrapping. Not sure what the interface should look like, but should
 support sentence-level, word-level, block-level.
 
 
-[uax29]: http://unicode.org/reports/tr29/
+Windows portability
+-------------------
+
+`mmap` calls are unix-specfic. Use the appropriate alternatives for
+windows builds
+
+`syslog` is unix-specific. Add custom logging? This would make
+error reporting better for, e.g., the R interface.

@@ -63,7 +63,8 @@ void wordscan_make(struct wordscan *scan, const struct text *text)
 			scan->attr |= scan->iter.attr; \
 			scan->iter_ptr = scan->iter.ptr; \
 			if (text_iter_advance(&scan->iter)) { \
-				scan->iter_prop = word_break(scan->iter.current); \
+				scan->iter_prop = \
+					word_break(scan->iter.current); \
 			} else { \
 				scan->iter_prop = -1; \
 			} \
@@ -172,11 +173,11 @@ int wordscan_advance(struct wordscan *scan)
 		}
 
 	default:
+		EXTEND();
+		NEXT();
 		break;
 	}
 
-	EXTEND();
-	NEXT();
 
 	switch (prop) {
 	case WORD_BREAK_ALETTER:

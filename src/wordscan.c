@@ -36,8 +36,6 @@ void wordscan_make(struct wordscan *scan, const struct text *text)
 		if (scan->prop < 0) { \
 			goto Break; \
 		} \
-		code = scan->code; \
-		prop = scan->prop; \
 		scan->code = scan->iter.current; \
 		scan->attr = scan->iter.attr; \
 		scan->prop = scan->iter_prop; \
@@ -131,12 +129,15 @@ void wordscan_reset(struct wordscan *scan)
 
 int wordscan_advance(struct wordscan *scan)
 {
-	uint32_t code;
-	int prop;
-
 	scan->current.ptr = (uint8_t *)scan->ptr;
 	scan->current.attr = 0;
-	scan->type = WORD_NONE;
+
+	// Break at the start and end of text, unless the text is empty.
+	if (scan->prop < 0) {
+		scan->type = WORD_NONE;
+		// WB2: Any + eot
+		goto Break;
+	}
 
 	switch (scan->prop) {
 	case WORD_BREAK_CR:
@@ -181,44 +182,45 @@ int wordscan_advance(struct wordscan *scan)
 		NEXT();
 		goto Break;
 
-	default:
-		NEXT();
-		break;
-	}
-
-
-	switch (prop) {
 	case WORD_BREAK_ALETTER:
 		scan->type = WORD_ALETTER;
+		NEXT();
 		goto ALetter;
 
 	case WORD_BREAK_NUMERIC:
 		scan->type = WORD_NUMERIC;
+		NEXT();
 		goto Numeric;
 
 	case WORD_BREAK_EXTENDNUMLET:
 		scan->type = WORD_EXTEND;
+		NEXT();
 		goto ExtendNumLet;
 
 	case WORD_BREAK_HEBREW_LETTER:
 		scan->type = WORD_HEBREW;
+		NEXT();
 		goto Hebrew_Letter;
 
 	case WORD_BREAK_KATAKANA:
 		scan->type = WORD_KATAKANA;
+		NEXT();
 		goto Katakana;
 
 	case WORD_BREAK_E_BASE:
 	case WORD_BREAK_E_BASE_GAZ:
 		scan->type = WORD_EBASE;
+		NEXT();
 		goto E_Base;
 
 	case WORD_BREAK_REGIONAL_INDICATOR:
 		scan->type = WORD_REGIONAL;
+		NEXT();
 		goto Regional_Indicator;
 
 	default:
 		scan->type = WORD_OTHER;
+		NEXT();
 		goto Break;
 	}
 

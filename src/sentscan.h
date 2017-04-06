@@ -43,7 +43,10 @@ enum sent_type {
  * A sentence scanner, for iterating over the sentences in a text. Sentence
  * boundaries are determined according to
  * [UAX #29, Unicode Text Segmentation][uax29].
+ * You can test the word boundary rules in an interactive
+ * [online demo][demo].
  *
+ * [demo]: http://unicode.org/cldr/utility/breaks.jsp
  * [uax29]: http://unicode.org/reports/tr29/
  */
 struct sentscan {

@@ -108,6 +108,17 @@ void wordscan_reset(struct wordscan *scan)
 		} else {
 			scan->iter_prop = -1;
 		}
+
+		switch (scan->prop) {
+		case WORD_BREAK_CR:
+		case WORD_BREAK_LF:
+		case WORD_BREAK_NEWLINE:
+		case WORD_BREAK_ZWJ:
+			break;
+		default:
+			EXTEND();
+			break;
+		}
 	} else {
 		scan->code = 0;
 		scan->attr = 0;
@@ -134,11 +145,11 @@ int wordscan_advance(struct wordscan *scan)
 		// Do not break within CRLF
 		// WB3: CR * LF
 		if (scan->iter_prop == WORD_BREAK_LF) {
-			SCAN();
+			NEXT();
 		}
 		// Otherwise break after Newlines
 		// WB3a: (Newline | CR | LF) +
-		SCAN();
+		NEXT();
 		goto Break;
 
 	case WORD_BREAK_NEWLINE:
@@ -146,7 +157,7 @@ int wordscan_advance(struct wordscan *scan)
 		// Break after Newlines
 		// WB3a: (Newline | LF) +
 		scan->type = WORD_NEWLINE;
-		SCAN();
+		NEXT();
 		goto Break;
 
 	case WORD_BREAK_ZWJ:
@@ -156,24 +167,23 @@ int wordscan_advance(struct wordscan *scan)
 			case WORD_BREAK_GLUE_AFTER_ZWJ:
 			// Do not break within emoji zwj sequences
 			// WB3c: ZWJ * (Glue_After_Zwj | EBG)
-			SCAN();
-			SCAN();
+			NEXT();
+			NEXT();
 			goto Break;
 
 		case WORD_BREAK_E_BASE_GAZ:
 			// WB3c: ZWJ * (Glue_After_Zwj | EBG)
-			SCAN();
-			SCAN();
+			NEXT();
+			NEXT();
 			goto E_Base;
 
 		default:
 			EXTEND();
-			SCAN();
+			NEXT();
 			goto Break;
 		}
 
 	default:
-		EXTEND();
 		NEXT();
 		break;
 	}

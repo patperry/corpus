@@ -24,7 +24,7 @@
 #include "../src/wordscan.h"
 #include "testutil.h"
 
-#define WORD_BREAK_TEST "data/ucd/auxiliary/WordBreakTest.txt"
+#define WORD_BREAK_TEST "/Users/ptrck/Projects/corpus/data/ucd/auxiliary/WordBreakTest.txt"
 struct wordscan scan;
 
 
@@ -130,7 +130,7 @@ struct unitest {
 
 };
 
-struct unitest unitests[2048];
+struct unitest unitests[4096];
 unsigned nunitest;
 
 void write_unitest(FILE *stream, const struct unitest *test)
@@ -270,7 +270,7 @@ START_TEST(test_unicode)
 	for (i = 0; i < nunitest; i++) {
 		test = &unitests[i];
 
-		//write_unitest(stderr, test);
+		write_unitest(stderr, test);
 		wordscan_make(&scan, &test->text);
 
 		for (j = 0; j < test->nbreak; j++) {

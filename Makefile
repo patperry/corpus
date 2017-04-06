@@ -12,7 +12,7 @@ CHECK_CFLAGS = `pkg-config --cflags check` \
 	       -Wno-gnu-zero-variadic-macro-arguments
 CHECK_LIBS = `pkg-config --libs check`
 
-UNICODE = http://www.unicode.org/Public/8.0.0
+UNICODE = http://www.unicode.org/Public/10.0.0
 
 CORPUS_A = libcorpus.a
 LIB_O	= lib/strntod_c.o lib/strntoimax.o src/array.o src/data.o \
@@ -161,7 +161,8 @@ src/token.o: src/token.c src/errcode.h src/text.h src/unicode.h src/xalloc.h \
     src/token.h
 src/unicode.o: src/unicode.c src/unicode/casefold.h src/unicode/combining.h \
     src/unicode/decompose.h src/errcode.h src/unicode.h
-src/wordscan.o: src/wordscan.c src/wordscan.h
+src/wordscan.o: src/wordscan.c src/text.h src/unicode/wordbreakprop.h \
+	src/wordscan.h
 src/xalloc.o: src/xalloc.c src/xalloc.h
 
 tests/check_data.o: tests/check_data.c src/errcode.h src/table.h src/text.h \

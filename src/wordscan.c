@@ -52,11 +52,12 @@ void wordscan_make(struct wordscan *scan, const struct text *text)
 // Ignore Format and Extend characters, except when they appear at the
 // beginning of a region of text
 //
-// WB4: X (Extend | Format)* -> X
+// WB4: X (Extend | Format | ZWJ)* -> X
 #define EXTEND() \
 	do { \
 		while (scan->iter_prop == WORD_BREAK_EXTEND \
-				|| scan->iter_prop == WORD_BREAK_FORMAT) { \
+				|| scan->iter_prop == WORD_BREAK_FORMAT \
+				|| scan->iter_prop == WORD_BREAK_ZWJ) { \
 			/* syslog(LOG_DEBUG, \
 				  "Extend: code = U+%04X", next); */ \
 			scan->attr |= scan->iter.attr; \
@@ -77,6 +78,7 @@ void wordscan_make(struct wordscan *scan, const struct text *text)
 		case WORD_BREAK_CR: \
 		case WORD_BREAK_LF: \
 		case WORD_BREAK_NEWLINE: \
+		case WORD_BREAK_ZWJ: \
 			break; \
 		default: \
 			EXTEND(); \
@@ -105,16 +107,6 @@ void wordscan_reset(struct wordscan *scan)
 		} else {
 			scan->iter_prop = -1;
 		}
-
-		switch (scan->prop) {
-		case WORD_BREAK_CR:
-		case WORD_BREAK_LF:
-		case WORD_BREAK_NEWLINE:
-			break;
-		default:
-			EXTEND();
-			break;
-		}
 	} else {
 		scan->code = 0;
 		scan->attr = 0;
@@ -134,19 +126,18 @@ int wordscan_advance(struct wordscan *scan)
 	scan->current.attr = 0;
 	scan->type = WORD_NONE;
 
-	NEXT();
-
-	switch (prop) {
+	switch (scan->prop) {
 	case WORD_BREAK_CR:
 		scan->type = WORD_NEWLINE;
 
 		// Do not break within CRLF
 		// WB3: CR * LF
-		if (scan->prop == WORD_BREAK_LF) {
-			NEXT();
+		if (scan->iter_prop == WORD_BREAK_LF) {
+			SCAN();
 		}
 		// Otherwise break after Newlines
 		// WB3a: (Newline | CR | LF) +
+		SCAN();
 		goto Break;
 
 	case WORD_BREAK_NEWLINE:
@@ -154,8 +145,40 @@ int wordscan_advance(struct wordscan *scan)
 		// Break after Newlines
 		// WB3a: (Newline | LF) +
 		scan->type = WORD_NEWLINE;
+		SCAN();
 		goto Break;
 
+	case WORD_BREAK_ZWJ:
+		scan->type = WORD_ZWJ;
+
+		switch (scan->iter_prop) {
+			case WORD_BREAK_GLUE_AFTER_ZWJ:
+			// Do not break within emoji zwj sequences
+			// WB3c: ZWJ * (Glue_After_Zwj | EBG)
+			SCAN();
+			SCAN();
+			goto Break;
+
+		case WORD_BREAK_E_BASE_GAZ:
+			// WB3c: ZWJ * (Glue_After_Zwj | EBG)
+			SCAN();
+			SCAN();
+			goto E_Base;
+
+		default:
+			EXTEND();
+			SCAN();
+			goto Break;
+		}
+
+	default:
+		break;
+	}
+
+	EXTEND();
+	NEXT();
+
+	switch (prop) {
 	case WORD_BREAK_ALETTER:
 		scan->type = WORD_ALETTER;
 		goto ALetter;
@@ -175,6 +198,11 @@ int wordscan_advance(struct wordscan *scan)
 	case WORD_BREAK_KATAKANA:
 		scan->type = WORD_KATAKANA;
 		goto Katakana;
+
+	case WORD_BREAK_E_BASE:
+	case WORD_BREAK_E_BASE_GAZ:
+		scan->type = WORD_EBASE;
+		goto E_Base;
 
 	case WORD_BREAK_REGIONAL_INDICATOR:
 		scan->type = WORD_REGIONAL;
@@ -400,17 +428,36 @@ ExtendNumLet:
 		goto Break;
 	}
 
+E_Base:
+	//syslog(LOG_DEBUG, "E_Base: code = U+%04X", code);
+
+	switch (scan->prop) {
+	case WORD_BREAK_E_MODIFIER:
+		// Do not break within emoji modifier sequences
+		// WB14: (E_Base | EBG) * E_Modifier
+		NEXT();
+		goto Break;
+
+	default:
+		goto Break;
+	}
+
 Regional_Indicator:
 
 	//syslog(LOG_DEBUG, "Regional_Indicator: code = U+%04X", code);
 
+	// Do not break within emoji flag sequences. That is, do not break
+	// between regional indicator (RI) symbols if there is an odd number
+	// of RI characters before the break point
+
 	switch (scan->prop) {
 	case WORD_BREAK_REGIONAL_INDICATOR:
-		// WB13c: Regional_Indicator * Regional_Indicator
+		// WB15/16: [^RI] RI * RI
 		NEXT();
-		goto Regional_Indicator;
+		goto Break;
 
 	default:
+		// WB15/16: [^RI] RI * RI
 		goto Break;
 	}
 

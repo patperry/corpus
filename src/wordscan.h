@@ -31,6 +31,8 @@
 enum word_type {
 	WORD_NONE = -1,	/**< at start or end of text */
 	WORD_NEWLINE = 0,
+	WORD_ZWJ, /**< emoji zwj sequence */
+	WORD_EBASE, /**< emoji modifier base */
 	WORD_ALETTER,
 	WORD_NUMERIC,
 	WORD_EXTEND,

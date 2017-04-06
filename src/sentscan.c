@@ -47,7 +47,7 @@ void sentscan_make(struct sentscan *scan, const struct text *text)
 // Ignore Format and Extend characters, except when they appear at the
 // beginning of a region of text
 //
-// WB4: X (Extend | Format | ZWJ)* -> X
+// SB5: X (Extend | Format)* -> X
 #define EXTEND() \
 	do { \
 		while (scan->iter_prop == SENT_BREAK_EXTEND \

@@ -19,6 +19,10 @@
 		884A369D1E8EE3DF00465CE7 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 884A36991E8EE3DF00465CE7 /* main.c */; };
 		884A36A11E8EE43500465CE7 /* strntod_c.c in Sources */ = {isa = PBXBuildFile; fileRef = 884A36A01E8EE43500465CE7 /* strntod_c.c */; };
 		886533651E958CA60089FD91 /* wordscan.c in Sources */ = {isa = PBXBuildFile; fileRef = 886533631E958CA60089FD91 /* wordscan.c */; };
+		88B565BD1E96D4CE00FC9AEF /* main_get.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565B81E96D4CE00FC9AEF /* main_get.c */; };
+		88B565BE1E96D4CE00FC9AEF /* main_scan.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565B91E96D4CE00FC9AEF /* main_scan.c */; };
+		88B565BF1E96D4CE00FC9AEF /* main_tokens.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565BA1E96D4CE00FC9AEF /* main_tokens.c */; };
+		88B565C01E96D4CE00FC9AEF /* sentscan.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565BB1E96D4CE00FC9AEF /* sentscan.c */; };
 		88EE9C801E9000A400B1FEBA /* datatype.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EE9C7E1E9000A400B1FEBA /* datatype.c */; };
 		88EE9C821E9000BB00B1FEBA /* strntoimax.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EE9C811E9000BB00B1FEBA /* strntoimax.c */; };
 /* End PBXBuildFile section */
@@ -66,6 +70,12 @@
 		886533631E958CA60089FD91 /* wordscan.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = wordscan.c; path = src/wordscan.c; sourceTree = "<group>"; };
 		886533641E958CA60089FD91 /* wordscan.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = wordscan.h; path = src/wordscan.h; sourceTree = "<group>"; };
 		886533661E958CB80089FD91 /* wordbreakprop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = wordbreakprop.h; path = src/unicode/wordbreakprop.h; sourceTree = "<group>"; };
+		88B565B71E96D4AE00FC9AEF /* sentbreakprop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sentbreakprop.h; path = src/unicode/sentbreakprop.h; sourceTree = "<group>"; };
+		88B565B81E96D4CE00FC9AEF /* main_get.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main_get.c; path = src/main_get.c; sourceTree = "<group>"; };
+		88B565B91E96D4CE00FC9AEF /* main_scan.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main_scan.c; path = src/main_scan.c; sourceTree = "<group>"; };
+		88B565BA1E96D4CE00FC9AEF /* main_tokens.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main_tokens.c; path = src/main_tokens.c; sourceTree = "<group>"; };
+		88B565BB1E96D4CE00FC9AEF /* sentscan.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sentscan.c; path = src/sentscan.c; sourceTree = "<group>"; };
+		88B565BC1E96D4CE00FC9AEF /* sentscan.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sentscan.h; path = src/sentscan.h; sourceTree = "<group>"; };
 		88EE9C7E1E9000A400B1FEBA /* datatype.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = datatype.c; path = src/datatype.c; sourceTree = "<group>"; };
 		88EE9C7F1E9000A400B1FEBA /* datatype.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = datatype.h; path = src/datatype.h; sourceTree = "<group>"; };
 		88EE9C811E9000BB00B1FEBA /* strntoimax.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = strntoimax.c; path = lib/strntoimax.c; sourceTree = "<group>"; };
@@ -114,6 +124,11 @@
 				88351CD91E8DB64F001DA3A8 /* filebuf.c */,
 				88351CDA1E8DB64F001DA3A8 /* filebuf.h */,
 				884A36991E8EE3DF00465CE7 /* main.c */,
+				88B565B81E96D4CE00FC9AEF /* main_get.c */,
+				88B565B91E96D4CE00FC9AEF /* main_scan.c */,
+				88B565BA1E96D4CE00FC9AEF /* main_tokens.c */,
+				88B565BB1E96D4CE00FC9AEF /* sentscan.c */,
+				88B565BC1E96D4CE00FC9AEF /* sentscan.h */,
 				88351CDB1E8DB64F001DA3A8 /* symtab.c */,
 				88351CDC1E8DB64F001DA3A8 /* symtab.h */,
 				88351CDD1E8DB64F001DA3A8 /* table.c */,
@@ -138,6 +153,7 @@
 				88351CF01E8DB677001DA3A8 /* casefold.h */,
 				88351CF11E8DB677001DA3A8 /* combining.h */,
 				88351CF21E8DB677001DA3A8 /* decompose.h */,
+				88B565B71E96D4AE00FC9AEF /* sentbreakprop.h */,
 				886533661E958CB80089FD91 /* wordbreakprop.h */,
 			);
 			name = unicode;
@@ -219,9 +235,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				884A369D1E8EE3DF00465CE7 /* main.c in Sources */,
+				88B565BD1E96D4CE00FC9AEF /* main_get.c in Sources */,
+				88B565C01E96D4CE00FC9AEF /* sentscan.c in Sources */,
+				88B565BF1E96D4CE00FC9AEF /* main_tokens.c in Sources */,
 				88351CEB1E8DB64F001DA3A8 /* table.c in Sources */,
 				88351CED1E8DB64F001DA3A8 /* token.c in Sources */,
 				88351CEA1E8DB64F001DA3A8 /* symtab.c in Sources */,
+				88B565BE1E96D4CE00FC9AEF /* main_scan.c in Sources */,
 				886533651E958CA60089FD91 /* wordscan.c in Sources */,
 				884A36A11E8EE43500465CE7 /* strntod_c.c in Sources */,
 				88351CE71E8DB64F001DA3A8 /* array.c in Sources */,

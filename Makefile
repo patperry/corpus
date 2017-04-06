@@ -21,7 +21,7 @@ LIB_O	= lib/strntod_c.o lib/strntoimax.o src/array.o src/data.o \
 		  src/xalloc.o
 
 CORPUS_T = corpus
-CORPUS_O = src/main.o
+CORPUS_O = src/main.o src/main_get.o src/main_scan.o src/main_tokens.o
 
 DATA    = data/ucd/CaseFolding.txt \
 		  data/ucd/auxiliary/SentenceBreakProperty.txt \
@@ -175,6 +175,12 @@ src/filebuf.o: src/filebuf.c src/array.h src/errcode.h src/xalloc.h \
     src/filebuf.h
 src/main.o: src/main.c src/errcode.h src/filebuf.h src/table.h src/text.h \
 	src/token.h src/symtab.h src/datatype.h
+src/main_get.o: src/main_get.c src/errcode.h src/filebuf.h src/table.h \
+	src/text.h src/token.h src/symtab.h src/datatype.h
+src/main_scan.o: src/main_scan.c src/errcode.h src/filebuf.h src/table.h \
+	src/text.h src/token.h src/symtab.h src/datatype.h
+src/main_tokens.o: src/main_tokens.c src/errcode.h src/filebuf.h src/table.h \
+	src/text.h src/token.h src/symtab.h src/datatype.h
 src/sentscan.o: src/sentscan.c src/text.h src/unicode/sentbreakprop.h \
 	src/sentscan.h
 src/symtab.o: src/symtab.c src/array.h src/errcode.h src/table.h src/text.h \

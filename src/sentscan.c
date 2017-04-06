@@ -168,26 +168,13 @@ NoBreak:
 
 	switch (scan->prop) {
 	case SENT_BREAK_CR:
-		scan->type = SENT_NEWLINE;
-
-		if (scan->iter_prop == SENT_BREAK_LF) {
-			// Do not break within CRLF
-			// SB3: CR * LF
-			NEXT();
-		}
-
-		// Break after paragraph separators
-		// SB4: ParaSep +
 		NEXT();
-		goto Break;
+		goto CR;
 
 	case SENT_BREAK_LF:
 	case SENT_BREAK_SEP:
-		// Break after paragraph separators
-		// SB4: ParaSep +
-		scan->type = SENT_NEWLINE;
 		NEXT();
-		goto Break;
+		goto ParaSep;
 
 	case SENT_BREAK_UPPER:
 	case SENT_BREAK_LOWER:
@@ -206,6 +193,19 @@ NoBreak:
 		NEXT();
 		goto NoBreak;
 	}
+
+CR:
+	if (scan->prop == SENT_BREAK_LF) {
+		// Do not break within CRLF
+		// SB3: CR * LF
+		NEXT();
+	}
+	// fall through
+
+ParaSep:
+	// SB4: ParaSep +
+	scan->type = SENT_NEWLINE;
+	goto Break;
 
 UpperLower:
 	if (scan->prop == SENT_BREAK_ATERM) {
@@ -253,10 +253,15 @@ ATerm_Close_Sp:
 		goto ATerm_Close_Sp;
 
 	case SENT_BREAK_CR:
+		// SB9: SATerm Close* * (Close | Sp | ParaSep)
+		NEXT();
+		goto CR;
+
 	case SENT_BREAK_LF:
 	case SENT_BREAK_SEP:
 		// SB9: SATerm Close* * (Close | Sp | ParaSep)
-		goto NoBreak;
+		NEXT();
+		goto ParaSep;
 
 	case SENT_BREAK_OLETTER:
 	case SENT_BREAK_UPPER:
@@ -280,7 +285,6 @@ ATerm_Close_Sp:
 		goto ATerm;
 
 	default:
-
 		if (has_future_lower(scan)) {
 			goto NoBreak;
 		} else {
@@ -290,11 +294,9 @@ ATerm_Close_Sp:
 	}
 
 STerm:
-
 	goto STerm_Close;
 
 STerm_Close:
-
 	switch(scan->prop) {
 	case SENT_BREAK_CLOSE:
 		NEXT();
@@ -305,17 +307,21 @@ STerm_Close:
 	}
 
 STerm_Close_Sp:
-
 	switch (scan->prop) {
 	case SENT_BREAK_SP:
 		NEXT();
 		goto STerm_Close_Sp;
 
 	case SENT_BREAK_CR:
+		// SB9: SATerm Close* * (Close | Sp | ParaSep)
+		NEXT();
+		goto CR;
+
 	case SENT_BREAK_LF:
 	case SENT_BREAK_SEP:
+		NEXT();
+		goto ParaSep;
 		// SB9: SATerm Close* * (Close | Sp | ParaSep)
-		goto NoBreak;
 
 	case SENT_BREAK_SCONTINUE:
 		NEXT();

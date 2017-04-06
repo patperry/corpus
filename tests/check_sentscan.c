@@ -255,8 +255,8 @@ START_TEST(test_unicode)
 	for (i = 0; i < nunitest; i++) {
 		test = &unitests[i];
 
-		fprintf(stderr, "[%u]: ", i);
-		write_unitest(stderr, test);
+		//fprintf(stderr, "[%u]: ", i);
+		//write_unitest(stderr, test);
 		sentscan_make(&scan, &test->text);
 
 		for (j = 0; j < test->nbreak; j++) {

@@ -16,8 +16,8 @@ UNICODE = http://www.unicode.org/Public/10.0.0
 
 CORPUS_A = libcorpus.a
 LIB_O	= lib/strntod_c.o lib/strntoimax.o src/array.o src/data.o \
-		  src/datatype.o src/filebuf.o src/symtab.o src/table.o \
-		  src/text.o src/token.o src/unicode.o src/wordscan.o \
+		  src/datatype.o src/filebuf.o src/sentscan.o src/symtab.o \
+		  src/table.o src/text.o src/token.o src/unicode.o src/wordscan.o \
 		  src/xalloc.o
 
 CORPUS_T = corpus
@@ -28,11 +28,12 @@ DATA    = data/ucd/CaseFolding.txt \
 		  data/ucd/UnicodeData.txt \
 		  data/ucd/auxiliary/WordBreakProperty.txt
 
-TESTS_T = tests/check_data tests/check_symtab tests/check_text \
-		  tests/check_token tests/check_unicode tests/check_wordscan
-TESTS_O = tests/check_data.o tests/check_symtab.o tests/check_text.o \
-		  tests/check_token.o tests/check_unicode.o tests/check_wordscan.o \
-		  tests/testutil.o
+TESTS_T = tests/check_data tests/check_sentscan tests/check_symtab \
+		  tests/check_text tests/check_token tests/check_unicode \
+		  tests/check_wordscan
+TESTS_O = tests/check_data.o tests/check_sentscan.o tests/check_symtab.o \
+		  tests/check_text.o tests/check_token.o tests/check_unicode.o \
+		  tests/check_wordscan.o tests/testutil.o
 
 TESTS_DATA = data/ucd/NormalizationTest.txt \
 			 data/ucd/auxiliary/SentenceBreakTest.txt \
@@ -128,6 +129,11 @@ tests/check_text: tests/check_text.o tests/testutil.o $(CORPUS_A)
 tests/check_token: tests/check_token.o tests/testutil.o $(CORPUS_A)
 	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS) $^
 
+tests/check_sentscan: tests/check_sentscan.o tests/testutil.o $(CORPUS_A) \
+		data/ucd/auxiliary/SentenceBreakTest.txt
+	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS)  \
+		tests/check_sentscan.o tests/testutil.o $(CORPUS_A)
+
 tests/check_unicode: tests/check_unicode.o $(CORPUS_A) \
 		data/ucd/NormalizationTest.txt
 	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS) \
@@ -169,6 +175,8 @@ src/filebuf.o: src/filebuf.c src/array.h src/errcode.h src/xalloc.h \
     src/filebuf.h
 src/main.o: src/main.c src/errcode.h src/filebuf.h src/table.h src/text.h \
 	src/token.h src/symtab.h src/datatype.h
+src/sentscan.o: src/sentscan.c src/text.h src/unicode/sentbreakprop.h \
+	src/sentscan.h
 src/symtab.o: src/symtab.c src/array.h src/errcode.h src/table.h src/text.h \
 	src/token.h src/xalloc.h src/symtab.h
 src/table.o: src/table.c src/errcode.h src/xalloc.h src/table.h
@@ -183,12 +191,16 @@ src/xalloc.o: src/xalloc.c src/xalloc.h
 
 tests/check_data.o: tests/check_data.c src/errcode.h src/table.h src/text.h \
 	src/token.h src/symtab.h src/data.h src/datatype.h tests/testutil.h
+tests/check_sentscan: tests/check_sentscan.c src/text.h src/token.h \
+	src/unicode.h src/wordscan.h tests/testutil.h
 tests/check_symtab.o: tests/check_symtab.c src/table.h src/text.h src/token.h \
 	src/symtab.h tests/testutil.h
 tests/check_text.o: tests/check_text.c src/text.h src/unicode.h tests/testutil.h
 tests/check_token.o: tests/check_token.c src/text.h src/token.h src/unicode.h \
     tests/testutil.h
 tests/check_unicode.o: tests/check_unicode.c src/unicode.h tests/testutil.h
+tests/check_sentscan: tests/check_sentscan.c src/text.h src/token.h \
+	src/unicode.h src/wordscan.h tests/testutil.h
 tests/check_wordscan: tests/check_wordscan.c src/text.h src/token.h \
 	src/unicode.h src/wordscan.h tests/testutil.h
 tests/testutil.o: tests/testutil.c src/text.h tests/testutil.h

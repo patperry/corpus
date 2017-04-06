@@ -21,11 +21,11 @@
 #include "../src/text.h"
 #include "../src/token.h"
 #include "../src/unicode.h"
-#include "../src/wordscan.h"
+#include "../src/sentscan.h"
 #include "testutil.h"
 
-#define WORD_BREAK_TEST "data/ucd/auxiliary/WordBreakTest.txt"
-struct wordscan scan;
+#define SENT_BREAK_TEST "data/ucd/auxiliary/SentenceBreakTest.txt"
+struct sentscan scan;
 
 
 void setup_scan(void)
@@ -42,75 +42,60 @@ void teardown_scan(void)
 
 void start(const struct text *text)
 {
-	wordscan_make(&scan, text);
+	sentscan_make(&scan, text);
 }
 
 
 const struct text *next(void)
 {
-	struct text *word;
-	if (!wordscan_advance(&scan)) {
+	struct text *sent;
+	if (!sentscan_advance(&scan)) {
 		return NULL;
 	}
-	word = alloc(sizeof(*word));
-	*word = scan.current;
-	return word;
+	sent = alloc(sizeof(*sent));
+	*sent = scan.current;
+	return sent;
 }
 
 
-START_TEST(test_figure1)
+START_TEST(test_figure3)
 {
-	// Test Figure 1 from http://www.unicode.org/reports/tr29/
-	start(T("The quick (\"brown\") fox can't jump 32.3 feet, right?"));
-	ck_assert_tok_eq(next(), T("The"));
-	ck_assert_tok_eq(next(), T(" "));
-	ck_assert_tok_eq(next(), T("quick"));
-	ck_assert_tok_eq(next(), T(" "));
-	ck_assert_tok_eq(next(), T("("));
-	ck_assert_tok_eq(next(), T("\""));
-	ck_assert_tok_eq(next(), T("brown"));
-	ck_assert_tok_eq(next(), T("\""));
-	ck_assert_tok_eq(next(), T(")"));
-	ck_assert_tok_eq(next(), T(" "));
-	ck_assert_tok_eq(next(), T("fox"));
-	ck_assert_tok_eq(next(), T(" "));
-	ck_assert_tok_eq(next(), T("can't"));
-	ck_assert_tok_eq(next(), T(" "));
-	ck_assert_tok_eq(next(), T("jump"));
-	ck_assert_tok_eq(next(), T(" "));
-	ck_assert_tok_eq(next(), T("32.3"));
-	ck_assert_tok_eq(next(), T(" "));
-	ck_assert_tok_eq(next(), T("feet"));
-	ck_assert_tok_eq(next(), T(","));
-	ck_assert_tok_eq(next(), T(" "));
-	ck_assert_tok_eq(next(), T("right"));
-	ck_assert_tok_eq(next(), T("?"));
+	// Test Figure 3 from http://www.unicode.org/reports/tr29/
+	start(T("c.d"));
+	ck_assert_tok_eq(next(), T("c.d"));
 	ck_assert_ptr_eq(next(), NULL);
-}
-END_TEST
 
-START_TEST(test_quote)
-{
-	start(T("both 'single' and \"double\"."));
-	ck_assert_tok_eq(next(), T("both"));
-	ck_assert_tok_eq(next(), T(" "));
-	ck_assert_tok_eq(next(), T("'"));
-	ck_assert_tok_eq(next(), T("single"));
-	ck_assert_tok_eq(next(), T("'"));
-	ck_assert_tok_eq(next(), T(" "));
-	ck_assert_tok_eq(next(), T("and"));
-	ck_assert_tok_eq(next(), T(" "));
-	ck_assert_tok_eq(next(), T("\""));
-	ck_assert_tok_eq(next(), T("double"));
-	ck_assert_tok_eq(next(), T("\""));
-	ck_assert_tok_eq(next(), T("."));
+	start(T("3.4"));
+	ck_assert_tok_eq(next(), T("3.4"));
+	ck_assert_ptr_eq(next(), NULL);
+
+	start(T("U.S."));
+	ck_assert_tok_eq(next(), T("U.S."));
+	ck_assert_ptr_eq(next(), NULL);
+
+	start(T("the resp. leaders are"));
+	ck_assert_tok_eq(next(), T("the resp. leaders are"));
+	ck_assert_ptr_eq(next(), NULL);
+
+	start(T("etc.)\\u2019\\u2018(the"));
+	ck_assert_tok_eq(next(), T("etc.)\\u2019\\u2018(the"));
 	ck_assert_ptr_eq(next(), NULL);
 }
 END_TEST
 
 
-// Unicode Word Break Test
-// http://www.unicode.org/Public/UCD/latest/ucd/auxiliary/WordBreakTest.txt
+START_TEST(test_figure4)
+{
+	start(T("She said \\u201cSee spot run.\\u201d John shook his head."));
+	ck_assert_tok_eq(next(), T("She said \\u201cSee spot run.\\u201d"));
+	ck_assert_tok_eq(next(), T("John shook his head."));
+	ck_assert_ptr_eq(next(), NULL);
+}
+END_TEST
+
+
+// Unicode Sentence Break Test
+// http://www.unicode.org/Public/UCD/latest/ucd/auxiliary/SentBreakTest.txt
 struct unitest {
 	char comment[1024];
 	unsigned line;
@@ -155,9 +140,9 @@ void setup_unicode(void)
 	int ch, is_ascii;
 
 	setup_scan();
-	file = fopen(WORD_BREAK_TEST, "r");
+	file = fopen(SENT_BREAK_TEST, "r");
 	if (!file) {
-		file = fopen("../"WORD_BREAK_TEST, "r");
+		file = fopen("../"SENT_BREAK_TEST, "r");
 	}
 
 	nunitest = 0;
@@ -170,7 +155,7 @@ void setup_unicode(void)
 	test->text.ptr = &test->buf[0];
 	dst = test->text.ptr;
 
-	ck_assert_msg(file, "file '"WORD_BREAK_TEST"' not found");
+	ck_assert_msg(file, "file '"SENT_BREAK_TEST"' not found");
 	while ((ch = fgetc(file)) != EOF) {
 		switch (ch) {
 		case '#':
@@ -270,36 +255,37 @@ START_TEST(test_unicode)
 	for (i = 0; i < nunitest; i++) {
 		test = &unitests[i];
 
-		//write_unitest(stderr, test);
-		wordscan_make(&scan, &test->text);
+		write_unitest(stderr, test);
+		sentscan_make(&scan, &test->text);
 
 		for (j = 0; j < test->nbreak; j++) {
 			//fprintf(stderr, "Break %u\n", j);
-			ck_assert(wordscan_advance(&scan));
+			ck_assert(sentscan_advance(&scan));
 			ck_assert_ptr_eq(scan.current.ptr,
 					 test->break_begin[j]);
 			ck_assert_ptr_eq(scan.current.ptr
 					 + TEXT_SIZE(&scan.current),
 					 test->break_end[j]);
 		}
-		ck_assert(!wordscan_advance(&scan));
+		ck_assert(!sentscan_advance(&scan));
 	}
 }
 END_TEST
 
-Suite *wordscan_suite(void)
+
+Suite *sentscan_suite(void)
 {
         Suite *s;
         TCase *tc;
 
-        s = suite_create("wordscan");
+        s = suite_create("sentscan");
 	tc = tcase_create("core");
         tcase_add_checked_fixture(tc, setup_scan, teardown_scan);
-        tcase_add_test(tc, test_figure1);
-        tcase_add_test(tc, test_quote);
+        tcase_add_test(tc, test_figure3);
+        tcase_add_test(tc, test_figure4);
         suite_add_tcase(s, tc);
 
-        tc = tcase_create("Unicode WordBreakTest.txt");
+        tc = tcase_create("Unicode SentenceBreakTest.txt");
         tcase_add_checked_fixture(tc, setup_unicode, teardown_unicode);
         tcase_add_test(tc, test_unicode);
         suite_add_tcase(s, tc);
@@ -314,11 +300,11 @@ int main(void)
         Suite *s;
         SRunner *sr;
 
-        openlog("check_wordscan", LOG_CONS | LOG_PERROR | LOG_PID, LOG_USER);
+        openlog("check_sentscan", LOG_CONS | LOG_PERROR | LOG_PID, LOG_USER);
 	setlogmask(LOG_UPTO(LOG_INFO));
         //setlogmask(LOG_UPTO(LOG_DEBUG));
 
-        s = wordscan_suite();
+        s = sentscan_suite();
         sr = srunner_create(s);
 
         srunner_run_all(sr, CK_NORMAL);

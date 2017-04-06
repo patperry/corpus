@@ -6,10 +6,9 @@ C library
 
 Text segmentation according to [UAX #29][uax29]:
 
- - words;
  - sentences.
 
-Update to Unicode 10.0.
+Update type normalizer (dash, quote folding) to Unicode 10.0.
 
 
 R interface

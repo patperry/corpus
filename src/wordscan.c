@@ -28,14 +28,10 @@ void wordscan_make(struct wordscan *scan, const struct text *text)
 	wordscan_reset(scan);
 }
 
-
 #define SCAN() \
 	do { \
 		scan->current.attr |= scan->attr; \
 		scan->ptr = scan->iter_ptr; \
-		if (scan->prop < 0) { \
-			goto Break; \
-		} \
 		scan->code = scan->iter.current; \
 		scan->attr = scan->iter.attr; \
 		scan->prop = scan->iter_prop; \
@@ -56,8 +52,6 @@ void wordscan_make(struct wordscan *scan, const struct text *text)
 		while (scan->iter_prop == WORD_BREAK_EXTEND \
 				|| scan->iter_prop == WORD_BREAK_FORMAT \
 				|| scan->iter_prop == WORD_BREAK_ZWJ) { \
-			/* syslog(LOG_DEBUG, \
-				  "Extend: code = U+%04X", next); */ \
 			scan->attr |= scan->iter.attr; \
 			scan->iter_ptr = scan->iter.ptr; \
 			if (text_iter_advance(&scan->iter)) { \
@@ -69,10 +63,8 @@ void wordscan_make(struct wordscan *scan, const struct text *text)
 		} \
 	} while (0)
 
-
-#define NEXT() \
+#define MAYBE_EXTEND() \
 	do { \
-		SCAN(); \
 		switch (scan->prop) { \
 		case WORD_BREAK_CR: \
 		case WORD_BREAK_LF: \
@@ -83,6 +75,12 @@ void wordscan_make(struct wordscan *scan, const struct text *text)
 			EXTEND(); \
 			break; \
 		} \
+	} while (0)
+
+#define NEXT() \
+	do { \
+		SCAN(); \
+		MAYBE_EXTEND(); \
 	} while (0)
 
 
@@ -106,17 +104,7 @@ void wordscan_reset(struct wordscan *scan)
 		} else {
 			scan->iter_prop = -1;
 		}
-
-		switch (scan->prop) {
-		case WORD_BREAK_CR:
-		case WORD_BREAK_LF:
-		case WORD_BREAK_NEWLINE:
-		case WORD_BREAK_ZWJ:
-			break;
-		default:
-			EXTEND();
-			break;
-		}
+		MAYBE_EXTEND();
 	} else {
 		scan->code = 0;
 		scan->attr = 0;

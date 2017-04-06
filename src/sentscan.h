@@ -26,13 +26,16 @@
 #include <stdint.h>
 
 /**
- * A sentence type.
+ * A sentence break type.
  */
 enum sent_type {
-	SENT_NONE = -1,	/**< at start or end of text */
-	SENT_NEWLINE,
-	SENT_ATERM,
-	SENT_STERM
+	SENT_NONE = -1,	/**< break at the end of the text */
+	SENT_PARASEP,	/**< break after a paragraph separator */
+	SENT_ATERM,	/**< break after a full stop (.) or other
+			  ambiguous terminator */
+	SENT_STERM	/**< break after a sentence terminator
+			  like a question or exclamation
+			  mark (? or !) */
 };
 
 /**

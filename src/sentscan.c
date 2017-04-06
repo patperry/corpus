@@ -204,7 +204,7 @@ CR:
 
 ParaSep:
 	// SB4: ParaSep +
-	scan->type = SENT_NEWLINE;
+	scan->type = SENT_PARASEP;
 	goto Break;
 
 UpperLower:

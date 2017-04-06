@@ -30,7 +30,9 @@
  */
 enum sent_type {
 	SENT_NONE = -1,	/**< at start or end of text */
-	SENT_OTHER
+	SENT_NEWLINE,
+	SENT_ATERM,
+	SENT_STERM
 };
 
 /**

@@ -114,26 +114,227 @@ void sentscan_reset(struct sentscan *scan)
 }
 
 
+static int has_future_lower(const struct sentscan *scan)
+{
+	struct text_iter iter;
+	int prop;
+
+	if (scan->iter_prop < 0) {
+		return 0;
+	}
+
+	prop = scan->iter_prop;
+	iter = scan->iter;
+
+	while (1) {
+		switch (prop) {
+		case SENT_BREAK_OLETTER:
+		case SENT_BREAK_UPPER:
+		case SENT_BREAK_SEP:
+		case SENT_BREAK_CR:
+		case SENT_BREAK_LF:
+		case SENT_BREAK_STERM:
+		case SENT_BREAK_ATERM:
+			return 0;
+		case SENT_BREAK_LOWER:
+			return 1;
+		default:
+			break;
+		}
+		if (text_iter_advance(&iter)) {
+			prop = sent_break(iter.current);
+		} else {
+			return 0;
+		}
+	}
+
+	return 0;
+}
+
+
 int sentscan_advance(struct sentscan *scan)
 {
 	scan->current.ptr = (uint8_t *)scan->ptr;
 	scan->current.attr = 0;
+	scan->type = SENT_NONE;
+
+NoBreak:
 
 	// Break at the start and end of text, unless the text is empty.
 	if (scan->prop < 0) {
-		scan->type = SENT_NONE;
 		// WB2: Any + eot
 		goto Break;
 	}
 
 	switch (scan->prop) {
-	default:
-		scan->type = SENT_OTHER;
+	case SENT_BREAK_CR:
+		scan->type = SENT_NEWLINE;
+
+		if (scan->iter_prop == SENT_BREAK_LF) {
+			// Do not break within CRLF
+			// SB3: CR * LF
+			NEXT();
+		}
+
+		// Break after paragraph separators
+		// SB4: ParaSep +
 		NEXT();
+		goto Break;
+
+	case SENT_BREAK_LF:
+	case SENT_BREAK_SEP:
+		// Break after paragraph separators
+		// SB4: ParaSep +
+		scan->type = SENT_NEWLINE;
+		NEXT();
+		goto Break;
+
+	case SENT_BREAK_UPPER:
+	case SENT_BREAK_LOWER:
+		NEXT();
+		goto UpperLower;
+
+	case SENT_BREAK_ATERM:
+		NEXT();
+		goto ATerm;
+
+	case SENT_BREAK_STERM:
+		NEXT();
+		goto STerm;
+
+	default:
+		NEXT();
+		goto NoBreak;
+	}
+
+UpperLower:
+	if (scan->prop == SENT_BREAK_ATERM) {
+		NEXT();
+		goto UpperLower_ATerm;
+	} else {
+		goto NoBreak;
+	}
+
+UpperLower_ATerm:
+	switch (scan->prop) {
+	case SENT_BREAK_UPPER:
+		// SB7: (Upper | Lower) ATerm * Upper
+		NEXT();
+		goto UpperLower;
+	default:
+		goto ATerm;
+	}
+
+ATerm:
+	switch (scan->prop) {
+	case SENT_BREAK_NUMERIC:
+		// SB5: ATerm * Numeric
+		NEXT();
+		goto NoBreak;
+
+	default:
+		goto ATerm_Close;
+	}
+
+ATerm_Close:
+	switch(scan->prop) {
+	case SENT_BREAK_CLOSE:
+		NEXT();
+		goto ATerm_Close;
+	
+	default:
+		goto ATerm_Close_Sp;
+	}
+
+ATerm_Close_Sp:
+	switch (scan->prop) {
+	case SENT_BREAK_SP:
+		NEXT();
+		goto ATerm_Close_Sp;
+
+	case SENT_BREAK_CR:
+	case SENT_BREAK_LF:
+	case SENT_BREAK_SEP:
+		// SB9: SATerm Close* * (Close | Sp | ParaSep)
+		goto NoBreak;
+
+	case SENT_BREAK_OLETTER:
+	case SENT_BREAK_UPPER:
+		scan->type = SENT_ATERM;
+		goto Break;
+
+	case SENT_BREAK_LOWER:
+		NEXT();
+		goto UpperLower;
+
+	case SENT_BREAK_SCONTINUE:
+		NEXT();
+		goto NoBreak;
+
+	case SENT_BREAK_STERM:
+		NEXT();
+		goto STerm;
+
+	case SENT_BREAK_ATERM:
+		NEXT();
+		goto ATerm;
+
+	default:
+
+		if (has_future_lower(scan)) {
+			goto NoBreak;
+		} else {
+			scan->type = SENT_ATERM;
+			goto Break;
+		}
+	}
+
+STerm:
+
+	goto STerm_Close;
+
+STerm_Close:
+
+	switch(scan->prop) {
+	case SENT_BREAK_CLOSE:
+		NEXT();
+		goto STerm_Close;
+	
+	default:
+		goto STerm_Close_Sp;
+	}
+
+STerm_Close_Sp:
+
+	switch (scan->prop) {
+	case SENT_BREAK_SP:
+		NEXT();
+		goto STerm_Close_Sp;
+
+	case SENT_BREAK_CR:
+	case SENT_BREAK_LF:
+	case SENT_BREAK_SEP:
+		// SB9: SATerm Close* * (Close | Sp | ParaSep)
+		goto NoBreak;
+
+	case SENT_BREAK_SCONTINUE:
+		NEXT();
+		goto NoBreak;
+
+	case SENT_BREAK_STERM:
+		NEXT();
+		goto STerm;
+
+	case SENT_BREAK_ATERM:
+		NEXT();
+		goto ATerm;
+
+	default:
+		scan->type = SENT_STERM;
 		goto Break;
 	}
 
 Break:
 	scan->current.attr |= (scan->ptr - scan->current.ptr);
-	return (scan->type == SENT_NONE) ? 0 : 1;
+	return (TEXT_SIZE(&scan->current) > 0) ? 1 : 0;
 }

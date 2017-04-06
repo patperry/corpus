@@ -87,7 +87,7 @@ END_TEST
 START_TEST(test_figure4)
 {
 	start(T("She said \\u201cSee spot run.\\u201d John shook his head."));
-	ck_assert_tok_eq(next(), T("She said \\u201cSee spot run.\\u201d"));
+	ck_assert_tok_eq(next(), T("She said \\u201cSee spot run.\\u201d "));
 	ck_assert_tok_eq(next(), T("John shook his head."));
 	ck_assert_ptr_eq(next(), NULL);
 }
@@ -97,12 +97,12 @@ END_TEST
 // Unicode Sentence Break Test
 // http://www.unicode.org/Public/UCD/latest/ucd/auxiliary/SentBreakTest.txt
 struct unitest {
-	char comment[1024];
+	char comment[4096];
 	unsigned line;
 	int is_ascii;
 
 	struct text text;
-	uint8_t buf[1024];
+	uint8_t buf[4096];
 
 	uint32_t code[256];
 	int can_break_before[256];
@@ -255,6 +255,7 @@ START_TEST(test_unicode)
 	for (i = 0; i < nunitest; i++) {
 		test = &unitests[i];
 
+		fprintf(stderr, "[%u]: ", i);
 		write_unitest(stderr, test);
 		sentscan_make(&scan, &test->text);
 

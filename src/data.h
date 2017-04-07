@@ -40,7 +40,7 @@ struct data {
 /**
  * An iterator over the items in an array.
  */
-struct data_iter {
+struct data_items {
 	const struct schema *schema;	/**< the data schema */
 	int array_item_type;		/**< the array item type ID */
 	int array_length;		/**< the array length */
@@ -139,7 +139,7 @@ int data_field(const struct data *d, const struct schema *s, int name_id,
  * 	is not an array
  */
 int data_items(const struct data *d, const struct schema *s,
-	       struct data_iter *valptr);
+	       struct data_items *valptr);
 
 /**
  * Advance a data iterator to the next item.
@@ -148,13 +148,13 @@ int data_items(const struct data *d, const struct schema *s,
  *
  * \returns zero if no next item exists, nonzero otherwise
  */
-int data_iter_advance(struct data_iter *it);
+int data_items_advance(struct data_items *it);
 
 /**
  * Reset a data iterator to the beginning of the array.
  *
  * \param it the iterator
  */
-void data_iter_reset(struct data_iter *it);
+void data_items_reset(struct data_items *it);
 
 #endif /* DATA_H */

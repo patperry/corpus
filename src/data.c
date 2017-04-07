@@ -223,7 +223,7 @@ out:
 }
 
 
-static void data_iter_make(struct data_iter *it, const struct schema *s,
+static void data_items_make(struct data_items *it, const struct schema *s,
 			   const uint8_t *ptr,
 			   const struct datatype_array *type)
 {
@@ -231,11 +231,11 @@ static void data_iter_make(struct data_iter *it, const struct schema *s,
 	it->array_item_type = type->type_id;
 	it->array_length = type->length;
 	it->array_ptr = ptr;
-	data_iter_reset(it);
+	data_items_reset(it);
 }
 
 
-void data_iter_reset(struct data_iter *it)
+void data_items_reset(struct data_items *it)
 {
 	it->index = -1;
 	it->current.ptr = NULL;
@@ -244,7 +244,7 @@ void data_iter_reset(struct data_iter *it)
 }
 
 
-int data_iter_advance(struct data_iter *it)
+int data_items_advance(struct data_items *it)
 {
 	const uint8_t *ptr;
 	const uint8_t *end;
@@ -298,9 +298,9 @@ end:
 
 
 int data_items(const struct data *d, const struct schema *s,
-	       struct data_iter *valptr)
+	       struct data_items *valptr)
 {
-	struct data_iter it;
+	struct data_items it;
 	const uint8_t *ptr = d->ptr;
 	int err;
 
@@ -310,7 +310,7 @@ int data_items(const struct data *d, const struct schema *s,
 
 	scan_spaces(&ptr);
 
-	data_iter_make(&it, s, ptr, &s->types[d->type_id].meta.array);
+	data_items_make(&it, s, ptr, &s->types[d->type_id].meta.array);
 	err = 0;
 	goto out;
 

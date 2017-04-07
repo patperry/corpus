@@ -224,14 +224,27 @@ out:
 
 
 static void data_items_make(struct data_items *it, const struct schema *s,
-			   const uint8_t *ptr,
-			   const struct datatype_array *type)
+			    const uint8_t *ptr,
+			    const struct datatype_array *type)
 {
 	it->schema = s;
-	it->array_item_type = type->type_id;
-	it->array_length = type->length;
-	it->array_ptr = ptr;
+	it->item_type = type->type_id;
+	it->length = type->length;
+	it->ptr = ptr;
 	data_items_reset(it);
+}
+
+
+static void data_fields_make(struct data_fields *it, const struct schema *s,
+			     const uint8_t *ptr,
+			     const struct datatype_record *type)
+{
+	it->schema = s;
+	it->field_types = type->type_ids;
+	it->field_names = type->name_ids;
+	it->nfield = type->nfield;
+	it->ptr = ptr;
+	data_fields_reset(it);
 }
 
 
@@ -244,13 +257,22 @@ void data_items_reset(struct data_items *it)
 }
 
 
+void data_fields_reset(struct data_fields *it)
+{
+	it->name_id = -1;
+	it->current.ptr = NULL;
+	it->current.size = 0;
+	it->current.type_id = DATATYPE_NULL;
+}
+
+
 int data_items_advance(struct data_items *it)
 {
 	const uint8_t *ptr;
 	const uint8_t *end;
 
 	if (it->index == -1) {
-		ptr = it->array_ptr;
+		ptr = it->ptr;
 		ptr++; // opening ([)
 
 		scan_spaces(&ptr);
@@ -276,7 +298,7 @@ int data_items_advance(struct data_items *it)
 	end = ptr;
 	scan_value(&end);
 
-	if (it->array_item_type == DATATYPE_ANY) {
+	if (it->item_type == DATATYPE_ANY) {
 		// this won't fail, because we already have enough
 		// space in the schema buffer to parse the array item
 		data_assign(&it->current, (struct schema *)it->schema,
@@ -284,9 +306,116 @@ int data_items_advance(struct data_items *it)
 	} else {
 		it->current.ptr = ptr;
 		it->current.size = ptr - end;
-		it->current.type_id = it->array_item_type;
+		it->current.type_id = it->item_type;
 	}
 	it->index++;
+	return 1;
+
+end:
+	it->current.ptr = ptr;
+	it->current.size = 0;
+	it->current.type_id = DATATYPE_NULL;
+	return 0;
+}
+
+
+static int compare_int(const void *x1, const void *x2)
+{
+	int y1 = *(int *)x1;
+	int y2 = *(int *)x2;
+	int ret;
+
+	if (y1 < y2) {
+		ret = -1;
+	} else if (y1 > y2) {
+		ret = +1;
+	} else {
+		ret = 0;
+	}
+
+	return ret;
+}
+
+
+int data_fields_advance(struct data_fields *it)
+{
+	struct text name;
+	const uint8_t *begin;
+	const uint8_t *ptr;
+	const uint8_t *end;
+	int flags, name_id, type_id;
+	int *idptr;
+
+	if (it->name_id == -1) {
+		ptr = it->ptr;
+		ptr++; // opening ({)
+
+		scan_spaces(&ptr);
+		if (*ptr == '}') {
+			goto end;
+		}
+	} else {
+		ptr = it->current.ptr + it->current.size;
+		scan_spaces(&ptr);
+		if (*ptr == '}') {
+			goto end;
+		}
+
+		ptr++; // comma (,)
+		scan_spaces(&ptr);
+	}
+
+	// "
+	ptr++;
+
+	// name
+	begin = ptr;
+	flags = TEXT_NOESCAPE;
+	while (*ptr != '"') {
+		if (*ptr == '\\') {
+			flags = 0;
+			ptr++;
+		}
+		ptr++;
+	}
+	text_assign(&name, begin, ptr - begin, flags | TEXT_NOVALIDATE);
+
+	// the call to schema_name always succeeds and does not
+	// create a new name, because the field name already
+	// exists as part of the type
+	schema_name((struct schema *)it->schema, &name, &name_id);
+	it->name_id = name_id;
+
+	// "
+	ptr++;
+
+	// ws
+	scan_spaces(&ptr);
+
+	// :
+	ptr++;
+
+	// ws
+	scan_spaces(&ptr);
+
+	end = ptr;
+	scan_value(&end);
+
+	idptr = bsearch(&name_id, it->field_names, it->nfield,
+			sizeof(*it->field_names), compare_int);
+	assert(idptr); // name exists in the record
+	type_id = it->field_types[idptr - it->field_names];
+
+	if (type_id == DATATYPE_ANY) {
+		// this won't fail, because we already have enough
+		// space in the schema buffer to parse the array item
+		data_assign(&it->current, (struct schema *)it->schema,
+			    ptr, end - ptr);
+	} else {
+		it->current.ptr = ptr;
+		it->current.size = ptr - end;
+		it->current.type_id = type_id;
+	}
 	return 1;
 
 end:
@@ -316,9 +445,9 @@ int data_items(const struct data *d, const struct schema *s,
 
 nullval:
 	it.schema = NULL;
-	it.array_item_type = DATATYPE_NULL;
-	it.array_length = -1;
-	it.array_ptr = NULL;
+	it.item_type = DATATYPE_NULL;
+	it.length = -1;
+	it.ptr = NULL;
 	it.current.ptr = NULL;
 	it.current.size = 0;
 	it.current.type_id = DATATYPE_NULL;
@@ -332,21 +461,39 @@ out:
 }
 
 
-static int compare_int(const void *x1, const void *x2)
+int data_fields(const struct data *d, const struct schema *s,
+		struct data_fields *valptr)
 {
-	int y1 = *(int *)x1;
-	int y2 = *(int *)x2;
-	int ret;
+	struct data_fields it;
+	const uint8_t *ptr = d->ptr;
+	int err;
 
-	if (y1 < y2) {
-		ret = -1;
-	} else if (y1 > y2) {
-		ret = +1;
-	} else {
-		ret = 0;
+	if (d->type_id < 0 || s->types[d->type_id].kind != DATATYPE_RECORD) {
+		goto nullval;
 	}
 
-	return ret;
+	scan_spaces(&ptr);
+
+	data_fields_make(&it, s, ptr, &s->types[d->type_id].meta.record);
+	err = 0;
+	goto out;
+
+nullval:
+	it.schema = NULL;
+	it.field_types = NULL;
+	it.field_names = NULL;
+	it.nfield = 0;
+	it.ptr = NULL;
+	it.current.ptr = NULL;
+	it.current.size = 0;
+	it.current.type_id = DATATYPE_NULL;
+	it.name_id = -1;
+	err = ERROR_INVAL;
+out:
+	if (valptr) {
+		*valptr = it;
+	}
+	return err;
 }
 
 

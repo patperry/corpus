@@ -42,12 +42,26 @@ struct data {
  */
 struct data_items {
 	const struct schema *schema;	/**< the data schema */
-	int array_item_type;		/**< the array item type ID */
-	int array_length;		/**< the array length */
-	const uint8_t *array_ptr;	/**< the array memory location */
+	int item_type;			/**< the array item type ID */
+	int length;			/**< the array length */
+	const uint8_t *ptr;		/**< the array memory location */
 
 	struct data current;		/**< the current item value */
 	int index;			/**< the current item index */
+};
+
+/**
+ * An iterator over the fields in a record.
+ */
+struct data_fields {
+	const struct schema *schema;	/**< the data schema */
+	const int *field_types;		/**< the record field types */
+	const int *field_names;		/**< the record field names*/
+	int nfield;			/**< the number of record fields */
+	const uint8_t *ptr;		/**< the record memory location */
+
+	struct data current;		/**< the current field value */
+	int name_id;			/**< the current field name */
 };
 
 /**
@@ -133,7 +147,7 @@ int data_field(const struct data *d, const struct schema *s, int name_id,
  *
  * \param d the data value
  * \param s the data schema
- * \param valptr if non_NULL, a location to store the field value
+ * \param valptr if non_NULL, a location to store the array items
  *
  * \returns 0 on success; #ERROR_INVAL if the data value is null or
  * 	is not an array
@@ -142,7 +156,7 @@ int data_items(const struct data *d, const struct schema *s,
 	       struct data_items *valptr);
 
 /**
- * Advance a data iterator to the next item.
+ * Advance an array items iterator to the next item.
  *
  * \param it the iterator
  *
@@ -151,10 +165,39 @@ int data_items(const struct data *d, const struct schema *s,
 int data_items_advance(struct data_items *it);
 
 /**
- * Reset a data iterator to the beginning of the array.
+ * Reset an array items iterator to the beginning of the array.
  *
  * \param it the iterator
  */
 void data_items_reset(struct data_items *it);
+
+/**
+ * Get the record fields from a data value.
+ *
+ * \param d the data value
+ * \param s the data schema
+ * \param valptr if non_NULL, a location to store the record fields 
+ *
+ * \returns 0 on success; #ERROR_INVAL if the data value is null or
+ * 	is not a record
+ */
+int data_fields(const struct data *d, const struct schema *s,
+		struct data_fields *valptr);
+
+/**
+ * Advance a record field iterator to the next field.
+ *
+ * \param it the iterator
+ *
+ * \returns zero if no next field exists, nonzero otherwise
+ */
+int data_fields_advance(struct data_fields *it);
+
+/**
+ * Reset a record field iterator to the beginning of the record.
+ *
+ * \param it the iterator
+ */
+void data_fields_reset(struct data_fields *it);
 
 #endif /* DATA_H */

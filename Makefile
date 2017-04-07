@@ -16,9 +16,9 @@ UNICODE = http://www.unicode.org/Public/10.0.0
 
 CORPUS_A = libcorpus.a
 LIB_O	= lib/strntod_c.o lib/strntoimax.o src/array.o src/data.o \
-		  src/datatype.o src/filebuf.o src/sentscan.o src/symtab.o \
-		  src/table.o src/text.o src/token.o src/unicode.o src/wordscan.o \
-		  src/xalloc.o
+		  src/datatype.o src/filebuf.o src/render.o src/sentscan.o \
+		  src/symtab.o src/table.o src/text.o src/token.o src/unicode.o \
+		  src/wordscan.o src/xalloc.o
 
 CORPUS_T = corpus
 CORPUS_O = src/main.o src/main_get.o src/main_scan.o src/main_tokens.o
@@ -181,6 +181,7 @@ src/main_scan.o: src/main_scan.c src/errcode.h src/filebuf.h src/table.h \
 	src/text.h src/token.h src/symtab.h src/datatype.h
 src/main_tokens.o: src/main_tokens.c src/errcode.h src/filebuf.h src/table.h \
 	src/text.h src/token.h src/symtab.h src/datatype.h
+src/render.o: src/render.c src/text.h src/render.h
 src/sentscan.o: src/sentscan.c src/text.h src/unicode/sentbreakprop.h \
 	src/sentscan.h
 src/symtab.o: src/symtab.c src/array.h src/errcode.h src/table.h src/text.h \

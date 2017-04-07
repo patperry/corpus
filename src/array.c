@@ -48,7 +48,7 @@ static int array_grow_size(int count, int size)
 	assert(ARRAY_SIZE_INIT > 0);
 	assert(ARRAY_GROW > 1);
 
-	if (size == 0 && count > 0) {
+	if (size < ARRAY_SIZE_INIT && count > 0) {
 		size = ARRAY_SIZE_INIT;
 	}
 

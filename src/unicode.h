@@ -43,6 +43,16 @@
 #define UTF16_ENCODE_LEN(u) \
 	((u) <= 0xFFFF ? 1 : 2)
 
+/** High (leading) UTF-16 surrogate for a code point in the supplementary
+ *  plane (U+10000 to U+10FFFF). */
+#define UTF16_HIGH(u) \
+	0xD800 | (((u) - 0x010000) >> 10)
+
+/** Low (trailing) UTF-16 surrogate for a code point in the supplementary
+ *  plane (U+10000 to U+10FFFF). */
+#define UTF16_LOW(u) \
+	0xDC00 | (((u) - 0x010000) & 0x03FF)
+
 /** Indicates whether a 16-bit code unit is a UTF-16 high surrogate.
  *  High surrogates are in the range 0xD800 `(1101 1000 0000 0000)`
  *  to 0xDBFF `(1101 1011 1111 1111)`. */
@@ -66,6 +76,10 @@
 
 /** Maximum number of UTF-8 continuation bytes in a valid encoded character */
 #define UTF8_TAIL_MAX 3
+
+/** Indicates whether a given unsigned integer is a valid ASCII codepoint */
+#define IS_ASCII(x) \
+	((x) <= 0x7F)
 
 /** Indicates whether a given unsigned integer is a valid unicode codepoint */
 #define IS_UNICODE(x) \

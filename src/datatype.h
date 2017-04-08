@@ -25,6 +25,8 @@
 
 #include <stdio.h>
 
+struct render;
+
 /**
  * A basic data type.
  */
@@ -189,7 +191,20 @@ int schema_union(struct schema *s, int id1, int id2, int *idptr);
 int schema_scan(struct schema *s, const uint8_t *ptr, size_t size, int *idptr);
 
 /**
+ * Render a textual representation of a data type.
+ *
+ * \param r the render object
+ * \param s the schema
+ * \param id the type id
+ *
+ * \returns 0 on success
+ */
+void render_datatype(struct render *r, const struct schema *s, int id);
+
+/**
  * Write a textual representation of a data type to the specified stream.
+ * Escape all control characters and non-ASCII Unicode characters using
+ * JSON-style backslash (\) escapes.
  *
  * \param stream the stream
  * \param s the schema

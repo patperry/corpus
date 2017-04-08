@@ -16,11 +16,14 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
 #include "array.h"
 #include "errcode.h"
+#include "render.h"
 #include "table.h"
 #include "text.h"
 #include "token.h"
@@ -125,12 +128,6 @@ int schema_buffer_grow(struct schema_buffer *buf, int nadd)
 			return ERROR_NOMEM;
 		}
 		buf->name_ids = nbase;
-	}
-
-	if (buf->nfield > INT_MAX - nadd) {
-		syslog(LOG_ERR, "schema buffer size exceeds maximum (%d)",
-		       INT_MAX);
-		return ERROR_OVERFLOW;
 	}
 
 	buf->nfield_max = size;
@@ -838,127 +835,120 @@ int schema_grow_types(struct schema *s, int nadd)
 		return err;
 	}
 
-	if (s->ntype > INT_MAX - nadd) {
-		syslog(LOG_ERR, "type count exceeds maximum (%d)", INT_MAX);
-		return ERROR_OVERFLOW;
-	}
-
 	s->types = base;
 	s->ntype_max = size;
 	return 0;
 }
 
 
-int write_datatype(FILE *stream, const struct schema *s, int id)
+void render_datatype(struct render *r, const struct schema *s, int id)
 {
 	const struct text *name;
 	const struct datatype *t;
 	int name_id, type_id;
 	int i, n;
-	int err;
 
 	if (id < 0) {
-		if (fprintf(stream, "any") < 0) {
-			goto error_os;
-		}
-		err = 0;
-		goto out;
+		render_string(r, "any");
+		return;
 	}
 
 	t = &s->types[id];
 
 	switch (t->kind) {
 	case DATATYPE_NULL:
-		if (fprintf(stream, "null") < 0) {
-			goto error_os;
-		}
+		render_string(r, "null");
 		break;
 
 	case DATATYPE_BOOLEAN:
-		if (fprintf(stream, "boolean") < 0) {
-			goto error_os;
-		}
+		render_string(r, "boolean");
 		break;
 
 	case DATATYPE_INTEGER:
-		if (fprintf(stream, "integer") < 0) {
-			goto error_os;
-		}
+		render_string(r, "integer");
 		break;
 
 	case DATATYPE_REAL:
-		if (fprintf(stream, "real") < 0) {
-			goto error_os;
-		}
+		render_string(r, "real");
 		break;
 
 	case DATATYPE_TEXT:
-		if (fprintf(stream, "text") < 0) {
-			goto error_os;
-		}
+		render_string(r, "text");
 		break;
 
 	case DATATYPE_ARRAY:
-		if (fprintf(stream, "[") < 0) {
-			goto error_os;
-		}
-		if ((err = write_datatype(stream, s, t->meta.array.type_id))) {
-			goto error;
-		}
+		render_char(r, '[');
+		render_datatype(r, s, t->meta.array.type_id);
 		if (t->meta.array.length >= 0) {
-			if (fprintf(stream, "; %d",
-				    t->meta.array.length) < 0) {
-				goto error_os;
-			}
+			render_printf(r, "; %d", t->meta.array.length);
 		}
-		if (fprintf(stream, "]") < 0) {
-			goto error_os;
-		}
+		render_char(r, ']');
 		break;
 
 	case DATATYPE_RECORD:
-		if (fprintf(stream, "{") < 0) {
-			goto error_os;
-		}
+		render_char(r, '{');
+		render_indent(r, +1);
 
 		n = t->meta.record.nfield;
 		for (i = 0; i < n; i++) {
-			if (i > 0 && fprintf(stream, ", ") < 0) {
-				goto error_os;
+			if (i > 0) {
+				render_string(r, ",");
 			}
+			render_newlines(r, 1);
 
 			name_id = t->meta.record.name_ids[i];
 			name = &s->names.types[name_id].text;
-			if (fprintf(stream, "\"%.*s\": ",
-				    (unsigned)TEXT_SIZE(name),
-				    name->ptr) < 0) {
-				goto error_os;
-			}
+			render_char(r, '"');
+			render_text(r, name);
+			render_string(r, "\": ");
 
 			type_id = t->meta.record.type_ids[i];
-			if ((err = write_datatype(stream, s, type_id))) {
-				goto error;
-			}
+			render_datatype(r, s, type_id);
 		}
 
-		if (fprintf(stream, "}") < 0) {
-			goto error_os;
-		}
+		render_indent(r, -1);
+		render_newlines(r, 1);
+		render_char(r, '}');
 		break;
 
 	default:
 		syslog(LOG_ERR, "internal error: invalid datatype kind");
-		err = ERROR_INTERNAL;
-		goto error;
+	}
+}
+
+
+int write_datatype(FILE *stream, const struct schema *s, int id)
+{
+	struct render r;
+	int err;
+
+	if ((err = render_init(&r, ESCAPE_CONTROL | ESCAPE_UTF8))) {
+		goto error_init;
+	}
+
+	render_datatype(&r, s, id);
+	if (r.error) {
+		goto error_render;
+	}
+
+	if (fwrite(r.string, 1, r.length, stream) < (size_t)r.length
+			&& r.length) {
+		syslog(LOG_ERR, "failed writing to output stream: %s",
+			strerror(errno));
+		err = ERROR_OS;
+		goto error_fwrite;
 	}
 
 	err = 0;
-	goto out;
 
-error_os:
-	err = ERROR_OS;
-error:
-out:
+error_fwrite:
+error_render:
+	render_destroy(&r);
+error_init:
+	if (err) {
+		syslog(LOG_ERR, "failed writing datatype to output stream");
+	}
+
 	return err;
 }
 

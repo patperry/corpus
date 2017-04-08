@@ -143,7 +143,7 @@ int main_scan(int argc, char * const argv[])
 	}
 	write_datatype(stream, &schema, type_id);
 	fprintf(stream, "\n");
-	fprintf(stream, "%"PRId64" records\n", buf.offset);
+	fprintf(stream, "%"PRId64" rows\n", buf.offset);
 	err = 0;
 
 error_scan:

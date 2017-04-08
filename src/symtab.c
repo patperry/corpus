@@ -311,11 +311,6 @@ int symtab_grow_tokens(struct symtab *tab, int nadd)
 		return err;
 	}
 
-	if (tab->ntoken > INT_MAX - nadd) {
-		syslog(LOG_ERR, "token count exceeds maximum (%d)", INT_MAX);
-		return ERROR_OVERFLOW;
-	}
-
 	tab->tokens = base;
 	tab->ntoken_max = size;
 	return 0;
@@ -332,11 +327,6 @@ int symtab_grow_types(struct symtab *tab, int nadd)
 			      tab->ntype, nadd))) {
 		syslog(LOG_ERR, "failed allocating type array");
 		return err;
-	}
-
-	if (tab->ntype > INT_MAX - nadd) {
-		syslog(LOG_ERR, "type count exceeds maximum (%d)", INT_MAX);
-		return ERROR_OVERFLOW;
 	}
 
 	tab->types = base;

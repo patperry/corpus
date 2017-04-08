@@ -45,11 +45,6 @@ static int filebuf_grow_lines(struct filebuf *buf, int nadd)
 		return err;
 	}
 
-	if (buf->nline > INT_MAX - nadd) {
-		syslog(LOG_ERR, "line count exceeds maximum (%d)", INT_MAX);
-		return ERROR_OVERFLOW;
-	}
-
 	buf->lines = base;
 	buf->nline_max = size;
 	return 0;

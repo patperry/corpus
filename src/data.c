@@ -305,7 +305,7 @@ int data_items_advance(struct data_items *it)
 			    ptr, end - ptr);
 	} else {
 		it->current.ptr = ptr;
-		it->current.size = ptr - end;
+		it->current.size = end - ptr;
 		it->current.type_id = it->item_type;
 	}
 	it->index++;
@@ -413,7 +413,7 @@ int data_fields_advance(struct data_fields *it)
 			    ptr, end - ptr);
 	} else {
 		it->current.ptr = ptr;
-		it->current.size = ptr - end;
+		it->current.size = end - ptr;
 		it->current.type_id = type_id;
 	}
 	return 1;

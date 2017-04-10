@@ -127,9 +127,9 @@ const char *render_set_tab(struct render *r, const char *tab);
  * string gets set.
  *
  * \param r the render object
- * \param tab the tab string (null terminated)
+ * \param newline the newline string (null terminated)
  *
- * \returns the old tab string
+ * \returns the old newline string
  */
 const char *render_set_newline(struct render *r, const char *newline);
 
@@ -163,7 +163,7 @@ void render_char(struct render *r, uint32_t ch);
  * all text characters through the appropriate escaping.
  *
  * \param r the render object
- * \param string the string, valid UTF-8
+ * \param str the string, valid UTF-8
  */
 void render_string(struct render *r, const char *str);
 

@@ -461,6 +461,70 @@ out:
 }
 
 
+int data_nitem(const struct data *d, const struct schema *s, int *nitemptr)
+{
+	struct data_items it;
+	int err, nitem;
+
+	if (d->type_id < 0 || s->types[d->type_id].kind != DATATYPE_ARRAY) {
+		goto nullval;
+	}
+
+	nitem = s->types[d->type_id].meta.array.length;
+
+	if (nitem < 0) {
+		nitem = 0;
+		data_items(d, s, &it);
+		while (data_items_advance(&it)) {
+			nitem++;
+		}
+	}
+	err = 0;
+	goto out;
+
+nullval:
+	nitem = -1;
+	err = ERROR_INVAL;
+out:
+	if (nitemptr) {
+		*nitemptr = nitem;
+	}
+	return err;
+}
+
+
+int data_nfield(const struct data *d, const struct schema *s, int *nfieldptr)
+{
+	struct data_fields it;
+	int err, nfield;
+
+	if (d->type_id < 0 || s->types[d->type_id].kind != DATATYPE_RECORD) {
+		goto nullval;
+	}
+
+	nfield = s->types[d->type_id].meta.record.nfield;
+
+	if (nfield < 0) {
+		nfield = 0;
+		data_fields(d, s, &it);
+		while (data_fields_advance(&it)) {
+			nfield++;
+		}
+	}
+	err = 0;
+	goto out;
+
+nullval:
+	nfield = -1;
+	err = ERROR_INVAL;
+out:
+	if (nfield) {
+		*nfieldptr = nfield;
+	}
+	return err;
+}
+
+
 int data_fields(const struct data *d, const struct schema *s,
 		struct data_fields *valptr)
 {

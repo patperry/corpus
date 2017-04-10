@@ -128,26 +128,23 @@ int data_double(const struct data *d, double *valptr);
 int data_text(const struct data *d, struct text *valptr);
 
 /**
- * Get a record field from a data value.
+ * Get the number of items (the length) of an array data value.
  *
  * \param d the data value
  * \param s the data schema
- * \param name_id the record field name ID
- * \param valptr if non-NULL, a location to store the field value
+ * \param nitemptr if non-NULL, a location to store the number of items
  *
- * \returns 0 on success; #ERROR_INVAL if the data value is null,
- * 	is not a record, or is a record but does not have a field for
- * 	the given name
+ * \returns 0 on success; #ERROR_INVAL if the data value is null or
+ * 	is not an array
  */
-int data_field(const struct data *d, const struct schema *s, int name_id,
-	       struct data *valptr);
+int data_nitem(const struct data *d, const struct schema *s, int *nitemptr);
 
 /**
  * Get the array items from a data value.
  *
  * \param d the data value
  * \param s the data schema
- * \param valptr if non_NULL, a location to store the array items
+ * \param valptr if non-NULL, a location to store the array items
  *
  * \returns 0 on success; #ERROR_INVAL if the data value is null or
  * 	is not an array
@@ -170,6 +167,33 @@ int data_items_advance(struct data_items *it);
  * \param it the iterator
  */
 void data_items_reset(struct data_items *it);
+
+/**
+ * Get the number of fields of a record data value.
+ *
+ * \param d the data value
+ * \param s the data schema
+ * \param nfieldptr if non-NULL, a location to store the number of fields
+ *
+ * \returns 0 on success; #ERROR_INVAL if the data value is null or
+ * 	is not a record
+ */
+int data_nfield(const struct data *d, const struct schema *s, int *nfieldptr);
+
+/**
+ * Get a record field from a data value.
+ *
+ * \param d the data value
+ * \param s the data schema
+ * \param name_id the record field name ID
+ * \param valptr if non-NULL, a location to store the field value
+ *
+ * \returns 0 on success; #ERROR_INVAL if the data value is null,
+ * 	is not a record, or is a record but does not have a field for
+ * 	the given name
+ */
+int data_field(const struct data *d, const struct schema *s, int name_id,
+	       struct data *valptr);
 
 /**
  * Get the record fields from a data value.

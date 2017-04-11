@@ -41,16 +41,9 @@
   |  U+100000..U+10FFFF |         F4 |      80..8F |     80..BF |      80..BF |
   -----------------------------------------------------------------------------
 
-  (courtesy of https://github.com/JulienPalard/is_utf8 )
+  (table taken from https://github.com/JulienPalard/is_utf8 )
 */
 
-// 80: 1000 0000
-// 8F: 1000 1111
-// 90: 1001 0000
-// 9F: 1001 1111
-// A0: 1010 0000
-// BF: 1011 1111
-// E0: 1110 0000
 
 int scan_utf8(const uint8_t **bufptr, const uint8_t *end)
 {
@@ -59,14 +52,51 @@ int scan_utf8(const uint8_t **bufptr, const uint8_t *end)
 	unsigned nc;
 	int err;
 
-	if (*bufptr >= end)
+	if (ptr >= end) {
 		return ERROR_INVAL;
+	}
 
-	// determine number of bytes
+	/* First byte
+	 * ----------
+	 *
+	 * 1-byte sequence:
+	 * 00: 0000 0000
+	 * 7F: 0111 1111
+	 * (ch1 & 0x80 == 0)
+	 *
+	 * Invalid:
+	 * 80: 1000 0000
+	 * BF: 1011 1111
+	 * C0: 1100 0000
+	 * C1: 1100 0001
+	 * (ch & 0xF0 == 0x80 || ch == 0xC0 || ch == 0xC1)
+	 *
+	 * 2-byte sequence:
+	 * C2: 1100 0010
+	 * DF: 1101 1111
+	 * (ch & 0xE0 == 0xC0 && ch > 0xC1)
+	 *
+	 * 3-byte sequence
+	 * E0: 1110 0000
+	 * EF: 1110 1111
+	 * (ch & 0xF0 == E0)
+	 *
+	 * 4-byte sequence:
+	 * F0: 1111 0000
+	 * F4: 1111 0100
+	 * (ch & 0xFC == 0xF0 || ch == 0xF4)
+	 */
+
 	ch1 = *ptr++;
+
 	if ((ch1 & 0x80) == 0) {
 		goto success;
-	} else if ((ch1 & 0xE2) == 0xC2) {
+	} else if ((ch1 & 0xC0) == 0x80) {
+		goto backtrack;
+	} else if ((ch1 & 0xE0) == 0xC0) {
+		if (ch1 == 0xC0 || ch1 == 0xC1) {
+			goto backtrack;
+		}
 		nc = 1;
 	} else if ((ch1 & 0xF0) == 0xE0) {
 		nc = 2;
@@ -82,6 +112,30 @@ int scan_utf8(const uint8_t **bufptr, const uint8_t *end)
 		// expecting another continuation byte
 		goto backtrack;
 	}
+
+	/* First Continuation byte
+	 * -----------
+	 * X  + 80..BF:
+	 * 80: 1000 0000
+	 * BF: 1011 1111
+	 * (ch & 0xC0 == 0x80)
+	 *
+	 * E0 + A0..BF:
+	 * A0: 1010 0000
+	 * BF: 1011 1111
+	 * (ch & 0xE0 == 0xA0)
+	 *
+	 * ED + 80..9F:
+	 * 80: 1000 0000
+	 * 9F: 1001 1111
+	 * (ch & 0xE0 == 0x80)
+	 *
+	 * F0 + 90..BF:
+	 * 90: 1001 0000
+	 * BF: 1011 1111
+	 * (ch & 0xF0 == 0x90 || ch & 0xE0 == A0)
+	 *
+	 */
 
 	// validate the first continuation byte
 	ch = *ptr++;

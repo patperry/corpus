@@ -75,6 +75,7 @@ START_TEST(test_valid_text)
 	ck_assert(is_valid_text("escape: \\n\\r\\t"));
 	ck_assert(is_valid_text("unicode escape: \\u0034"));
 	ck_assert(is_valid_text("surrogate pair: \\uD834\\uDD1E"));
+	ck_assert(is_valid_text("B\\u0153uf Bourguignon"));
 }
 END_TEST
 
@@ -111,6 +112,7 @@ START_TEST(test_valid_raw)
 	ck_assert(is_valid_raw("\\uDFFF low surrogate"));
 	ck_assert(is_valid_raw("\\uD84 incomplete"));
 	ck_assert(is_valid_raw("\\uD804\\u2603 invalid low"));
+	ck_assert(is_valid_raw("B\xC5\x93uf Bourguignon"));
 }
 END_TEST
 

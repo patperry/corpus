@@ -73,11 +73,6 @@ Corpus is designed to be embedded into other language environments. The
 [R interface][rcorpus] is under development concurrently with the library.
 
 
-License
--------
-
-Corpus is released under the [Apache Licence, Version 2.0][apache].
-
 
 Building from source
 --------------------
@@ -99,6 +94,12 @@ the UNIX-specific memory-map system calls. Second, we use the UNIX-specific
 so it should be straightforward to remove the first dependency. For the second
 dependency, the plan is to eventually move away from `syslog` to a custom
 logging interface.
+
+
+License
+-------
+
+Corpus is released under the [Apache Licence, Version 2.0][apache].
 
 
 [apache]: https://www.apache.org/licenses/LICENSE-2.0.html

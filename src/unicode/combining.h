@@ -569,7 +569,7 @@ static const uint8_t combining_class_stage1[] = {
 /* U+10F800 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
 };
 
-static const int8_t combining_class_stage2[][128] = {
+static const uint8_t combining_class_stage2[][128] = {
   /* block 0 */
   {  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
      0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,

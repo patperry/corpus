@@ -109,7 +109,7 @@ elif type1_size == 4:
 else:
     type1 = 'uint64_t'
 
-type2 = 'int8_t'
+type2 = 'uint8_t'
 
 
 # Write combining.h to stdout

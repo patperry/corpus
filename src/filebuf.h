@@ -31,7 +31,7 @@
  */
 struct filebuf {
 	char *file_name;	/**< file name */
-	int fd;			/**< the file descriptor */
+	intptr_t handle;	/**< the file descriptor or handle */
 	uint64_t file_size;	/**< file size, in bytes */
 
 	void *map_addr;		/**< the memory-mapped address */

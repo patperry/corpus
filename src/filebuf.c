@@ -24,14 +24,106 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "error.h"
+#include "xalloc.h"
+#include "filebuf.h"
+
+
+#if (defined(_WIN32) || defined(_WIN64))
+
+#include <windows.h>
+
+
+int filebuf_init(struct filebuf *buf, const char *file_name)
+{
+	HANDLE handle, mapping;
+	DWORD lo, hi;
+	void *addr;
+	int err;
+
+	assert(file_name);
+
+	if (!(buf->file_name = xstrdup(file_name))) {
+		err = ERROR_NOMEM;
+		logmsg(err, "failed copying file name (%s)", file_name);
+		goto strdup_fail;
+	}
+
+	handle = CreateFile(file_name, GENERIC_READ,
+			    FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
+			    NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+	if (handle == INVALID_HANDLE_VALUE) {
+		// GetLastError()
+		err = ERROR_OS;
+		logmsg(err, "failed opening file (%s)", buf->file_name);
+		goto open_fail;
+	}
+	buf->handle = (intptr_t)handle;
+
+	lo = GetFileSize(handle, &hi);
+	buf->file_size = (uint64_t)lo + ((uint64_t)hi << 32);
+
+	if (buf->file_size > SIZE_MAX) {
+		err = ERROR_OVERFLOW;
+		logmsg(err, "file size (%"PRIu64" bytes)"
+			"exceeds maximum (%"PRIu64" bytes)",
+			buf->file_size, (uint64_t)SIZE_MAX);
+		goto mapping_fail;
+	}
+	buf->map_size = (size_t)(buf->file_size);
+
+        mapping = CreateFileMapping(handle, NULL, PAGE_READONLY, hi, lo, NULL);
+	if (mapping == NULL) {
+		// GetLastError()
+		err = ERROR_OS;
+		logmsg(err, "failed creating mapping for file (%s)",
+			buf->file_name);
+		goto mapping_fail;
+	}
+
+	addr = MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, 0);
+	if (addr == NULL) {
+		// GetLastError()
+		err = ERROR_OS;
+		logmsg(err, "failed creating mapping for file (%s)",
+			buf->file_name);
+		goto view_fail;
+	}
+	buf->map_addr = addr;
+	CloseHandle(mapping);
+
+	err = 0;
+	goto out;
+
+view_fail:
+	CloseHandle(mapping);
+mapping_fail:
+	CloseHandle(handle);
+open_fail:
+	free(buf->file_name);
+strdup_fail:
+	logmsg(err, "failed initializing file buffer");
+out:
+	return err;
+}
+
+
+void filebuf_destroy(struct filebuf *buf)
+{
+	UnmapViewOfFile(buf->map_addr);
+	CloseHandle((HANDLE)buf->handle);
+	free(buf->file_name);
+}
+
+
+#else /* POSIX */
+
+
 #include <fcntl.h>	// open, O_RDONLY
 #include <sys/mman.h>	// mmap, munmap, PROT_READ, MAP_SHARED, MAP_FAILED
 #include <sys/stat.h>	// struct stat, fstat
 #include <unistd.h>	// close
-
-#include "error.h"
-#include "xalloc.h"
-#include "filebuf.h"
 
 
 int filebuf_init(struct filebuf *buf, const char *file_name)
@@ -48,15 +140,18 @@ int filebuf_init(struct filebuf *buf, const char *file_name)
 	}
 
 	access = O_RDONLY;
+#ifdef O_LARGEFILE
+	access |= O_LARGEFILE;
+#endif
 
-	if ((buf->fd = open(buf->file_name, access)) < 0) {
+	if ((buf->handle = (intptr_t)open(buf->file_name, access)) < 0) {
 		err = ERROR_OS;
 		logmsg(err, "failed opening file (%s): %s",
 		       buf->file_name, strerror(errno));
 		goto open_fail;
 	}
 
-	if (fstat(buf->fd, &stat) < 0) {
+	if (fstat((int)buf->handle, &stat) < 0) {
 		err = ERROR_OS;
 		logmsg(err, "failed determining size of file (%s): %s",
 		       buf->file_name, strerror(errno));
@@ -74,7 +169,7 @@ int filebuf_init(struct filebuf *buf, const char *file_name)
 
 	buf->map_size = (size_t)buf->file_size;
 	buf->map_addr = mmap(NULL, buf->map_size, PROT_READ, MAP_SHARED,
-			     buf->fd, 0);
+			     (int)buf->handle, 0);
 	if (buf->map_addr == MAP_FAILED) {
 		err = ERROR_OS;
 		logmsg(err, "failed memory-mapping file (%s): %s", file_name,
@@ -87,7 +182,7 @@ int filebuf_init(struct filebuf *buf, const char *file_name)
 
 mmap_fail:
 fstat_fail:
-	close(buf->fd);
+	close((int)buf->handle);
 open_fail:
 	free(buf->file_name);
 strdup_fail:
@@ -106,9 +201,12 @@ void filebuf_destroy(struct filebuf *buf)
 		munmap(buf->map_addr, buf->map_size);
 	}
 
-	close(buf->fd);
+	close((int)buf->handle);
 	free(buf->file_name);
 }
+
+
+#endif /* end of platform-specific code */ 
 
 
 void filebuf_iter_make(struct filebuf_iter *it, const struct filebuf *buf)

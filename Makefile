@@ -12,7 +12,7 @@ CHECK_CFLAGS = `pkg-config --cflags check` \
 	       -Wno-gnu-zero-variadic-macro-arguments
 CHECK_LIBS = `pkg-config --libs check`
 
-UNICODE = http://www.unicode.org/Public/10.0.0
+UNICODE = http://www.unicode.org/Public/9.0.0
 
 CORPUS_A = libcorpus.a
 LIB_O	= lib/strntod_c.o lib/strntoimax.o src/array.o src/data.o \

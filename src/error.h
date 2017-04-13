@@ -63,6 +63,10 @@ const char *error_string(int code);
  * \param format a printf-style format string
  */
 void logmsg(int code, const char *format, ...)
-	 __attribute__ ((format (printf, 2, 3)));
+#if (defined(_WIN32) || defined(_WIN64))
+	;
+#else
+	__attribute__ ((format (printf, 2, 3)));
+#endif
 
 #endif /* ERROR_H */

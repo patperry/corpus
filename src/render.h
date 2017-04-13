@@ -174,7 +174,12 @@ void render_string(struct render *r, const char *str);
  * \param r the render object
  * \param format the format string
  */
-void render_printf(struct render *r, const char *format, ...);
+void render_printf(struct render *r, const char *format, ...)
+#if (defined(_WIN32) || defined(_WIN64))
+	;
+#else
+	__attribute__ ((format (printf, 2, 3)));
+#endif
 
 /**
  * Render a text object. If any render escape flags are set, filter

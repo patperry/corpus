@@ -1,3 +1,5 @@
+*.a
+*.o
 project.xcworkspace
 xcuserdata
 /corpus

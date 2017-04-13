@@ -17,7 +17,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
+#include "error.h"
 #include "xalloc.h"
 
 
@@ -29,8 +29,10 @@ void *xcalloc(size_t count, size_t size)
 	void *mem = calloc(count, size);
 
 	if (count && size && !mem) {
-		syslog(LOG_CRIT, "failed to allocate %zu objects of size %zu",
+		logmsg(ERROR_NOMEM,
+		       "failed to allocate %zu objects of size %zu",
 		       count, size);
+
 		if (xalloc_fail_func) {
 			xalloc_fail_func();
 		}
@@ -45,7 +47,8 @@ void *xmalloc(size_t size)
 	void *mem = malloc(size);
 
 	if (size && !mem) {
-		syslog(LOG_CRIT, "failed to allocate %zu bytes", size);
+		logmsg(ERROR_NOMEM, "failed to allocate %zu bytes", size);
+
 		if (xalloc_fail_func) {
 			xalloc_fail_func();
 		}
@@ -60,7 +63,8 @@ void *xrealloc(void *ptr, size_t size)
 	void *mem = realloc(ptr, size);
 
 	if (size && !mem) {
-		syslog(LOG_CRIT, "failed to allocate %zu bytes", size);
+		logmsg(ERROR_NOMEM, "failed to allocate %zu bytes", size);
+
 		if (xalloc_fail_func) {
 			xalloc_fail_func();
 		}

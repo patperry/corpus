@@ -214,7 +214,7 @@ int wordscan_advance(struct wordscan *scan)
 
 
 ALetter:
-	//syslog(LOG_DEBUG, "ALetter: code = U+%04X", code);
+	//fprintf(stderr, "ALetter: code = U+%04X\n", code);
 
 	switch (scan->prop) {
 	case WORD_BREAK_ALETTER:
@@ -270,7 +270,7 @@ ALetter:
 
 
 Hebrew_Letter:
-	//syslog(LOG_DEBUG, "Hebrew_Letter: code = U+%04X", code);
+	//fprintf(stderr, "Hebrew_Letter: code = U+%04X\n", code);
 
 	switch (scan->prop) {
 	case WORD_BREAK_ALETTER:
@@ -336,7 +336,7 @@ Hebrew_Letter:
 	}
 
 Numeric:
-	//syslog(LOG_DEBUG, "Numeric: code = U+%04X", code);
+	//fprintf(stderr, "Numeric: code = U+%04X\n", code);
 
 	switch (scan->prop) {
 	case WORD_BREAK_NUMERIC:
@@ -376,7 +376,7 @@ Numeric:
 	}
 
 Katakana:
-	//syslog(LOG_DEBUG, "Katakana: code = U+%04X", code);
+	//fprintf(stderr, "Katakana: code = U+%04X\n", code);
 
 	switch (scan->prop) {
 	case WORD_BREAK_KATAKANA:
@@ -395,7 +395,7 @@ Katakana:
 
 ExtendNumLet:
 
-	//syslog(LOG_DEBUG, "ExtendNumLet: code = U+%04X", code);
+	//fprintf(stderr, "ExtendNumLet: code = U+%04X\n", code);
 
 	switch (scan->prop) {
 	case WORD_BREAK_ALETTER:
@@ -428,7 +428,7 @@ ExtendNumLet:
 	}
 
 E_Base:
-	//syslog(LOG_DEBUG, "E_Base: code = U+%04X", code);
+	//fprintf(stderr, "E_Base: code = U+%04X\n", code);
 
 	switch (scan->prop) {
 	case WORD_BREAK_E_MODIFIER:
@@ -443,7 +443,7 @@ E_Base:
 
 Regional_Indicator:
 
-	//syslog(LOG_DEBUG, "Regional_Indicator: code = U+%04X", code);
+	//fprintf(stderr, "Regional_Indicator: code = U+%04X\n", code);
 
 	// Do not break within emoji flag sequences. That is, do not break
 	// between regional indicator (RI) symbols if there is an odd number

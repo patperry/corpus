@@ -16,9 +16,9 @@ UNICODE = http://www.unicode.org/Public/10.0.0
 
 CORPUS_A = libcorpus.a
 LIB_O	= lib/strntod_c.o lib/strntoimax.o src/array.o src/data.o \
-		  src/datatype.o src/filebuf.o src/render.o src/sentscan.o \
-		  src/symtab.o src/table.o src/text.o src/token.o src/unicode.o \
-		  src/wordscan.o src/xalloc.o
+		  src/datatype.o src/error.o src/filebuf.o src/render.o \
+		  src/sentscan.o src/symtab.o src/table.o src/text.o src/token.o \
+		  src/unicode.o src/wordscan.o src/xalloc.o
 
 CORPUS_T = corpus
 CORPUS_O = src/main.o src/main_get.o src/main_scan.o src/main_tokens.o
@@ -166,39 +166,40 @@ tests/%.o: tests/%.c
 .PHONY: all check clean data doc
 
 
-src/array.o: src/array.c src/errcode.h src/xalloc.h src/array.h
-src/data.o: src/data.c src/errcode.h src/table.h src/text.h src/token.h \
+src/array.o: src/array.c src/error.h src/xalloc.h src/array.h
+src/data.o: src/data.c src/error.h src/table.h src/text.h src/token.h \
 	src/symtab.h src/datatype.h src/data.h
-src/datatype.o: src/datatype.c src/array.h src/errcode.h src/render.h \
+src/datatype.o: src/datatype.c src/array.h src/error.h src/render.h \
 	src/table.h src/text.h src/token.h src/symtab.h src/xalloc.h \
 	src/data.h src/datatype.h
-src/filebuf.o: src/filebuf.c src/array.h src/errcode.h src/xalloc.h \
+src/error.o: src/error.c src/error.h
+src/filebuf.o: src/filebuf.c src/array.h src/error.h src/xalloc.h \
     src/filebuf.h
-src/main.o: src/main.c src/errcode.h src/filebuf.h src/table.h src/text.h \
+src/main.o: src/main.c src/error.h src/filebuf.h src/table.h src/text.h \
 	src/token.h src/symtab.h src/datatype.h
-src/main_get.o: src/main_get.c src/errcode.h src/filebuf.h src/table.h \
+src/main_get.o: src/main_get.c src/error.h src/filebuf.h src/table.h \
 	src/text.h src/token.h src/symtab.h src/datatype.h
-src/main_scan.o: src/main_scan.c src/errcode.h src/filebuf.h src/table.h \
+src/main_scan.o: src/main_scan.c src/error.h src/filebuf.h src/table.h \
 	src/text.h src/token.h src/symtab.h src/datatype.h
-src/main_tokens.o: src/main_tokens.c src/errcode.h src/filebuf.h src/table.h \
+src/main_tokens.o: src/main_tokens.c src/error.h src/filebuf.h src/table.h \
 	src/text.h src/token.h src/symtab.h src/datatype.h
-src/render.o: src/render.c src/array.h src/errcode.h src/text.h \
+src/render.o: src/render.c src/array.h src/error.h src/text.h \
 	src/unicode.h src/xalloc.h src/render.h
 src/sentscan.o: src/sentscan.c src/text.h src/unicode/sentbreakprop.h \
 	src/sentscan.h
-src/symtab.o: src/symtab.c src/array.h src/errcode.h src/table.h src/text.h \
+src/symtab.o: src/symtab.c src/array.h src/error.h src/table.h src/text.h \
 	src/token.h src/xalloc.h src/symtab.h
-src/table.o: src/table.c src/errcode.h src/xalloc.h src/table.h
-src/text.o: src/text.c src/errcode.h src/unicode.h src/xalloc.h src/text.h
-src/token.o: src/token.c src/errcode.h src/text.h src/unicode.h src/xalloc.h \
+src/table.o: src/table.c src/error.h src/xalloc.h src/table.h
+src/text.o: src/text.c src/error.h src/unicode.h src/xalloc.h src/text.h
+src/token.o: src/token.c src/error.h src/text.h src/unicode.h src/xalloc.h \
     src/token.h
 src/unicode.o: src/unicode.c src/unicode/casefold.h src/unicode/combining.h \
-    src/unicode/decompose.h src/errcode.h src/unicode.h
+    src/unicode/decompose.h src/error.h src/unicode.h
 src/wordscan.o: src/wordscan.c src/text.h src/unicode/wordbreakprop.h \
 	src/wordscan.h
 src/xalloc.o: src/xalloc.c src/xalloc.h
 
-tests/check_data.o: tests/check_data.c src/errcode.h src/table.h src/text.h \
+tests/check_data.o: tests/check_data.c src/error.h src/table.h src/text.h \
 	src/token.h src/symtab.h src/data.h src/datatype.h tests/testutil.h
 tests/check_sentscan: tests/check_sentscan.c src/text.h src/token.h \
 	src/unicode.h src/wordscan.h tests/testutil.h

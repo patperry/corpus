@@ -18,8 +18,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
-#include "errcode.h"
+#include "error.h"
 #include "text.h"
 #include "unicode.h"
 #include "xalloc.h"
@@ -123,6 +122,7 @@ int typemap_reserve(struct typemap *map, size_t size)
 {
 	uint8_t *ptr = map->type.ptr;
 	uint32_t *codes = map->codes;
+	int err;
 
 	if (map->size_max >= size) {
 		return 0;
@@ -142,10 +142,10 @@ int typemap_reserve(struct typemap *map, size_t size)
 	return 0;
 
 error_nomem:
-	syslog(LOG_ERR, "failed allocating type map buffer");
-	return ERROR_NOMEM;
+	err = ERROR_NOMEM;
+	logmsg(err, "failed allocating type map buffer");
+	return err;
 }
-
 
 
 int typemap_set(struct typemap *map, const struct text *tok)
@@ -175,7 +175,7 @@ int typemap_set(struct typemap *map, const struct text *tok)
 	return err;
 
 error:
-	syslog(LOG_ERR, "failed normalizing token");
+	logmsg(err, "failed normalizing token");
 	return err;
 }
 
@@ -443,7 +443,7 @@ int typemap_set_ascii(struct typemap *map, const struct text *tok)
 	return 0;
 
 error:
-	syslog(LOG_ERR, "failed normalizing token");
+	logmsg(err, "failed normalizing token");
 	return err;
 }
 

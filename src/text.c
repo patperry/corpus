@@ -17,8 +17,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
-#include "errcode.h"
+#include "error.h"
 #include "unicode.h"
 #include "xalloc.h"
 #include "text.h"
@@ -41,10 +40,12 @@ int text_init_copy(struct text *text, const struct text *other)
 {
         size_t size = TEXT_SIZE(other);
         size_t attr = other->attr;
+	int err;
 
         if (!(text->ptr = xmalloc(size + 1))) {
-                syslog(LOG_ERR, "failed allocating text object");
-                return ERROR_NOMEM;
+                err = ERROR_NOMEM;
+                logmsg(err, "failed allocating text object");
+                return err;
         }
 
         memcpy(text->ptr, other->ptr, size);
@@ -172,18 +173,17 @@ int assign_raw(struct text *text, const uint8_t *ptr, size_t size)
 	return 0;
 
 error_inval_utf8:
-	syslog(LOG_ERR, "invalid UTF-8 byte (0x%02X)", (unsigned)*ptr);
+	logmsg(err, "invalid UTF-8 byte (0x%02X)", (unsigned)*ptr);
 	goto error_inval;
 
 error_inval:
-	syslog(LOG_ERR, "error in text at byte %zu", ptr - input);
-	err = ERROR_INVAL;
+	logmsg(err, "error in text at byte %zu", ptr - input);
 	goto error;
 
 error_overflow:
-	syslog(LOG_ERR, "text size (%zu bytes) exceeds maximum (%zu bytes)",
-	       size, TEXT_SIZE_MAX);
 	err = ERROR_OVERFLOW;
+	logmsg(err, "text size (%zu bytes) exceeds maximum (%zu bytes)",
+	       size, TEXT_SIZE_MAX);
 	goto error;
 
 error:
@@ -221,9 +221,9 @@ int assign_raw_unsafe(struct text *text, const uint8_t *ptr, size_t size)
 	return 0;
 
 error_overflow:
-	syslog(LOG_ERR, "text size (%zu bytes) exceeds maximum (%zu bytes)",
-	       size, TEXT_SIZE_MAX);
 	err = ERROR_OVERFLOW;
+	logmsg(err, "text size (%zu bytes) exceeds maximum (%zu bytes)",
+	       size, TEXT_SIZE_MAX);
 	goto error;
 
 error:
@@ -295,29 +295,30 @@ int assign_esc(struct text *text, const uint8_t *ptr, size_t size)
 	return 0;
 
 error_inval_incomplete:
-	syslog(LOG_ERR, "incomplete escape code (\\)");
+	err = ERROR_INVAL;
+	logmsg(err, "incomplete escape code (\\)");
 	goto error_inval;
 
 error_inval_esc:
-	syslog(LOG_ERR, "invalid escape code (\\%c)", ch);
+	err = ERROR_INVAL;
+	logmsg(err, "invalid escape code (\\%c)", ch);
 	goto error_inval;
 
 error_inval_uesc:
 	goto error_inval;
 
 error_inval_utf8:
-	syslog(LOG_ERR, "invalid UTF-8 byte (0x%02X)", (unsigned)*ptr);
+	logmsg(err, "invalid UTF-8 byte (0x%02X)", (unsigned)*ptr);
 	goto error_inval;
 
 error_inval:
-	syslog(LOG_ERR, "error in text at byte %zu", ptr - input);
-	err = ERROR_INVAL;
+	logmsg(err, "error in text at byte %zu", ptr - input);
 	goto error;
 
 error_overflow:
-	syslog(LOG_ERR, "text size (%zu bytes) exceeds maximum (%zu bytes)",
-	       size, TEXT_SIZE_MAX);
 	err = ERROR_OVERFLOW;
+	logmsg(err, "text size (%zu bytes) exceeds maximum (%zu bytes)",
+	       size, TEXT_SIZE_MAX);
 	goto error;
 
 error:
@@ -370,9 +371,9 @@ int assign_esc_unsafe(struct text *text, const uint8_t *ptr, size_t size)
 	return 0;
 
 error_overflow:
-	syslog(LOG_ERR, "text size (%zu bytes) exceeds maximum (%zu bytes)",
-	       size, TEXT_SIZE_MAX);
 	err = ERROR_OVERFLOW;
+	logmsg(err, "text size (%zu bytes) exceeds maximum (%zu bytes)",
+	       size, TEXT_SIZE_MAX);
 	goto error;
 
 error:
@@ -433,36 +434,40 @@ int decode_uescape(const uint8_t **inputptr, const uint8_t *end,
 	goto out;
 
 error_inval_incomplete:
-	syslog(LOG_ERR, "incomplete escape code (\\u%.*s)",
+	err = ERROR_INVAL;
+	logmsg(err, "incomplete escape code (\\u%.*s)",
 	       (int)(end - input), input);
 	goto error_inval;
 
 error_inval_hex:
-	syslog(LOG_ERR, "invalid hex value in escape code (\\u%.*s)", 4, input);
+	err = ERROR_INVAL;
+	logmsg(err, "invalid hex value in escape code (\\u%.*s)", 4, input);
 	goto error_inval;
 
 error_inval_nolow:
-	syslog(LOG_ERR,
+	err = ERROR_INVAL;
+	logmsg(err,
 	       "missing UTF-16 low surrogate after high surrogate escape code"
 	       " (\\u%.*s)", 4, input);
 	goto error_inval;
 
 error_inval_low:
-	syslog(LOG_ERR,
+	err = ERROR_INVAL;
+	logmsg(err,
 		"invalid UTF-16 low surrogate (\\u%.*s)"
 	        " after high surrogate escape code (\\u%.*s)",
 		4, input, 4, input - 6);
 	goto error_inval;
 
 error_inval_nohigh:
-	syslog(LOG_ERR,
+	err = ERROR_INVAL;
+	logmsg(err,
 	       "missing UTF-16 high surrogate before low surrogate escape code"
 	       " (\\u%.*s)", 4, input);
 	goto error_inval;
 
 error_inval:
 	code = UNICODE_REPLACEMENT;
-	err = ERROR_INVAL;
 
 out:
 	*codeptr = code;

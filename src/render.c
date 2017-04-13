@@ -20,9 +20,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include "array.h"
-#include "errcode.h"
+#include "error.h"
 #include "text.h"
 #include "unicode.h"
 #include "xalloc.h"
@@ -56,10 +55,13 @@ static void render_grow(struct render *r, int nadd)
 
 int render_init(struct render *r, int escape_flags)
 {
+	int err;
+
 	r->string = xmalloc(1);
 	if (!r->string) {
-		syslog(LOG_ERR, "failed initializing render object");
-		return ERROR_NOMEM;
+		err = ERROR_NOMEM;
+		logmsg(err, "failed initializing render object");
+		return err;
 	}
 
 	r->length = 0;
@@ -286,7 +288,7 @@ void render_string(struct render *r, const char *str)
 void render_printf(struct render *r, const char *format, ...)
 {
 	va_list ap, ap2;
-	int len;
+	int err, len;
 
 	if (r->error) {
 		return;
@@ -297,8 +299,9 @@ void render_printf(struct render *r, const char *format, ...)
 
 	len = vsnprintf(NULL, 0, format, ap);
 	if (len < 0) {
-		syslog(LOG_ERR, "printf format error: %s", strerror(errno));
-		r->error = ERROR_OS;
+		err = ERROR_OS;
+		logmsg(err, "printf formatting error: %s", strerror(errno));
+		r->error = err;
 		goto out;
 	}
 

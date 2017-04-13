@@ -19,7 +19,7 @@
 #include "unicode/casefold.h"
 #include "unicode/combining.h"
 #include "unicode/decompose.h"
-#include "errcode.h"
+#include "error.h"
 #include "unicode.h"
 
 /*

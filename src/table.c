@@ -18,8 +18,7 @@
 #include <limits.h>
 #include <inttypes.h>
 #include <stdlib.h>
-#include <syslog.h>
-#include "errcode.h"
+#include "error.h"
 #include "xalloc.h"
 #include "table.h"
 
@@ -79,6 +78,7 @@ static unsigned table_size_min(int count, unsigned size_min)
 int table_init(struct table *tab)
 {
 	unsigned size = TABLE_SIZE_INIT;
+	int err;
 
 	assert(size >= TABLE_SIZE_MIN);
 	assert(size <= TABLE_SIZE_MAX);
@@ -94,8 +94,9 @@ int table_init(struct table *tab)
 	return 0;
 
 error_nomem:
-	syslog(LOG_ERR, "failed allocating table");
-	return ERROR_NOMEM;
+	err = ERROR_NOMEM;
+	logmsg(err, "failed allocating table");
+	return err;
 }
 
 
@@ -104,20 +105,23 @@ int table_reinit(struct table *tab, int min_capacity)
 	int *items = tab->items;
 	unsigned size = tab->mask + 1;
 	int capacity = tab->capacity;
+	int err;
 
 	if (min_capacity > capacity) {
 		size = table_size_min(min_capacity, size);
 		capacity = (int)(LOAD_FACTOR * size);
 
 		if ((size_t)size > SIZE_MAX / sizeof(*items)) {
-			syslog(LOG_ERR, "table size (%d) exceeds maximum (%zu)",
+			err = ERROR_OVERFLOW;
+			logmsg(err, "table size (%d) exceeds maximum (%zu)",
 			       size, (size_t)(SIZE_MAX / sizeof(*items)));
-			return ERROR_OVERFLOW;
+			return err;
 		}
 
 		if (!(items = xrealloc(items, size * sizeof(*items)))) {
-			syslog(LOG_ERR, "failed allocating table");
-			return ERROR_NOMEM;
+			err = ERROR_NOMEM;
+			logmsg(err, "failed allocating table");
+			return err;
 		}
 
 		tab->items = items;

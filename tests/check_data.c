@@ -22,8 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
-#include "../src/errcode.h"
+#include "../src/error.h"
 #include "../src/table.h"
 #include "../src/text.h"
 #include "../src/token.h"
@@ -715,10 +714,6 @@ int main(void)
 	int nfail;
 	Suite *s;
 	SRunner *sr;
-
-	//openlog("check_data", LOG_CONS | LOG_PERROR | LOG_PID, LOG_USER);
-        //setlogmask(LOG_UPTO(LOG_INFO));
-        //setlogmask(LOG_UPTO(LOG_DEBUG));
 
 	s = data_suite();
 	sr = srunner_create(s);

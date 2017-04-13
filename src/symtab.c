@@ -19,9 +19,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include "array.h"
-#include "errcode.h"
+#include "error.h"
 #include "table.h"
 #include "text.h"
 #include "token.h"
@@ -41,17 +40,17 @@ int symtab_init(struct symtab *tab, int type_kind)
 	int err;
 
 	if ((err = typemap_init(&tab->typemap, type_kind))) {
-		syslog(LOG_ERR, "failed allocating type buffer");
+		logmsg(err, "failed allocating type buffer");
 		goto error_typemap;
 	}
 
 	if ((err = table_init(&tab->type_table))) {
-		syslog(LOG_ERR, "failed allocating type table");
+		logmsg(err, "failed allocating type table");
 		goto error_type_table;
 	}
 
 	if ((err = table_init(&tab->token_table))) {
-		syslog(LOG_ERR, "failed allocating token table");
+		logmsg(err, "failed allocating token table");
 		goto error_token_table;
 	}
 
@@ -70,8 +69,8 @@ error_token_table:
 error_type_table:
 	typemap_destroy(&tab->typemap);
 error_typemap:
-	syslog(LOG_ERR, "failed initializing symbol table");
-	return ERROR_NOMEM;
+	logmsg(err, "failed initializing symbol table");
+	return err;
 }
 
 
@@ -232,7 +231,7 @@ error:
 	if (rehash) {
 		symtab_rehash_tokens(tab);
 	}
-	syslog(LOG_ERR, "failed adding token to symbol table");
+	logmsg(err, "failed adding token to symbol table");
 	return err;
 }
 
@@ -294,7 +293,7 @@ error:
 	if (rehash) {
 		symtab_rehash_types(tab);
 	}
-	syslog(LOG_ERR, "failed adding type to symbol table");
+	logmsg(err, "failed adding type to symbol table");
 	return err;
 }
 
@@ -307,7 +306,7 @@ int symtab_grow_tokens(struct symtab *tab, int nadd)
 
 	if ((err = array_grow(&base, &size, sizeof(*tab->tokens),
 			      tab->ntoken, nadd))) {
-		syslog(LOG_ERR, "failed allocating token array");
+		logmsg(err, "failed allocating token array");
 		return err;
 	}
 
@@ -325,7 +324,7 @@ int symtab_grow_types(struct symtab *tab, int nadd)
 
 	if ((err = array_grow(&base, &size, sizeof(*tab->types),
 			      tab->ntype, nadd))) {
-		syslog(LOG_ERR, "failed allocating type array");
+		logmsg(err, "failed allocating type array");
 		return err;
 	}
 
@@ -365,7 +364,6 @@ void symtab_rehash_types(struct symtab *tab)
 		table_add(type_table, hash, i);
 	}
 }
-
 
 
 int type_add_token(struct symtab_type *typ, int tok_id)

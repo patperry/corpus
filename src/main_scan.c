@@ -21,9 +21,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <syslog.h>
-
-#include "errcode.h"
+#include "error.h"
 #include "filebuf.h"
 #include "table.h"
 #include "text.h"

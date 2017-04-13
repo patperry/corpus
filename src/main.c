@@ -21,9 +21,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <syslog.h>
-
-#include "errcode.h"
+#include "error.h"
 #include "filebuf.h"
 #include "table.h"
 #include "text.h"
@@ -71,17 +69,11 @@ void version(void)
 
 int main(int argc, char * const argv[])
 {
-	int help = 0, debug = 0, err = 0;
+	int help = 0, err = 0;
 	int ch;
 
-	openlog(PROGRAM_NAME, LOG_CONS | LOG_PERROR | LOG_PID, LOG_USER);
-        setlogmask(LOG_UPTO(LOG_INFO));
-
-	while ((ch = getopt(argc, argv, "dhv")) != -1) {
+	while ((ch = getopt(argc, argv, "hv")) != -1) {
 		switch (ch) {
-		case 'd':
-			debug = 1;
-			break;
 		case 'h':
 			help = 1;
 			break;
@@ -97,10 +89,6 @@ int main(int argc, char * const argv[])
 	argv += optind;
 	optreset = 1;
 	optind = 1;
-
-	if (debug) {
-        	setlogmask(LOG_UPTO(LOG_DEBUG));
-	}
 
 	if (argc == 0) {
 		usage(EXIT_FAILURE);

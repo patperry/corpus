@@ -20,8 +20,7 @@
 #include <inttypes.h>
 #include <math.h>
 #include <stdlib.h>
-#include <syslog.h>
-#include "errcode.h"
+#include "error.h"
 #include "table.h"
 #include "text.h"
 #include "token.h"

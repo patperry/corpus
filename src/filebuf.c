@@ -20,15 +20,15 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <syslog.h>
 #include <unistd.h>
 #include "array.h"
-#include "errcode.h"
+#include "error.h"
 #include "xalloc.h"
 #include "filebuf.h"
 
@@ -41,7 +41,7 @@ static int filebuf_grow_lines(struct filebuf *buf, int nadd)
 
 	if ((err = array_grow(&base, &size, sizeof(*buf->lines),
 			      buf->nline, nadd))) {
-		syslog(LOG_ERR, "failed allocating lines array");
+		logmsg(err, "failed allocating lines array");
 		return err;
 	}
 
@@ -61,7 +61,7 @@ int filebuf_init(struct filebuf *buf, const char *file_name)
 
 	if (!(buf->file_name = xstrdup(file_name))) {
 		err = ERROR_NOMEM;
-		syslog(LOG_ERR, "failed copying file name (%s)", file_name);
+		logmsg(err, "failed copying file name (%s)", file_name);
 		goto strdup_fail;
 	}
 
@@ -69,23 +69,23 @@ int filebuf_init(struct filebuf *buf, const char *file_name)
 
 	if ((buf->fd = open(buf->file_name, access)) < 0) {
 		err = ERROR_OS;
-		syslog(LOG_ERR, "failed opening file (%s): %s",
+		logmsg(err, "failed opening file (%s): %s",
 		       buf->file_name, strerror(errno));
 		goto open_fail;
 	}
 
 	if (fstat(buf->fd, &stat) < 0) {
 		err = ERROR_OS;
-		syslog(LOG_ERR, "failed determining size of file (%s): %s",
+		logmsg(err, "failed determining size of file (%s): %s",
 		       buf->file_name, strerror(errno));
 		goto fstat_fail;
 	}
 	buf->file_size = (uint64_t)stat.st_size;
-	syslog(LOG_DEBUG, "file has size %"PRIu64" bytes", buf->file_size);
+	//fprintf(stderr, "file has size %"PRIu64" bytes\n", buf->file_size);
 
 	if ((page_size = sysconf(_SC_PAGESIZE)) < 0) {
 		err = ERROR_OS;
-		syslog(LOG_ERR, "failed determining memory page size: %s",
+		logmsg(err, "failed determining memory page size: %s",
 		       strerror(errno));
 		goto sysconf_fail;
 	}
@@ -111,7 +111,7 @@ fstat_fail:
 open_fail:
 	free(buf->file_name);
 strdup_fail:
-	syslog(LOG_ERR, "failed initializing file buffer");
+	logmsg(err, "failed initializing file buffer");
 out:
 	buf->error = err;
 	return err;
@@ -121,8 +121,9 @@ out:
 void filebuf_destroy(struct filebuf *buf)
 {
 	if (buf->map_addr) {
-		syslog(LOG_DEBUG, "unmaping %zu bytes from address %p",
-		       buf->map_size, buf->map_addr);
+		//fprintf(stderr, "unmaping %zu bytes from address %p\n",
+		//        buf->map_size, buf->map_addr);
+
 		munmap(buf->map_addr, buf->map_size);
 	}
 
@@ -138,8 +139,9 @@ void filebuf_reset(struct filebuf *buf)
 	buf->offset = -1;
 
 	if (buf->map_offset != 0) {
-		syslog(LOG_DEBUG, "unmapping %zu bytes from address %p",
-		        buf->map_size, buf->map_addr);
+		//fprintf(stderr, "unmapping %zu bytes from address %p\n",
+		//	  buf->map_size, buf->map_addr);
+
 		munmap(buf->map_addr, buf->map_size);
 		buf->map_addr = NULL;
 		buf->map_size = 0;
@@ -202,34 +204,36 @@ int filebuf_advance(struct filebuf *buf)
 		} else if (buf->map_size != SIZE_MAX) {
 			size = SIZE_MAX;
 		} else {
-			syslog(LOG_ERR, "file line size exceeds maximum"
+			err = ERROR_OVERFLOW;
+			logmsg(err, "file line size exceeds maximum"
 			       " (%zu bytes)",
 			       (size_t)(SIZE_MAX - buf->page_size + 1));
-			err = ERROR_OVERFLOW;
 			goto error;
 		}
 
-		syslog(LOG_DEBUG, "unmapping %zu bytes from address %p",
-		        buf->map_size, buf->map_addr);
+		//fprintf(stderr, "unmapping %zu bytes from address %p\n",
+		//        buf->map_size, buf->map_addr);
+
 		munmap(buf->map_addr, buf->map_size);
 		buf->map_addr = NULL;
 		flags = MAP_SHARED;
 	}
 
-	syslog(LOG_DEBUG, "mapping file segment at offset %"PRIu64
-		       ", length %zu", (uint64_t)offset, size);
+	//fprintf(stderr, "mapping file segment at offset %"PRIu64
+	//	       ", length %zu\n", (uint64_t)offset, size);
 
 	addr = mmap(buf->map_addr, size, PROT_READ, flags, buf->fd, offset);
 
 	if (addr == MAP_FAILED) {
-		syslog(LOG_ERR, "failed %smapping file (%s): %s",
+		err = ERROR_OS;
+		logmsg(err, "failed %smapping file (%s): %s",
 		       buf->map_addr == NULL ? "" : "re-", buf->file_name,
 		       strerror(errno));
-		err = ERROR_OS;
 		goto error;
 	} else {
-		syslog(LOG_DEBUG, "mapped %zu bytes to address %p", size,
-		       addr);
+		//fprintf(stderr, "mapped %zu bytes to address %p\n", size,
+		//	addr);
+
 		buf->map_addr = addr;
 		buf->map_size = size;
 		buf->map_offset = offset;

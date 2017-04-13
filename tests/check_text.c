@@ -17,7 +17,6 @@
 #include <check.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <syslog.h>
 #include "../src/text.h"
 #include "../src/unicode.h"
 #include "testutil.h"
@@ -196,15 +195,12 @@ int main(void)
 	Suite *s;
 	SRunner *sr;
 
-	//openlog("check_text", LOG_CONS | LOG_PERROR | LOG_PID, LOG_USER);
-        //setlogmask(LOG_UPTO(LOG_INFO));
-        //setlogmask(LOG_UPTO(LOG_DEBUG));
-
 	s = text_suite();
 	sr = srunner_create(s);
 
 	srunner_run_all(sr, CK_NORMAL);
 	nfail = srunner_ntests_failed(sr);
 	srunner_free(sr);
+
 	return (nfail == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

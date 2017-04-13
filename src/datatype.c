@@ -20,9 +20,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include "array.h"
-#include "errcode.h"
+#include "error.h"
 #include "render.h"
 #include "table.h"
 #include "text.h"
@@ -117,15 +116,16 @@ int schema_buffer_grow(struct schema_buffer *buf, int nadd)
 
 	if ((err = array_grow(&tbase, &size, sizeof(*buf->type_ids),
 			      buf->nfield, nadd))) {
-		syslog(LOG_ERR, "failed allocating schema buffer");
+		logmsg(err, "failed allocating schema buffer");
 		return err;
 	}
 	buf->type_ids = tbase;
 
 	if (size) {
 		if (!(nbase = xrealloc(nbase, size * sizeof(*nbase)))) {
-			syslog(LOG_ERR, "failed allocating schema buffer");
-			return ERROR_NOMEM;
+			err = ERROR_NOMEM;
+			logmsg(err, "failed allocating schema buffer");
+			return err;
 		}
 		buf->name_ids = nbase;
 	}
@@ -190,7 +190,7 @@ int sorter_reserve(struct schema_sorter *sort, int length)
 	nadd = length - n;
 
 	if ((err = array_grow(&base, &n, sizeof(*sort->idptrs), n, nadd))) {
-		syslog(LOG_ERR, "failed allocating schema sorter");
+		logmsg(err, "failed allocating schema sorter");
 		return err;
 	}
 
@@ -305,7 +305,7 @@ int schema_name(struct schema *s, const struct text *name, int *idptr)
 	goto out;
 
 error:
-	syslog(LOG_ERR, "failed adding name to schema");
+	logmsg(err, "failed adding name to schema");
 	id = -1;
 
 out:
@@ -366,7 +366,7 @@ int schema_array(struct schema *s, int type_id, int length, int *idptr)
 	goto out;
 
 error:
-	syslog(LOG_ERR, "failed adding array type");
+	logmsg(err, "failed adding array type");
 	id = DATATYPE_ANY;
 	if (rehash) {
 		schema_rehash_arrays(s);
@@ -586,14 +586,14 @@ sorted:
 	goto out;
 
 error_duplicate:
-	syslog(LOG_ERR, "duplicate field name \"%.*s\" in record",
+	err = ERROR_INVAL;
+	logmsg(err, "duplicate field name \"%.*s\" in record",
 		(int)TEXT_SIZE(&s->names.types[name_ids[index]].text),
 		s->names.types[name_ids[index]].text.ptr);
-	err = ERROR_INVAL;
 	goto error;
 
 error:
-	syslog(LOG_ERR, "failed adding record type");
+	logmsg(err, "failed adding record type");
 	id = DATATYPE_ANY;
 	if (rehash) {
 		schema_rehash_records(s);
@@ -725,7 +725,7 @@ int schema_union_array(struct schema *s, int id1, int id2, int *idptr)
 	goto out;
 
 error:
-	syslog(LOG_ERR, "failed computing union of array types");
+	logmsg(err, "failed computing union of array types");
 	id = DATATYPE_ANY;
 
 out:
@@ -805,12 +805,15 @@ int schema_union_record(struct schema *s, int id1, int id2, int *idptr)
 		nfield += n2 - i2;
 	}
 
-	err = schema_record(s, s->buffer.type_ids + fstart,
-			    s->buffer.name_ids + fstart, nfield, &id);
+	if ((err = schema_record(s, s->buffer.type_ids + fstart,
+				 s->buffer.name_ids + fstart, nfield, &id))) {
+		goto error;
+	}
+
 	goto out;
 
 error:
-	syslog(LOG_ERR, "failed computing union of record types");
+	logmsg(err, "failed computing union of record types");
 	id = DATATYPE_ANY;
 	goto out;
 
@@ -831,7 +834,7 @@ int schema_grow_types(struct schema *s, int nadd)
 
 	if ((err = array_grow(&base, &size, sizeof(*s->types),
 			      s->ntype, nadd))) {
-		syslog(LOG_ERR, "failed allocating type array");
+		logmsg(err, "failed allocating type array");
 		return err;
 	}
 
@@ -912,7 +915,7 @@ void render_datatype(struct render *r, const struct schema *s, int id)
 		break;
 
 	default:
-		syslog(LOG_ERR, "internal error: invalid datatype kind");
+		logmsg(ERROR_INTERNAL, "internal error: invalid datatype kind");
 	}
 }
 
@@ -933,9 +936,9 @@ int write_datatype(FILE *stream, const struct schema *s, int id)
 
 	if (fwrite(r.string, 1, r.length, stream) < (size_t)r.length
 			&& r.length) {
-		syslog(LOG_ERR, "failed writing to output stream: %s",
-			strerror(errno));
 		err = ERROR_OS;
+		logmsg(err, "failed writing to output stream: %s",
+		       strerror(errno));
 		goto error_fwrite;
 	}
 
@@ -946,7 +949,7 @@ error_render:
 	render_destroy(&r);
 error_init:
 	if (err) {
-		syslog(LOG_ERR, "failed writing datatype to output stream");
+		logmsg(err, "failed writing datatype to output stream");
 	}
 
 	return err;
@@ -1023,7 +1026,8 @@ int schema_scan(struct schema *s, const uint8_t *ptr, size_t size, int *idptr)
 
 	scan_spaces(&ptr, end);
 	if (ptr != end) {
-		syslog(LOG_ERR, "unexpected trailing characters");
+		err = ERROR_INVAL;
+		logmsg(err, "unexpected trailing characters");
 		goto error;
 	}
 
@@ -1032,9 +1036,8 @@ success:
 	goto out;
 
 error:
-	syslog(LOG_ERR, "failed parsing value (%.*s)", (unsigned)size, input);
+	logmsg(err, "failed parsing value (%.*s)", (unsigned)size, input);
 	id = DATATYPE_ANY;
-	err = ERROR_INVAL;
 	goto out;
 
 out:
@@ -1183,24 +1186,24 @@ close:
 	goto out;
 
 error_inval_noclose:
-	syslog(LOG_ERR, "no closing bracket (]) at end of array");
 	err = ERROR_INVAL;
+	logmsg(err, "no closing bracket (]) at end of array");
 	goto error;
 
 error_inval_noval:
-	syslog(LOG_ERR, "missing value at index %d in array", length);
 	err = ERROR_INVAL;
+	logmsg(err, "missing value at index %d in array", length);
 	goto error;
 
 error_inval_val:
-	syslog(LOG_ERR, "failed parsing value at index %d in array", length);
 	err = ERROR_INVAL;
+	logmsg(err, "failed parsing value at index %d in array", length);
 	goto error;
 
 error_inval_nocomma:
-	syslog(LOG_ERR, "missing comma (,) after index %d in array",
-	       length);
 	err = ERROR_INVAL;
+	logmsg(err, "missing comma (,) after index %d in array",
+	       length);
 	goto error;
 
 error:
@@ -1294,13 +1297,13 @@ close:
 	goto out;
 
 error_inval_noclose:
-	syslog(LOG_ERR, "no closing bracket (}) at end of record");
 	err = ERROR_INVAL;
+	logmsg(err, "no closing bracket (}) at end of record");
 	goto error;
 
 error_inval_nocomma:
-	syslog(LOG_ERR, "missing comma (,) in record");
 	err = ERROR_INVAL;
+	logmsg(err, "missing comma (,) in record");
 	goto error;
 
 error:
@@ -1355,26 +1358,26 @@ int scan_field(struct schema *s, const uint8_t **bufptr, const uint8_t *end,
 	goto out;
 
 error_inval_noname:
-	syslog(LOG_ERR, "missing field name in record");
 	err = ERROR_INVAL;
+	logmsg(err, "missing field name in record");
 	goto error;
 
 error_inval_nocolon:
-	syslog(LOG_ERR, "missing colon after field name \"%.*s\" in record",
-	       (unsigned)TEXT_SIZE(&name), name.ptr);
 	err = ERROR_INVAL;
+	logmsg(err, "missing colon after field name \"%.*s\" in record",
+	       (unsigned)TEXT_SIZE(&name), name.ptr);
 	goto error;
 
 error_inval_noval:
-	syslog(LOG_ERR, "missing value for field \"%.*s\" in record",
-	       (unsigned)TEXT_SIZE(&name), name.ptr);
 	err = ERROR_INVAL;
+	logmsg(err, "missing value for field \"%.*s\" in record",
+	       (unsigned)TEXT_SIZE(&name), name.ptr);
 	goto error;
 
 error_inval_val:
-	syslog(LOG_ERR, "failed parsing value for field \"%.*s\" in record",
-	       (unsigned)TEXT_SIZE(&name), name.ptr);
 	err = ERROR_INVAL;
+	logmsg(err, "failed parsing value for field \"%.*s\" in record",
+	       (unsigned)TEXT_SIZE(&name), name.ptr);
 	goto error;
 
 error:
@@ -1402,8 +1405,9 @@ int scan_numeric(const uint8_t **bufptr, const uint8_t *end, int *idptr)
 	// skip over optional sign
 	if (ch == '-' || ch == '+') {
 		if (ptr == end) {
-			syslog(LOG_ERR, "missing number after (%c) sign",
-				(char)ch);
+			err = ERROR_INVAL;
+			logmsg(err, "missing number after (%c) sign",
+			       (char)ch);
 			goto error_inval;
 		}
 		ch = *ptr++;
@@ -1491,31 +1495,34 @@ int scan_numeric(const uint8_t **bufptr, const uint8_t *end, int *idptr)
 	goto out;
 
 error_inval_start:
+	err = ERROR_INVAL;
 	if (isprint(ch)) {
-		syslog(LOG_ERR, "invalid character (%c) at start of value",
+		logmsg(err, "invalid character (%c) at start of value",
 		       (char)ch);
 	} else {
-		syslog(LOG_ERR, "invalid character (0x%02x) at start of value",
+		logmsg(err, "invalid character (0x%02x) at start of value",
 		       (unsigned char)ch);
 	}
 	goto error_inval;
 
 error_inval_char:
+	err = ERROR_INVAL;
 	if (isprint(ch)) {
-		syslog(LOG_ERR, "invalid character (%c) in number",
+		logmsg(err, "invalid character (%c) in number",
 		       (char)ch);
 	} else {
-		syslog(LOG_ERR, "invalid character (0x%02x) in number",
+		logmsg(err, "invalid character (0x%02x) in number",
 		       (unsigned char)ch);
 	}
 	goto error_inval;
 
 error_inval_exp:
-	syslog(LOG_ERR, "missing exponent at end of number");
+	err = ERROR_INVAL;
+	logmsg(err, "missing exponent at end of number");
 	goto error_inval;
 
 error_inval:
-	err = ERROR_INVAL;
+	logmsg(err, "failed attempting to parse numeric value");
 
 out:
 	*bufptr = ptr;
@@ -1562,8 +1569,8 @@ int scan_text(const uint8_t **bufptr, const uint8_t *end,
 	}
 
 error_noclose:
-	syslog(LOG_ERR, "no trailing quote (\") at end of text value");
 	err = ERROR_INVAL;
+	logmsg(err, "no trailing quote (\") at end of text value");
 	goto out;
 
 close:
@@ -1657,22 +1664,25 @@ int scan_char(char c, const uint8_t **bufptr, const uint8_t *end)
 {
 	const uint8_t *ptr = *bufptr;
 	uint_fast8_t ch;
+	int err;
 
 	if (ptr == end) {
-		syslog(LOG_ERR, "expecting '%c' but input ended", c);
-		return ERROR_INVAL;
+		err = ERROR_INVAL;
+		logmsg(err, "expecting '%c' but input ended", c);
+		return err;
 	}
 
 	ch = *ptr;
 	if (ch != c) {
+		err = ERROR_INVAL;
 		if (isprint(ch)) {
-			syslog(LOG_ERR, "expecting '%c' but got '%c'", c,
+			logmsg(err, "expecting '%c' but got '%c'", c,
 			       (char)ch);
 		} else {
-			syslog(LOG_ERR, "expecting '%c' but got '0x%02x'", c,
+			logmsg(err, "expecting '%c' but got '0x%02x'", c,
 			       (unsigned char)ch);
 		}
-		return ERROR_INVAL;
+		return err;
 	}
 
 	*bufptr = ptr + 1;

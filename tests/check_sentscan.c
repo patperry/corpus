@@ -16,7 +16,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <syslog.h>
 #include <check.h>
 #include "../src/text.h"
 #include "../src/token.h"
@@ -301,18 +300,12 @@ int main(void)
         Suite *s;
         SRunner *sr;
 
-        openlog("check_sentscan", LOG_CONS | LOG_PERROR | LOG_PID, LOG_USER);
-	setlogmask(LOG_UPTO(LOG_INFO));
-        //setlogmask(LOG_UPTO(LOG_DEBUG));
-
         s = sentscan_suite();
         sr = srunner_create(s);
 
         srunner_run_all(sr, CK_NORMAL);
         number_failed = srunner_ntests_failed(sr);
         srunner_free(sr);
-
-        closelog();
 
         return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

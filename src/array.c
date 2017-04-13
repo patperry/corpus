@@ -17,8 +17,7 @@
 #include <assert.h>
 #include <limits.h>
 #include <stdint.h>
-#include <syslog.h>
-#include "errcode.h"
+#include "error.h"
 #include "xalloc.h"
 #include "array.h"
 
@@ -70,6 +69,7 @@ int array_grow(void **baseptr, int *sizeptr, size_t width, int count, int nadd)
 	void *base = *baseptr;
 	int size = *sizeptr;
 	int max = size;
+	int err;
 
 	assert(count >= 0);
 	assert(size >= 0);
@@ -79,8 +79,9 @@ int array_grow(void **baseptr, int *sizeptr, size_t width, int count, int nadd)
 	}
 
 	if (count > INT_MAX - nadd) {
-		syslog(LOG_ERR, "array count exceeds maximum (%d)", INT_MAX);
-		return ERROR_OVERFLOW;
+		err = ERROR_OVERFLOW;
+		logmsg(err, "array count exceeds maximum (%d)", INT_MAX);
+		return err;
 	}
 	count = count + nadd;
 
@@ -89,9 +90,10 @@ int array_grow(void **baseptr, int *sizeptr, size_t width, int count, int nadd)
 	}
 
 	if ((size_t)count > SIZE_MAX / width) {
-		syslog(LOG_ERR, "array size (%zu) exceeds maximum (%zu)",
+		err = ERROR_OVERFLOW;
+		logmsg(err, "array size (%zu) exceeds maximum (%zu)",
 		       (size_t)count, (size_t)SIZE_MAX / width);
-		return ERROR_OVERFLOW;
+		return err;
 	}
 
 	size = array_grow_size(count, size);
@@ -101,8 +103,9 @@ int array_grow(void **baseptr, int *sizeptr, size_t width, int count, int nadd)
 	}
 
 	if (!(base = xrealloc(base, ((size_t)size) * width))) {
-		syslog(LOG_ERR, "failed allocating array");
-		return ERROR_NOMEM;
+		err = ERROR_NOMEM;
+		logmsg(err, "failed allocating array");
+		return err;
 	}
 
 	*baseptr = base;

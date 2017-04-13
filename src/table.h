@@ -39,11 +39,11 @@ struct table {
  * Hash table probe, for looking up items by their hash value.
  */
 struct table_probe {
-	const struct table *table;	/**< the underlying table */
-	unsigned hash;			/**< starting hash value */
-	unsigned nprobe;		/**< number of previous probes */
-	unsigned index;			/**< current index in the probe sequence */
-	int current;			/**< current item in the probe sequence */
+	const struct table *table; /**< the underlying table */
+	unsigned hash;		/**< starting hash value */
+	unsigned nprobe;	/**< number of previous probes */
+	int index;		/**< current index in the probe sequence */
+	int current;		/**< current item in the probe sequence */
 };
 
 /**
@@ -140,8 +140,9 @@ static inline int table_probe_advance(struct table_probe *probe)
 		index = probe->index + probe->nprobe;
 	}
 
-	probe->index = index & (probe->table->mask);
-	probe->current = probe->table->items[probe->index];
+	index &= probe->table->mask;
+	probe->current = probe->table->items[index];
+	probe->index = (int)index;
 	probe->nprobe++;
 
 	return (probe->current != TABLE_ITEM_EMPTY);

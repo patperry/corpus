@@ -17,9 +17,17 @@
 #include <check.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include "../src/error.h"
 #include "../src/text.h"
 #include "../src/unicode.h"
 #include "testutil.h"
+
+
+void ignore_message(int code, const char *message)
+{
+	(void)code;
+	(void)message;
+}
 
 
 void setup_text(void)
@@ -31,6 +39,7 @@ void setup_text(void)
 void teardown_text(void)
 {
 	teardown();
+	logmsg_func = NULL;
 }
 
 
@@ -81,6 +90,8 @@ END_TEST
 
 START_TEST(test_invalid_text)
 {
+	logmsg_func = ignore_message;
+
 	ck_assert(!is_valid_text("invalid utf-8 \xBF"));
 	ck_assert(!is_valid_text("invalid utf-8 \xC2\x7F"));
 	ck_assert(!is_valid_text("invalid escape \\a"));
@@ -118,6 +129,8 @@ END_TEST
 
 START_TEST(test_invalid_raw)
 {
+	logmsg_func = ignore_message;
+
 	ck_assert(!is_valid_raw("invalid utf-8 \xBF"));
 	ck_assert(!is_valid_raw("invalid utf-8 \xC2\x7F"));
 }

@@ -44,6 +44,13 @@ const int Text = DATATYPE_TEXT;
 const int Any = DATATYPE_ANY;
 
 
+void ignore_message(int code, const char *message)
+{
+	(void)code;
+	(void)message;
+}
+
+
 void setup_data(void)
 {
 	setup();
@@ -55,6 +62,7 @@ void teardown_data(void)
 {
 	schema_destroy(&schema);
 	teardown();
+	logmsg_func = NULL;
 }
 
 
@@ -78,8 +86,8 @@ int get_type(const char *str)
 int is_error(const char *str)
 {
 	size_t n = strlen(str);
-	int id;
-	int err = schema_scan(&schema, (const uint8_t *)str, n, &id);
+	int err, id;
+	err = schema_scan(&schema, (const uint8_t *)str, n, &id);
 	ck_assert(err == ERROR_INVAL || err == 0);
 	return (err != 0);
 }
@@ -236,6 +244,8 @@ END_TEST
 
 START_TEST(test_invalid_null)
 {
+	logmsg_func = ignore_message;
+
 	ck_assert(is_error("n"));
 	ck_assert(is_error("nulll"));
 	ck_assert(is_error("null null"));
@@ -257,6 +267,8 @@ END_TEST
 
 START_TEST(test_invalid_boolean)
 {
+	logmsg_func = ignore_message;
+
 	ck_assert(is_error("tru"));
 	ck_assert(is_error("true1"));
 	ck_assert(is_error("false (really)"));
@@ -316,6 +328,8 @@ END_TEST
 
 START_TEST(test_invalid_number)
 {
+	logmsg_func = ignore_message;
+
 	ck_assert(is_error("1a"));
 	ck_assert(is_error("-"));
 	ck_assert(is_error("1e"));
@@ -500,6 +514,8 @@ END_TEST
 
 START_TEST(test_invalid_text)
 {
+	logmsg_func = ignore_message;
+
 	ck_assert(is_error("hello"));
 	ck_assert(is_error("\"hello\" world"));
 	ck_assert(is_error("\"invalid utf-8 \xBF\""));
@@ -531,6 +547,8 @@ END_TEST
 
 START_TEST(test_invalid_array)
 {
+	logmsg_func = ignore_message;
+
 	ck_assert(is_error("[null, ]"));
 }
 END_TEST
@@ -574,6 +592,8 @@ END_TEST
 
 START_TEST(test_invalid_record)
 {
+	logmsg_func = ignore_message;
+
 	ck_assert(is_error("{ \"hello\": }"));
 	ck_assert(is_error("{ \"a\":1, }"));
 	ck_assert(is_error("{ \"x\":,\"y\":null }"));

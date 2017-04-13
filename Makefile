@@ -205,7 +205,8 @@ tests/check_sentscan: tests/check_sentscan.c src/text.h src/token.h \
 	src/unicode.h src/wordscan.h tests/testutil.h
 tests/check_symtab.o: tests/check_symtab.c src/table.h src/text.h src/token.h \
 	src/symtab.h tests/testutil.h
-tests/check_text.o: tests/check_text.c src/text.h src/unicode.h tests/testutil.h
+tests/check_text.o: tests/check_text.c src/error.h src/text.h src/unicode.h \
+	tests/testutil.h
 tests/check_token.o: tests/check_token.c src/text.h src/token.h src/unicode.h \
     tests/testutil.h
 tests/check_unicode.o: tests/check_unicode.c src/unicode.h tests/testutil.h

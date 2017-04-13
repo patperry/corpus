@@ -1522,7 +1522,7 @@ error_inval_exp:
 	goto error_inval;
 
 error_inval:
-	logmsg(err, "failed attempting to parse numeric value");
+	//logmsg(err, "failed attempting to parse numeric value");
 
 out:
 	*bufptr = ptr;

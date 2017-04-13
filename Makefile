@@ -1,4 +1,4 @@
-CC      = cc -std=c99
+CC      = gcc -std=c99
 CFLAGS  = -Wall -Wextra -pedantic -g -O2
 LDFLAGS =
 LIBS    = -lm

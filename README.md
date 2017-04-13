@@ -88,9 +88,8 @@ run the tests.
 Windows support
 ---------------
 
-We do not currently support Windows, due to a dependency on the UNIX-specific
-memory-map system calls (`mmap`).  There is a Windows equivalent to the UNIX
-`mmap` interface, so it should be straightforward to remove this dependency.
+Everything should work on Windows, the only platform-specific code is the
+memory-mapping used internally by the `filebuf.h` interface.
 
 
 License

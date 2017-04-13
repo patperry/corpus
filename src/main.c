@@ -70,9 +70,23 @@ void version(void)
 int main(int argc, char * const argv[])
 {
 	int help = 0, err = 0;
-	int ch;
+	int ind, ch;
 
-	while ((ch = getopt(argc, argv, "hv")) != -1) {
+	// handle initial arguments ourselves rather than calling
+	// getopt twice, which requires platform-specific behavior
+
+	for (ind = 1; ind < argc; ind++) {
+		if (argv[ind][0] != '-') {
+			break;
+		}
+
+		if (argv[ind][2] != '\0') {
+			printf("illegal option: %s\n", argv[ind]);
+			usage(EXIT_FAILURE);
+		}
+
+		ch = argv[ind][1];
+
 		switch (ch) {
 		case 'h':
 			help = 1;
@@ -85,10 +99,8 @@ int main(int argc, char * const argv[])
 		}
 	}
 
-	argc -= optind;
-	argv += optind;
-	optreset = 1;
-	optind = 1;
+	argc -= ind;
+	argv += ind;
 
 	if (argc == 0) {
 		usage(EXIT_FAILURE);

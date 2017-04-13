@@ -17,6 +17,7 @@
 #include <assert.h>
 #include <limits.h>
 #include <inttypes.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include "error.h"
 #include "xalloc.h"
@@ -113,8 +114,9 @@ int table_reinit(struct table *tab, int min_capacity)
 
 		if ((size_t)size > SIZE_MAX / sizeof(*items)) {
 			err = ERROR_OVERFLOW;
-			logmsg(err, "table size (%d) exceeds maximum (%zu)",
-			       size, (size_t)(SIZE_MAX / sizeof(*items)));
+			logmsg(err, "table size (%d) exceeds maximum (%"
+				PRIu64")",
+			       size, (uint64_t)(SIZE_MAX / sizeof(*items)));
 			return err;
 		}
 

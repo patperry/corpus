@@ -121,8 +121,8 @@ out:
 void filebuf_destroy(struct filebuf *buf)
 {
 	if (buf->map_addr) {
-		//fprintf(stderr, "unmaping %zu bytes from address %p\n",
-		//        buf->map_size, buf->map_addr);
+		//fprintf(stderr, "unmaping %"PRIu64" bytes from address %p\n",
+		//        (uint64_t)buf->map_size, buf->map_addr);
 
 		munmap(buf->map_addr, buf->map_size);
 	}
@@ -139,8 +139,8 @@ void filebuf_reset(struct filebuf *buf)
 	buf->offset = -1;
 
 	if (buf->map_offset != 0) {
-		//fprintf(stderr, "unmapping %zu bytes from address %p\n",
-		//	  buf->map_size, buf->map_addr);
+		//fprintf(stderr, "unmapping %"PRIu64" bytes from address %p\n",
+		//	  (uint64_t)buf->map_size, buf->map_addr);
 
 		munmap(buf->map_addr, buf->map_size);
 		buf->map_addr = NULL;
@@ -206,13 +206,13 @@ int filebuf_advance(struct filebuf *buf)
 		} else {
 			err = ERROR_OVERFLOW;
 			logmsg(err, "file line size exceeds maximum"
-			       " (%zu bytes)",
-			       (size_t)(SIZE_MAX - buf->page_size + 1));
+			       " (%"PRIu64" bytes)",
+			       (uint64_t)(SIZE_MAX - buf->page_size + 1));
 			goto error;
 		}
 
-		//fprintf(stderr, "unmapping %zu bytes from address %p\n",
-		//        buf->map_size, buf->map_addr);
+		//fprintf(stderr, "unmapping %"PRIu64" bytes from address %p\n",
+		//        (uint64_t)buf->map_size, buf->map_addr);
 
 		munmap(buf->map_addr, buf->map_size);
 		buf->map_addr = NULL;
@@ -220,7 +220,7 @@ int filebuf_advance(struct filebuf *buf)
 	}
 
 	//fprintf(stderr, "mapping file segment at offset %"PRIu64
-	//	       ", length %zu\n", (uint64_t)offset, size);
+	//	  ", length %"PRIu64"\n", (uint64_t)offset, (uint64_t)size);
 
 	addr = mmap(buf->map_addr, size, PROT_READ, flags, buf->fd, offset);
 
@@ -231,8 +231,8 @@ int filebuf_advance(struct filebuf *buf)
 		       strerror(errno));
 		goto error;
 	} else {
-		//fprintf(stderr, "mapped %zu bytes to address %p\n", size,
-		//	addr);
+		//fprintf(stderr, "mapped %"PRIu64" bytes to address %p\n",
+		//	(uint64_t)size, addr);
 
 		buf->map_addr = addr;
 		buf->map_size = size;

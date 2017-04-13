@@ -15,6 +15,8 @@
  */
 
 #include <ctype.h>
+#include <inttypes.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include "error.h"
@@ -177,13 +179,14 @@ error_inval_utf8:
 	goto error_inval;
 
 error_inval:
-	logmsg(err, "error in text at byte %zu", ptr - input);
+	logmsg(err, "error in text at byte %"PRIu64, (uint64_t)(ptr - input));
 	goto error;
 
 error_overflow:
 	err = ERROR_OVERFLOW;
-	logmsg(err, "text size (%zu bytes) exceeds maximum (%zu bytes)",
-	       size, TEXT_SIZE_MAX);
+	logmsg(err, "text size (%"PRIu64" bytes)"
+		" exceeds maximum (%"PRIu64" bytes)",
+	       (uint64_t)size, (uint64_t)TEXT_SIZE_MAX);
 	goto error;
 
 error:
@@ -222,8 +225,9 @@ int assign_raw_unsafe(struct text *text, const uint8_t *ptr, size_t size)
 
 error_overflow:
 	err = ERROR_OVERFLOW;
-	logmsg(err, "text size (%zu bytes) exceeds maximum (%zu bytes)",
-	       size, TEXT_SIZE_MAX);
+	logmsg(err, "text size (%"PRIu64" bytes)"
+	       " exceeds maximum (%"PRIu64" bytes)",
+	       (uint64_t)size, (uint64_t)TEXT_SIZE_MAX);
 	goto error;
 
 error:
@@ -312,13 +316,15 @@ error_inval_utf8:
 	goto error_inval;
 
 error_inval:
-	logmsg(err, "error in text at byte %zu", ptr - input);
+	logmsg(err, "error in text at byte %"PRIu64,
+		(uint64_t)(ptr - input));
 	goto error;
 
 error_overflow:
 	err = ERROR_OVERFLOW;
-	logmsg(err, "text size (%zu bytes) exceeds maximum (%zu bytes)",
-	       size, TEXT_SIZE_MAX);
+	logmsg(err, "text size (%"PRIu64" bytes)"
+	       " exceeds maximum (%"PRIu64" bytes)",
+	       (uint64_t)size, (uint64_t)TEXT_SIZE_MAX);
 	goto error;
 
 error:
@@ -372,8 +378,9 @@ int assign_esc_unsafe(struct text *text, const uint8_t *ptr, size_t size)
 
 error_overflow:
 	err = ERROR_OVERFLOW;
-	logmsg(err, "text size (%zu bytes) exceeds maximum (%zu bytes)",
-	       size, TEXT_SIZE_MAX);
+	logmsg(err, "text size (%"PRIu64" bytes)"
+	       " exceeds maximum (%"PRIu64" bytes)",
+	       (uint64_t)size, (uint64_t)TEXT_SIZE_MAX);
 	goto error;
 
 error:

@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+#include <inttypes.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include "error.h"
@@ -30,8 +32,8 @@ void *xcalloc(size_t count, size_t size)
 
 	if (count && size && !mem) {
 		logmsg(ERROR_NOMEM,
-		       "failed to allocate %zu objects of size %zu",
-		       count, size);
+		       "failed to allocate %"PRIu64" objects of size %"PRIu64,
+		       (uint64_t)count, (uint64_t)size);
 
 		if (xalloc_fail_func) {
 			xalloc_fail_func();
@@ -47,7 +49,8 @@ void *xmalloc(size_t size)
 	void *mem = malloc(size);
 
 	if (size && !mem) {
-		logmsg(ERROR_NOMEM, "failed to allocate %zu bytes", size);
+		logmsg(ERROR_NOMEM, "failed to allocate %"PRIu64" bytes",
+			(uint64_t)size);
 
 		if (xalloc_fail_func) {
 			xalloc_fail_func();
@@ -63,7 +66,8 @@ void *xrealloc(void *ptr, size_t size)
 	void *mem = realloc(ptr, size);
 
 	if (size && !mem) {
-		logmsg(ERROR_NOMEM, "failed to allocate %zu bytes", size);
+		logmsg(ERROR_NOMEM, "failed to allocate %"PRIu64" bytes",
+			(uint64_t)size);
 
 		if (xalloc_fail_func) {
 			xalloc_fail_func();

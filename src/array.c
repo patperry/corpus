@@ -15,6 +15,7 @@
  */
 
 #include <assert.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdint.h>
 #include "error.h"
@@ -91,8 +92,8 @@ int array_grow(void **baseptr, int *sizeptr, size_t width, int count, int nadd)
 
 	if ((size_t)count > SIZE_MAX / width) {
 		err = ERROR_OVERFLOW;
-		logmsg(err, "array size (%zu) exceeds maximum (%zu)",
-		       (size_t)count, (size_t)SIZE_MAX / width);
+		logmsg(err, "array size (%d) exceeds maximum (%"PRIu64")",
+		       count, (uint64_t)SIZE_MAX / width);
 		return err;
 	}
 

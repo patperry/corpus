@@ -67,12 +67,13 @@ int main_tokens(int argc, char * const argv[])
 	struct text name, text, word;
 	struct schema schema;
 	struct filebuf buf;
+	struct filebuf_iter it;
 	const char *output = NULL;
 	const char *field, *input;
 	FILE *stream;
 	size_t field_len;
 	int flags;
-	int ch, err, i, name_id, start, tokid, typid, zero;
+	int ch, err, name_id, start, tokid, typid, zero;
 
 	flags = (TYPE_COMPAT | TYPE_CASEFOLD | TYPE_DASHFOLD
 			| TYPE_QUOTFOLD | TYPE_RMCC | TYPE_RMDI
@@ -169,60 +170,51 @@ int main_tokens(int argc, char * const argv[])
 		goto error;
 	}
 
-	while (filebuf_advance(&buf)) {
-		for (i = 0; i < buf.nline; i++) {
-			if ((err = data_assign(&data, &schema,
-						buf.lines[i].ptr,
-						buf.lines[i].size))) {
+	filebuf_iter_make(&it, &buf);
+	while (filebuf_iter_advance(&it)) {
+		if ((err = data_assign(&data, &schema, it.current.ptr,
+					it.current.size))) {
+				goto error;
+		}
+
+		if ((err = data_field(&data, &schema, name_id, &val))) {
+			err = data_text(&data, &text);
+		} else {
+			err = data_text(&val, &text);
+		}
+
+		if (err) {
+			fprintf(stream, "null\n");
+			continue;
+		}
+
+		fprintf(stream, "[");
+		wordscan_make(&scan, &text);
+		start = 1;
+		while (wordscan_advance(&scan)) {
+
+			if ((err = symtab_add_token(&symtab, &scan.current,
+							&tokid))) {
 				goto error;
 			}
 
-			if ((err = data_field(&data, &schema, name_id, &val))) {
-				err = data_text(&data, &text);
-			} else {
-				err = data_text(&val, &text);
-			}
+			typid = symtab.tokens[tokid].type_id;
+			word = symtab.types[typid].text;
 
-			if (err) {
-				fprintf(stream, "null\n");
+			if (TEXT_SIZE(&word) == 0 && !zero) {
 				continue;
 			}
 
-			fprintf(stream, "[");
-			wordscan_make(&scan, &text);
-			start = 1;
-			while (wordscan_advance(&scan)) {
-
-				if ((err = symtab_add_token(&symtab,
-							&scan.current,
-							&tokid))) {
-					goto error;
-				}
-
-				typid = symtab.tokens[tokid].type_id;
-				word = symtab.types[typid].text;
-
-				if (TEXT_SIZE(&word) == 0 && !zero) {
-					continue;
-				}
-
-				if (!start) {
-					fprintf(stream, ", ");
-				} else {
-					start = 0;
-				}
-
-				fprintf(stream, "\"%.*s\"",
-					(int)TEXT_SIZE(&word),
-					(char *)word.ptr);
+			if (!start) {
+				fprintf(stream, ", ");
+			} else {
+				start = 0;
 			}
-			fprintf(stream, "]\n");
-		}
-	}
 
-	if ((err = buf.error)) {
-		perror("Failed parsing input file");
-		goto error;
+			fprintf(stream, "\"%.*s\"", (int)TEXT_SIZE(&word),
+				(char *)word.ptr);
+		}
+		fprintf(stream, "]\n");
 	}
 
 	err = 0;

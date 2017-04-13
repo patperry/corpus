@@ -54,11 +54,13 @@ int main_scan(int argc, char * const argv[])
 {
 	struct schema schema;
 	struct filebuf buf;
+	struct filebuf_iter it;
 	const char *output = NULL;
 	const char *input = NULL;
 	FILE *stream;
-	int ch, err, i, id, type_id;
+	int ch, err, id, type_id;
 	int lines = 0;
+	uint64_t lineno;
 
 	while ((ch = getopt(argc, argv, "lo:")) != -1) {
 		switch (ch) {
@@ -110,30 +112,25 @@ int main_scan(int argc, char * const argv[])
 
 	type_id = DATATYPE_NULL;
 
-	while (filebuf_advance(&buf)) {
-		for (i = 0; i < buf.nline; i++) {
-			if ((err = schema_scan(&schema, buf.lines[i].ptr,
-						buf.lines[i].size, &id))) {
-				goto error_scan;
-			}
+	filebuf_iter_make(&it, &buf);
+	lineno = 0;
+	while (filebuf_iter_advance(&it)) {
+		lineno++;
 
-			if (lines) {
-				fprintf(stream, "%"PRId64"\t",
-					1 + buf.offset + i);
-				write_datatype(stream, &schema, id);
-				fprintf(stream, "\n");
-			}
-
-			if ((err = schema_union(&schema, type_id, id,
-							&type_id))) {
-				goto error_scan;
-			}
+		if ((err = schema_scan(&schema, it.current.ptr,
+					it.current.size, &id))) {
+			goto error_scan;
 		}
-	}
 
-	if ((err = buf.error)) {
-		perror("Failed scanning input file");
-		goto error_scan;
+		if (lines) {
+			fprintf(stream, "%"PRId64"\t", lineno);
+			write_datatype(stream, &schema, id);
+			fprintf(stream, "\n");
+		}
+
+		if ((err = schema_union(&schema, type_id, id, &type_id))) {
+			goto error_scan;
+		}
 	}
 
 	if (lines) {
@@ -141,7 +138,7 @@ int main_scan(int argc, char * const argv[])
 	}
 	write_datatype(stream, &schema, type_id);
 	fprintf(stream, "\n");
-	fprintf(stream, "%"PRId64" rows\n", buf.offset);
+	fprintf(stream, "%"PRId64" rows\n", lineno);
 	err = 0;
 
 error_scan:

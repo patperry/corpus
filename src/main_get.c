@@ -55,10 +55,11 @@ int main_get(int argc, char * const argv[])
 	struct text name;
 	struct schema schema;
 	struct filebuf buf;
+	struct filebuf_iter it;
 	const char *output = NULL;
 	const char *field, *input;
 	FILE *stream;
-	int ch, err, i, name_id;
+	int ch, err, name_id;
 	size_t field_len;
 
 	while ((ch = getopt(argc, argv, "o:")) != -1) {
@@ -121,28 +122,21 @@ int main_get(int argc, char * const argv[])
 		goto error_get;
 	}
 
-	while (filebuf_advance(&buf)) {
-		for (i = 0; i < buf.nline; i++) {
-			if ((err = data_assign(&data, &schema,
-						buf.lines[i].ptr,
-						buf.lines[i].size))) {
-				goto error_get;
-			}
-
-			if (data_field(&data, &schema, name_id, &val) == 0) {
-				// field exists
-				fprintf(stream, "%.*s\n", (int)val.size,
-					(char *)val.ptr);
-			} else {
-				// field is null
-				fprintf(stream, "null\n");
-			}
+	filebuf_iter_make(&it, &buf);
+	while (filebuf_iter_advance(&it)) {
+		if ((err = data_assign(&data, &schema, it.current.ptr,
+					it.current.size))) {
+			goto error_get;
 		}
-	}
 
-	if ((err = buf.error)) {
-		perror("Failed parsing input file");
-		goto error_get;
+		if (data_field(&data, &schema, name_id, &val) == 0) {
+			// field exists
+			fprintf(stream, "%.*s\n", (int)val.size,
+				(char *)val.ptr);
+		} else {
+			// field is null
+			fprintf(stream, "null\n");
+		}
 	}
 
 	err = 0;

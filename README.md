@@ -88,12 +88,9 @@ run the tests.
 Windows support
 ---------------
 
-We do not currently support Windows, due to two dependencies. First, we use
-the UNIX-specific memory-map system calls. Second, we use the UNIX-specific
-`syslog` interface for logging.  There are Windows equivalents to UNIX `mmap`,
-so it should be straightforward to remove the first dependency. For the second
-dependency, the plan is to eventually move away from `syslog` to a custom
-logging interface.
+We do not currently support Windows, due to a dependency on the UNIX-specific
+memory-map system calls (`mmap`).  There is a Windows equivalent to the UNIX
+`mmap` interface, so it should be straightforward to remove this dependency.
 
 
 License

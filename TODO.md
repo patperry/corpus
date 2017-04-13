@@ -13,5 +13,7 @@ Windows portability
 `mmap` calls are unix-specfic. Use the appropriate alternatives for
 windows builds
 
-`syslog` is unix-specific. Add custom logging? This would make
-error reporting better for, e.g., the R interface.
+Chris Wellons' blog post, [Four ways to compile C for Windows][wellons],
+might be useful.
+
+[wellons]: http://nullprogram.com/blog/2016/06/13/

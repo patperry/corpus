@@ -97,7 +97,7 @@ License
 
 Corpus is released under the [Apache Licence, Version 2.0][apache]. Portions
 of the library rely on data from the [Unicode Character Database][ucd] and are
-subject to the terms of the [Unicode Licence][unicode]
+subject to the terms of the [Unicode Licence][unicode].
 
 
 [apache]: https://www.apache.org/licenses/LICENSE-2.0.html

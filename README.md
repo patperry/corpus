@@ -95,7 +95,9 @@ memory-mapping used internally by the `filebuf.h` interface.
 License
 -------
 
-Corpus is released under the [Apache Licence, Version 2.0][apache].
+Corpus is released under the [Apache Licence, Version 2.0][apache]. Portions
+of the library rely on data from the [Unicode Character Database][ucd] and are
+subject to the terms of the [Unicode Licence][unicode]
 
 
 [apache]: https://www.apache.org/licenses/LICENSE-2.0.html
@@ -105,3 +107,5 @@ Corpus is released under the [Apache Licence, Version 2.0][apache].
 [jsonlines]: http://jsonlines.org/
 [rcorpus]: https://github.com/patperry/r-corpus
 [segmentation]: http://unicode.org/reports/tr29/
+[ucd]: http://unicode.org/ucd/
+[unicode]: http://www.unicode.org/copyright.html#License

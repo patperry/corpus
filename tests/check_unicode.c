@@ -383,6 +383,58 @@ START_TEST(test_reject_invalid_4byte_utf8)
 END_TEST
 
 
+static void roundtrip(uint32_t code)
+{
+	uint8_t buf[6];
+	uint8_t *ptr;
+	uint32_t decode;
+
+	ptr = buf;
+	encode_utf8(code, &ptr);
+
+	ck_assert_int_eq(ptr - buf, UTF8_ENCODE_LEN(code));
+	ck_assert(is_utf8((const char *)buf, UTF8_ENCODE_LEN(code)));
+
+	ptr = buf;
+	decode_utf8((const uint8_t **)&ptr, &decode);
+	ck_assert_int_eq(ptr - buf, UTF8_ENCODE_LEN(code));
+	ck_assert_int_eq(code, decode);
+}
+
+
+START_TEST(test_encode_decode_utf8)
+{
+	uint32_t code;
+
+	// U+0000..U+0FFF
+	for (code = 0; code <= 0xFFFF; code++) {
+		if (!IS_UNICODE(code)) {
+			continue;
+		}
+		roundtrip(code);
+	}
+
+	// U+10000..U+3FFFF
+	roundtrip(0x10000);
+	roundtrip(0x10001);
+	roundtrip(0x3FFFE);
+	roundtrip(0x3FFFF);
+
+	// U+40000..U+FFFFF
+	roundtrip(0x40000);
+	roundtrip(0x40001);
+	roundtrip(0xFFFFE);
+	roundtrip(0xFFFFF);
+
+	// U+100000..U+10FFFF
+	roundtrip(0x100000);
+	roundtrip(0x100001);
+	roundtrip(0x10FFFE);
+	roundtrip(0x10FFFF);
+}
+END_TEST
+
+
 START_TEST(test_normalize_nfd)
 {
 	unsigned i, n = num_normalization_test;
@@ -465,6 +517,10 @@ Suite *unicode_suite(void)
 	tcase_add_test(tc, test_reject_invalid_3byte_utf8);
 	tcase_add_test(tc, test_accept_valid_4byte_utf8);
 	tcase_add_test(tc, test_reject_invalid_4byte_utf8);
+	suite_add_tcase(s, tc);
+
+	tc = tcase_create("utf8 encoding and decoding");
+	tcase_add_test(tc, test_encode_decode_utf8);
 	suite_add_tcase(s, tc);
 
 	tc = tcase_create("utf32 normalization");

@@ -18,7 +18,7 @@
 #define ERROR_H
 
 /**
- * \file errcode.h
+ * \file error.h
  *
  * Error codes and error logging.
  */
@@ -59,7 +59,7 @@ const char *error_string(int code);
 /**
  * Log a message.
  *
- * \param code the status code, an #error code value
+ * \param code the status code, an #error_code value
  * \param format a printf-style format string
  */
 void logmsg(int code, const char *format, ...)

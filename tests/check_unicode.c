@@ -406,7 +406,7 @@ START_TEST(test_encode_decode_utf8)
 {
 	uint32_t code;
 
-	// U+0000..U+0FFF
+	// U+0000..U+FFFF
 	for (code = 0; code <= 0xFFFF; code++) {
 		if (!IS_UNICODE(code)) {
 			continue;

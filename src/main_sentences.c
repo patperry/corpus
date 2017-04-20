@@ -29,42 +29,33 @@
 #include "symtab.h"
 #include "datatype.h"
 #include "data.h"
-#include "wordscan.h"
+#include "sentscan.h"
 
 #define PROGRAM_NAME	"corpus"
 
 
-void usage_tokens(int status)
+void usage_sentences(int status)
 {
 	printf("\
-Usage:\t%s tokens [options] <path>\n\
+Usage:\t%s sentences [options] <path>\n\
 \n\
 Description:\n\
-\tSegment text into tokens.\n\
+\tSegment text into sentences.\n\
 \n\
 Options:\n\
-\t-c\t\tKeeps original case instead of case folding.\n\
-\t-d\t\tKeeps dashes instead of replacing them with \"-\".\n\
 \t-f <field>\tGets text from the given field (defaults to \"text\").\n\
-\t-i\t\tKeeps default ignorable characters like soft hyphens.\n\
-\t-k\t\tDoes not perform compatibility decompositions (NFKD).\n\
 \t-o <path>\tSaves output at the given path.\n\
-\t-q\t\tKeeps quotes instead of replacing them with \"'\".\n\
-\t-w\t\tKeeps white space.\n\
-\t-x\t\tKeeps non-white-space control characters.\n\
-\t-z\t\tKeeps zero-character (empty) tokens.\n\
 ", PROGRAM_NAME);
 
 	exit(status);
 }
 
 
-int main_tokens(int argc, char * const argv[])
+int main_sentences(int argc, char * const argv[])
 {
-	struct wordscan scan;
-	struct symtab symtab;
+	struct sentscan scan;
 	struct data data, val;
-	struct text name, text, word;
+	struct text name, text;
 	struct schema schema;
 	struct filebuf buf;
 	struct filebuf_iter it;
@@ -72,51 +63,22 @@ int main_tokens(int argc, char * const argv[])
 	const char *field, *input;
 	FILE *stream;
 	size_t field_len;
-	int flags;
-	int ch, err, name_id, start, tokid, typid, zero;
-
-	flags = (TYPE_COMPAT | TYPE_CASEFOLD | TYPE_DASHFOLD
-			| TYPE_QUOTFOLD | TYPE_RMCC | TYPE_RMDI
-			| TYPE_RMWS);
+	int ch, err, name_id, start, zero;
 
 	field = "text";
 
 	zero = 0;
 
-	while ((ch = getopt(argc, argv, "cdf:iko:qwxz")) != -1) {
+	while ((ch = getopt(argc, argv, "f:o:")) != -1) {
 		switch (ch) {
-		case 'c':
-			flags &= ~TYPE_CASEFOLD;
-			break;
-		case 'd':
-			flags &= ~TYPE_DASHFOLD;
-			break;
 		case 'f':
 			field = optarg;
-			break;
-		case 'i':
-			flags &= ~TYPE_RMDI;
-			break;
-		case 'k':
-			flags &= ~TYPE_COMPAT;
 			break;
 		case 'o':
 			output = optarg;
 			break;
-		case 'q':
-			flags &= ~TYPE_QUOTFOLD;
-			break;
-		case 'w':
-			flags &= ~TYPE_RMWS;
-			break;
-		case 'x':
-			flags &= ~TYPE_RMCC;
-			break;
-		case 'z':
-			zero = 1;
-			break;
 		default:
-			usage_tokens(EXIT_FAILURE);
+			usage_sentences(EXIT_FAILURE);
 		}
 	}
 
@@ -125,10 +87,10 @@ int main_tokens(int argc, char * const argv[])
 
 	if (argc == 0) {
 		fprintf(stderr, "No input file specified.\n\n");
-		usage_tokens(EXIT_FAILURE);
+		usage_sentences(EXIT_FAILURE);
 	} else if (argc > 1) {
 		fprintf(stderr, "Too many input files specified.\n\n");
-		usage_tokens(EXIT_FAILURE);
+		usage_sentences(EXIT_FAILURE);
 	}
 
 	field_len = strlen(field);
@@ -146,10 +108,6 @@ int main_tokens(int argc, char * const argv[])
 
 	if ((err = schema_init(&schema))) {
 		goto error_schema;
-	}
-
-	if ((err = symtab_init(&symtab, flags))) {
-		goto error_symtab;
 	}
 
 	if ((err = filebuf_init(&buf, input))) {
@@ -189,30 +147,18 @@ int main_tokens(int argc, char * const argv[])
 		}
 
 		fprintf(stream, "[");
-		wordscan_make(&scan, &text);
+		sentscan_make(&scan, &text);
 		start = 1;
-		while (wordscan_advance(&scan)) {
-
-			if ((err = symtab_add_token(&symtab, &scan.current,
-							&tokid))) {
-				goto error;
-			}
-
-			typid = symtab.tokens[tokid].type_id;
-			word = symtab.types[typid].text;
-
-			if (TEXT_SIZE(&word) == 0 && !zero) {
-				continue;
-			}
-
+		while (sentscan_advance(&scan)) {
 			if (!start) {
 				fprintf(stream, ", ");
 			} else {
 				start = 0;
 			}
 
-			fprintf(stream, "\"%.*s\"", (int)TEXT_SIZE(&word),
-				(char *)word.ptr);
+			fprintf(stream, "\"%.*s\"",
+				(int)TEXT_SIZE(&scan.current),
+				(char *)scan.current.ptr);
 		}
 		fprintf(stream, "]\n");
 	}
@@ -227,8 +173,6 @@ error:
 error_output:
 	filebuf_destroy(&buf);
 error_filebuf:
-	symtab_destroy(&symtab);
-error_symtab:
 	schema_destroy(&schema);
 error_schema:
 	if (err) {

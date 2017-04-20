@@ -31,14 +31,16 @@
 #include "data.h"
 
 #define PROGRAM_NAME	"corpus"
-#define PROGRAM_VERSION	"0.2.0"
+#define PROGRAM_VERSION	"0.3.0"
 
 void usage_get(int status);
 void usage_scan(int status);
+void usage_sentences(int status);
 void usage_tokens(int status);
 
 int main_get(int argc, char * const argv[]);
 int main_scan(int argc, char * const argv[]);
+int main_sentences(int argc, char * const argv[]);
 int main_tokens(int argc, char * const argv[]);
 
 
@@ -52,8 +54,9 @@ Options:\n\
 \n\
 Commands:\n\
 \tget\tExtract a field from a data file.\n\
-\ttokens\tTokenize text from from a data file.\n\
 \tscan\tDetermine the schema of a data file.\n\
+\tsentences\tSegment text into sentences.\n\
+\ttokens\tSegment text into tokens.\n\
 ", PROGRAM_NAME);
 
 	exit(status);
@@ -114,6 +117,11 @@ int main(int argc, char * const argv[])
 			usage_tokens(EXIT_SUCCESS);
 		}
 		err = main_tokens(argc, argv);
+	} else if (!strcmp(argv[0], "sentences")) {
+		if (help) {
+			usage_sentences(EXIT_SUCCESS);
+		}
+		err = main_sentences(argc, argv);
 	} else if (!strcmp(argv[0], "scan")) {
 		if (help) {
 			usage_scan(EXIT_SUCCESS);

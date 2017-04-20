@@ -21,7 +21,8 @@ LIB_O	= lib/strntod_c.o lib/strntoimax.o src/array.o src/data.o \
 		  src/unicode.o src/wordscan.o src/xalloc.o
 
 CORPUS_T = corpus
-CORPUS_O = src/main.o src/main_get.o src/main_scan.o src/main_tokens.o
+CORPUS_O = src/main.o src/main_get.o src/main_scan.o src/main_sentences.o \
+		   src/main_tokens.o
 
 DATA    = data/ucd/CaseFolding.txt \
 		  data/ucd/auxiliary/SentenceBreakProperty.txt \
@@ -180,8 +181,10 @@ src/main_get.o: src/main_get.c src/error.h src/filebuf.h src/table.h \
 	src/text.h src/token.h src/symtab.h src/datatype.h
 src/main_scan.o: src/main_scan.c src/error.h src/filebuf.h src/table.h \
 	src/text.h src/token.h src/symtab.h src/datatype.h
+src/main_sentences.o: src/main_sentences.c src/error.h src/filebuf.h \
+	src/sentscan.h src/table.h src/text.h src/data.h src/datatype.h
 src/main_tokens.o: src/main_tokens.c src/error.h src/filebuf.h src/table.h \
-	src/text.h src/token.h src/symtab.h src/datatype.h
+	src/text.h src/token.h src/symtab.h src/data.h src/datatype.h src/wordscan.h
 src/render.o: src/render.c src/array.h src/error.h src/text.h \
 	src/unicode.h src/xalloc.h src/render.h
 src/sentscan.o: src/sentscan.c src/text.h src/unicode/sentbreakprop.h \

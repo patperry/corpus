@@ -73,25 +73,30 @@ int filebuf_init(struct filebuf *buf, const char *file_name)
 	}
 	buf->map_size = (size_t)(buf->file_size);
 
-        mapping = CreateFileMapping(handle, NULL, PAGE_READONLY, hi, lo, NULL);
-	if (mapping == NULL) {
-		// GetLastError()
-		err = ERROR_OS;
-		logmsg(err, "failed creating mapping for file (%s)",
-			buf->file_name);
-		goto mapping_fail;
-	}
+	if (buf->map_size > 0) {
+		mapping = CreateFileMapping(handle, NULL, PAGE_READONLY, hi,
+					    lo, NULL);
+		if (mapping == NULL) {
+			// GetLastError()
+			err = ERROR_OS;
+			logmsg(err, "failed creating mapping for file (%s)",
+				buf->file_name);
+			goto mapping_fail;
+		}
 
-	addr = MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, 0);
-	if (addr == NULL) {
-		// GetLastError()
-		err = ERROR_OS;
-		logmsg(err, "failed creating mapping for file (%s)",
-			buf->file_name);
-		goto view_fail;
+		addr = MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, 0);
+		if (addr == NULL) {
+			// GetLastError()
+			err = ERROR_OS;
+			logmsg(err, "failed creating mapping for file (%s)",
+				buf->file_name);
+			goto view_fail;
+		}
+		buf->map_addr = addr;
+		CloseHandle(mapping);
+	} else {
+		buf->map_addr = NULL;
 	}
-	buf->map_addr = addr;
-	CloseHandle(mapping);
 
 	err = 0;
 	goto out;
@@ -111,7 +116,9 @@ out:
 
 void filebuf_destroy(struct filebuf *buf)
 {
-	UnmapViewOfFile(buf->map_addr);
+	if (buf->map_addr) {
+		UnmapViewOfFile(buf->map_addr);
+	}
 	CloseHandle((HANDLE)buf->handle);
 	free(buf->file_name);
 }
@@ -168,13 +175,17 @@ int filebuf_init(struct filebuf *buf, const char *file_name)
 	}
 
 	buf->map_size = (size_t)buf->file_size;
-	buf->map_addr = mmap(NULL, buf->map_size, PROT_READ, MAP_SHARED,
-			     (int)buf->handle, 0);
-	if (buf->map_addr == MAP_FAILED) {
-		err = ERROR_OS;
-		logmsg(err, "failed memory-mapping file (%s): %s", file_name,
-		      strerror(errno));
-		goto mmap_fail;
+	if (buf->map_size > 0) {
+		buf->map_addr = mmap(NULL, buf->map_size, PROT_READ,
+				     MAP_SHARED, (int)buf->handle, 0);
+		if (buf->map_addr == MAP_FAILED) {
+			err = ERROR_OS;
+			logmsg(err, "failed memory-mapping file (%s): %s",
+			       file_name, strerror(errno));
+			goto mmap_fail;
+		}
+	} else {
+		buf->map_addr = NULL;
 	}
 
 	err = 0;

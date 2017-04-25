@@ -554,6 +554,40 @@ START_TEST(test_invalid_array)
 END_TEST
 
 
+START_TEST(test_decode_record_array)
+{
+	const uint8_t *ptr = (uint8_t *)"[{}]";
+	size_t size = strlen((char *)ptr);
+	struct data val;
+	struct data_items items;
+	struct data_fields fields;
+	int nitem, nfield;
+
+	// parse the value
+	ck_assert(!data_assign(&val, &schema, ptr, size));
+
+	// check that it is an array of length 1
+	ck_assert(!data_nitem(&val, &schema, &nitem));
+	ck_assert_int_eq(nitem, 1);
+
+	// parse the first item
+	ck_assert(!data_items(&val, &schema, &items));
+	ck_assert(data_items_advance(&items));
+
+	// check that it is a record of length 0
+	ck_assert(!data_nfield(&items.current, &schema, &nfield));
+	ck_assert_int_eq(nfield, 0);
+
+	// check that iterating over the fields works
+	ck_assert(!data_fields(&items.current, &schema, &fields));
+	ck_assert(!data_fields_advance(&fields));
+
+	// check that there are no more items
+	ck_assert(!data_items_advance(&items));
+}
+END_TEST
+
+
 START_TEST(test_valid_record)
 {
 	ck_assert(get_type("{}") == Record(0));
@@ -706,6 +740,7 @@ Suite *data_suite(void)
         tcase_add_checked_fixture(tc, setup_data, teardown_data);
 	tcase_add_test(tc, test_valid_array);
 	tcase_add_test(tc, test_invalid_array);
+	tcase_add_test(tc, test_decode_record_array);
 	suite_add_tcase(s, tc);
 
 	tc = tcase_create("record");

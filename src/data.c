@@ -517,7 +517,7 @@ nullval:
 	nfield = -1;
 	err = ERROR_INVAL;
 out:
-	if (nfield) {
+	if (nfieldptr) {
 		*nfieldptr = nfield;
 	}
 	return err;

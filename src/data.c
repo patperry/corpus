@@ -228,6 +228,11 @@ static void data_items_make(struct data_items *it, const struct schema *s,
 {
 	it->schema = s;
 	it->item_type = type->type_id;
+	if (it->item_type >= 0) {
+		it->item_kind = s->types[it->item_type].kind;
+	} else {
+		it->item_kind = DATATYPE_ANY;
+	}
 	it->length = type->length;
 	it->ptr = ptr;
 	data_items_reset(it);
@@ -297,9 +302,16 @@ int data_items_advance(struct data_items *it)
 	end = ptr;
 	scan_value(&end);
 
-	if (it->item_type == DATATYPE_ANY) {
-		// this won't fail, because we already have enough
-		// space in the schema buffer to parse the array item
+	if (it->item_type == DATATYPE_ANY
+			|| it->item_kind == DATATYPE_RECORD) {
+		// we need to re-parse records to figure out exactly
+		// which fields are present (it->item_type is the union
+		// over all items in the array, and might include
+		// fields not in the current item)
+
+		// the call to data_assign won't fail because we already
+		// have enough space in the schema buffer to parse the
+		// array item
 		data_assign(&it->current, (struct schema *)it->schema,
 			    ptr, end - ptr);
 	} else {
@@ -494,7 +506,6 @@ out:
 
 int data_nfield(const struct data *d, const struct schema *s, int *nfieldptr)
 {
-	struct data_fields it;
 	int err, nfield;
 
 	if (d->type_id < 0 || s->types[d->type_id].kind != DATATYPE_RECORD) {
@@ -502,14 +513,6 @@ int data_nfield(const struct data *d, const struct schema *s, int *nfieldptr)
 	}
 
 	nfield = s->types[d->type_id].meta.record.nfield;
-
-	if (nfield < 0) {
-		nfield = 0;
-		data_fields(d, s, &it);
-		while (data_fields_advance(&it)) {
-			nfield++;
-		}
-	}
 	err = 0;
 	goto out;
 

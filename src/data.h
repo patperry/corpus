@@ -43,6 +43,7 @@ struct data {
 struct data_items {
 	const struct schema *schema;	/**< the data schema */
 	int item_type;			/**< the array item type ID */
+	int item_kind;			/**< the array item kind */
 	int length;			/**< the array length */
 	const uint8_t *ptr;		/**< the array memory location */
 

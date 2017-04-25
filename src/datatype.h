@@ -196,8 +196,6 @@ int schema_scan(struct schema *s, const uint8_t *ptr, size_t size, int *idptr);
  * \param r the render object
  * \param s the schema
  * \param id the type id
- *
- * \returns 0 on success
  */
 void render_datatype(struct render *r, const struct schema *s, int id);
 

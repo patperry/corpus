@@ -69,10 +69,10 @@ int render_init(struct render *r, int escape_flags)
 	r->escape_flags = escape_flags;
 
 	r->tab = "\t";
-	r->tab_length = strlen(r->tab);
+	r->tab_length = (int)strlen(r->tab);
 
 	r->newline = "\n";
-	r->newline_length = strlen(r->newline);
+	r->newline_length = (int)strlen(r->newline);
 
 	render_clear(r);
 
@@ -107,9 +107,18 @@ int render_set_escape(struct render *r, int flags)
 const char *render_set_tab(struct render *r, const char *tab)
 {
 	const char *oldtab = r->tab;
+	size_t len;
 	assert(tab);
-	r->tab = tab;
-	r->tab_length = strlen(r->tab);
+
+	if ((len = strlen(tab)) >= INT_MAX) {
+		r->error = ERROR_OVERFLOW;
+		logmsg(r->error, "tab string length exceeds maximum (%d)", INT_MAX - 1);
+
+	} else {
+		r->tab = tab;
+		r->tab_length = (int)len;
+	}
+
 	return oldtab;
 }
 
@@ -117,9 +126,17 @@ const char *render_set_tab(struct render *r, const char *tab)
 const char *render_set_newline(struct render *r, const char *newline)
 {
 	const char *oldnewline = r->newline;
+	size_t len;
 	assert(newline);
-	r->newline = newline;
-	r->newline_length = strlen(r->newline);
+
+	if ((len = strlen(newline)) >= INT_MAX) {
+		r->error = ERROR_OVERFLOW;
+		logmsg(r->error, "newline string length exceeds maximum (%d)", INT_MAX - 1);
+	} else {
+		r->newline = newline;
+		r->newline_length = (int)len;
+	}
+
 	return oldnewline;
 }
 

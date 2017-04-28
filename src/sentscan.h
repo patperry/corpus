@@ -65,6 +65,8 @@ struct sentscan {
 
 	struct text current;	/**< the current word */
 	enum sent_type type;	/**< the type of the current sentence */
+	int at_end;		/**< whether the scanner is at the end of
+				  the text */
 };
 
 /**

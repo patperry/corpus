@@ -111,6 +111,7 @@ void sentscan_reset(struct sentscan *scan)
 		scan->iter_ptr = NULL;
 		scan->iter_prop = -1;
 	}
+	scan->at_end = 0;
 }
 
 
@@ -342,5 +343,16 @@ STerm_Close_Sp:
 
 Break:
 	scan->current.attr |= (scan->ptr - scan->current.ptr);
-	return (TEXT_SIZE(&scan->current) > 0) ? 1 : 0;
+
+	if (TEXT_SIZE(&scan->current) == 0) {
+		if (TEXT_SIZE(&scan->text) == 0 && !scan->at_end) {
+			scan->at_end = 1;
+			return 1;
+		} else {
+			scan->at_end = 1;
+			return 0;
+		}
+	} else {
+		return 1;
+	}
 }

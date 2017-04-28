@@ -93,6 +93,16 @@ START_TEST(test_figure4)
 END_TEST
 
 
+START_TEST(test_empty)
+{
+	start(T(""));
+	ck_assert_tok_eq(next(), T(""));
+	ck_assert_ptr_eq(next(), NULL);
+	ck_assert_ptr_eq(next(), NULL);
+}
+END_TEST
+
+
 // Unicode Sentence Break Test
 // http://www.unicode.org/Public/UCD/latest/ucd/auxiliary/SentBreakTest.txt
 struct unitest {
@@ -283,6 +293,7 @@ Suite *sentscan_suite(void)
         tcase_add_checked_fixture(tc, setup_scan, teardown_scan);
         tcase_add_test(tc, test_figure3);
         tcase_add_test(tc, test_figure4);
+        tcase_add_test(tc, test_empty);
         suite_add_tcase(s, tc);
 
         tc = tcase_create("Unicode SentenceBreakTest.txt");

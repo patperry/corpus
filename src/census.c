@@ -58,3 +58,10 @@ int census_has(const struct census *c, int item, double *weightptr)
 
 	return 0;
 }
+
+
+int census_sort(struct census *c)
+{
+	(void)c;
+	return 0;
+}

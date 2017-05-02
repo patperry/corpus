@@ -30,5 +30,6 @@ void census_clear(struct census *c);
 
 int census_add(struct census *c, int item, double weight);
 int census_has(const struct census *c, int item, double *weightptr);
+int census_sort(struct census *c);
 
 #endif /* CENSUS_H */

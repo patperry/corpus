@@ -5,6 +5,7 @@ xcuserdata
 /corpus
 /data/ucd
 /doc/html
+/tests/check_census
 /tests/check_data
 /tests/check_sentscan
 /tests/check_symtab

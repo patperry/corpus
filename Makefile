@@ -15,8 +15,8 @@ CHECK_LIBS = `pkg-config --libs check`
 UNICODE = http://www.unicode.org/Public/9.0.0
 
 CORPUS_A = libcorpus.a
-LIB_O	= lib/strntod_c.o lib/strntoimax.o src/array.o src/data.o \
-		  src/datatype.o src/error.o src/filebuf.o src/render.o \
+LIB_O	= lib/strntod_c.o lib/strntoimax.o src/array.o src/census.o \
+		  src/data.o src/datatype.o src/error.o src/filebuf.o src/render.o \
 		  src/sentscan.o src/symtab.o src/table.o src/text.o src/token.o \
 		  src/unicode.o src/wordscan.o src/xalloc.o
 
@@ -29,12 +29,12 @@ DATA    = data/ucd/CaseFolding.txt \
 		  data/ucd/UnicodeData.txt \
 		  data/ucd/auxiliary/WordBreakProperty.txt
 
-TESTS_T = tests/check_data tests/check_sentscan tests/check_symtab \
-		  tests/check_text tests/check_token tests/check_unicode \
-		  tests/check_wordscan
-TESTS_O = tests/check_data.o tests/check_sentscan.o tests/check_symtab.o \
-		  tests/check_text.o tests/check_token.o tests/check_unicode.o \
-		  tests/check_wordscan.o tests/testutil.o
+TESTS_T = tests/check_census tests/check_data tests/check_sentscan  \
+		  tests/check_symtab tests/check_text tests/check_token \
+		  tests/check_unicode tests/check_wordscan
+TESTS_O = tests/check_census.o tests/check_data.o tests/check_sentscan.o \
+		  tests/check_symtab.o tests/check_text.o tests/check_token.o \
+		  tests/check_unicode.o tests/check_wordscan.o tests/testutil.o
 
 TESTS_DATA = data/ucd/NormalizationTest.txt \
 			 data/ucd/auxiliary/SentenceBreakTest.txt \
@@ -118,8 +118,16 @@ src/unicode/wordbreakprop.h: util/gen-wordbreak.py \
 
 # Tests
 
+tests/check_census: tests/check_census.o tests/testutil.o $(CORPUS_A)
+	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS) $^
+
 tests/check_data: tests/check_data.o tests/testutil.o $(CORPUS_A)
 	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS) $^
+
+tests/check_sentscan: tests/check_sentscan.o tests/testutil.o $(CORPUS_A) \
+		data/ucd/auxiliary/SentenceBreakTest.txt
+	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS)  \
+		tests/check_sentscan.o tests/testutil.o $(CORPUS_A)
 
 tests/check_symtab: tests/check_symtab.o tests/testutil.o $(CORPUS_A)
 	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS) $^
@@ -129,11 +137,6 @@ tests/check_text: tests/check_text.o tests/testutil.o $(CORPUS_A)
 
 tests/check_token: tests/check_token.o tests/testutil.o $(CORPUS_A)
 	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS) $^
-
-tests/check_sentscan: tests/check_sentscan.o tests/testutil.o $(CORPUS_A) \
-		data/ucd/auxiliary/SentenceBreakTest.txt
-	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS)  \
-		tests/check_sentscan.o tests/testutil.o $(CORPUS_A)
 
 tests/check_unicode: tests/check_unicode.o $(CORPUS_A) \
 		data/ucd/NormalizationTest.txt
@@ -168,6 +171,7 @@ tests/%.o: tests/%.c
 
 
 src/array.o: src/array.c src/error.h src/xalloc.h src/array.h
+src/census.o: src/census.c src/census.h
 src/data.o: src/data.c src/error.h src/table.h src/text.h src/token.h \
 	src/symtab.h src/datatype.h src/data.h
 src/datatype.o: src/datatype.c src/array.h src/error.h src/render.h \
@@ -201,9 +205,10 @@ src/wordscan.o: src/wordscan.c src/text.h src/unicode/wordbreakprop.h \
 	src/wordscan.h
 src/xalloc.o: src/xalloc.c src/xalloc.h
 
+tests/check_census.o: tests/check_census.c src/census.h tests/testutil.h
 tests/check_data.o: tests/check_data.c src/error.h src/table.h src/text.h \
 	src/token.h src/symtab.h src/data.h src/datatype.h tests/testutil.h
-tests/check_sentscan: tests/check_sentscan.c src/text.h src/token.h \
+tests/check_sentscan.o: tests/check_sentscan.c src/text.h src/token.h \
 	src/unicode.h src/wordscan.h tests/testutil.h
 tests/check_symtab.o: tests/check_symtab.c src/table.h src/text.h src/token.h \
 	src/symtab.h tests/testutil.h

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <limits.h>
+#include <math.h>
 #include <stdlib.h>
 #include "array.h"
 #include "error.h"
@@ -68,6 +70,12 @@ int census_add(struct census *c, int item, double weight)
 	int err, pos, i, rehash;
 
 	rehash = 0;
+
+	if (isnan(weight)) {
+		err = ERROR_INVAL;
+		logmsg(err, "invalid weight for census item %d (NaN)", item);
+		goto error;
+	}
 
 	if (census_find(c, item, &i)) {
 		c->weights[i] += weight;
@@ -137,10 +145,88 @@ int census_has(const struct census *c, int item, double *weightptr)
 }
 
 
+struct census_item {
+	int item;
+	double weight;
+};
+
+
+static int int_cmp(int x1, int x2)
+{
+	if (x1 < x2) {
+		return -1;
+	} else if (x1 > x2) {
+		return +1;
+	} else {
+		return 0;
+	}
+}
+
+
+static int double_cmp(double x1, double x2)
+{
+	if (x1 < x2) {
+		return -1;
+	} else if (x1 > x2) {
+		return +1;
+	} else {
+		return 0;
+	}
+}
+
+
+static int census_item_cmp(const void *x1, const void *x2)
+{
+	const struct census_item *y1 = x1;
+	const struct census_item *y2 = x2;
+	int cmp;
+
+	cmp = -double_cmp(y1->weight, y2->weight); // weight descending
+	if (cmp == 0) {
+		cmp = int_cmp(y1->item, y2->item); // item ascending
+	}
+
+	return cmp;
+}
+
+
 int census_sort(struct census *c)
 {
-	(void)c;
-	return 0;
+	struct census_item *array;
+	int i, n = c->nitem;
+	int err;
+
+	if ((size_t)n > SIZE_MAX / sizeof(*array)) {
+		err = ERROR_OVERFLOW;
+		logmsg(err, "census items array size (%d)"
+		       " is too large to sort", n);
+		goto out;
+	}
+
+	if (!(array = xmalloc(n * sizeof(*array)))) {
+		err = ERROR_NOMEM;
+		logmsg(err, "failed allocating memory to sort census items");
+		goto out;
+	}
+
+	for (i = 0; i < n; i++) {
+		array[i].item = c->items[i];
+		array[i].weight = c->weights[i];
+	}
+
+	qsort(array, n, sizeof(*array), census_item_cmp);
+
+	for (i = 0; i < n; i++) {
+		c->items[i] = array[i].item;
+		c->weights[i] = array[i].weight;
+	}
+
+	census_rehash(c);
+
+	free(array);
+	err = 0;
+out:
+	return err;
 }
 
 

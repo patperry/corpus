@@ -102,6 +102,7 @@ off = 0
 for code in range(UNICODE_MAX + 1):
     if code in compose_map:
         maps = compose_map[code]
+        maps.sort()
         compose.append((off, len(maps)))
         combiner.extend([c for (c,p) in maps])
         primary.extend([p for (c,p) in maps])

@@ -184,8 +184,8 @@ void unicode_map(int type, uint32_t code, uint32_t **bufptr);
 void unicode_order(uint32_t *ptr, size_t len);
 
 /**
- * Apply the composition algorithm to put an array of canonically-ordered
- * Unicode codepoints into composed (NFC/NFKC) form.
+ * Apply the canonical composition algorithm to put an array of
+ * canonically-ordered Unicode codepoints into composed form.
  *
  * \param ptr a pointer to the first codepoint
  * \param lenptr on entry, a pointer to the number of input codepoints;

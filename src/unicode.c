@@ -410,3 +410,10 @@ void unicode_order(uint32_t *ptr, size_t len)
 		}
 	}
 }
+
+
+void unicode_compose(uint32_t *ptr, size_t *lenptr)
+{
+	(void)ptr;
+	(void)lenptr;
+}

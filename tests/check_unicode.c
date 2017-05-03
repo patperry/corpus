@@ -501,6 +501,74 @@ START_TEST(test_normalize_nfkd)
 END_TEST
 
 
+START_TEST(test_normalize_nfc)
+{
+	unsigned i, n = num_normalization_test;
+	size_t j, len;
+	struct normalization_test *test;
+	uint32_t buf[128];
+	uint32_t *dst;
+	uint32_t code;
+
+	for (i = 0; i < n; i++) {
+		test = &normalization_tests[i];
+		dst = buf;
+		for (j = 0; j < test->source_len; j++) {
+			code = test->source[j];
+			unicode_map(0, code, &dst);
+		}
+		len = dst - buf;
+
+		unicode_order(buf, len);
+		unicode_compose(buf, &len);
+
+		ck_assert_int_eq(len, test->nfc_len);
+
+		for (j = 0; j < test->nfc_len; j++) {
+			if (buf[j] != test->nfc[j]) {
+				write_normalization_test(stderr, test);
+			}
+			ck_assert_uint_eq(buf[j], test->nfc[j]);
+		}
+	}
+}
+END_TEST
+
+
+START_TEST(test_normalize_nfkc)
+{
+	unsigned i, n = num_normalization_test;
+	size_t j, len;
+	struct normalization_test *test;
+	uint32_t buf[128];
+	uint32_t *dst;
+	uint32_t code;
+
+	for (i = 0; i < n; i++) {
+		test = &normalization_tests[i];
+		dst = buf;
+		for (j = 0; j < test->source_len; j++) {
+			code = test->source[j];
+			unicode_map(UDECOMP_ALL, code, &dst);
+		}
+		len = dst - buf;
+
+		unicode_order(buf, len);
+		unicode_compose(buf, &len);
+
+		ck_assert_int_eq(len, test->nfkc_len);
+
+		for (j = 0; j < test->nfkc_len; j++) {
+			if (buf[j] != test->nfkc[j]) {
+				write_normalization_test(stderr, test);
+			}
+			ck_assert_uint_eq(buf[j], test->nfkc[j]);
+		}
+	}
+}
+END_TEST
+
+
 Suite *unicode_suite(void)
 {
 	Suite *s;
@@ -528,6 +596,8 @@ Suite *unicode_suite(void)
 				  teardown_normalization);
 	tcase_add_test(tc, test_normalize_nfd);
 	tcase_add_test(tc, test_normalize_nfkd);
+	tcase_add_test(tc, test_normalize_nfc);
+	tcase_add_test(tc, test_normalize_nfkc);
 	suite_add_tcase(s, tc);
 
 	return s;

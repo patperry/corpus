@@ -162,7 +162,7 @@ enum ucasefold_type {
 #define UNICODE_DECOMP_MAX 18
 
 /**
- * Apply decomposition and/or casefold mapping to a unicode character,
+ * Apply decomposition and/or casefold mapping to a Unicode character,
  * outputting the result to the specified buffer. The output will be at
  * most #UNICODE_DECOMP_MAX codepoints.
  *
@@ -175,12 +175,22 @@ enum ucasefold_type {
 void unicode_map(int type, uint32_t code, uint32_t **bufptr);
 
 /**
- * Apply the canonical ordering algorithm to put an array of unicode
+ * Apply the canonical ordering algorithm to put an array of Unicode
  * codepoints in normal order. See *Unicode* Sec 3.11 and *TR44* Sec. 5.7.4.
  *
  * \param ptr a pointer to the first codepoint
  * \param len the number of codepoints
  */
 void unicode_order(uint32_t *ptr, size_t len);
+
+/**
+ * Apply the composition algorithm to put an array of canonically-ordered
+ * Unicode codepoints into composed (NFC/NFKC) form.
+ *
+ * \param ptr a pointer to the first codepoint
+ * \param lenptr on entry, a pointer to the number of input codepoints;
+ * 	on exit, a pointer to the number of composed codepoints
+ */
+void unicode_compose(uint32_t *ptr, size_t *lenptr);
 
 #endif /* UNICODE_H */

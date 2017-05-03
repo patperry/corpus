@@ -16,7 +16,9 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include "unicode/casefold.h"
+#include "unicode/compose.h"
 #include "unicode/combining.h"
 #include "unicode/decompose.h"
 #include "error.h"
@@ -284,6 +286,37 @@ static void hangul_decompose(uint32_t code, uint32_t **bufp)
 }
 
 
+static int is_hangul_vpart(uint32_t code)
+{
+	return (HANGUL_VBASE <= code && code < HANGUL_VBASE + HANGUL_VCOUNT);
+}
+
+
+static int is_hangul_tpart(uint32_t code)
+{
+	// strict less-than on lower bound
+	return (HANGUL_TBASE < code && code < HANGUL_TBASE + HANGUL_TCOUNT);
+}
+
+
+static uint32_t hangul_compose_lv(uint32_t lpart, uint32_t vpart)
+{
+	uint32_t lindex = lpart - HANGUL_LBASE;
+	uint32_t vindex = vpart - HANGUL_VBASE;
+	uint32_t lvindex = lindex * HANGUL_NCOUNT + vindex * HANGUL_TCOUNT;
+	uint32_t s = HANGUL_SBASE + lvindex;
+	return s;
+}
+
+
+static uint32_t hangul_compose_lvt(uint32_t lvpart, uint32_t tpart)
+{
+	uint32_t tindex = tpart - HANGUL_TBASE;
+	uint32_t s = lvpart + tindex;
+	return s;
+}
+
+
 static void casefold(int type, uint32_t code, uint32_t **bufp)
 {
 	const uint32_t block_size = CASEFOLD_BLOCK_SIZE;
@@ -412,8 +445,163 @@ void unicode_order(uint32_t *ptr, size_t len)
 }
 
 
+static int has_compose(uint32_t code, int *offsetptr, int *lengthptr)
+{
+	const uint32_t block_size = COMPOSITION_BLOCK_SIZE;
+	unsigned i = composition_stage1[code / block_size];
+	struct composition c = composition_stage2[i][code % block_size];
+	int offset = (int)c.offset;
+	int length = (int)c.length;
+
+	*offsetptr = offset;
+	*lengthptr = length;
+
+	return (length > 0 ? 1 : 0);
+}
+
+
+int code_cmp(const void *x1, const void *x2)
+{
+	uint32_t y1 = *(const uint32_t *)x1;
+	uint32_t y2 = *(const uint32_t *)x2;
+
+	if (y1 < y2) {
+		return -1;
+	} else if (y1 > y2) {
+		return +1;
+	} else {
+		return 0;
+	}
+}
+
+
+static int combiner_find(int offset, int length, uint32_t code)
+{
+	const uint32_t *base = composition_combiner + offset;
+	const uint32_t *ptr;
+
+	// handle empty and singleton case
+	if (length == 0) {
+		return -1;
+	} else if (length == 1) {
+		return (*base == code) ? 0 : -1;
+	}
+
+	// handle general case
+	ptr = bsearch(&code, base, length, sizeof(*base), code_cmp);
+
+	if (ptr == NULL) {
+		return -1;
+	} else {
+		return (int)(ptr - base);
+	}
+}
+
+
+static int has_combiner(uint32_t left, int offset, int length, uint32_t code,
+		        uint32_t *primaryptr)
+{
+	int i;
+
+	if (offset < COMPOSITION_HANGUL_LPART) {
+		i = combiner_find(offset, length, code);
+		if (i >= 0) {
+			*primaryptr = composition_primary[offset + i];
+			return 1;
+		}
+	} else if (offset == COMPOSITION_HANGUL_LPART) {
+		if (is_hangul_vpart(code)) {
+			*primaryptr = hangul_compose_lv(left, code);
+			return 1;
+		}
+	} else if (offset == COMPOSITION_HANGUL_LVPART) {
+		if (is_hangul_tpart(code)) {
+			*primaryptr = hangul_compose_lvt(left, code);
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+
 void unicode_compose(uint32_t *ptr, size_t *lenptr)
 {
-	(void)ptr;
-	(void)lenptr;
+	size_t len = *lenptr;
+	uint32_t *begin = ptr;
+	uint32_t *leftptr, *dst;
+	uint32_t *end = begin + len;
+	uint32_t left, code, prev, prim;
+	uint8_t code_ccc, prev_ccc;
+	int moff, mlen;
+	int blocked, has_prev, did_del;
+
+	did_del = 0;
+
+	// find the first combining starter (the left code point, L)
+	leftptr = begin;
+	while (leftptr != end) {
+		left = *leftptr;
+		if (has_compose(left, &moff, &mlen)) {
+			break;
+		}
+		leftptr++;
+	}
+
+	if (leftptr == end) {
+		ptr = end;
+		goto out;
+	}
+
+	ptr = leftptr + 1;
+	has_prev = 0;
+	while (ptr != end) {
+		code = *ptr;
+		code_ccc = combining_class(code);
+
+		// determine whether the code is blocked
+		if (has_prev && prev_ccc >= code_ccc) {
+			blocked = 1;
+		} else {
+			blocked = 0;
+		}
+
+		if (!blocked && has_combiner(left, moff, mlen, code, &prim)) {
+			// replace L by P
+			*leftptr = prim;
+			left = prim;
+			has_compose(left, &moff, &mlen);
+
+			// delete C
+			*ptr = UINT32_MAX;
+			did_del = 1;
+		} else if (code_ccc == 0) {
+			// new leftmost combining starter, L
+			leftptr = ptr;
+			left = code;
+			has_compose(left, &moff, &mlen);
+			has_prev = 0;
+		} else {
+			prev = code;
+			prev_ccc = code_ccc;
+			has_prev = 1;
+		}
+		ptr++;
+	}
+
+	// remove the deleted entries
+	if (did_del) {
+		ptr = begin;
+		dst = begin;
+		while (ptr != end) {
+			code = *ptr++;
+			if (code != UINT32_MAX) {
+				*dst++ = code;
+			}
+		}
+		len = dst - begin;
+	}
+
+out:
+	*lenptr = len;
 }

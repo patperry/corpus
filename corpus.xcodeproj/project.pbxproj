@@ -19,7 +19,6 @@
 		884A369D1E8EE3DF00465CE7 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 884A36991E8EE3DF00465CE7 /* main.c */; };
 		884A36A11E8EE43500465CE7 /* strntod_c.c in Sources */ = {isa = PBXBuildFile; fileRef = 884A36A01E8EE43500465CE7 /* strntod_c.c */; };
 		884F5CAD1EBA67EE00DA1C24 /* census.c in Sources */ = {isa = PBXBuildFile; fileRef = 884F5CAB1EBA67ED00DA1C24 /* census.c */; };
-		884F5CB01EBA681500DA1C24 /* check_unicode.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EA69EF1EAF952D00D57BEB /* check_unicode.c */; };
 		886533651E958CA60089FD91 /* wordscan.c in Sources */ = {isa = PBXBuildFile; fileRef = 886533631E958CA60089FD91 /* wordscan.c */; };
 		88B565BD1E96D4CE00FC9AEF /* main_get.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565B81E96D4CE00FC9AEF /* main_get.c */; };
 		88B565BE1E96D4CE00FC9AEF /* main_scan.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565B91E96D4CE00FC9AEF /* main_scan.c */; };
@@ -366,7 +365,6 @@
 				88EA69E81EAF94E400D57BEB /* testutil.c in Sources */,
 				88EA69E11EAF94DE00D57BEB /* symtab.c in Sources */,
 				88EA69DB1EAF94C500D57BEB /* data.c in Sources */,
-				884F5CB01EBA681500DA1C24 /* check_unicode.c in Sources */,
 				88EA69DE1EAF94D300D57BEB /* filebuf.c in Sources */,
 				88EA69E41EAF94DE00D57BEB /* token.c in Sources */,
 				88EA69EA1EAF94F500D57BEB /* strntoimax.c in Sources */,

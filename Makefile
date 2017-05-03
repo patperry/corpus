@@ -25,6 +25,7 @@ CORPUS_O = src/main.o src/main_get.o src/main_scan.o src/main_sentences.o \
 		   src/main_tokens.o
 
 DATA    = data/ucd/CaseFolding.txt \
+		  data/ucd/CompositionExclusions.txt \
 		  data/ucd/auxiliary/SentenceBreakProperty.txt \
 		  data/ucd/UnicodeData.txt \
 		  data/ucd/auxiliary/WordBreakProperty.txt
@@ -63,6 +64,10 @@ data/ucd/CaseFolding.txt:
 	$(MKDIR_P) data/ucd
 	$(CURL) -o $@ $(UNICODE)/ucd/CaseFolding.txt
 
+data/ucd/CompositionExclusions.txt:
+	$(MKDIR_P) data/ucd
+	$(CURL) -o $@ $(UNICODE)/ucd/CompositionExclusions.txt
+
 data/ucd/NormalizationTest.txt:
 	$(MKDIR_P) data/ucd
 	$(CURL) -o $@ $(UNICODE)/ucd/NormalizationTest.txt
@@ -99,6 +104,11 @@ src/unicode/combining.h: util/gen-combining.py \
 		data/ucd/UnicodeData.txt
 	$(MKDIR_P) src/unicode
 	./util/gen-combining.py > $@
+
+src/unicode/compose.h: util/gen-compose.py \
+		data/ucd/CompositionExclusions.txt data/ucd/UnicodeData.txt
+	$(MKDIR_P) src/unicode
+	./util/gen-compose.py > $@
 
 src/unicode/decompose.h: util/gen-decompose.py \
 		data/ucd/UnicodeData.txt
@@ -201,7 +211,7 @@ src/text.o: src/text.c src/error.h src/unicode.h src/xalloc.h src/text.h
 src/token.o: src/token.c src/error.h src/text.h src/unicode.h src/xalloc.h \
     src/token.h
 src/unicode.o: src/unicode.c src/unicode/casefold.h src/unicode/combining.h \
-    src/unicode/decompose.h src/error.h src/unicode.h
+    src/unicode/compose.h src/unicode/decompose.h src/error.h src/unicode.h
 src/wordscan.o: src/wordscan.c src/text.h src/unicode/wordbreakprop.h \
 	src/wordscan.h
 src/xalloc.o: src/xalloc.c src/xalloc.h

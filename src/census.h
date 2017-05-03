@@ -18,6 +18,7 @@
 #define CENSUS_H
 
 struct census {
+	struct table table;
 	int *items;
 	double *weights;
 	int nitem;

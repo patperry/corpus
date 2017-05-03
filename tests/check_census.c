@@ -16,6 +16,7 @@
 
 #include <check.h>
 #include <stdlib.h>
+#include "../src/table.h"
 #include "../src/census.h"
 #include "testutil.h"
 

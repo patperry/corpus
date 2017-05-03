@@ -171,7 +171,8 @@ tests/%.o: tests/%.c
 
 
 src/array.o: src/array.c src/error.h src/xalloc.h src/array.h
-src/census.o: src/census.c src/census.h
+src/census.o: src/census.c src/array.h src/error.h src/table.h \
+	src/xalloc.h src/census.h
 src/data.o: src/data.c src/error.h src/table.h src/text.h src/token.h \
 	src/symtab.h src/datatype.h src/data.h
 src/datatype.o: src/datatype.c src/array.h src/error.h src/render.h \
@@ -205,7 +206,8 @@ src/wordscan.o: src/wordscan.c src/text.h src/unicode/wordbreakprop.h \
 	src/wordscan.h
 src/xalloc.o: src/xalloc.c src/xalloc.h
 
-tests/check_census.o: tests/check_census.c src/census.h tests/testutil.h
+tests/check_census.o: tests/check_census.c src/table.h src/census.h \
+	tests/testutil.h
 tests/check_data.o: tests/check_data.c src/error.h src/table.h src/text.h \
 	src/token.h src/symtab.h src/data.h src/datatype.h tests/testutil.h
 tests/check_sentscan.o: tests/check_sentscan.c src/text.h src/token.h \

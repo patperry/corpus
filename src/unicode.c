@@ -529,11 +529,11 @@ void unicode_compose(uint32_t *ptr, size_t *lenptr)
 {
 	size_t len = *lenptr;
 	uint32_t *begin = ptr;
-	uint32_t *leftptr, *dst;
 	uint32_t *end = begin + len;
-	uint32_t left, code, prev, prim;
-	uint8_t code_ccc, prev_ccc;
-	int moff, mlen;
+	uint32_t *leftptr, *dst;
+	uint32_t left = 0, code, prev, prim;
+	uint8_t code_ccc, prev_ccc = 0;
+	int moff = 0, mlen = 0;
 	int blocked, has_prev, did_del;
 
 	did_del = 0;
@@ -549,7 +549,6 @@ void unicode_compose(uint32_t *ptr, size_t *lenptr)
 	}
 
 	if (leftptr == end) {
-		ptr = end;
 		goto out;
 	}
 

@@ -110,6 +110,17 @@ for code in range(UNICODE_MAX + 1):
     else:
         compose.append((0,0))
 
+# Hangul
+hangul_lpart = off
+hangul_lvpart = off + 1
+
+for code in range(0x1100, 0x1113):
+    compose[code] = (hangul_lpart, -1)
+
+for code in range(0xAC00, 0xD7A4):
+    if (code - 0xAC00) % 28 == 0:
+        compose[code] = (hangul_lvpart, -1)
+
 
 def compute_tables(block_size):
     nblock = (UNICODE_MAX + 1) // block_size
@@ -210,6 +221,10 @@ print("\tunsigned length : 5;")
 print("};")
 print("")
 print("#define COMPOSITION_BLOCK_SIZE", block_size)
+print("")
+print("#define COMPOSITION_HANGUL_LPART", hangul_lpart)
+print("")
+print("#define COMPOSITION_HANGUL_LVPART", hangul_lvpart)
 print("")
 print("static const " + type1 + " composition_stage1[] = {")
 for i in range(len(stage1) - 1):

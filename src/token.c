@@ -16,6 +16,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,6 +35,7 @@ static int typemap_reserve(struct typemap *map, size_t size);
 static int typemap_set_ascii(struct typemap *map, const struct text *tok);
 static int typemap_set_utf32(struct typemap *map, const uint32_t *ptr,
 			     const uint32_t *end);
+static int typemap_stem(struct typemap *map);
 
 
 const char **stemmer_list(void)
@@ -48,15 +50,17 @@ int typemap_init(struct typemap *map, int kind, const char *stemmer)
 
 	if (stemmer) {
 		errno = 0;
-		map->stemmer = sb_stemmer_new(stemmer, NULL);
-		if (errno == ENOMEM) {
-			err = ERROR_NOMEM;
-			logmsg(err, "failed allocating stemmer");
-		} else {
-			err = ERROR_INVAL;
-			logmsg(err, "unrecognized stemming algorithm (%s)",
-				stemmer);
-			goto out;
+		map->stemmer = sb_stemmer_new(stemmer, "UTF_8");
+		if (!map->stemmer) {
+		       if (errno == ENOMEM) {
+			       err = ERROR_NOMEM;
+			       logmsg(err, "failed allocating stemmer");
+		       } else {
+				err = ERROR_INVAL;
+				logmsg(err, "unrecognized stemming algorithm"
+				       " (%s)", stemmer);
+		       }
+		       goto out;
 		}
 	} else {
 		map->stemmer = NULL;
@@ -184,8 +188,10 @@ int typemap_set(struct typemap *map, const struct text *tok)
 	int err;
 
 	if (TEXT_IS_ASCII(tok)) {
-		err = typemap_set_ascii(map, tok);
-		return err;
+		if ((err = typemap_set_ascii(map, tok))) {
+			goto error;
+		}
+		goto stem;
 	}
 
 	if ((err = typemap_reserve(map, size + 1))) {
@@ -202,11 +208,59 @@ int typemap_set(struct typemap *map, const struct text *tok)
 	unicode_order(map->codes, size);
 	unicode_compose(map->codes, &size);
 
-	err = typemap_set_utf32(map, map->codes, map->codes + size);
+	if ((err = typemap_set_utf32(map, map->codes, map->codes + size))) {
+		goto error;
+	}
+
+stem:
+	err = typemap_stem(map);
 	return err;
 
 error:
 	logmsg(err, "failed normalizing token");
+	return err;
+}
+
+
+int typemap_stem(struct typemap *map)
+{
+	size_t size;
+	const uint8_t *buf;
+	int err;
+
+	if (!map->stemmer) {
+		return 0;
+	}
+
+	size = TEXT_SIZE(&map->type);
+
+	if (size >= INT_MAX) {
+		err = ERROR_OVERFLOW;
+		logmsg(err, "type size (%"PRIu64" bytes)"
+		       " exceeds maximum (%d)", (uint64_t)size, INT_MAX - 1);
+		goto out;
+	}
+
+	buf = (const uint8_t *)sb_stemmer_stem(map->stemmer, map->type.ptr,
+					       (int)size);
+	if (buf == NULL) {
+		err = ERROR_NOMEM;
+		logmsg(err, "failed allocating memory to stem word"
+		       " of size %"PRIu64" bytes", (uint64_t)size);
+		goto out;
+	}
+
+	size = (size_t)sb_stemmer_length(map->stemmer);
+
+	memcpy(map->type.ptr, buf, size);
+	map->type.ptr[size] = '\0';
+
+	// keep old utf8 bit, but update to new size
+	map->type.attr &= ~TEXT_SIZE_MASK;
+	map->type.attr |= TEXT_SIZE_MASK & size;
+	err = 0;
+
+out:
 	return err;
 }
 

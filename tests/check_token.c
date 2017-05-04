@@ -23,13 +23,14 @@
 #include "testutil.h"
 
 
-struct text *get_type(const struct text *tok, int flags)
+struct text *get_type_stem(const struct text *tok, int flags,
+			   const char *stemmer)
 {
 	struct text *typ;
 	struct typemap map;
 	size_t size;
 
-	ck_assert(!typemap_init(&map, flags, NULL));
+	ck_assert(!typemap_init(&map, flags, stemmer));
 	ck_assert(!typemap_set(&map, tok));
 	size = TEXT_SIZE(&map.type);
 
@@ -46,9 +47,21 @@ struct text *get_type(const struct text *tok, int flags)
 }
 
 
+struct text *get_type(const struct text *tok, int flags)
+{
+	return get_type_stem(tok, flags, NULL);
+}
+
+
 struct text *casefold(const struct text *tok)
 {
 	return get_type(tok, TYPE_CASEFOLD);
+}
+
+
+struct text *stem_en(const struct text *tok)
+{
+	return get_type_stem(tok, 0, "english");
 }
 
 
@@ -428,21 +441,38 @@ START_TEST(test_nofold_quote)
 END_TEST
 
 
+START_TEST(test_stem_en)
+{
+	ck_assert_tok_eq(stem_en(S("consign")), S("consign"));
+	ck_assert_tok_eq(stem_en(S("consigned")), S("consign"));
+	ck_assert_tok_eq(stem_en(S("consigning")), S("consign"));
+	ck_assert_tok_eq(stem_en(S("consignment")), S("consign"));
+
+	ck_assert_tok_eq(stem_en(S("consolation")), S("consol"));
+	ck_assert_tok_eq(stem_en(S("consolations")), S("consol"));
+	ck_assert_tok_eq(stem_en(S("consolatory")), S("consolatori"));
+	ck_assert_tok_eq(stem_en(S("console")), S("consol"));
+
+	ck_assert_tok_eq(stem_en(S("")), S(""));
+}
+END_TEST
+
+
 Suite *token_suite(void)
 {
-        Suite *s;
-        TCase *tc;
+	Suite *s;
+	TCase *tc;
 
-        s = suite_create("token");
-        tc = tcase_create("compare");
-        tcase_add_checked_fixture(tc, setup, teardown);
+	s = suite_create("token");
+	tc = tcase_create("compare");
+	tcase_add_checked_fixture(tc, setup, teardown);
 	tcase_add_test(tc, test_equals);
 	tcase_add_test(tc, test_not_equals);
 	tcase_add_test(tc, test_equals_esc);
-        suite_add_tcase(s, tc);
+	suite_add_tcase(s, tc);
 
-        tc = tcase_create("normalize");
-        tcase_add_checked_fixture(tc, setup, teardown);
+	tc = tcase_create("normalize");
+	tcase_add_checked_fixture(tc, setup, teardown);
 	tcase_add_test(tc, test_typ_basic);
 	tcase_add_test(tc, test_typ_esc);
 	tcase_add_test(tc, test_rm_control_ascii);
@@ -458,9 +488,14 @@ Suite *token_suite(void)
 	tcase_add_test(tc, test_nofold_dash);
 	tcase_add_test(tc, test_fold_quote);
 	tcase_add_test(tc, test_nofold_quote);
-        suite_add_tcase(s, tc);
+	suite_add_tcase(s, tc);
 
-        return s;
+	tc = tcase_create("stem");
+	tcase_add_checked_fixture(tc, setup, teardown);
+	tcase_add_test(tc, test_stem_en);
+	suite_add_tcase(s, tc);
+
+	return s;
 }
 
 

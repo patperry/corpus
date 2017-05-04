@@ -28,11 +28,11 @@
 
 /**
  * Type map descriptor. At a minimum, convert all tokens to
- * decomposed normal form (NFD). Optionally, apply compatibility maps for
- * NFKD normal and/or apply other transformations:
+ * composed normal form (NFC). Optionally, apply compatibility maps for
+ * NFKC normal and/or apply other transformations:
  *
  *  + #TYPE_COMPAT: apply all compatibility maps required for
- *  	[NFKD normal form](http://unicode.org/reports/tr15/#Norm_Forms)
+ *  	[NFKC normal form](http://unicode.org/reports/tr15/#Norm_Forms)
  *
  *  + #TYPE_CASEFOLD: perform case folding, in most languages (including
  *  	English) mapping uppercase characters to their lowercase equivalents,
@@ -52,7 +52,7 @@
  *  	[Quotation Mark=Yes](http://unicode.org/reports/tr44/#Quotation_Mark)
  *  	property with a single quote (`'`)
  *
- *  + #TYPE_RMCC: remove non-whitespace control codes (Cc) like
+ *  + #TYPE_RMCC: remove non-white-space control codes (Cc) like
  *  	non-printable ASCII codes; these are defined in
  *  	_The Unicode Standard_ Sec. 23.1 "Control Codes"
  *
@@ -62,19 +62,20 @@
  *  	(http://www.unicode.org/reports/tr44/#Default_Ignorable_Code_Point)
  *  	property
  *
- *  + #TYPE_RMWS: remove whitespace (WS), anything with the
+ *  + #TYPE_RMWS: remove white space (WS), anything with the
  *  	[White_Space=Yes](http://www.unicode.org/reports/tr44/#White_Space)
  *  	property
  */
 enum type_kind {
-	TYPE_NORMAL   = 0,        /**< apply decomposition mappings */
+	TYPE_NORMAL   = 0,        /**< transform to composed normal form */
 	TYPE_COMPAT   = (1 << 0), /**< apply compatibility mappings */
 	TYPE_CASEFOLD = (1 << 1), /**< perform case folding */
 	TYPE_DASHFOLD = (1 << 2), /**< replace dashes with `-` */
 	TYPE_QUOTFOLD = (1 << 3), /**< replace quotes with `'` */
-	TYPE_RMCC     = (1 << 4), /**< remove non-whitespace control characters */
+	TYPE_RMCC     = (1 << 4), /**< remove non-white-space control
+				    characters */
 	TYPE_RMDI     = (1 << 5), /**< remove default ignorables */
-	TYPE_RMWS     = (1 << 6)  /**< remove whitespace */
+	TYPE_RMWS     = (1 << 6)  /**< remove white space */
 };
 
 /**

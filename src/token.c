@@ -169,9 +169,12 @@ int typemap_set(struct typemap *map, const struct text *tok)
 	while (text_iter_advance(&it)) {
 		unicode_map(map->charmap_type, it.current, &dst);
 	}
-	unicode_order(map->codes, dst - map->codes);
 
-	err = typemap_set_utf32(map, map->codes, dst);
+	size = dst - map->codes;
+	unicode_order(map->codes, size);
+	unicode_compose(map->codes, &size);
+
+	err = typemap_set_utf32(map, map->codes, map->codes + size);
 	return err;
 
 error:

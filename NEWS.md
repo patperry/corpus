@@ -1,4 +1,11 @@
 
+# corpus 0.3.0
+
+* Add NFC Unicode normalization; use this instead of NFD in typemap
+
+* Add stemming (using the Snowball library)
+
+
 # corpus 0.2.0
 
 * Remove syslog in favor of custom logging in `error.h` interface;

@@ -42,7 +42,7 @@ respectively.
 
 Corpus supports the following text normalization transformations:
 
- + transforming to Unicode NFD or NFKD normal form;
+ + transforming to Unicode NFC or NFKC normal form;
 
  + performing Unicode case folding (using the default mappings, not
    the locale-specific ones);
@@ -58,7 +58,10 @@ Corpus supports the following text normalization transformations:
  + removing Unicode default ignorable characters like zero-width-space
    and soft hyphen;
 
- + removing white space characters.
+ + removing white space characters;
+
+ + stemming, using one of the algorithms supported by the [Snowball][snowball]
+   stemming library.
 
 These normalizations can be applied to arbitrary text, but they are designed
 to be applied to individual word tokens, so that the results can be cached
@@ -95,8 +98,11 @@ memory-mapping used internally by the `filebuf.h` interface.
 License
 -------
 
-Corpus is released under the [Apache Licence, Version 2.0][apache]. Portions
-of the library rely on data from the [Unicode Character Database][ucd] and are
+Corpus is released under the [Apache Licence, Version 2.0][apache]. The
+stemming algorithms used by Corpus come from the [Snowball][snowball]
+library and are subject to the conditions of the
+[3-clause BSD license][snowball-lic]. Portions of Corpus rely on data
+from the [Unicode Character Database][ucd] and are
 subject to the terms of the [Unicode Licence][unicode].
 
 
@@ -107,5 +113,7 @@ subject to the terms of the [Unicode Licence][unicode].
 [jsonlines]: http://jsonlines.org/
 [rcorpus]: https://github.com/patperry/r-corpus
 [segmentation]: http://unicode.org/reports/tr29/
+[snowball]: http://snowballstem.org/
+[snowball-lic]: http://snowballstem.org/license.html
 [ucd]: http://unicode.org/ucd/
 [unicode]: http://www.unicode.org/copyright.html#License

@@ -35,12 +35,12 @@ static void symtab_rehash_types(struct symtab *tab);
 static int type_add_token(struct symtab_type *type, int token_id);
 
 
-int symtab_init(struct symtab *tab, int type_kind)
+int symtab_init(struct symtab *tab, int type_kind, const char *stemmer)
 {
 	int err;
 
-	if ((err = typemap_init(&tab->typemap, type_kind))) {
-		logmsg(err, "failed allocating type buffer");
+	if ((err = typemap_init(&tab->typemap, type_kind, stemmer))) {
+		logmsg(err, "failed initializing type buffer");
 		goto error_typemap;
 	}
 

@@ -213,7 +213,7 @@ int schema_init(struct schema *s)
 		goto error_sorter;
 	}
 
-	if ((err = symtab_init(&s->names, 0))) {
+	if ((err = symtab_init(&s->names, 0, NULL))) {
 		goto error_names;
 	}
 

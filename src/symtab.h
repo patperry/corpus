@@ -56,15 +56,17 @@ struct symtab {
 	int ntoken_max;			/**< token array capacity */
 };
 
+
 /**
  * Initialize an empty symbol table with types of the specified kind.
  *
  * \param tab the symbol table
- * \param type_kind the type kind specifier, a bit mask of #type_kind values.
+ * \param type_kind the type kind specifier, a bit mask of #type_kind values
+ * \param stemmer the stemming algorithm name, or NULL to disable stemming
  *
  * \returns 0 on success
  */
-int symtab_init(struct symtab *tab, int type_kind);
+int symtab_init(struct symtab *tab, int type_kind, const char *stemmer);
 
 /**
  * Release the resources associated with a symbol table.

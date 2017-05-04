@@ -26,6 +26,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+struct sb_stemmer;
+
 /**
  * Type map descriptor. At a minimum, convert all tokens to
  * composed normal form (NFC). Optionally, apply compatibility maps for
@@ -86,6 +88,8 @@ struct typemap {
 				  recent typemap_set() call */
 	int8_t ascii_map[128];	/**< a lookup table for the mappings of ASCII
 				  characters; -1 indicates deletion */
+	struct sb_stemmer *stemmer;
+				/**< the stemmer (NULL if none) */
 	uint32_t *codes;	/**< buffer for intermediate UTF-32 decoding */
 	size_t size_max;	/**< token size maximum; normalizing a larger
 				 	token will force a reallocation */
@@ -96,14 +100,22 @@ struct typemap {
 };
 
 /**
+ * Get a list of the stemmer algorithms (canonical names, not aliases).
+ *
+ * \returns a NULL-terminated array of algorithm names
+ */
+const char **stemmer_list(void);
+
+/**
  * Initialize a new type map of the specified kind.
  *
  * \param map the type map
- * \param kind a bitmask of #type_kind values, specifying the map type.
+ * \param kind a bitmask of #type_kind values, specifying the map type
+ * \param stemmer the stemming algorithm name, or NULL to disable stemming
  *
  * \returns 0 on success
  */
-int typemap_init(struct typemap *map, int kind);
+int typemap_init(struct typemap *map, int kind, const char *stemmer);
 
 /**
  * Release the resources associated with a type map.

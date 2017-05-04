@@ -15,9 +15,11 @@
  */
 
 #include <assert.h>
+#include <errno.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../lib/libstemmer_c/include/libstemmer.h"
 #include "error.h"
 #include "text.h"
 #include "unicode.h"
@@ -33,9 +35,32 @@ static int typemap_set_ascii(struct typemap *map, const struct text *tok);
 static int typemap_set_utf32(struct typemap *map, const uint32_t *ptr,
 			     const uint32_t *end);
 
-int typemap_init(struct typemap *map, int kind)
+
+const char **stemmer_list(void)
+{
+	return sb_stemmer_list();
+}
+
+
+int typemap_init(struct typemap *map, int kind, const char *stemmer)
 {
 	int err;
+
+	if (stemmer) {
+		errno = 0;
+		map->stemmer = sb_stemmer_new(stemmer, NULL);
+		if (errno == ENOMEM) {
+			err = ERROR_NOMEM;
+			logmsg(err, "failed allocating stemmer");
+		} else {
+			err = ERROR_INVAL;
+			logmsg(err, "unrecognized stemming algorithm (%s)",
+				stemmer);
+			goto out;
+		}
+	} else {
+		map->stemmer = NULL;
+	}
 
 	map->type.ptr = NULL;
 	map->codes = NULL;
@@ -43,7 +68,7 @@ int typemap_init(struct typemap *map, int kind)
 
 	typemap_clear_kind(map);
 	err = typemap_set_kind(map, kind);
-
+out:
 	return err;
 }
 
@@ -52,6 +77,9 @@ void typemap_destroy(struct typemap *map)
 {
 	free(map->codes);
 	free(map->type.ptr);
+	if (map->stemmer) {
+		sb_stemmer_delete(map->stemmer);
+	}
 }
 
 

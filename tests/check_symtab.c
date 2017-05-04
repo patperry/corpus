@@ -30,7 +30,7 @@ struct symtab tab;
 void setup_empty_symtab(void)
 {
 	setup();
-	symtab_init(&tab, TYPE_COMPAT | TYPE_CASEFOLD | TYPE_RMDI);
+	symtab_init(&tab, TYPE_COMPAT | TYPE_CASEFOLD | TYPE_RMDI, NULL);
 }
 
 

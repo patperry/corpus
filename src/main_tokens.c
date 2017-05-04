@@ -50,6 +50,7 @@ Options:\n\
 \t-k\t\tDoes not perform compatibility decompositions (NFKD).\n\
 \t-o <path>\tSaves output at the given path.\n\
 \t-q\t\tKeeps quotes instead of replacing them with \"'\".\n\
+\t-s <stemmer>\tStems tokens with the given algorithm.\n\
 \t-w\t\tKeeps white space.\n\
 \t-x\t\tKeeps non-white-space control characters.\n\
 \t-z\t\tKeeps zero-character (empty) tokens.\n\
@@ -69,6 +70,7 @@ int main_tokens(int argc, char * const argv[])
 	struct filebuf buf;
 	struct filebuf_iter it;
 	const char *output = NULL;
+	const char *stemmer = NULL;
 	const char *field, *input;
 	FILE *stream;
 	size_t field_len;
@@ -105,6 +107,9 @@ int main_tokens(int argc, char * const argv[])
 			break;
 		case 'q':
 			flags &= ~TYPE_QUOTFOLD;
+			break;
+		case 's':
+			stemmer = optarg;
 			break;
 		case 'w':
 			flags &= ~TYPE_RMWS;
@@ -148,7 +153,7 @@ int main_tokens(int argc, char * const argv[])
 		goto error_schema;
 	}
 
-	if ((err = symtab_init(&symtab, flags))) {
+	if ((err = symtab_init(&symtab, flags, stemmer))) {
 		goto error_symtab;
 	}
 

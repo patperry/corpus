@@ -29,7 +29,7 @@ struct text *get_type(const struct text *tok, int flags)
 	struct typemap map;
 	size_t size;
 
-	ck_assert(!typemap_init(&map, flags));
+	ck_assert(!typemap_init(&map, flags, NULL));
 	ck_assert(!typemap_set(&map, tok));
 	size = TEXT_SIZE(&map.type);
 

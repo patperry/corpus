@@ -21,7 +21,6 @@ LIB_O	= lib/strntod_c.o lib/strntoimax.o src/array.o src/census.o \
 		  src/unicode.o src/wordscan.o src/xalloc.o
 
 SNOWBALL = lib/libstemmer_c
-STEMMER_A = libstemmer.a
 STEMMER_O = $(SNOWBALL)/src_c/stem_UTF_8_arabic.o \
 			$(SNOWBALL)/src_c/stem_UTF_8_danish.o \
 			$(SNOWBALL)/src_c/stem_UTF_8_dutch.o \
@@ -66,24 +65,20 @@ TESTS_DATA = data/ucd/NormalizationTest.txt \
 			 data/ucd/auxiliary/WordBreakTest.txt
 
 ALL_O = $(LIB_O) $(CORPUS_O) $(STEMMER_O)
-ALL_T = $(CORPUS_A) $(CORPUS_T) $(STEMMER_A)
-ALL_A = $(CORPUS_A) $(STEMMER_A)
+ALL_T = $(CORPUS_A) $(CORPUS_T)
+ALL_A = $(CORPUS_A)
 
 
 # Products
 
 all: $(ALL_T)
 
-$(CORPUS_A): $(LIB_O)
-	$(AR) $@ $(LIB_O)
+$(CORPUS_A): $(LIB_O) $(STEMMER_O)
+	$(AR) $@ $(LIB_O) $(STEMMER_O)
 	$(RANLIB) $@
 
-$(CORPUS_T): $(CORPUS_O) $(CORPUS_A) $(STEMMER_A)
-	$(CC) -o $@ $(LDFLAGS) $(CORPUS_O) $(CORPUS_A) $(STEMMER_A) $(LIBS)
-
-$(STEMMER_A): $(STEMMER_O)
-	$(AR) $@ $(STEMMER_O)
-	$(RANLIB) $@
+$(CORPUS_T): $(CORPUS_O) $(CORPUS_A)
+	$(CC) -o $@ $(LDFLAGS) $(CORPUS_O) $(CORPUS_A) $(LIBS)
 
 
 # Data

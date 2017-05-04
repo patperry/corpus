@@ -20,6 +20,30 @@ LIB_O	= lib/strntod_c.o lib/strntoimax.o src/array.o src/census.o \
 		  src/sentscan.o src/symtab.o src/table.o src/text.o src/token.o \
 		  src/unicode.o src/wordscan.o src/xalloc.o
 
+SNOWBALL = lib/libstemmer_c
+STEMMER_A = libstemmer.a
+STEMMER_O = $(SNOWBALL)/src_c/stem_UTF_8_arabic.o \
+			$(SNOWBALL)/src_c/stem_UTF_8_danish.o \
+			$(SNOWBALL)/src_c/stem_UTF_8_dutch.o \
+			$(SNOWBALL)/src_c/stem_UTF_8_english.o \
+			$(SNOWBALL)/src_c/stem_UTF_8_finnish.o \
+			$(SNOWBALL)/src_c/stem_UTF_8_french.o \
+			$(SNOWBALL)/src_c/stem_UTF_8_german.o \
+			$(SNOWBALL)/src_c/stem_UTF_8_hungarian.o \
+			$(SNOWBALL)/src_c/stem_UTF_8_italian.o \
+			$(SNOWBALL)/src_c/stem_UTF_8_norwegian.o \
+			$(SNOWBALL)/src_c/stem_UTF_8_porter.o \
+			$(SNOWBALL)/src_c/stem_UTF_8_portuguese.o \
+			$(SNOWBALL)/src_c/stem_UTF_8_romanian.o \
+			$(SNOWBALL)/src_c/stem_UTF_8_russian.o \
+			$(SNOWBALL)/src_c/stem_UTF_8_spanish.o \
+			$(SNOWBALL)/src_c/stem_UTF_8_swedish.o \
+			$(SNOWBALL)/src_c/stem_UTF_8_tamil.o \
+			$(SNOWBALL)/src_c/stem_UTF_8_turkish.o \
+			$(SNOWBALL)/runtime/api.o \
+			$(SNOWBALL)/runtime/utilities.o \
+			$(SNOWBALL)/libstemmer/libstemmer_utf8.o
+
 CORPUS_T = corpus
 CORPUS_O = src/main.o src/main_get.o src/main_scan.o src/main_sentences.o \
 		   src/main_tokens.o
@@ -41,9 +65,9 @@ TESTS_DATA = data/ucd/NormalizationTest.txt \
 			 data/ucd/auxiliary/SentenceBreakTest.txt \
 			 data/ucd/auxiliary/WordBreakTest.txt
 
-ALL_O = $(LIB_O) $(CORPUS_O)
-ALL_T = $(CORPUS_A) $(CORPUS_T)
-ALL_A = $(CORPUS_A)
+ALL_O = $(LIB_O) $(CORPUS_O) $(STEMMER_O)
+ALL_T = $(CORPUS_A) $(CORPUS_T) $(STEMMER_A)
+ALL_A = $(CORPUS_A) $(STEMMER_A)
 
 
 # Products
@@ -54,8 +78,12 @@ $(CORPUS_A): $(LIB_O)
 	$(AR) $@ $(LIB_O)
 	$(RANLIB) $@
 
-$(CORPUS_T): $(CORPUS_O) $(CORPUS_A)
-	$(CC) -o $@ $(LDFLAGS) $(CORPUS_O) $(CORPUS_A) $(LIBS)
+$(CORPUS_T): $(CORPUS_O) $(CORPUS_A) $(STEMMER_A)
+	$(CC) -o $@ $(LDFLAGS) $(CORPUS_O) $(CORPUS_A) $(STEMMER_A) $(LIBS)
+
+$(STEMMER_A): $(STEMMER_O)
+	$(AR) $@ $(STEMMER_O)
+	$(RANLIB) $@
 
 
 # Data

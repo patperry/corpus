@@ -63,11 +63,9 @@ int main_sentences(int argc, char * const argv[])
 	const char *field, *input;
 	FILE *stream;
 	size_t field_len;
-	int ch, err, name_id, start, zero;
+	int ch, err, name_id, start;
 
 	field = "text";
-
-	zero = 0;
 
 	while ((ch = getopt(argc, argv, "f:o:")) != -1) {
 		switch (ch) {

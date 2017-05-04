@@ -36,6 +36,9 @@
 
 void usage_tokens(int status)
 {
+	const char **stems = stemmer_list();
+	int i;
+
 	printf("\
 Usage:\t%s tokens [options] <path>\n\
 \n\
@@ -47,7 +50,7 @@ Options:\n\
 \t-d\t\tKeeps dashes instead of replacing them with \"-\".\n\
 \t-f <field>\tGets text from the given field (defaults to \"text\").\n\
 \t-i\t\tKeeps default ignorable characters like soft hyphens.\n\
-\t-k\t\tDoes not perform compatibility decompositions (NFKD).\n\
+\t-k\t\tDoes not perform compatibility decompositions (NFKC).\n\
 \t-o <path>\tSaves output at the given path.\n\
 \t-q\t\tKeeps quotes instead of replacing them with \"'\".\n\
 \t-s <stemmer>\tStems tokens with the given algorithm.\n\
@@ -55,6 +58,24 @@ Options:\n\
 \t-x\t\tKeeps non-white-space control characters.\n\
 \t-z\t\tKeeps zero-character (empty) tokens.\n\
 ", PROGRAM_NAME);
+
+	printf("\nStemming Algorithms:");
+	if (*stems) {
+
+		for (i = 0; stems[i] != NULL; i++) {
+			if (i != 0) {
+				printf(",");
+			}
+			if (i % 6 == 0) {
+				printf("\n\t%s", stems[i]);
+			} else {
+				printf(" %s", stems[i]);
+			}
+		}
+		printf("\n");
+	} else {
+		printf("\n\t(none available)\n");
+	}
 
 	exit(status);
 }

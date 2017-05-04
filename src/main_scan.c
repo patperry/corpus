@@ -39,7 +39,7 @@ void usage_scan(int status)
 Usage:\t%s scan [options] <path>\n\
 \n\
 Description:\n\
-\tDetermine the types of the data values in a JSON Lines input file.\n\
+\tDetermine the types of the data values in a newline-delimited JSON file.\n\
 \n\
 Options:\n\
 \t-l\t\tPrints type information for each line.\n\
@@ -107,7 +107,7 @@ int main_scan(int argc, char * const argv[])
 	}
 
 	fprintf(stream, "file:   %s\n", input);
-	fprintf(stream, "format: %s\n", "JSON Lines");
+	fprintf(stream, "format: %s\n", "newline-delimited JSON");
 	fprintf(stream, "--\n");
 
 	type_id = DATATYPE_NULL;

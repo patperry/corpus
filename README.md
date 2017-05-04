@@ -21,13 +21,13 @@ as a JSON-style escape, 1 bit indicating whether the text includes a byte
 sequence that may decode to a non-ASCII character, and 62 bits to store the
 encoding size, in bytes.
 
-In typical usage, you will memory-map a [JSON Lines][jsonlines] data file,
-validate and type-check the data values using the `datatype.h` interface,
-extract the appropriate fields using the `data.h` interface, and create text
-objects that point into the file. By memory mapping the file, you can let the
-operating system move data between the hard drive and RAM whenever necessary.
-You can process a large data set seamlessly without loading everything into
-RAM at the same time.
+In typical usage, you will memory-map a [newline-demimited JSON][ndjson]
+data file, validate and type-check the data values using the `datatype.h`
+interface, extract the appropriate fields using the `data.h` interface, and
+create text objects that point into the file. By memory mapping the file,
+you can let the operating system move data between the hard drive and RAM
+whenever necessary.  You can process a large data set seamlessly without
+loading everything into RAM at the same time.
 
 
 ### Text segmentation
@@ -110,7 +110,7 @@ subject to the terms of the [Unicode Licence][unicode].
 [check]: https://libcheck.github.io/check/
 [doxygen]: http://www.stack.nl/~dimitri/doxygen/
 [json]: http://www.json.org/
-[jsonlines]: http://jsonlines.org/
+[ndjson]: http://ndjson.org/
 [rcorpus]: https://github.com/patperry/r-corpus
 [segmentation]: http://unicode.org/reports/tr29/
 [snowball]: http://snowballstem.org/

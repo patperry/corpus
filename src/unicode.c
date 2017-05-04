@@ -531,7 +531,7 @@ void unicode_compose(uint32_t *ptr, size_t *lenptr)
 	uint32_t *begin = ptr;
 	uint32_t *end = begin + len;
 	uint32_t *leftptr, *dst;
-	uint32_t left = 0, code, prev, prim;
+	uint32_t left = 0, code, prim;
 	uint8_t code_ccc, prev_ccc = 0;
 	int moff = 0, mlen = 0;
 	int blocked, has_prev, did_del;
@@ -581,7 +581,6 @@ void unicode_compose(uint32_t *ptr, size_t *lenptr)
 			has_compose(left, &moff, &mlen);
 			has_prev = 0;
 		} else {
-			prev = code;
 			prev_ccc = code_ccc;
 			has_prev = 1;
 		}

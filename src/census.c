@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include <limits.h>
 #include <math.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "array.h"
 #include "error.h"
 #include "table.h"

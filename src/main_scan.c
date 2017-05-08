@@ -32,8 +32,11 @@
 
 #define PROGRAM_NAME	"corpus"
 
+int main_scan(int argc, char * const argv[]);
+void usage_scan(void);
 
-void usage_scan(int status)
+
+void usage_scan(void)
 {
 	printf("\
 Usage:\t%s scan [options] <path>\n\
@@ -45,8 +48,6 @@ Options:\n\
 \t-l\t\tPrints type information for each line.\n\
 \t-o <path>\tSaves output at the given path.\n\
 ", PROGRAM_NAME);
-
-	exit(status);
 }
 
 
@@ -71,7 +72,8 @@ int main_scan(int argc, char * const argv[])
 			output = optarg;
 			break;
 		default:
-			usage_scan(EXIT_FAILURE);
+			usage_scan();
+			return EXIT_FAILURE;
 		}
 	}
 
@@ -80,10 +82,12 @@ int main_scan(int argc, char * const argv[])
 
 	if (argc == 0) {
 		fprintf(stderr, "No input file specified.\n\n");
-		usage_scan(EXIT_FAILURE);
+		usage_scan();
+		return EXIT_FAILURE;
 	} else if (argc > 1) {
 		fprintf(stderr, "Too many input files specified.\n\n");
-		usage_scan(EXIT_FAILURE);
+		usage_scan();
+		return EXIT_FAILURE;
 	}
 
 	input = argv[0];

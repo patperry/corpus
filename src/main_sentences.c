@@ -33,8 +33,11 @@
 
 #define PROGRAM_NAME	"corpus"
 
+int main_sentences(int argc, char * const argv[]);
+void usage_sentences(void);
 
-void usage_sentences(int status)
+
+void usage_sentences(void)
 {
 	printf("\
 Usage:\t%s sentences [options] <path>\n\
@@ -46,8 +49,6 @@ Options:\n\
 \t-f <field>\tGets text from the given field (defaults to \"text\").\n\
 \t-o <path>\tSaves output at the given path.\n\
 ", PROGRAM_NAME);
-
-	exit(status);
 }
 
 
@@ -76,7 +77,8 @@ int main_sentences(int argc, char * const argv[])
 			output = optarg;
 			break;
 		default:
-			usage_sentences(EXIT_FAILURE);
+			usage_sentences();
+			return EXIT_FAILURE;
 		}
 	}
 
@@ -85,10 +87,12 @@ int main_sentences(int argc, char * const argv[])
 
 	if (argc == 0) {
 		fprintf(stderr, "No input file specified.\n\n");
-		usage_sentences(EXIT_FAILURE);
+		usage_sentences();
+		return EXIT_FAILURE;
 	} else if (argc > 1) {
 		fprintf(stderr, "Too many input files specified.\n\n");
-		usage_sentences(EXIT_FAILURE);
+		usage_sentences();
+		return EXIT_FAILURE;
 	}
 
 	field_len = strlen(field);
@@ -101,7 +105,7 @@ int main_sentences(int argc, char * const argv[])
 
 	if (text_assign(&name, (const uint8_t *)field, field_len, 0)) {
 		fprintf(stderr, "Invalid field name (%s)\n", field);
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 
 	if ((err = schema_init(&schema))) {

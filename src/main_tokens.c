@@ -33,8 +33,11 @@
 
 #define PROGRAM_NAME	"corpus"
 
+int main_tokens(int argc, char * const argv[]);
+void usage_tokens(void);
 
-void usage_tokens(int status)
+
+void usage_tokens(void)
 {
 	const char **stems = stemmer_list();
 	int i;
@@ -76,8 +79,6 @@ Options:\n\
 	} else {
 		printf("\n\t(none available)\n");
 	}
-
-	exit(status);
 }
 
 
@@ -142,7 +143,8 @@ int main_tokens(int argc, char * const argv[])
 			zero = 1;
 			break;
 		default:
-			usage_tokens(EXIT_FAILURE);
+			usage_tokens();
+			return EXIT_FAILURE;
 		}
 	}
 
@@ -151,10 +153,12 @@ int main_tokens(int argc, char * const argv[])
 
 	if (argc == 0) {
 		fprintf(stderr, "No input file specified.\n\n");
-		usage_tokens(EXIT_FAILURE);
+		usage_tokens();
+		return EXIT_FAILURE;
 	} else if (argc > 1) {
 		fprintf(stderr, "Too many input files specified.\n\n");
-		usage_tokens(EXIT_FAILURE);
+		usage_tokens();
+		return EXIT_FAILURE;
 	}
 
 	field_len = strlen(field);
@@ -167,7 +171,7 @@ int main_tokens(int argc, char * const argv[])
 
 	if (text_assign(&name, (const uint8_t *)field, field_len, 0)) {
 		fprintf(stderr, "Invalid field name (%s)\n", field);
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 
 	if ((err = schema_init(&schema))) {

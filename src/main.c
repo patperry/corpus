@@ -33,10 +33,13 @@
 #define PROGRAM_NAME	"corpus"
 #define PROGRAM_VERSION	"0.3.1"
 
-void usage_get(int status);
-void usage_scan(int status);
-void usage_sentences(int status);
-void usage_tokens(int status);
+void usage(void);
+void usage_get(void);
+void usage_scan(void);
+void usage_sentences(void);
+void usage_tokens(void);
+
+void version(void);
 
 int main_get(int argc, char * const argv[]);
 int main_scan(int argc, char * const argv[]);
@@ -44,7 +47,7 @@ int main_sentences(int argc, char * const argv[]);
 int main_tokens(int argc, char * const argv[]);
 
 
-void usage(int status)
+void usage(void)
 {
 	printf("\
 Usage:\t%s [options] <command> [<args>]\n\
@@ -58,15 +61,12 @@ Commands:\n\
 \tsentences\tSegment text into sentences.\n\
 \ttokens\tSegment text into tokens.\n\
 ", PROGRAM_NAME);
-
-	exit(status);
 }
 
 
 void version(void)
 {
 	printf("%s version %s\n", PROGRAM_NAME, PROGRAM_VERSION);
-	exit(EXIT_SUCCESS);
 }
 
 
@@ -85,7 +85,8 @@ int main(int argc, char * const argv[])
 
 		if (argv[ind][2] != '\0') {
 			printf("illegal option: %s\n", argv[ind]);
-			usage(EXIT_FAILURE);
+			usage();
+			return EXIT_FAILURE;
 		}
 
 		ch = argv[ind][1];
@@ -96,9 +97,10 @@ int main(int argc, char * const argv[])
 			break;
 		case 'v':
 			version();
-			break;
+			return EXIT_SUCCESS;
 		default:
-			usage(EXIT_FAILURE);
+			usage();
+			return EXIT_FAILURE;
 		}
 	}
 
@@ -106,30 +108,36 @@ int main(int argc, char * const argv[])
 	argv += ind;
 
 	if (argc == 0) {
-		usage(EXIT_FAILURE);
+		usage();
+		return EXIT_FAILURE;
 	} else if (!strcmp(argv[0], "get")) {
 		if (help) {
-			usage_get(EXIT_SUCCESS);
+			usage_get();
+			return EXIT_SUCCESS;
 		}
 		err = main_get(argc, argv);
 	} else if (!strcmp(argv[0], "tokens")) {
 		if (help) {
-			usage_tokens(EXIT_SUCCESS);
+			usage_tokens();
+			return EXIT_SUCCESS;
 		}
 		err = main_tokens(argc, argv);
 	} else if (!strcmp(argv[0], "sentences")) {
 		if (help) {
-			usage_sentences(EXIT_SUCCESS);
+			usage_sentences();
+			return EXIT_SUCCESS;
 		}
 		err = main_sentences(argc, argv);
 	} else if (!strcmp(argv[0], "scan")) {
 		if (help) {
-			usage_scan(EXIT_SUCCESS);
+			usage_scan();
+			return EXIT_SUCCESS;
 		}
 		err = main_scan(argc, argv);
 	} else {
 		fprintf(stderr, "Unrecognized command '%s'.\n\n", argv[0]);
-		usage(EXIT_FAILURE);
+		usage();
+		return EXIT_FAILURE;
 	}
 
 	return err;

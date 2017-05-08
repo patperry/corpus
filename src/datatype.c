@@ -151,8 +151,8 @@ void sorter_destroy(struct schema_sorter *sort)
 
 static int idptr_cmp(const void *x1, const void *x2)
 {
-	int id1 = **(const int **)x1;
-	int id2 = **(const int **)x2;
+	int id1 = **(int * const *)x1;
+	int id2 = **(int * const *)x2;
 	return id1 - id2;
 }
 

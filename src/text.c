@@ -123,7 +123,7 @@ int text_iter_advance(struct text_iter *it)
 		decode_utf8(&ptr, &code);
 	}
 
-	it->ptr = (uint8_t *)ptr;
+	it->ptr = ptr;
 	it->current = code;
 	it->attr = attr;
 	return 1;

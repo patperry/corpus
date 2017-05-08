@@ -460,7 +460,7 @@ static int has_compose(uint32_t code, int *offsetptr, int *lengthptr)
 }
 
 
-int code_cmp(const void *x1, const void *x2)
+static int code_cmp(const void *x1, const void *x2)
 {
 	uint32_t y1 = *(const uint32_t *)x1;
 	uint32_t y2 = *(const uint32_t *)x2;

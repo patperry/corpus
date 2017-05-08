@@ -111,7 +111,7 @@ int decode_boolean(const char *str)
 	struct data data;
 	int val;
 
-	ck_assert(!data_assign(&data, &schema, (uint8_t *)str, n));
+	ck_assert(!data_assign(&data, &schema, (const uint8_t *)str, n));
 	ck_assert(!data_bool(&data, &val));
 
 	return val;
@@ -130,7 +130,7 @@ int decode_int(const char *str)
 	struct data data;
 	int err, val;
 
-	ck_assert(!data_assign(&data, &schema, (uint8_t *)str, n));
+	ck_assert(!data_assign(&data, &schema, (const uint8_t *)str, n));
 	err = data_int(&data, &val);
 	ck_assert(err == 0 || err == ERROR_OVERFLOW);
 
@@ -158,7 +158,7 @@ double decode_double(const char *str)
 	double val;
 	int err;
 
-	ck_assert(!data_assign(&data, &schema, (uint8_t *)str, n));
+	ck_assert(!data_assign(&data, &schema, (const uint8_t *)str, n));
 	err = data_double(&data, &val);
 	ck_assert(err == 0 || err == ERROR_OVERFLOW);
 
@@ -557,7 +557,7 @@ END_TEST
 START_TEST(test_decode_record_array)
 {
 	const uint8_t *ptr = (uint8_t *)"[{}]";
-	size_t size = strlen((char *)ptr);
+	size_t size = strlen((const char *)ptr);
 	struct data val;
 	struct data_items items;
 	struct data_fields fields;

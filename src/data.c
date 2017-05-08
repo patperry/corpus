@@ -28,7 +28,7 @@
 #include "datatype.h"
 #include "data.h"
 
-double strntod_c(const char *string, size_t maxlen, char **endPtr);
+double strntod_c(const char *string, size_t maxlen, const char **endPtr);
 intmax_t strntoimax(const char *string, size_t maxlen, char **endptr);
 
 static void scan_value(const uint8_t **bufptr);
@@ -94,7 +94,7 @@ int data_int(const struct data *d, int *valptr)
 	}
 
 	errno = 0;
-	lval = strntoimax((char *)d->ptr, d->size, NULL);
+	lval = strntoimax((const char *)d->ptr, d->size, NULL);
 	if (errno == ERANGE) {
 		val = lval > 0 ? INT_MAX : INT_MIN;
 		err = ERROR_OVERFLOW;
@@ -135,7 +135,7 @@ int data_double(const struct data *d, double *valptr)
 		goto nullval;
 	}
 
-	val = strntod_c((char *)d->ptr, d->size, (char **)&ptr);
+	val = strntod_c((const char *)d->ptr, d->size, (const char **)&ptr);
 	if (ptr != d->ptr) {
 		if (!isfinite(val)) {
 			err = ERROR_OVERFLOW;
@@ -159,11 +159,11 @@ int data_double(const struct data *d, double *valptr)
 
 	switch (ch) {
 	case 'I':
-		val = neg ? -INFINITY : INFINITY;
+		val = neg ? (double)-INFINITY : (double)INFINITY;
 		break;
 
 	default:
-		val = neg ? copysign(NAN, -1) : NAN;
+		val = neg ? copysign((double)NAN, -1) : (double)NAN;
 		break;
 	}
 
@@ -172,7 +172,7 @@ int data_double(const struct data *d, double *valptr)
 
 nullval:
 	err = ERROR_INVAL;
-	val = NAN;
+	val = (double)NAN;
 	goto out;
 
 out:
@@ -332,8 +332,8 @@ end:
 
 static int compare_int(const void *x1, const void *x2)
 {
-	int y1 = *(int *)x1;
-	int y2 = *(int *)x2;
+	int y1 = *(const int *)x1;
+	int y2 = *(const int *)x2;
 	int ret;
 
 	if (y1 < y2) {

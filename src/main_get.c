@@ -32,8 +32,11 @@
 
 #define PROGRAM_NAME	"corpus"
 
+int main_get(int argc, char * const argv[]);
+void usage_get(void);
 
-void usage_get(int status)
+
+void usage_get(void)
 {
 	printf("\
 Usage:\t%s get [options] <field> <path>\n\
@@ -44,8 +47,6 @@ Description:\n\
 Options:\n\
 \t-o <path>\tSaves output at the given path.\n\
 ", PROGRAM_NAME);
-
-	exit(status);
 }
 
 
@@ -68,7 +69,8 @@ int main_get(int argc, char * const argv[])
 			output = optarg;
 			break;
 		default:
-			usage_get(EXIT_FAILURE);
+			usage_get();
+			return EXIT_FAILURE;
 		}
 	}
 
@@ -77,13 +79,16 @@ int main_get(int argc, char * const argv[])
 
 	if (argc == 0) {
 		fprintf(stderr, "No field specified.\n\n");
-		usage_get(EXIT_FAILURE);
+		usage_get();
+		return EXIT_FAILURE;
 	} else if (argc == 1) {
 		fprintf(stderr, "No input file specified.\n\n");
-		usage_get(EXIT_FAILURE);
+		usage_get();
+		return EXIT_FAILURE;
 	} else if (argc > 2) {
 		fprintf(stderr, "Too many input files specified.\n\n");
-		usage_get(EXIT_FAILURE);
+		usage_get();
+		return EXIT_FAILURE;
 	}
 
 	field = argv[0];
@@ -97,7 +102,7 @@ int main_get(int argc, char * const argv[])
 
 	if (text_assign(&name, (const uint8_t *)field, field_len, 0)) {
 		fprintf(stderr, "Invalid field name (%s)\n", field);
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 
 	if ((err = schema_init(&schema))) {

@@ -1,68 +1,88 @@
-CC      = gcc -std=c99
-CFLAGS  = -Wall -Wextra -pedantic -g -O2
+CC     = gcc -std=c99
+
+CFLAGS = -Weverything -pedantic \
+	-Wno-cast-qual \
+	-Wno-padded \
+	-Wno-reserved-id-macro \
+	-Wno-unused-macros \
+	-g -O2
+
 LDFLAGS =
 LIBS    = -lm
-
 AR      = ar rcu
 RANLIB  = ranlib
 MKDIR_P = mkdir -p
 CURL    = curl
 
-CHECK_CFLAGS = `pkg-config --cflags check` \
-	       -Wno-gnu-zero-variadic-macro-arguments
-CHECK_LIBS = `pkg-config --libs check`
+LIB_CFLAGS = \
+	-Wno-cast-align \
+	-Wno-cast-qual \
+	-Wno-float-equal \
+	-Wno-missing-prototypes \
+	-Wno-sign-conversion \
+	-Wno-unreachable-code-break
+
+TEST_CFLAGS = `pkg-config --cflags check` \
+	-Wno-double-promotion \
+	-Wno-float-equal \
+	-Wno-gnu-zero-variadic-macro-arguments \
+	-Wno-missing-prototypes \
+	-Wno-missing-variable-declarations \
+	-Wno-reserved-id-macro
+
+TEST_LIBS = `pkg-config --libs check`
 
 UNICODE = http://www.unicode.org/Public/9.0.0
 
 CORPUS_A = libcorpus.a
 LIB_O	= lib/strntod_c.o lib/strntoimax.o src/array.o src/census.o \
-		  src/data.o src/datatype.o src/error.o src/filebuf.o src/render.o \
-		  src/sentscan.o src/symtab.o src/table.o src/text.o src/token.o \
-		  src/unicode.o src/wordscan.o src/xalloc.o
+	  src/data.o src/datatype.o src/error.o src/filebuf.o src/render.o \
+	  src/sentscan.o src/symtab.o src/table.o src/text.o src/token.o \
+	  src/unicode.o src/wordscan.o src/xalloc.o
 
-SNOWBALL = lib/libstemmer_c
-STEMMER_O = $(SNOWBALL)/src_c/stem_UTF_8_arabic.o \
-			$(SNOWBALL)/src_c/stem_UTF_8_danish.o \
-			$(SNOWBALL)/src_c/stem_UTF_8_dutch.o \
-			$(SNOWBALL)/src_c/stem_UTF_8_english.o \
-			$(SNOWBALL)/src_c/stem_UTF_8_finnish.o \
-			$(SNOWBALL)/src_c/stem_UTF_8_french.o \
-			$(SNOWBALL)/src_c/stem_UTF_8_german.o \
-			$(SNOWBALL)/src_c/stem_UTF_8_hungarian.o \
-			$(SNOWBALL)/src_c/stem_UTF_8_italian.o \
-			$(SNOWBALL)/src_c/stem_UTF_8_norwegian.o \
-			$(SNOWBALL)/src_c/stem_UTF_8_porter.o \
-			$(SNOWBALL)/src_c/stem_UTF_8_portuguese.o \
-			$(SNOWBALL)/src_c/stem_UTF_8_romanian.o \
-			$(SNOWBALL)/src_c/stem_UTF_8_russian.o \
-			$(SNOWBALL)/src_c/stem_UTF_8_spanish.o \
-			$(SNOWBALL)/src_c/stem_UTF_8_swedish.o \
-			$(SNOWBALL)/src_c/stem_UTF_8_tamil.o \
-			$(SNOWBALL)/src_c/stem_UTF_8_turkish.o \
-			$(SNOWBALL)/runtime/api.o \
-			$(SNOWBALL)/runtime/utilities.o \
-			$(SNOWBALL)/libstemmer/libstemmer_utf8.o
+STEMMER = lib/libstemmer_c
+STEMMER_O = $(STEMMER)/src_c/stem_UTF_8_arabic.o \
+	    $(STEMMER)/src_c/stem_UTF_8_danish.o \
+	    $(STEMMER)/src_c/stem_UTF_8_dutch.o \
+	    $(STEMMER)/src_c/stem_UTF_8_english.o \
+	    $(STEMMER)/src_c/stem_UTF_8_finnish.o \
+	    $(STEMMER)/src_c/stem_UTF_8_french.o \
+	    $(STEMMER)/src_c/stem_UTF_8_german.o \
+	    $(STEMMER)/src_c/stem_UTF_8_hungarian.o \
+	    $(STEMMER)/src_c/stem_UTF_8_italian.o \
+	    $(STEMMER)/src_c/stem_UTF_8_norwegian.o \
+	    $(STEMMER)/src_c/stem_UTF_8_porter.o \
+	    $(STEMMER)/src_c/stem_UTF_8_portuguese.o \
+	    $(STEMMER)/src_c/stem_UTF_8_romanian.o \
+	    $(STEMMER)/src_c/stem_UTF_8_russian.o \
+	    $(STEMMER)/src_c/stem_UTF_8_spanish.o \
+	    $(STEMMER)/src_c/stem_UTF_8_swedish.o \
+	    $(STEMMER)/src_c/stem_UTF_8_tamil.o \
+	    $(STEMMER)/src_c/stem_UTF_8_turkish.o \
+	    $(STEMMER)/runtime/api.o \
+	    $(STEMMER)/runtime/utilities.o \
+	    $(STEMMER)/libstemmer/libstemmer_utf8.o
 
 CORPUS_T = corpus
 CORPUS_O = src/main.o src/main_get.o src/main_scan.o src/main_sentences.o \
-		   src/main_tokens.o
+	   src/main_tokens.o
 
 DATA    = data/ucd/CaseFolding.txt \
-		  data/ucd/CompositionExclusions.txt \
-		  data/ucd/auxiliary/SentenceBreakProperty.txt \
-		  data/ucd/UnicodeData.txt \
-		  data/ucd/auxiliary/WordBreakProperty.txt
+	  data/ucd/CompositionExclusions.txt \
+	  data/ucd/auxiliary/SentenceBreakProperty.txt \
+	  data/ucd/UnicodeData.txt \
+	  data/ucd/auxiliary/WordBreakProperty.txt
 
 TESTS_T = tests/check_census tests/check_data tests/check_sentscan  \
-		  tests/check_symtab tests/check_text tests/check_token \
-		  tests/check_unicode tests/check_wordscan
+	  tests/check_symtab tests/check_text tests/check_token \
+	  tests/check_unicode tests/check_wordscan
 TESTS_O = tests/check_census.o tests/check_data.o tests/check_sentscan.o \
-		  tests/check_symtab.o tests/check_text.o tests/check_token.o \
-		  tests/check_unicode.o tests/check_wordscan.o tests/testutil.o
+	  tests/check_symtab.o tests/check_text.o tests/check_token.o \
+	  tests/check_unicode.o tests/check_wordscan.o tests/testutil.o
 
 TESTS_DATA = data/ucd/NormalizationTest.txt \
-			 data/ucd/auxiliary/SentenceBreakTest.txt \
-			 data/ucd/auxiliary/WordBreakTest.txt
+	     data/ucd/auxiliary/SentenceBreakTest.txt \
+	     data/ucd/auxiliary/WordBreakTest.txt
 
 ALL_O = $(LIB_O) $(CORPUS_O) $(STEMMER_O)
 ALL_T = $(CORPUS_A) $(CORPUS_T)
@@ -152,42 +172,42 @@ src/unicode/wordbreakprop.h: util/gen-wordbreak.py \
 # Tests
 
 tests/check_census: tests/check_census.o tests/testutil.o $(CORPUS_A)
-	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS) $^
+	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS) $^
 
 tests/check_data: tests/check_data.o tests/testutil.o $(CORPUS_A)
-	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS) $^
+	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS) $^
 
 tests/check_sentscan: tests/check_sentscan.o tests/testutil.o $(CORPUS_A) \
 		data/ucd/auxiliary/SentenceBreakTest.txt
-	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS)  \
+	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS)  \
 		tests/check_sentscan.o tests/testutil.o $(CORPUS_A)
 
 tests/check_symtab: tests/check_symtab.o tests/testutil.o $(CORPUS_A)
-	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS) $^
+	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS) $^
 
 tests/check_text: tests/check_text.o tests/testutil.o $(CORPUS_A)
-	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS) $^
+	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS) $^
 
 tests/check_token: tests/check_token.o tests/testutil.o $(CORPUS_A)
-	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS) $^
+	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS) $^
 
 tests/check_unicode: tests/check_unicode.o $(CORPUS_A) \
 		data/ucd/NormalizationTest.txt
-	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS) \
+	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS) \
 		tests/check_unicode.o $(CORPUS_A)
 
 tests/check_wordscan: tests/check_wordscan.o tests/testutil.o $(CORPUS_A) \
 		data/ucd/auxiliary/WordBreakTest.txt
-	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(CHECK_LIBS)  \
+	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS)  \
 		tests/check_wordscan.o tests/testutil.o $(CORPUS_A)
 
 
 # Special Rules
 
+check: $(TESTS_T) $(TESTS_T:=.test)
+
 clean:
 	$(RM) -r $(ALL_O) $(ALL_T) $(TESTS_O) $(TESTS_T)
-
-check: $(TESTS_T) $(TESTS_T:=.test)
 
 data: $(DATA) $(TESTS_DATA)
 
@@ -197,8 +217,12 @@ doc:
 %.test: %
 	$<
 
+lib/%.o: lib/%.c
+	$(CC) -c $(CFLAGS) $(LIB_CFLAGS) $(CPPFLAGS) $< -o $@
+
 tests/%.o: tests/%.c
-	$(CC) -c $(CFLAGS) $(CHECK_CFLAGS) $(CPPFLAGS) $< -o $@
+	$(CC) -c $(CFLAGS) $(TEST_CFLAGS) $(CPPFLAGS) $< -o $@
+
 
 .PHONY: all check clean data doc
 
@@ -222,7 +246,8 @@ src/main_scan.o: src/main_scan.c src/error.h src/filebuf.h src/table.h \
 src/main_sentences.o: src/main_sentences.c src/error.h src/filebuf.h \
 	src/sentscan.h src/table.h src/text.h src/data.h src/datatype.h
 src/main_tokens.o: src/main_tokens.c src/error.h src/filebuf.h src/table.h \
-	src/text.h src/token.h src/symtab.h src/data.h src/datatype.h src/wordscan.h
+	src/text.h src/token.h src/symtab.h src/data.h src/datatype.h \
+	src/wordscan.h
 src/render.o: src/render.c src/array.h src/error.h src/text.h \
 	src/unicode.h src/xalloc.h src/render.h
 src/sentscan.o: src/sentscan.c src/text.h src/unicode/sentbreakprop.h \
@@ -232,9 +257,10 @@ src/symtab.o: src/symtab.c src/array.h src/error.h src/table.h src/text.h \
 src/table.o: src/table.c src/error.h src/xalloc.h src/table.h
 src/text.o: src/text.c src/error.h src/unicode.h src/xalloc.h src/text.h
 src/token.o: src/token.c src/error.h src/text.h src/unicode.h src/xalloc.h \
-    src/token.h
+	src/token.h
 src/unicode.o: src/unicode.c src/unicode/casefold.h src/unicode/combining.h \
-    src/unicode/compose.h src/unicode/decompose.h src/error.h src/unicode.h
+	src/unicode/compose.h src/unicode/decompose.h src/error.h \
+	src/unicode.h
 src/wordscan.o: src/wordscan.c src/text.h src/unicode/wordbreakprop.h \
 	src/wordscan.h
 src/xalloc.o: src/xalloc.c src/xalloc.h
@@ -250,7 +276,7 @@ tests/check_symtab.o: tests/check_symtab.c src/table.h src/text.h src/token.h \
 tests/check_text.o: tests/check_text.c src/error.h src/text.h src/unicode.h \
 	tests/testutil.h
 tests/check_token.o: tests/check_token.c src/text.h src/token.h src/unicode.h \
-    tests/testutil.h
+	tests/testutil.h
 tests/check_unicode.o: tests/check_unicode.c src/unicode.h tests/testutil.h
 tests/check_sentscan: tests/check_sentscan.c src/text.h src/token.h \
 	src/unicode.h src/wordscan.h tests/testutil.h

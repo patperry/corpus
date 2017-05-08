@@ -48,7 +48,7 @@ struct filebuf_line {
 
 /**
  * An iterator over the lines in a file. Lines include the trailing
- * newline (`\n`), if it exists. (The last line in the file may or
+ * newline (`\\n`), if it exists. (The last line in the file may or
  * may not end in a newline; all other lines do.)
  */
 struct filebuf_iter {

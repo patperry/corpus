@@ -99,7 +99,7 @@ int main_sentences(int argc, char * const argv[])
 
 	input = argv[0];
 
-	if (text_assign(&name, (uint8_t *)field, field_len, 0)) {
+	if (text_assign(&name, (const uint8_t *)field, field_len, 0)) {
 		fprintf(stderr, "Invalid field name (%s)\n", field);
 		exit(EXIT_FAILURE);
 	}

@@ -371,7 +371,8 @@ int type_add_token(struct symtab_type *typ, int tok_id)
 	int *tok_ids = typ->token_ids;
 	int ntok = typ->ntoken;
 
-	if (!(tok_ids = xrealloc(tok_ids, (ntok + 1) * sizeof(*tok_ids)))) {
+	if (!(tok_ids = xrealloc(tok_ids,
+				 (size_t)(ntok + 1) * sizeof(*tok_ids)))) {
 		return ERROR_NOMEM;
 	}
 

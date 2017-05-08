@@ -118,7 +118,7 @@ void sentscan_reset(struct sentscan *scan)
 static int has_future_lower(const struct sentscan *scan)
 {
 	struct text_iter iter;
-	int prop;
+	int prop, ret;
 
 	if (scan->iter_prop < 0) {
 		return 0;
@@ -136,20 +136,27 @@ static int has_future_lower(const struct sentscan *scan)
 		case SENT_BREAK_LF:
 		case SENT_BREAK_STERM:
 		case SENT_BREAK_ATERM:
-			return 0;
+			ret = 0;
+			goto out;
+
 		case SENT_BREAK_LOWER:
-			return 1;
+			ret = 1;
+			goto out;
+
 		default:
 			break;
 		}
+
 		if (text_iter_advance(&iter)) {
 			prop = sent_break(iter.current);
 		} else {
-			return 0;
+			ret = 0;
+			goto out;
 		}
 	}
 
-	return 0;
+out:
+	return ret;
 }
 
 
@@ -342,7 +349,7 @@ STerm_Close_Sp:
 	}
 
 Break:
-	scan->current.attr |= (scan->ptr - scan->current.ptr);
+	scan->current.attr |= (size_t)(scan->ptr - scan->current.ptr);
 
 	if (TEXT_SIZE(&scan->current) == 0) {
 		if (TEXT_SIZE(&scan->text) == 0 && !scan->at_end) {

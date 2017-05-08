@@ -92,7 +92,7 @@ void text_iter_make(struct text_iter *it, const struct text *text)
 	it->end = it->ptr + TEXT_SIZE(text);
 	it->text_attr = text->attr;
 	it->attr = 0;
-	it->current = -1;
+	it->current = (uint32_t)-1;
 }
 
 
@@ -138,7 +138,7 @@ at_end:
 void text_iter_reset(struct text_iter *it)
 {
 	it->ptr = it->end - (it->text_attr & TEXT_SIZE_MASK);
-	it->current = -1;
+	it->current = (uint32_t)-1;
 	it->attr = 0;
 }
 
@@ -165,7 +165,7 @@ int assign_raw(struct text *text, const uint8_t *ptr, size_t size)
 	}
 
 	// validate size
-	size = ptr - text->ptr;
+	size = (size_t)(ptr - text->ptr);
 	if (size > TEXT_SIZE_MAX) {
 		goto error_overflow;
 	}
@@ -214,7 +214,7 @@ int assign_raw_unsafe(struct text *text, const uint8_t *ptr, size_t size)
 	}
 
 	// validate size
-	size = ptr - text->ptr;
+	size = (size_t)(ptr - text->ptr);
 	if (size > TEXT_SIZE_MAX) {
 		goto error_overflow;
 	}
@@ -289,7 +289,7 @@ int assign_esc(struct text *text, const uint8_t *ptr, size_t size)
 	}
 
 	// validate size
-	size = ptr - text->ptr;
+	size = (size_t)(ptr - text->ptr);
 	if (size > TEXT_SIZE_MAX) {
 		goto error_overflow;
 	}
@@ -367,7 +367,7 @@ int assign_esc_unsafe(struct text *text, const uint8_t *ptr, size_t size)
 	}
 
 	// validate size
-	size = ptr - text->ptr;
+	size = (size_t)(ptr - text->ptr);
 	if (size > TEXT_SIZE_MAX) {
 		goto error_overflow;
 	}
@@ -504,7 +504,7 @@ void decode_valid_uescape(const uint8_t **inputptr, uint32_t *codeptr)
 		low = 0;
 		for (i = 0; i < 4; i++) {
 			ch = *ptr++;
-			low = (low << 4) + hextoi(ch);
+			low = (uint_fast16_t)(low << 4) + hextoi(ch);
 		}
 
 		code = DECODE_UTF16_PAIR(code, low);

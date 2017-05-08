@@ -94,7 +94,7 @@ void typemap_clear_kind(struct typemap *map)
 	map->charmap_type = UDECOMP_NORMAL | UCASEFOLD_NONE;
 
 	for (ch = 0; ch < 0x80; ch++) {
-		map->ascii_map[ch] = ch;
+		map->ascii_map[ch] = (int8_t)ch;
 	}
 
 	map->kind = 0;
@@ -204,7 +204,7 @@ int typemap_set(struct typemap *map, const struct text *tok)
 		unicode_map(map->charmap_type, it.current, &dst);
 	}
 
-	size = dst - map->codes;
+	size = (size_t)(dst - map->codes);
 	unicode_order(map->codes, size);
 	unicode_compose(map->codes, &size);
 
@@ -490,7 +490,7 @@ int typemap_set_utf32(struct typemap *map, const uint32_t *ptr,
 	}
 
 	*dst = '\0'; // not necessary, but helps with debugging
-	map->type.attr = TEXT_SIZE_MASK & (dst - map->type.ptr);
+	map->type.attr = TEXT_SIZE_MASK & ((size_t)(dst - map->type.ptr));
 	if (utf8) {
 		map->type.attr |= TEXT_UTF8_BIT;
 	}
@@ -524,7 +524,7 @@ int typemap_set_ascii(struct typemap *map, const struct text *tok)
 	}
 
 	*dst = '\0'; // not necessary, but helps with debugging
-	map->type.attr = TEXT_SIZE_MASK & (dst - map->type.ptr);
+	map->type.attr = TEXT_SIZE_MASK & ((size_t)(dst - map->type.ptr));
 	return 0;
 
 error:

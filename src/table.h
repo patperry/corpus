@@ -137,7 +137,7 @@ static inline int table_probe_advance(struct table_probe *probe)
 		 *
 		 *     https://en.wikipedia.org/wiki/Quadratic_probing
 		 */
-		index = probe->index + probe->nprobe;
+		index = (unsigned)probe->index + probe->nprobe;
 	}
 
 	index &= probe->table->mask;

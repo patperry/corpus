@@ -234,19 +234,19 @@ void encode_utf8(uint32_t code, uint8_t **bufptr)
 	uint32_t x = code;
 
 	if (x <= 0x7F) {
-		*ptr++ = x;
+		*ptr++ = (uint8_t)x;
 	} else if (x <= 0x07FF) {
-		*ptr++ = 0xC0 | (x >> 6);
-		*ptr++ = 0x80 | (x & 0x3F);
+		*ptr++ = (uint8_t)(0xC0 | (x >> 6));
+		*ptr++ = (uint8_t)(0x80 | (x & 0x3F));
 	} else if (x <= 0xFFFF) {
-		*ptr++ = 0xE0 | (x >> 12);
-		*ptr++ = 0x80 | ((x >> 6) & 0x3F);
-		*ptr++ = 0x80 | (x & 0x3F);
+		*ptr++ = (uint8_t)(0xE0 | (x >> 12));
+		*ptr++ = (uint8_t)(0x80 | ((x >> 6) & 0x3F));
+		*ptr++ = (uint8_t)(0x80 | (x & 0x3F));
 	} else {
-		*ptr++ = 0xF0 | (x >> 18);
-		*ptr++ = 0x80 | ((x >> 12) & 0x3F);
-		*ptr++ = 0x80 | ((x >> 6) & 0x3F);
-		*ptr++ = 0x80 | (x & 0x3F);
+		*ptr++ = (uint8_t)(0xF0 | (x >> 18));
+		*ptr++ = (uint8_t)(0x80 | ((x >> 12) & 0x3F));
+		*ptr++ = (uint8_t)(0x80 | ((x >> 6) & 0x3F));
+		*ptr++ = (uint8_t)(0x80 | (x & 0x3F));
 	}
 
 	*bufptr = ptr;
@@ -414,11 +414,11 @@ void unicode_order(uint32_t *ptr, size_t len)
 		for (c_tail = c_begin + 1; c_tail != c_end; c_tail++) {
 			c_ptr = c_tail;
 			code = *c_ptr;
-			cl = code & (0xFF << 24);
+			cl = code & (0xFFU << 24);
 
 			while (c_ptr != c_begin) {
 				code_prev = c_ptr[-1];
-				cl_prev = code_prev & (0xFF << 24);
+				cl_prev = code_prev & (0xFFU << 24);
 
 				if (cl_prev <= cl) {
 					break;
@@ -438,7 +438,7 @@ void unicode_order(uint32_t *ptr, size_t len)
 		// remove the combining mark annotations
 		while (c_begin != c_end) {
 			code = *c_begin;
-			*c_begin = code & (~(0xFF << 24));
+			*c_begin = code & (~(0xFFU << 24));
 			c_begin++;
 		}
 	}
@@ -488,7 +488,7 @@ static int combiner_find(int offset, int length, uint32_t code)
 	}
 
 	// handle general case
-	ptr = bsearch(&code, base, length, sizeof(*base), code_cmp);
+	ptr = bsearch(&code, base, (size_t)length, sizeof(*base), code_cmp);
 
 	if (ptr == NULL) {
 		return -1;
@@ -597,7 +597,7 @@ void unicode_compose(uint32_t *ptr, size_t *lenptr)
 				*dst++ = code;
 			}
 		}
-		len = dst - begin;
+		len = (size_t)(dst - begin);
 	}
 
 out:

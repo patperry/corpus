@@ -254,7 +254,7 @@ void render_char(struct render *r, uint32_t ch)
 				break;
 			}
 		} else {
-			end[0] = ch;
+			end[0] = (char)ch;
 			end[1] = '\0';
 			r->length++;
 		}

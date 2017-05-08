@@ -122,7 +122,7 @@ int schema_buffer_grow(struct schema_buffer *buf, int nadd)
 	buf->type_ids = tbase;
 
 	if (size) {
-		if (!(nbase = xrealloc(nbase, size * sizeof(*nbase)))) {
+		if (!(nbase = xrealloc(nbase, (size_t)size * sizeof(*nbase)))) {
 			err = ERROR_NOMEM;
 			logmsg(err, "failed allocating schema buffer");
 			return err;
@@ -162,6 +162,8 @@ int sorter_sort(struct schema_sorter *sort, const int *ptr, int n)
 	int i;
 	int err;
 
+	assert(n >= 0);
+
 	if ((err = sorter_reserve(sort, n))) {
 		goto out;
 	}
@@ -170,7 +172,7 @@ int sorter_sort(struct schema_sorter *sort, const int *ptr, int n)
 		sort->idptrs[i] = ptr + i;
 	}
 
-	qsort(sort->idptrs, n, sizeof(*sort->idptrs), idptr_cmp);
+	qsort(sort->idptrs, (size_t)n, sizeof(*sort->idptrs), idptr_cmp);
 out:
 	return err;
 }
@@ -227,7 +229,7 @@ int schema_init(struct schema *s)
 
 	// initialize primitive types
 	n = NUM_ATOMIC;
-	if (!(s->types = xmalloc(n * sizeof(*s->types)))) {
+	if (!(s->types = xmalloc((size_t)n * sizeof(*s->types)))) {
 		goto error_types;
 	}
 	s->ntype = n;
@@ -558,8 +560,10 @@ sorted:
 		t->meta.record.type_ids = NULL;
 		t->meta.record.name_ids = NULL;
 	} else {
-		t->meta.record.type_ids = xmalloc(nfield * sizeof(*type_ids));
-		t->meta.record.name_ids = xmalloc(nfield * sizeof(*name_ids));
+		t->meta.record.type_ids = xmalloc((size_t)nfield
+							* sizeof(*type_ids));
+		t->meta.record.name_ids = xmalloc((size_t)nfield
+							* sizeof(*name_ids));
 		if (!t->meta.record.type_ids || !t->meta.record.type_ids) {
 			free(t->meta.record.type_ids);
 			free(t->meta.record.name_ids);
@@ -567,9 +571,9 @@ sorted:
 			goto error;
 		}
 		memcpy(t->meta.record.type_ids, type_ids,
-			nfield * sizeof(*type_ids));
+			(size_t)nfield * sizeof(*type_ids));
 		memcpy(t->meta.record.name_ids, name_ids,
-			nfield * sizeof(*name_ids));
+			(size_t)nfield * sizeof(*name_ids));
 	}
 	t->meta.record.nfield = nfield;
 	s->ntype++;
@@ -787,9 +791,11 @@ int schema_union_record(struct schema *s, int id1, int id2, int *idptr)
 		}
 		s->buffer.nfield += n1 - i1;
 		memcpy(s->buffer.name_ids + fstart + nfield,
-			t1.name_ids + i1, (n1 - i1) * sizeof(*t1.name_ids));
+			t1.name_ids + i1,
+			(size_t)(n1 - i1) * sizeof(*t1.name_ids));
 		memcpy(s->buffer.type_ids + fstart + nfield,
-			t1.type_ids + i1, (n1 - i1) * sizeof(*t1.type_ids));
+			t1.type_ids + i1,
+			(size_t)(n1 - i1) * sizeof(*t1.type_ids));
 		nfield += n1 - i1;
 	}
 
@@ -799,9 +805,11 @@ int schema_union_record(struct schema *s, int id1, int id2, int *idptr)
 		}
 		s->buffer.nfield += n2 - i2;
 		memcpy(s->buffer.name_ids + fstart + nfield,
-			t2.name_ids + i2, (n2 - i2) * sizeof(*t2.name_ids));
+			t2.name_ids + i2,
+			(size_t)(n2 - i2) * sizeof(*t2.name_ids));
 		memcpy(s->buffer.type_ids + fstart + nfield,
-			t2.type_ids + i2, (n2 - i2) * sizeof(*t2.type_ids));
+			t2.type_ids + i2,
+			(size_t)(n2 - i2) * sizeof(*t2.type_ids));
 		nfield += n2 - i2;
 	}
 
@@ -934,7 +942,7 @@ int write_datatype(FILE *stream, const struct schema *s, int id)
 		goto error_render;
 	}
 
-	if (fwrite(r.string, 1, r.length, stream) < (size_t)r.length
+	if (fwrite(r.string, 1, (size_t)r.length, stream) < (size_t)r.length
 			&& r.length) {
 		err = ERROR_OS;
 		logmsg(err, "failed writing to output stream: %s",
@@ -1574,7 +1582,7 @@ error_noclose:
 	goto out;
 
 close:
-	if ((err = text_assign(text, input, ptr - input, flags))) {
+	if ((err = text_assign(text, input, (size_t)(ptr - input), flags))) {
 		err = ERROR_INVAL;
 		goto out;
 	}
@@ -1625,7 +1633,7 @@ void scan_digits(const uint8_t **bufptr, const uint8_t *end)
 
 /**
  * Skip over ASCII whitespace characters. This is more permissive than
- * strict JSON, which only allows ' ', '\t', '\r', and '\n'.
+ * strict JSON, which only allows ' ', '\\t', '\\r', and '\\n'.
  */
 void scan_spaces(const uint8_t **bufptr, const uint8_t *end)
 {
@@ -1716,10 +1724,10 @@ int record_equals(const struct datatype_record *t1,
 	if (t1->nfield != t2->nfield) {
 		eq = 0;
 	} else if (memcmp(t1->type_ids, t2->type_ids,
-				n * sizeof(*t1->type_ids))) {
+			  (size_t)n * sizeof(*t1->type_ids))) {
 		eq = 0;
 	} else if (memcmp(t1->name_ids, t2->name_ids,
-				  n * sizeof(*t1->name_ids))) {
+			  (size_t)n * sizeof(*t1->name_ids))) {
 		eq = 0;
 	} else {
 		eq = 1;

@@ -95,7 +95,7 @@ int main_get(int argc, char * const argv[])
 		field_len -= 2;
 	}
 
-	if (text_assign(&name, (uint8_t *)field, field_len, 0)) {
+	if (text_assign(&name, (const uint8_t *)field, field_len, 0)) {
 		fprintf(stderr, "Invalid field name (%s)\n", field);
 		exit(EXIT_FAILURE);
 	}
@@ -132,7 +132,7 @@ int main_get(int argc, char * const argv[])
 		if (data_field(&data, &schema, name_id, &val) == 0) {
 			// field exists
 			fprintf(stream, "%.*s\n", (int)val.size,
-				(char *)val.ptr);
+				(const char *)val.ptr);
 		} else {
 			// field is null
 			fprintf(stream, "null\n");

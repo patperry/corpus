@@ -115,11 +115,11 @@ hangul_lpart = off
 hangul_lvpart = off + 1
 
 for code in range(0x1100, 0x1113):
-    compose[code] = (hangul_lpart, -1)
+    compose[code] = (hangul_lpart, 1)
 
 for code in range(0xAC00, 0xD7A4):
     if (code - 0xAC00) % 28 == 0:
-        compose[code] = (hangul_lvpart, -1)
+        compose[code] = (hangul_lvpart, 1)
 
 
 def compute_tables(block_size):

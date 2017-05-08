@@ -461,6 +461,6 @@ Regional_Indicator:
 	}
 
 Break:
-	scan->current.attr |= (scan->ptr - scan->current.ptr);
+	scan->current.attr |= (size_t)(scan->ptr - scan->current.ptr);
 	return (scan->type == WORD_NONE) ? 0 : 1;
 }

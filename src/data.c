@@ -46,7 +46,7 @@ int data_assign(struct data *d, struct schema *s, const uint8_t *ptr,
 
 	scan_spaces_safe(&ptr, end);
 
-	if ((err = schema_scan(s, ptr, end - ptr, &id))) {
+	if ((err = schema_scan(s, ptr, (size_t)(end - ptr), &id))) {
 		goto error;
 	}
 	goto out;
@@ -205,7 +205,7 @@ int data_text(const struct data *d, struct text *valptr)
 		end--;
 	}
 
-	err = text_assign(&val, ptr, end - ptr, TEXT_NOVALIDATE);
+	err = text_assign(&val, ptr, (size_t)(end - ptr), TEXT_NOVALIDATE);
 	goto out;
 
 nullval:
@@ -313,10 +313,10 @@ int data_items_advance(struct data_items *it)
 		// have enough space in the schema buffer to parse the
 		// array item
 		data_assign(&it->current, (struct schema *)it->schema,
-			    ptr, end - ptr);
+			    ptr, (size_t)(end - ptr));
 	} else {
 		it->current.ptr = ptr;
-		it->current.size = end - ptr;
+		it->current.size = (size_t)(end - ptr);
 		it->current.type_id = it->item_type;
 	}
 	it->index++;
@@ -389,7 +389,8 @@ int data_fields_advance(struct data_fields *it)
 		}
 		ptr++;
 	}
-	text_assign(&name, begin, ptr - begin, flags | TEXT_NOVALIDATE);
+	text_assign(&name, begin, (size_t)(ptr - begin),
+		    flags | TEXT_NOVALIDATE);
 
 	// the call to schema_name always succeeds and does not
 	// create a new name, because the field name already
@@ -412,7 +413,7 @@ int data_fields_advance(struct data_fields *it)
 	end = ptr;
 	scan_value(&end);
 
-	idptr = bsearch(&name_id, it->field_names, it->nfield,
+	idptr = bsearch(&name_id, it->field_names, (size_t)it->nfield,
 			sizeof(*it->field_names), compare_int);
 	assert(idptr); // name exists in the record
 	type_id = it->field_types[idptr - it->field_names];
@@ -421,10 +422,10 @@ int data_fields_advance(struct data_fields *it)
 		// this won't fail, because we already have enough
 		// space in the schema buffer to parse the array item
 		data_assign(&it->current, (struct schema *)it->schema,
-			    ptr, end - ptr);
+			    ptr, (size_t)(end - ptr));
 	} else {
 		it->current.ptr = ptr;
-		it->current.size = end - ptr;
+		it->current.size = (size_t)(end - ptr);
 		it->current.type_id = type_id;
 	}
 	return 1;
@@ -579,7 +580,7 @@ int data_field(const struct data *d, const struct schema *s, int name_id,
 	}
 
 	rec = &s->types[d->type_id].meta.record;
-	idptr = bsearch(&name_id, rec->name_ids, rec->nfield,
+	idptr = bsearch(&name_id, rec->name_ids, (size_t)rec->nfield,
 			sizeof(*rec->name_ids), compare_int);
 	if (idptr == NULL) {
 		goto nullval;
@@ -610,7 +611,8 @@ int data_field(const struct data *d, const struct schema *s, int name_id,
 			}
 			ptr++;
 		}
-		text_assign(&name, begin, ptr - begin, flags | TEXT_NOVALIDATE);
+		text_assign(&name, begin, (size_t)(ptr - begin),
+			    flags | TEXT_NOVALIDATE);
 
 		// the call to schema_name always succeeds and does not
 		// create a new name, because the field name already
@@ -652,7 +654,7 @@ int data_field(const struct data *d, const struct schema *s, int name_id,
 found:
 	val.ptr = ptr;
 	scan_value(&ptr);
-	val.size = ptr - val.ptr;
+	val.size = (size_t)(ptr - val.ptr);
 	val.type_id = type_id;
 	err = 0;
 	goto out;

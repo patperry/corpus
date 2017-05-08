@@ -203,7 +203,7 @@ int census_sort(struct census *c)
 		goto out;
 	}
 
-	if (!(array = xmalloc(n * sizeof(*array)))) {
+	if (!(array = xmalloc((size_t)n * sizeof(*array)))) {
 		err = ERROR_NOMEM;
 		logmsg(err, "failed allocating memory to sort census items");
 		goto out;
@@ -214,7 +214,7 @@ int census_sort(struct census *c)
 		array[i].weight = c->weights[i];
 	}
 
-	qsort(array, n, sizeof(*array), census_item_cmp);
+	qsort(array, (size_t)n, sizeof(*array), census_item_cmp);
 
 	for (i = 0; i < n; i++) {
 		c->items[i] = array[i].item;
@@ -273,7 +273,7 @@ int census_grow(struct census *c, int nadd)
 	}
 	c->weights = wbase;
 
-	ibase = xrealloc(c->items, size * sizeof(*c->items));
+	ibase = xrealloc(c->items, (size_t)size * sizeof(*c->items));
 	if (!ibase) {
 		err = ERROR_NOMEM;
 		logmsg(err, "failed growing census items array");

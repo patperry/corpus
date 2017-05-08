@@ -70,6 +70,7 @@ static long double POWERS_OF_5[] = {	// Binary powers of 5. Entry is
 	8.6361685550944446253864e+178L
 };
 
+
 /**
  * Format:
  *
@@ -107,7 +108,7 @@ double strntod_c(const char *string, size_t maxlen, char **endPtr)
 	double dblExp2;
 	const char *p;
 	const char *end = string + maxlen;
-	uint_fast8_t c;
+	char c;
 	int exp;		/* Exponent read from "EX" field. */
 	int fracExp;		/* Exponent that derives from the fractional
 				 * part.  Under normal circumstances, it is
@@ -182,7 +183,7 @@ double strntod_c(const char *string, size_t maxlen, char **endPtr)
 		fracExp = decPt - mantSize;
 	}
 	if (mantSize == 0) {
-		fraction = 0.0;
+		fraction = 0;
 		p = string;
 		goto done;
 	} else {
@@ -214,7 +215,7 @@ double strntod_c(const char *string, size_t maxlen, char **endPtr)
 				c = *p;
 				p += 1;
 			}
-			frac = 10 * frac + (c - '0');
+			frac = 10 * frac + (unsigned)(c - '0');
 		}
 		fraction = (long double)frac;
 	}
@@ -278,8 +279,8 @@ double strntod_c(const char *string, size_t maxlen, char **endPtr)
 			exp = MAX_EXPONENT;
 			errno = ERANGE;
 		}
-		dblExp2 = 1.0;
-		dblExp5 = 1.0;
+		dblExp2 = 1;
+		dblExp5 = 1;
 		for (i = 0; exp != 0; exp >>= 1, i += 1) {
 			if (exp & 0x01) {
 				dblExp2 *= POWERS_OF_2[i];
@@ -288,10 +289,10 @@ double strntod_c(const char *string, size_t maxlen, char **endPtr)
 		}
 		if (expSign) {
 			fraction /= dblExp5;
-			fraction /= dblExp2;
+			fraction /= (long double)dblExp2;
 		} else {
 			fraction *= dblExp5;
-			fraction *= dblExp2;
+			fraction *= (long double)dblExp2;
 		}
 	}
 
@@ -301,7 +302,7 @@ done:
 	}
 
 	if (sign) {
-		return -fraction;
+		return (double)-fraction;
 	}
-	return fraction;
+	return (double)fraction;
 }

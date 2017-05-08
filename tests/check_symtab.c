@@ -163,6 +163,7 @@ int add_token(const struct text *tok)
 		type_id = tab.tokens[token_id].type_id;
 		type_ntoken = tab.types[type_id].ntoken;
 	} else {
+		type_id = -1;
 		type_ntoken = 0;
 	}
 

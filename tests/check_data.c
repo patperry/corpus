@@ -200,8 +200,8 @@ int Array(int length, int element_id)
 
 int Record(int nfield, ...)
 {
-	int *name_ids = alloc(nfield * sizeof(*name_ids));
-	int *type_ids = alloc(nfield * sizeof(*type_ids));
+	int *name_ids = alloc((size_t)nfield * sizeof(*name_ids));
+	int *type_ids = alloc((size_t)nfield * sizeof(*type_ids));
 	const char *name_str;
 	int i, id;
 	va_list ap;
@@ -405,7 +405,7 @@ START_TEST(test_decode_zero)
 {
 	ck_assert(decode_double("0") == 0);
 	ck_assert(decode_double("-0") == 0);
-	ck_assert(copysign(1, decode_double("-0") == -1));
+	ck_assert(copysign(1, decode_double("-0")) == -1);
 
 	// https://bugs.r-project.org/bugzilla/show_bug.cgi?id=15976
 	ck_assert(decode_double("0E4932") == 0);

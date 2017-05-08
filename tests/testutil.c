@@ -48,7 +48,7 @@ void *alloc(size_t size)
 {
 	void *ptr;
 
-	allocs = realloc(allocs, (nalloc + 1) * sizeof(*allocs));
+	allocs = realloc(allocs, (size_t)(nalloc + 1) * sizeof(*allocs));
 	ck_assert(allocs);
 
 	ptr = malloc(size);

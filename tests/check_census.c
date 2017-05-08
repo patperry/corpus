@@ -80,8 +80,8 @@ void clear()
 void sort()
 {
 	int nval = census.nitem;
-	double *vals = alloc(nval * sizeof(double));
-	int *inds = alloc(nval * sizeof(int));
+	double *vals = alloc((size_t)nval * sizeof(double));
+	int *inds = alloc((size_t)nval * sizeof(int));
 	double val;
 	int i, j;
 
@@ -211,7 +211,7 @@ START_TEST(test_sort_random)
 	double val;
 
 	for (seed = 0; seed < nseed; seed++) {
-		srand(seed);
+		srand((unsigned)seed);
 		clear();
 
 		for (i = 0; i < 2 * nseed; i++) {

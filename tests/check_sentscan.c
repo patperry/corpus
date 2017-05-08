@@ -170,7 +170,7 @@ void setup_unicode(void)
 		case '#':
 			comment = &test->comment[0];
 			do {
-				*comment++ = ch;
+				*comment++ = (char)ch;
 				ch = fgetc(file);
 			} while (ch != EOF && ch != '\n');
 			*comment = '\0';
@@ -184,7 +184,7 @@ void setup_unicode(void)
 
 			test->line = line;
 			test->is_ascii = is_ascii;
-			test->text.attr = dst - test->text.ptr;
+			test->text.attr = (size_t)(dst - test->text.ptr);
 			if (!is_ascii) {
 				test->text.attr |= TEXT_UTF8_BIT;
 			}

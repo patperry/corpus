@@ -106,7 +106,7 @@ void setup_normalization(void)
 	uint32_t *dst;
 	unsigned *lenp;
 	char *comment;
-	char ch;
+	int ch;
 
 	file = fopen(NORMALIZATION_TEST, "r");
 	if (!file) {
@@ -134,7 +134,7 @@ void setup_normalization(void)
 		case '#':
 			comment = &test->comment[0];
 			do {
-				*comment++ = ch;
+				*comment++ = (char)ch;
 				ch = fgetc(file);
 			} while (ch != EOF && ch != '\n');
 			*comment = '\0';
@@ -452,7 +452,7 @@ START_TEST(test_normalize_nfd)
 			unicode_map(0, code, &dst);
 		}
 
-		len = dst - buf;
+		len = (unsigned)(dst - buf);
 		ck_assert_int_eq(len, test->nfd_len);
 
 		unicode_order(buf, len);
@@ -485,7 +485,7 @@ START_TEST(test_normalize_nfkd)
 			unicode_map(UDECOMP_ALL, code, &dst);
 		}
 
-		len = dst - buf;
+		len = (unsigned)(dst - buf);
 		ck_assert_int_eq(len, test->nfkd_len);
 
 		unicode_order(buf, len);
@@ -517,12 +517,12 @@ START_TEST(test_normalize_nfc)
 			code = test->source[j];
 			unicode_map(0, code, &dst);
 		}
-		len = dst - buf;
+		len = (size_t)(dst - buf);
 
 		unicode_order(buf, len);
 		unicode_compose(buf, &len);
 
-		ck_assert_int_eq(len, test->nfc_len);
+		ck_assert_uint_eq(len, test->nfc_len);
 
 		for (j = 0; j < test->nfc_len; j++) {
 			if (buf[j] != test->nfc[j]) {
@@ -551,12 +551,12 @@ START_TEST(test_normalize_nfkc)
 			code = test->source[j];
 			unicode_map(UDECOMP_ALL, code, &dst);
 		}
-		len = dst - buf;
+		len = (size_t)(dst - buf);
 
 		unicode_order(buf, len);
 		unicode_compose(buf, &len);
 
-		ck_assert_int_eq(len, test->nfkc_len);
+		ck_assert_uint_eq(len, test->nfkc_len);
 
 		for (j = 0; j < test->nfkc_len; j++) {
 			if (buf[j] != test->nfkc[j]) {

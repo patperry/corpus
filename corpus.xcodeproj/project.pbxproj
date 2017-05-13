@@ -14,7 +14,6 @@
 		88351CEC1E8DB64F001DA3A8 /* text.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CDF1E8DB64F001DA3A8 /* text.c */; };
 		88351CED1E8DB64F001DA3A8 /* token.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CE11E8DB64F001DA3A8 /* token.c */; };
 		88351CEE1E8DB64F001DA3A8 /* unicode.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CE31E8DB64F001DA3A8 /* unicode.c */; };
-		88351CEF1E8DB64F001DA3A8 /* xalloc.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CE51E8DB64F001DA3A8 /* xalloc.c */; };
 		884A369C1E8EE3DF00465CE7 /* data.c in Sources */ = {isa = PBXBuildFile; fileRef = 884A36971E8EE3DF00465CE7 /* data.c */; };
 		884A369D1E8EE3DF00465CE7 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 884A36991E8EE3DF00465CE7 /* main.c */; };
 		884A36A11E8EE43500465CE7 /* strntod_c.c in Sources */ = {isa = PBXBuildFile; fileRef = 884A36A01E8EE43500465CE7 /* strntod_c.c */; };
@@ -66,6 +65,7 @@
 		88CD84741EBB7FCA00DF50CB /* stem_UTF_8_swedish.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CD844A1EBB7FA000DF50CB /* stem_UTF_8_swedish.c */; };
 		88CD84751EBB7FCA00DF50CB /* stem_UTF_8_tamil.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CD844C1EBB7FA000DF50CB /* stem_UTF_8_tamil.c */; };
 		88CD84761EBB7FCA00DF50CB /* stem_UTF_8_turkish.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CD844E1EBB7FA000DF50CB /* stem_UTF_8_turkish.c */; };
+		88E48C9D1EC76E17007F5449 /* memory.c in Sources */ = {isa = PBXBuildFile; fileRef = 88E48C9B1EC76E17007F5449 /* memory.c */; };
 		88EA69C91EAF923D00D57BEB /* error.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EA69C41EAF923D00D57BEB /* error.c */; };
 		88EA69CA1EAF923D00D57BEB /* main_sentences.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EA69C61EAF923D00D57BEB /* main_sentences.c */; };
 		88EA69CB1EAF923D00D57BEB /* render.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EA69C71EAF923D00D57BEB /* render.c */; };
@@ -82,7 +82,6 @@
 		88EA69E41EAF94DE00D57BEB /* token.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CE11E8DB64F001DA3A8 /* token.c */; };
 		88EA69E51EAF94DE00D57BEB /* unicode.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CE31E8DB64F001DA3A8 /* unicode.c */; };
 		88EA69E61EAF94DE00D57BEB /* wordscan.c in Sources */ = {isa = PBXBuildFile; fileRef = 886533631E958CA60089FD91 /* wordscan.c */; };
-		88EA69E71EAF94DE00D57BEB /* xalloc.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CE51E8DB64F001DA3A8 /* xalloc.c */; };
 		88EA69E81EAF94E400D57BEB /* testutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CF61E8DB6BB001DA3A8 /* testutil.c */; };
 		88EA69E91EAF94F200D57BEB /* strntod_c.c in Sources */ = {isa = PBXBuildFile; fileRef = 884A36A01E8EE43500465CE7 /* strntod_c.c */; };
 		88EA69EA1EAF94F500D57BEB /* strntoimax.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EE9C811E9000BB00B1FEBA /* strntoimax.c */; };
@@ -127,8 +126,6 @@
 		88351CE21E8DB64F001DA3A8 /* token.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = token.h; path = src/token.h; sourceTree = "<group>"; };
 		88351CE31E8DB64F001DA3A8 /* unicode.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = unicode.c; path = src/unicode.c; sourceTree = "<group>"; };
 		88351CE41E8DB64F001DA3A8 /* unicode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = unicode.h; path = src/unicode.h; sourceTree = "<group>"; };
-		88351CE51E8DB64F001DA3A8 /* xalloc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = xalloc.c; path = src/xalloc.c; sourceTree = "<group>"; };
-		88351CE61E8DB64F001DA3A8 /* xalloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xalloc.h; path = src/xalloc.h; sourceTree = "<group>"; };
 		88351CF01E8DB677001DA3A8 /* casefold.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = casefold.h; path = src/unicode/casefold.h; sourceTree = "<group>"; };
 		88351CF11E8DB677001DA3A8 /* combining.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = combining.h; path = src/unicode/combining.h; sourceTree = "<group>"; };
 		88351CF21E8DB677001DA3A8 /* decompose.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = decompose.h; path = src/unicode/decompose.h; sourceTree = "<group>"; };
@@ -194,6 +191,8 @@
 		88CD844E1EBB7FA000DF50CB /* stem_UTF_8_turkish.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = stem_UTF_8_turkish.c; path = lib/libstemmer_c/src_c/stem_UTF_8_turkish.c; sourceTree = "<group>"; };
 		88CD844F1EBB7FA000DF50CB /* stem_UTF_8_turkish.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stem_UTF_8_turkish.h; path = lib/libstemmer_c/src_c/stem_UTF_8_turkish.h; sourceTree = "<group>"; };
 		88CD84771EBB800200DF50CB /* modules_utf8.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = modules_utf8.h; path = lib/libstemmer_c/libstemmer/modules_utf8.h; sourceTree = "<group>"; };
+		88E48C9B1EC76E17007F5449 /* memory.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = memory.c; path = src/memory.c; sourceTree = "<group>"; };
+		88E48C9C1EC76E17007F5449 /* memory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = memory.h; path = src/memory.h; sourceTree = "<group>"; };
 		88EA69C41EAF923D00D57BEB /* error.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = error.c; path = src/error.c; sourceTree = "<group>"; };
 		88EA69C51EAF923D00D57BEB /* error.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = error.h; path = src/error.h; sourceTree = "<group>"; };
 		88EA69C61EAF923D00D57BEB /* main_sentences.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main_sentences.c; path = src/main_sentences.c; sourceTree = "<group>"; };
@@ -270,6 +269,8 @@
 				88B565B91E96D4CE00FC9AEF /* main_scan.c */,
 				88EA69C61EAF923D00D57BEB /* main_sentences.c */,
 				88B565BA1E96D4CE00FC9AEF /* main_tokens.c */,
+				88E48C9B1EC76E17007F5449 /* memory.c */,
+				88E48C9C1EC76E17007F5449 /* memory.h */,
 				88EA69C71EAF923D00D57BEB /* render.c */,
 				88EA69C81EAF923D00D57BEB /* render.h */,
 				88B565BB1E96D4CE00FC9AEF /* sentscan.c */,
@@ -286,8 +287,6 @@
 				88351CE41E8DB64F001DA3A8 /* unicode.h */,
 				886533631E958CA60089FD91 /* wordscan.c */,
 				886533641E958CA60089FD91 /* wordscan.h */,
-				88351CE51E8DB64F001DA3A8 /* xalloc.c */,
-				88351CE61E8DB64F001DA3A8 /* xalloc.h */,
 			);
 			name = src;
 			sourceTree = "<group>";
@@ -525,13 +524,13 @@
 				88351CEE1E8DB64F001DA3A8 /* unicode.c in Sources */,
 				88EA69CA1EAF923D00D57BEB /* main_sentences.c in Sources */,
 				88EE9C821E9000BB00B1FEBA /* strntoimax.c in Sources */,
+				88E48C9D1EC76E17007F5449 /* memory.c in Sources */,
 				884F5CAD1EBA67EE00DA1C24 /* census.c in Sources */,
 				88351CEC1E8DB64F001DA3A8 /* text.c in Sources */,
 				88CD84531EBB7FA000DF50CB /* stem_UTF_8_english.c in Sources */,
 				88CD84501EBB7FA000DF50CB /* stem_UTF_8_arabic.c in Sources */,
 				88CD84571EBB7FA000DF50CB /* stem_UTF_8_hungarian.c in Sources */,
 				88CD84561EBB7FA000DF50CB /* stem_UTF_8_german.c in Sources */,
-				88351CEF1E8DB64F001DA3A8 /* xalloc.c in Sources */,
 				88351CE91E8DB64F001DA3A8 /* filebuf.c in Sources */,
 				884A369C1E8EE3DF00465CE7 /* data.c in Sources */,
 				88CD845C1EBB7FA000DF50CB /* stem_UTF_8_romanian.c in Sources */,
@@ -562,7 +561,6 @@
 				88EA69E01EAF94DE00D57BEB /* sentscan.c in Sources */,
 				88EA69DA1EAF94C200D57BEB /* array.c in Sources */,
 				88CD84641EBB7FB400DF50CB /* utilities.c in Sources */,
-				88EA69E71EAF94DE00D57BEB /* xalloc.c in Sources */,
 				88CD846B1EBB7FCA00DF50CB /* stem_UTF_8_german.c in Sources */,
 				88EA69E81EAF94E400D57BEB /* testutil.c in Sources */,
 				88EA69E11EAF94DE00D57BEB /* symtab.c in Sources */,

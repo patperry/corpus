@@ -17,14 +17,13 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdlib.h>
 #include <string.h>
 #include "array.h"
 #include "error.h"
+#include "memory.h"
 #include "table.h"
 #include "text.h"
 #include "token.h"
-#include "xalloc.h"
 #include "symtab.h"
 
 static int symtab_grow_tokens(struct symtab *tab, int nadd);
@@ -77,8 +76,8 @@ error_typemap:
 void symtab_destroy(struct symtab *tab)
 {
 	symtab_clear(tab);
-	free(tab->tokens);
-	free(tab->types);
+	corpus_free(tab->tokens);
+	corpus_free(tab->types);
 	table_destroy(&tab->token_table);
 	table_destroy(&tab->type_table);
 	typemap_destroy(&tab->typemap);
@@ -97,7 +96,7 @@ void symtab_clear(struct symtab *tab)
 
 	while (ntype-- > 0) {
 		text_destroy(&tab->types[ntype].text);
-		free(tab->types[ntype].token_ids);
+		corpus_free(tab->types[ntype].token_ids);
 	}
 	tab->ntype = 0;
 
@@ -371,8 +370,9 @@ int type_add_token(struct symtab_type *typ, int tok_id)
 	int *tok_ids = typ->token_ids;
 	int ntok = typ->ntoken;
 
-	if (!(tok_ids = xrealloc(tok_ids,
-				 (size_t)(ntok + 1) * sizeof(*tok_ids)))) {
+	tok_ids = corpus_realloc(tok_ids,
+				 (size_t)(ntok + 1) * sizeof(*tok_ids));
+	if (!tok_ids) {
 		return ERROR_NOMEM;
 	}
 

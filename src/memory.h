@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef XALLOC_H
-#define XALLOC_H
+#ifndef CORPUS_MEMORY_H
+#define CORPUS_MEMORY_H
 
 /**
- * \file xalloc.h
+ * \file memory.h
  *
- * Replacement functions for the stdlib memory allocation routines.
- * Unlike the stdlib functions, on an allocation failure these will
- * log the error and call #xalloc_fail_func. Memory returned by these
- * functions can be freed with `free`.
+ * Memory allocation routines.  * Unlike the stdlib functions, on an
+ * allocation failure these will log the error and call
+ * #corpus_alloc_fail_func.
+ * Memory returned by these functions can be freed with `free`.
  */
 
 #include <stddef.h>
@@ -32,26 +32,31 @@
  * If non-`NULL`, this function gets called after an allocation failure.
  * Initialized to `NULL`.
  */
-extern void (*xalloc_fail_func) (void);
+extern void (*corpus_alloc_fail_func) (void);
 
 /**
  * Replacement for `calloc`.
  */
-void *xcalloc(size_t count, size_t size);
+void *corpus_calloc(size_t count, size_t size);
+
+/**
+ * Replacement for `free`.
+ */
+void corpus_free(void *ptr);
 
 /**
  * Replacement for `malloc`.
  */
-void *xmalloc(size_t size);
+void *corpus_malloc(size_t size);
 
 /**
  * Replacement for `realloc`.
  */
-void *xrealloc(void *ptr, size_t size);
+void *corpus_realloc(void *ptr, size_t size);
 
 /**
  * Replacement for `strdup`.
  */
-char *xstrdup(const char *s1);
+char *corpus_strdup(const char *s1);
 
-#endif /* XALLOC_H */
+#endif /* CORPUS_MEMORY_H */

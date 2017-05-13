@@ -17,11 +17,10 @@
 #include <ctype.h>
 #include <inttypes.h>
 #include <stdint.h>
-#include <stdlib.h>
 #include <string.h>
 #include "error.h"
+#include "memory.h"
 #include "unicode.h"
-#include "xalloc.h"
 #include "text.h"
 
 /* http://stackoverflow.com/a/11986885 */
@@ -44,7 +43,7 @@ int text_init_copy(struct text *text, const struct text *other)
         size_t attr = other->attr;
 	int err;
 
-        if (!(text->ptr = xmalloc(size + 1))) {
+        if (!(text->ptr = corpus_malloc(size + 1))) {
                 err = ERROR_NOMEM;
                 logmsg(err, "failed allocating text object");
                 return err;
@@ -59,7 +58,7 @@ int text_init_copy(struct text *text, const struct text *other)
 
 void text_destroy(struct text *text)
 {
-        free(text->ptr);
+        corpus_free(text->ptr);
 }
 
 

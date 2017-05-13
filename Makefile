@@ -38,7 +38,7 @@ CORPUS_A = libcorpus.a
 LIB_O	= lib/strntod_c.o lib/strntoimax.o src/array.o src/census.o \
 	  src/data.o src/datatype.o src/error.o src/filebuf.o src/render.o \
 	  src/sentscan.o src/symtab.o src/table.o src/text.o src/token.o \
-	  src/unicode.o src/wordscan.o src/xalloc.o
+	  src/unicode.o src/wordscan.o src/memory.o
 
 STEMMER = lib/libstemmer_c
 STEMMER_O = $(STEMMER)/src_c/stem_UTF_8_arabic.o \
@@ -227,16 +227,16 @@ tests/%.o: tests/%.c
 .PHONY: all check clean data doc
 
 
-src/array.o: src/array.c src/error.h src/xalloc.h src/array.h
-src/census.o: src/census.c src/array.h src/error.h src/table.h \
-	src/xalloc.h src/census.h
+src/array.o: src/array.c src/error.h src/memory.h src/array.h
+src/census.o: src/census.c src/array.h src/error.h src/memory.h src/table.h \
+	src/census.h
 src/data.o: src/data.c src/error.h src/table.h src/text.h src/token.h \
 	src/symtab.h src/datatype.h src/data.h
-src/datatype.o: src/datatype.c src/array.h src/error.h src/render.h \
-	src/table.h src/text.h src/token.h src/symtab.h src/xalloc.h \
+src/datatype.o: src/datatype.c src/array.h src/error.h src/memory.h \
+	src/render.h src/table.h src/text.h src/token.h src/symtab.h \
 	src/data.h src/datatype.h
 src/error.o: src/error.c src/error.h
-src/filebuf.o: src/filebuf.c src/error.h src/xalloc.h src/filebuf.h
+src/filebuf.o: src/filebuf.c src/error.h src/memory.h src/filebuf.h
 src/main.o: src/main.c src/error.h src/filebuf.h src/table.h src/text.h \
 	src/token.h src/symtab.h src/datatype.h
 src/main_get.o: src/main_get.c src/error.h src/filebuf.h src/table.h \
@@ -248,22 +248,22 @@ src/main_sentences.o: src/main_sentences.c src/error.h src/filebuf.h \
 src/main_tokens.o: src/main_tokens.c src/error.h src/filebuf.h src/table.h \
 	src/text.h src/token.h src/symtab.h src/data.h src/datatype.h \
 	src/wordscan.h
-src/render.o: src/render.c src/array.h src/error.h src/text.h \
-	src/unicode.h src/xalloc.h src/render.h
+src/memory.o: src/memory.c src/memory.h
+src/render.o: src/render.c src/array.h src/error.h src/memory.h src/text.h \
+	src/unicode.h src/render.h
 src/sentscan.o: src/sentscan.c src/text.h src/unicode/sentbreakprop.h \
 	src/sentscan.h
-src/symtab.o: src/symtab.c src/array.h src/error.h src/table.h src/text.h \
-	src/token.h src/xalloc.h src/symtab.h
-src/table.o: src/table.c src/error.h src/xalloc.h src/table.h
-src/text.o: src/text.c src/error.h src/unicode.h src/xalloc.h src/text.h
-src/token.o: src/token.c src/error.h src/text.h src/unicode.h src/xalloc.h \
+src/symtab.o: src/symtab.c src/array.h src/error.h src/memory.h src/table.h \
+	src/text.h src/token.h src/symtab.h
+src/table.o: src/table.c src/error.h src/memory.h src/table.h
+src/text.o: src/text.c src/error.h src/memory.h src/unicode.h src/text.h
+src/token.o: src/token.c src/error.h src/memory.h src/text.h src/unicode.h \
 	src/token.h
 src/unicode.o: src/unicode.c src/unicode/casefold.h src/unicode/combining.h \
 	src/unicode/compose.h src/unicode/decompose.h src/error.h \
 	src/unicode.h
 src/wordscan.o: src/wordscan.c src/text.h src/unicode/wordbreakprop.h \
 	src/wordscan.h
-src/xalloc.o: src/xalloc.c src/xalloc.h
 
 tests/check_census.o: tests/check_census.c src/table.h src/census.h \
 	tests/testutil.h

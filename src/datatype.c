@@ -22,12 +22,12 @@
 #include <string.h>
 #include "array.h"
 #include "error.h"
+#include "memory.h"
 #include "render.h"
 #include "table.h"
 #include "text.h"
 #include "token.h"
 #include "symtab.h"
-#include "xalloc.h"
 #include "data.h"
 #include "datatype.h"
 
@@ -102,8 +102,8 @@ int schema_buffer_init(struct schema_buffer *buf)
 
 void schema_buffer_destroy(struct schema_buffer *buf)
 {
-	free(buf->name_ids);
-	free(buf->type_ids);
+	corpus_free(buf->name_ids);
+	corpus_free(buf->type_ids);
 }
 
 
@@ -122,7 +122,8 @@ int schema_buffer_grow(struct schema_buffer *buf, int nadd)
 	buf->type_ids = tbase;
 
 	if (size) {
-		if (!(nbase = xrealloc(nbase, (size_t)size * sizeof(*nbase)))) {
+		nbase = corpus_realloc(nbase, (size_t)size * sizeof(*nbase));
+		if (!nbase) {
 			err = ERROR_NOMEM;
 			logmsg(err, "failed allocating schema buffer");
 			return err;
@@ -145,7 +146,7 @@ int sorter_init(struct schema_sorter *sort)
 
 void sorter_destroy(struct schema_sorter *sort)
 {
-	free(sort->idptrs);
+	corpus_free(sort->idptrs);
 }
 
 
@@ -229,7 +230,7 @@ int schema_init(struct schema *s)
 
 	// initialize primitive types
 	n = NUM_ATOMIC;
-	if (!(s->types = xmalloc((size_t)n * sizeof(*s->types)))) {
+	if (!(s->types = corpus_malloc((size_t)n * sizeof(*s->types)))) {
 		goto error_types;
 	}
 	s->ntype = n;
@@ -262,7 +263,7 @@ void schema_destroy(struct schema *s)
 {
 	schema_clear(s);
 
-	free(s->types);
+	corpus_free(s->types);
 	symtab_destroy(&s->names);
 	table_destroy(&s->records);
 	table_destroy(&s->arrays);
@@ -279,8 +280,8 @@ void schema_clear(struct schema *s)
 	while (i-- > 0) {
 		t = &s->types[i];
 		if (t->kind == DATATYPE_RECORD) {
-			free(t->meta.record.name_ids);
-			free(t->meta.record.type_ids);
+			corpus_free(t->meta.record.name_ids);
+			corpus_free(t->meta.record.type_ids);
 		}
 	}
 	s->ntype = NUM_ATOMIC;
@@ -560,13 +561,13 @@ sorted:
 		t->meta.record.type_ids = NULL;
 		t->meta.record.name_ids = NULL;
 	} else {
-		t->meta.record.type_ids = xmalloc((size_t)nfield
+		t->meta.record.type_ids = corpus_malloc((size_t)nfield
 							* sizeof(*type_ids));
-		t->meta.record.name_ids = xmalloc((size_t)nfield
+		t->meta.record.name_ids = corpus_malloc((size_t)nfield
 							* sizeof(*name_ids));
 		if (!t->meta.record.type_ids || !t->meta.record.type_ids) {
-			free(t->meta.record.type_ids);
-			free(t->meta.record.name_ids);
+			corpus_free(t->meta.record.type_ids);
+			corpus_free(t->meta.record.name_ids);
 			err = ERROR_NOMEM;
 			goto error;
 		}

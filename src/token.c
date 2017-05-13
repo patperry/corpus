@@ -18,13 +18,12 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
-#include <stdlib.h>
 #include <string.h>
 #include "../lib/libstemmer_c/include/libstemmer.h"
 #include "error.h"
+#include "memory.h"
 #include "text.h"
 #include "unicode.h"
-#include "xalloc.h"
 #include "token.h"
 
 
@@ -79,8 +78,8 @@ out:
 
 void typemap_destroy(struct typemap *map)
 {
-	free(map->codes);
-	free(map->type.ptr);
+	corpus_free(map->codes);
+	corpus_free(map->type.ptr);
 	if (map->stemmer) {
 		sb_stemmer_delete(map->stemmer);
 	}
@@ -160,12 +159,12 @@ int typemap_reserve(struct typemap *map, size_t size)
 		return 0;
 	}
 
-	if (!(ptr = xrealloc(ptr, size))) {
+	if (!(ptr = corpus_realloc(ptr, size))) {
 		goto error_nomem;
 	}
 	map->type.ptr = ptr;
 
-	if (!(codes = xrealloc(codes, size * UNICODE_DECOMP_MAX))) {
+	if (!(codes = corpus_realloc(codes, size * UNICODE_DECOMP_MAX))) {
 		goto error_nomem;
 	}
 	map->codes = codes;

@@ -25,7 +25,7 @@
 #include <string.h>
 
 #include "error.h"
-#include "xalloc.h"
+#include "memory.h"
 #include "filebuf.h"
 
 
@@ -43,7 +43,7 @@ int filebuf_init(struct filebuf *buf, const char *file_name)
 
 	assert(file_name);
 
-	if (!(buf->file_name = xstrdup(file_name))) {
+	if (!(buf->file_name = corpus_strdup(file_name))) {
 		err = ERROR_NOMEM;
 		logmsg(err, "failed copying file name (%s)", file_name);
 		goto strdup_fail;
@@ -106,7 +106,7 @@ view_fail:
 mapping_fail:
 	CloseHandle(handle);
 open_fail:
-	free(buf->file_name);
+	corpus_free(buf->file_name);
 strdup_fail:
 	logmsg(err, "failed initializing file buffer");
 out:
@@ -120,7 +120,7 @@ void filebuf_destroy(struct filebuf *buf)
 		UnmapViewOfFile(buf->map_addr);
 	}
 	CloseHandle((HANDLE)buf->handle);
-	free(buf->file_name);
+	corpus_free(buf->file_name);
 }
 
 
@@ -140,7 +140,7 @@ int filebuf_init(struct filebuf *buf, const char *file_name)
 
 	assert(file_name);
 
-	if (!(buf->file_name = xstrdup(file_name))) {
+	if (!(buf->file_name = corpus_strdup(file_name))) {
 		err = ERROR_NOMEM;
 		logmsg(err, "failed copying file name (%s)", file_name);
 		goto strdup_fail;
@@ -195,7 +195,7 @@ mmap_fail:
 fstat_fail:
 	close((int)buf->handle);
 open_fail:
-	free(buf->file_name);
+	corpus_free(buf->file_name);
 strdup_fail:
 	logmsg(err, "failed initializing file buffer");
 out:
@@ -213,7 +213,7 @@ void filebuf_destroy(struct filebuf *buf)
 	}
 
 	close((int)buf->handle);
-	free(buf->file_name);
+	corpus_free(buf->file_name);
 }
 
 

@@ -20,13 +20,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include "error.h"
-#include "xalloc.h"
+#include "memory.h"
 
 
-void (*xalloc_fail_func) (void) = NULL;
+void (*corpus_alloc_fail_func) (void) = NULL;
 
 
-void *xcalloc(size_t count, size_t size)
+void *corpus_calloc(size_t count, size_t size)
 {
 	void *mem = calloc(count, size);
 
@@ -35,8 +35,8 @@ void *xcalloc(size_t count, size_t size)
 		       "failed to allocate %"PRIu64" objects of size %"PRIu64,
 		       (uint64_t)count, (uint64_t)size);
 
-		if (xalloc_fail_func) {
-			xalloc_fail_func();
+		if (corpus_alloc_fail_func) {
+			corpus_alloc_fail_func();
 		}
 	}
 
@@ -44,7 +44,13 @@ void *xcalloc(size_t count, size_t size)
 }
 
 
-void *xmalloc(size_t size)
+void corpus_free(void *ptr)
+{
+	free(ptr);
+}
+
+
+void *corpus_malloc(size_t size)
 {
 	void *mem = malloc(size);
 
@@ -52,8 +58,8 @@ void *xmalloc(size_t size)
 		logmsg(ERROR_NOMEM, "failed to allocate %"PRIu64" bytes",
 			(uint64_t)size);
 
-		if (xalloc_fail_func) {
-			xalloc_fail_func();
+		if (corpus_alloc_fail_func) {
+			corpus_alloc_fail_func();
 		}
 	}
 
@@ -61,7 +67,7 @@ void *xmalloc(size_t size)
 }
 
 
-void *xrealloc(void *ptr, size_t size)
+void *corpus_realloc(void *ptr, size_t size)
 {
 	void *mem = realloc(ptr, size);
 
@@ -69,8 +75,8 @@ void *xrealloc(void *ptr, size_t size)
 		logmsg(ERROR_NOMEM, "failed to allocate %"PRIu64" bytes",
 			(uint64_t)size);
 
-		if (xalloc_fail_func) {
-			xalloc_fail_func();
+		if (corpus_alloc_fail_func) {
+			corpus_alloc_fail_func();
 		}
 	}
 
@@ -78,12 +84,12 @@ void *xrealloc(void *ptr, size_t size)
 }
 
 
-char *xstrdup(const char *s1)
+char *corpus_strdup(const char *s1)
 {
 	size_t n = strlen(s1);
 	char *s;
 
-	if (!(s = xmalloc(n + 1))) {
+	if (!(s = corpus_malloc(n + 1))) {
 		return NULL;
 	}
 

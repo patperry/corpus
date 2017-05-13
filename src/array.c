@@ -19,7 +19,7 @@
 #include <limits.h>
 #include <stdint.h>
 #include "error.h"
-#include "xalloc.h"
+#include "memory.h"
 #include "array.h"
 
 
@@ -103,7 +103,7 @@ int array_grow(void **baseptr, int *sizeptr, size_t width, int count, int nadd)
 		assert((size_t)size <= SIZE_MAX / width);
 	}
 
-	if (!(base = xrealloc(base, ((size_t)size) * width))) {
+	if (!(base = corpus_realloc(base, ((size_t)size) * width))) {
 		err = ERROR_NOMEM;
 		logmsg(err, "failed allocating array");
 		return err;

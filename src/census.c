@@ -15,12 +15,12 @@
  */
 
 #include <math.h>
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include "array.h"
 #include "error.h"
+#include "memory.h"
 #include "table.h"
-#include "xalloc.h"
 #include "census.h"
 
 
@@ -52,8 +52,8 @@ out:
 
 void census_destroy(struct census *c)
 {
-	free(c->weights);
-	free(c->items);
+	corpus_free(c->weights);
+	corpus_free(c->items);
 	table_destroy(&c->table);
 }
 
@@ -203,7 +203,7 @@ int census_sort(struct census *c)
 		goto out;
 	}
 
-	if (!(array = xmalloc((size_t)n * sizeof(*array)))) {
+	if (!(array = corpus_malloc((size_t)n * sizeof(*array)))) {
 		err = ERROR_NOMEM;
 		logmsg(err, "failed allocating memory to sort census items");
 		goto out;
@@ -223,7 +223,7 @@ int census_sort(struct census *c)
 
 	census_rehash(c);
 
-	free(array);
+	corpus_free(array);
 	err = 0;
 out:
 	return err;
@@ -273,7 +273,7 @@ int census_grow(struct census *c, int nadd)
 	}
 	c->weights = wbase;
 
-	ibase = xrealloc(c->items, (size_t)size * sizeof(*c->items));
+	ibase = corpus_realloc(c->items, (size_t)size * sizeof(*c->items));
 	if (!ibase) {
 		err = ERROR_NOMEM;
 		logmsg(err, "failed growing census items array");

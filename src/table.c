@@ -18,9 +18,8 @@
 #include <limits.h>
 #include <inttypes.h>
 #include <stdint.h>
-#include <stdlib.h>
 #include "error.h"
-#include "xalloc.h"
+#include "memory.h"
 #include "table.h"
 
 /*
@@ -84,7 +83,7 @@ int table_init(struct table *tab)
 	assert(size >= TABLE_SIZE_MIN);
 	assert(size <= TABLE_SIZE_MAX);
 
-	if (!(tab->items = xmalloc(size * sizeof(*tab->items)))) {
+	if (!(tab->items = corpus_malloc(size * sizeof(*tab->items)))) {
 		goto error_nomem;
 	}
 
@@ -120,7 +119,8 @@ int table_reinit(struct table *tab, int min_capacity)
 			return err;
 		}
 
-		if (!(items = xrealloc(items, size * sizeof(*items)))) {
+		items = corpus_realloc(items, size * sizeof(*items));
+		if (!items) {
 			err = ERROR_NOMEM;
 			logmsg(err, "failed allocating table");
 			return err;
@@ -139,7 +139,7 @@ int table_reinit(struct table *tab, int min_capacity)
 
 void table_destroy(struct table *tab)
 {
-	free(tab->items);
+	corpus_free(tab->items);
 }
 
 

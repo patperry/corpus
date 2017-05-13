@@ -22,9 +22,9 @@
 #include <string.h>
 #include "array.h"
 #include "error.h"
+#include "memory.h"
 #include "text.h"
 #include "unicode.h"
-#include "xalloc.h"
 #include "render.h"
 
 
@@ -57,7 +57,7 @@ int render_init(struct render *r, int escape_flags)
 {
 	int err;
 
-	r->string = xmalloc(1);
+	r->string = corpus_malloc(1);
 	if (!r->string) {
 		err = ERROR_NOMEM;
 		logmsg(err, "failed initializing render object");
@@ -82,7 +82,7 @@ int render_init(struct render *r, int escape_flags)
 
 void render_destroy(struct render *r)
 {
-	free(r->string);
+	corpus_free(r->string);
 }
 
 

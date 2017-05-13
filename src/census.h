@@ -27,11 +27,11 @@
  * Census table.
  */
 struct census {
-	struct table table;	/**< hash table for items */
-	int *items;		/**< item keys */
-	double *weights;	/**< item weights */
-	int nitem;		/**< census size */
-	int nitem_max;		/**< census capacity */
+	struct corpus_table table;	/**< hash table for items */
+	int *items;			/**< item keys */
+	double *weights;		/**< item weights */
+	int nitem;			/**< census size */
+	int nitem_max;			/**< census capacity */
 };
 
 /**

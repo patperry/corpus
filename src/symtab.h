@@ -46,8 +46,8 @@ struct symtab_type {
 struct symtab {
 	struct typemap typemap;		/**< type map, for normalizing
 					  tokens to types */
-	struct table type_table;	/**< type hash table */
-	struct table token_table;	/**< token hash table */
+	struct corpus_table type_table;	/**< type hash table */
+	struct corpus_table token_table;/**< token hash table */
 	struct symtab_type *types;	/**< type array */
 	struct symtab_token *tokens;	/**< token array */
 	int ntype;			/**< type array length */

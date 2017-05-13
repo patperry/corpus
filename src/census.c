@@ -35,7 +35,7 @@ int census_init(struct census *c)
 {
 	int err;
 
-	if ((err = table_init(&c->table))) {
+	if ((err = corpus_table_init(&c->table))) {
 		logmsg(err, "failed initializing census");
 		goto out;
 	}
@@ -54,13 +54,13 @@ void census_destroy(struct census *c)
 {
 	corpus_free(c->weights);
 	corpus_free(c->items);
-	table_destroy(&c->table);
+	corpus_table_destroy(&c->table);
 }
 
 
 void census_clear(struct census *c)
 {
-	table_clear(&c->table);
+	corpus_table_clear(&c->table);
 	c->nitem = 0;
 }
 
@@ -94,7 +94,7 @@ int census_add(struct census *c, int item, double weight)
 
 	// grow the table if necessary
 	if (c->nitem == c->table.capacity) {
-		if ((err = table_reinit(&c->table, c->nitem + 1))) {
+		if ((err = corpus_table_reinit(&c->table, c->nitem + 1))) {
 			goto error;
 		}
 		rehash = 1;
@@ -232,13 +232,13 @@ out:
 
 int census_find(const struct census *c, int item, int *indexptr)
 {
-	struct table_probe probe;
+	struct corpus_table_probe probe;
 	unsigned hash = item_hash(item);
 	int index = -1;
 	int found;
 
-	table_probe_make(&probe, &c->table, hash);
-	while (table_probe_advance(&probe)) {
+	corpus_table_probe_make(&probe, &c->table, hash);
+	while (corpus_table_probe_advance(&probe)) {
 		index = probe.current;
 		if (c->items[index] == item) {
 			found = 1;
@@ -293,11 +293,11 @@ void census_rehash(struct census *c)
 	int item, i, n = c->nitem;
 	unsigned hash;
 
-	table_clear(&c->table);
+	corpus_table_clear(&c->table);
 	for (i = 0; i < n; i++) {
 		item = c->items[i];
 		hash = item_hash(item);
-		table_add(&c->table, hash, i);
+		corpus_table_add(&c->table, hash, i);
 	}
 }
 

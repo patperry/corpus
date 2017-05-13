@@ -43,12 +43,12 @@ int symtab_init(struct symtab *tab, int type_kind, const char *stemmer)
 		goto error_typemap;
 	}
 
-	if ((err = table_init(&tab->type_table))) {
+	if ((err = corpus_table_init(&tab->type_table))) {
 		logmsg(err, "failed allocating type table");
 		goto error_type_table;
 	}
 
-	if ((err = table_init(&tab->token_table))) {
+	if ((err = corpus_table_init(&tab->token_table))) {
 		logmsg(err, "failed allocating token table");
 		goto error_token_table;
 	}
@@ -64,7 +64,7 @@ int symtab_init(struct symtab *tab, int type_kind, const char *stemmer)
 	return 0;
 
 error_token_table:
-	table_destroy(&tab->type_table);
+	corpus_table_destroy(&tab->type_table);
 error_type_table:
 	typemap_destroy(&tab->typemap);
 error_typemap:
@@ -78,8 +78,8 @@ void symtab_destroy(struct symtab *tab)
 	symtab_clear(tab);
 	corpus_free(tab->tokens);
 	corpus_free(tab->types);
-	table_destroy(&tab->token_table);
-	table_destroy(&tab->type_table);
+	corpus_table_destroy(&tab->token_table);
+	corpus_table_destroy(&tab->type_table);
 	typemap_destroy(&tab->typemap);
 }
 
@@ -100,21 +100,21 @@ void symtab_clear(struct symtab *tab)
 	}
 	tab->ntype = 0;
 
-	table_clear(&tab->token_table);
-	table_clear(&tab->type_table);
+	corpus_table_clear(&tab->token_table);
+	corpus_table_clear(&tab->type_table);
 }
 
 
 int symtab_has_token(const struct symtab *tab, const struct text *tok,
 		     int *idptr)
 {
-	struct table_probe probe;
+	struct corpus_table_probe probe;
 	unsigned hash = token_hash(tok);
 	int token_id = -1;
 	bool found = false;
 
-	table_probe_make(&probe, &tab->token_table, hash);
-	while (table_probe_advance(&probe)) {
+	corpus_table_probe_make(&probe, &tab->token_table, hash);
+	while (corpus_table_probe_advance(&probe)) {
 		token_id = probe.current;
 		if (token_equals(tok, &tab->tokens[token_id].text)) {
 			found = true;
@@ -134,13 +134,13 @@ out:
 int symtab_has_type(const struct symtab *tab, const struct text *typ,
 		    int *idptr)
 {
-	struct table_probe probe;
+	struct corpus_table_probe probe;
 	unsigned hash = token_hash(typ);
 	int type_id = -1;
 	bool found = false;
 
-	table_probe_make(&probe, &tab->type_table, hash);
-	while (table_probe_advance(&probe)) {
+	corpus_table_probe_make(&probe, &tab->type_table, hash);
+	while (corpus_table_probe_advance(&probe)) {
 		type_id = probe.current;
 		if (token_equals(typ, &tab->types[type_id].text)) {
 			found = true;
@@ -188,8 +188,8 @@ int symtab_add_token(struct symtab *tab, const struct text *tok, int *idptr)
 
 		// grow the token table if necessary
 		if (token_id == tab->token_table.capacity) {
-			if ((err = table_reinit(&tab->token_table,
-						token_id + 1))) {
+			if ((err = corpus_table_reinit(&tab->token_table,
+						       token_id + 1))) {
 				goto error;
 			}
 			rehash = true;
@@ -255,8 +255,8 @@ int symtab_add_type(struct symtab *tab, const struct text *typ, int *idptr)
 
 		// grow the type table if necessary
 		if (type_id == tab->type_table.capacity) {
-			if ((err = table_reinit(&tab->type_table,
-						type_id + 1))) {
+			if ((err = corpus_table_reinit(&tab->type_table,
+						       type_id + 1))) {
 				goto error;
 			}
 			rehash = true;
@@ -336,15 +336,15 @@ int symtab_grow_types(struct symtab *tab, int nadd)
 void symtab_rehash_tokens(struct symtab *tab)
 {
 	const struct symtab_token *tokens = tab->tokens;
-	struct table *token_table = &tab->token_table;
+	struct corpus_table *token_table = &tab->token_table;
 	int i, n = tab->ntoken;
 	unsigned hash;
 
-	table_clear(token_table);
+	corpus_table_clear(token_table);
 
 	for (i = 0; i < n; i++) {
 		hash = token_hash(&tokens[i].text);
-		table_add(token_table, hash, i);
+		corpus_table_add(token_table, hash, i);
 	}
 }
 
@@ -352,15 +352,15 @@ void symtab_rehash_tokens(struct symtab *tab)
 void symtab_rehash_types(struct symtab *tab)
 {
 	const struct symtab_type *types = tab->types;
-	struct table *type_table = &tab->type_table;
+	struct corpus_table *type_table = &tab->type_table;
 	int i, n = tab->ntype;
 	unsigned hash;
 
-	table_clear(type_table);
+	corpus_table_clear(type_table);
 
 	for (i = 0; i < n; i++) {
 		hash = token_hash(&types[i].text);
-		table_add(type_table, hash, i);
+		corpus_table_add(type_table, hash, i);
 	}
 }
 

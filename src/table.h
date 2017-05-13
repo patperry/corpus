@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TABLE_H
-#define TABLE_H
+#ifndef CORPUS_TABLE_H
+#define CORPUS_TABLE_H
 
 /**
  * \file table.h
@@ -24,12 +24,12 @@
  */
 
 /** Code for empty table cells. */
-#define TABLE_ITEM_EMPTY (-1)
+#define CORPUS_TABLE_ITEM_EMPTY (-1)
 
 /**
  * Hash table buckets.
  */
-struct table {
+struct corpus_table {
 	int *items;	/**< indices of the items in the table */
 	int capacity;	/**< maximum capacity of the table */
 	unsigned mask;	/**< bitwise mask for indexing into the `items` array */
@@ -38,8 +38,8 @@ struct table {
 /**
  * Hash table probe, for looking up items by their hash value.
  */
-struct table_probe {
-	const struct table *table; /**< the underlying table */
+struct corpus_table_probe {
+	const struct corpus_table *table; /**< the underlying table */
 	unsigned hash;		/**< starting hash value */
 	unsigned nprobe;	/**< number of previous probes */
 	int index;		/**< current index in the probe sequence */
@@ -53,7 +53,7 @@ struct table_probe {
  *
  * \returns 0 on success
  */
-int table_init(struct table *tab);
+int corpus_table_init(struct corpus_table *tab);
 
 /**
  * Replace a hash table with a new empty table with a given minimum capacity.
@@ -64,19 +64,19 @@ int table_init(struct table *tab);
  * \returns 0 on success; nonzero on failure. On failure, the `tab` object
  * is left unchanged.
  */
-int table_reinit(struct table *tab, int min_capacity);
+int corpus_table_reinit(struct corpus_table *tab, int min_capacity);
 
 /**
  * Release a hash table's resources.
  *
  * \param tab the table
  */
-void table_destroy(struct table *tab);
+void corpus_table_destroy(struct corpus_table *tab);
 
 /**
  * Set all hash table items to #TABLE_ITEM_EMPTY.
  */
-void table_clear(struct table *tab);
+void corpus_table_clear(struct corpus_table *tab);
 
 /**
  * Associate an item with the given hash code.
@@ -85,7 +85,7 @@ void table_clear(struct table *tab);
  * \param hash the hash code
  * \param item a non-negative item
  */
-void table_add(struct table *tab, unsigned hash, int item);
+void corpus_table_add(struct corpus_table *tab, unsigned hash, int item);
 
 /**
  * Start a new hash table probe at the given hash code.
@@ -94,14 +94,15 @@ void table_add(struct table *tab, unsigned hash, int item);
  * \param tab the hash table
  * \param hash the hash code
  */
-static inline void table_probe_make(struct table_probe *probe,
-			            const struct table *tab, unsigned hash)
+static inline void corpus_table_probe_make(struct corpus_table_probe *probe,
+					   const struct corpus_table *tab,
+					   unsigned hash)
 {
 	probe->table = tab;
 	probe->hash = hash;
 	probe->nprobe = 0;
 	probe->index = 0;
-	probe->current = TABLE_ITEM_EMPTY;
+	probe->current = CORPUS_TABLE_ITEM_EMPTY;
 }
 
 /**
@@ -113,7 +114,7 @@ static inline void table_probe_make(struct table_probe *probe,
  * \returns zero if at the end of the sequence and `probe->current` is invalid;
  * 	nonzero if not at the end of the sequence
  */
-static inline int table_probe_advance(struct table_probe *probe)
+static inline int corpus_table_probe_advance(struct corpus_table_probe *probe)
 {
 	unsigned index;
 
@@ -145,7 +146,7 @@ static inline int table_probe_advance(struct table_probe *probe)
 	probe->index = (int)index;
 	probe->nprobe++;
 
-	return (probe->current != TABLE_ITEM_EMPTY);
+	return (probe->current != CORPUS_TABLE_ITEM_EMPTY);
 }
 
-#endif /* TABLE_H */
+#endif /* CORPUS_TABLE_H */

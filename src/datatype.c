@@ -221,11 +221,11 @@ int schema_init(struct schema *s)
 		goto error_names;
 	}
 
-	if ((err = table_init(&s->arrays))) {
+	if ((err = corpus_table_init(&s->arrays))) {
 		goto error_arrays;
 	}
 
-	if ((err = table_init(&s->records))) {
+	if ((err = corpus_table_init(&s->records))) {
 		goto error_records;
 	}
 
@@ -246,9 +246,9 @@ int schema_init(struct schema *s)
 	return 0;
 
 error_types:
-	table_destroy(&s->records);
+	corpus_table_destroy(&s->records);
 error_records:
-	table_destroy(&s->arrays);
+	corpus_table_destroy(&s->arrays);
 error_arrays:
 	symtab_destroy(&s->names);
 error_names:
@@ -266,8 +266,8 @@ void schema_destroy(struct schema *s)
 
 	corpus_free(s->types);
 	symtab_destroy(&s->names);
-	table_destroy(&s->records);
-	table_destroy(&s->arrays);
+	corpus_table_destroy(&s->records);
+	corpus_table_destroy(&s->arrays);
 	sorter_destroy(&s->sorter);
 	schema_buffer_destroy(&s->buffer);
 }
@@ -289,8 +289,8 @@ void schema_clear(struct schema *s)
 	s->narray = 0;
 	s->nrecord = 0;
 
-	table_clear(&s->arrays);
-	table_clear(&s->records);
+	corpus_table_clear(&s->arrays);
+	corpus_table_clear(&s->records);
 	symtab_clear(&s->names);
 }
 
@@ -345,7 +345,7 @@ int schema_array(struct schema *s, int type_id, int length, int *idptr)
 
 	// grow array table if necessary
 	if (s->narray == s->arrays.capacity) {
-		if ((err = table_reinit(&s->arrays, s->narray + 1))) {
+		if ((err = corpus_table_reinit(&s->arrays, s->narray + 1))) {
 			goto error;
 		}
 		rehash = 1;
@@ -387,7 +387,7 @@ out:
 int schema_has_array(const struct schema *s, int type_id, int length,
 		     int *idptr)
 {
-	struct table_probe probe;
+	struct corpus_table_probe probe;
 	struct datatype_array key = {
 		.type_id = type_id,
 		.length = length
@@ -396,8 +396,8 @@ int schema_has_array(const struct schema *s, int type_id, int length,
 	int id = -1;
 	int found = 0;
 
-	table_probe_make(&probe, &s->arrays, hash);
-	while (table_probe_advance(&probe)) {
+	corpus_table_probe_make(&probe, &s->arrays, hash);
+	while (corpus_table_probe_advance(&probe)) {
 		id = probe.current;
 		if (array_equals(&key, &s->types[id].meta.array)) {
 			found = 1;
@@ -434,7 +434,7 @@ void schema_rehash_arrays(struct schema *s)
 	int i, n = s->ntype;
 	unsigned hash;
 
-	table_clear(&s->arrays);
+	corpus_table_clear(&s->arrays);
 
 	for (i = 0; i < n; i++) {
 		if (s->types[i].kind != DATATYPE_ARRAY) {
@@ -442,7 +442,7 @@ void schema_rehash_arrays(struct schema *s)
 		}
 		t = &s->types[i].meta.array;
 		hash = array_hash(t);
-		table_add(&s->arrays, hash, i);
+		corpus_table_add(&s->arrays, hash, i);
 	}
 }
 
@@ -453,7 +453,7 @@ void schema_rehash_records(struct schema *s)
 	int i, n = s->ntype;
 	unsigned hash;
 
-	table_clear(&s->records);
+	corpus_table_clear(&s->records);
 
 	for (i = 0; i < n; i++) {
 		if (s->types[i].kind != DATATYPE_RECORD) {
@@ -461,7 +461,7 @@ void schema_rehash_records(struct schema *s)
 		}
 		t = &s->types[i].meta.record;
 		hash = record_hash(t);
-		table_add(&s->records, hash, i);
+		corpus_table_add(&s->records, hash, i);
 	}
 }
 
@@ -549,7 +549,7 @@ sorted:
 
 	// grow the record table if necessary
 	if (s->nrecord == s->records.capacity) {
-		if ((err = table_reinit(&s->records, s->nrecord + 1))) {
+		if ((err = corpus_table_reinit(&s->records, s->nrecord + 1))) {
 			goto error;
 		}
 		rehash = 1;
@@ -619,7 +619,7 @@ out:
 int schema_has_record(const struct schema *s, const int *type_ids,
 		      const int *name_ids, int nfield, int *idptr)
 {
-	struct table_probe probe;
+	struct corpus_table_probe probe;
 	struct datatype_record key = {
 		.type_ids = (int *)type_ids,
 		.name_ids = (int *)name_ids,
@@ -629,8 +629,8 @@ int schema_has_record(const struct schema *s, const int *type_ids,
 	int id = -1;
 	int found = 0;
 
-	table_probe_make(&probe, &s->records, hash);
-	while (table_probe_advance(&probe)) {
+	corpus_table_probe_make(&probe, &s->records, hash);
+	while (corpus_table_probe_advance(&probe)) {
 		id = probe.current;
 		if (record_equals(&key, &s->types[id].meta.record)) {
 			found = 1;

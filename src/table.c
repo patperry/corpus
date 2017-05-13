@@ -23,9 +23,9 @@
 #include "table.h"
 
 /*
- * The hash table implementation is based on
+ * The hash corpus_table implementation is based on
  *
- *       src/sparsehash/internal/densehashtable.h
+ *       src/sparsehash/internal/densehashcorpus_table.h
  *
  * from the Google SparseHash library (BSD 3-Clause License):
  *
@@ -34,40 +34,44 @@
 
 
 /* Maximum occupy percentage before we resize. Must be in (0, 1]. */
-#define LOAD_FACTOR	0.75
+#define CORPUS_TABLE_LOAD_FACTOR	0.75
 
-/* Minimum size for hash tables. Must be a power of 2, and at least 1,
+/* Minimum size for hash corpus_tables. Must be a power of 2, and at least 1,
  * so that we can replace modulo operation 'i % m' with 'i & (m - 1)',
- * where 'm' is the table size.
+ * where 'm' is the corpus_table size.
  */
-#define TABLE_SIZE_MIN	1
+#define CORPUS_TABLE_SIZE_MIN	1
 
-/* Default initial size for hash tables. Must be a power of 2, and
- * at least TABLE_SIZE_MIN.
+/* Default initial size for hash corpus_tables. Must be a power of 2, and
+ * at least CORPUS_TABLE_SIZE_MIN.
  */
-//#define TABLE_SIZE_INIT	32
-#define TABLE_SIZE_INIT	1
+//#define CORPUS_TABLE_SIZE_INIT	32
+#define CORPUS_TABLE_SIZE_INIT	1
 
 /* The number of buckets must be a power of 2, and below (INT_MAX + 1) */
-#define TABLE_SIZE_MAX ((unsigned)INT_MAX + 1)
+#define CORPUS_TABLE_SIZE_MAX ((unsigned)INT_MAX + 1)
 
 /* Maximum number of occupied buckets. */
-#define TABLE_COUNT_MAX	(int)(LOAD_FACTOR * TABLE_SIZE_MAX)
+#define CORPUS_TABLE_COUNT_MAX \
+	(int)(CORPUS_TABLE_LOAD_FACTOR * CORPUS_TABLE_SIZE_MAX)
 
-static int table_next_empty(const struct table *tab, unsigned hash);
+static int corpus_table_next_empty(const struct corpus_table *tab,
+				   unsigned hash);
 
-// The smallest size a hash table can be while holding 'count' elements
-static unsigned table_size_min(int count, unsigned size_min)
+// The smallest size a hash corpus_table can be while holding 'count' elements
+static unsigned corpus_table_size_min(int count, unsigned size_min)
 {
 	unsigned n;
 
-	assert(count <= TABLE_COUNT_MAX);
-	assert(size_min <= TABLE_SIZE_MAX);
-	assert(TABLE_SIZE_MIN > 0);
+	assert(count <= CORPUS_TABLE_COUNT_MAX);
+	assert(size_min <= CORPUS_TABLE_SIZE_MAX);
+	assert(CORPUS_TABLE_SIZE_MIN > 0);
 
-	n = TABLE_SIZE_MIN;
+	n = CORPUS_TABLE_SIZE_MIN;
 
-	while (n < size_min || (unsigned)count > (unsigned)(LOAD_FACTOR * n)) {
+	while (n < size_min
+		|| ((unsigned)count
+			> (unsigned)(CORPUS_TABLE_LOAD_FACTOR * n))) {
 		n *= 2;
 	}
 
@@ -75,21 +79,21 @@ static unsigned table_size_min(int count, unsigned size_min)
 }
 
 
-int table_init(struct table *tab)
+int corpus_table_init(struct corpus_table *tab)
 {
-	unsigned size = TABLE_SIZE_INIT;
+	unsigned size = CORPUS_TABLE_SIZE_INIT;
 	int err;
 
-	assert(size >= TABLE_SIZE_MIN);
-	assert(size <= TABLE_SIZE_MAX);
+	assert(size >= CORPUS_TABLE_SIZE_MIN);
+	assert(size <= CORPUS_TABLE_SIZE_MAX);
 
 	if (!(tab->items = corpus_malloc(size * sizeof(*tab->items)))) {
 		goto error_nomem;
 	}
 
-	tab->capacity = (int)(LOAD_FACTOR * size);
+	tab->capacity = (int)(CORPUS_TABLE_LOAD_FACTOR * size);
 	tab->mask = size - 1;
-	table_clear(tab);
+	corpus_table_clear(tab);
 
 	return 0;
 
@@ -100,7 +104,7 @@ error_nomem:
 }
 
 
-int table_reinit(struct table *tab, int min_capacity)
+int corpus_table_reinit(struct corpus_table *tab, int min_capacity)
 {
 	int *items = tab->items;
 	unsigned size = tab->mask + 1;
@@ -108,13 +112,13 @@ int table_reinit(struct table *tab, int min_capacity)
 	int err;
 
 	if (min_capacity > capacity) {
-		size = table_size_min(min_capacity, size);
-		capacity = (int)(LOAD_FACTOR * size);
+		size = corpus_table_size_min(min_capacity, size);
+		capacity = (int)(CORPUS_TABLE_LOAD_FACTOR * size);
 
 		if ((size_t)size > SIZE_MAX / sizeof(*items)) {
 			err = ERROR_OVERFLOW;
-			logmsg(err, "table size (%d) exceeds maximum (%"
-				PRIu64")",
+			logmsg(err,
+			       "table size (%d) exceeds maximum (%"PRIu64")",
 			       size, (uint64_t)(SIZE_MAX / sizeof(*items)));
 			return err;
 		}
@@ -131,44 +135,44 @@ int table_reinit(struct table *tab, int min_capacity)
 		tab->mask = size - 1;
 	}
 
-	table_clear(tab);
+	corpus_table_clear(tab);
 
 	return 0;
 }
 
 
-void table_destroy(struct table *tab)
+void corpus_table_destroy(struct corpus_table *tab)
 {
 	corpus_free(tab->items);
 }
 
 
-void table_clear(struct table *tab)
+void corpus_table_clear(struct corpus_table *tab)
 {
 	unsigned i, n = tab->mask + 1;
 
 	for (i = 0; i < n; i++) {
-		tab->items[i] = TABLE_ITEM_EMPTY;
+		tab->items[i] = CORPUS_TABLE_ITEM_EMPTY;
 	}
 }
 
 
-void table_add(struct table *tab, unsigned hash, int item)
+void corpus_table_add(struct corpus_table *tab, unsigned hash, int item)
 {
 	int index;
 
-	index = table_next_empty(tab, hash);
+	index = corpus_table_next_empty(tab, hash);
 	tab->items[index] = item;
 }
 
 
-int table_next_empty(const struct table *tab, unsigned hash)
+int corpus_table_next_empty(const struct corpus_table *tab, unsigned hash)
 {
-	struct table_probe probe;
+	struct corpus_table_probe probe;
 
-	table_probe_make(&probe, tab, hash);
-	while (table_probe_advance(&probe)) {
-		// skip over occupied table cells
+	corpus_table_probe_make(&probe, tab, hash);
+	while (corpus_table_probe_advance(&probe)) {
+		// skip over occupied corpus_table cells
 	}
 
 	return probe.index;

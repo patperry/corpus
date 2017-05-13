@@ -68,7 +68,7 @@ static int scan_null(const uint8_t **bufptr, const uint8_t *end);
 static int scan_false(const uint8_t **bufptr, const uint8_t *end);
 static int scan_true(const uint8_t **bufptr, const uint8_t *end);
 static int scan_text(const uint8_t **bufptr, const uint8_t *end,
-		     struct text *text);
+		     struct corpus_text *text);
 static int scan_numeric(const uint8_t **bufptr, const uint8_t *end, int *idptr);
 static int scan_infinity(const uint8_t **bufptr, const uint8_t *end);
 static int scan_nan(const uint8_t **bufptr, const uint8_t *end);
@@ -295,7 +295,7 @@ void schema_clear(struct schema *s)
 }
 
 
-int schema_name(struct schema *s, const struct text *name, int *idptr)
+int schema_name(struct schema *s, const struct corpus_text *name, int *idptr)
 {
 	int tokid, id;
 	int err;
@@ -594,7 +594,7 @@ sorted:
 error_duplicate:
 	err = ERROR_INVAL;
 	logmsg(err, "duplicate field name \"%.*s\" in record",
-		(int)TEXT_SIZE(&s->names.types[name_ids[index]].text),
+		(int)CORPUS_TEXT_SIZE(&s->names.types[name_ids[index]].text),
 		s->names.types[name_ids[index]].text.ptr);
 	goto error;
 
@@ -856,7 +856,7 @@ int schema_grow_types(struct schema *s, int nadd)
 
 void render_datatype(struct render *r, const struct schema *s, int id)
 {
-	const struct text *name;
+	const struct corpus_text *name;
 	const struct datatype *t;
 	int name_id, type_id;
 	int i, n;
@@ -969,7 +969,7 @@ error_init:
 
 int schema_scan(struct schema *s, const uint8_t *ptr, size_t size, int *idptr)
 {
-	struct text text;
+	struct corpus_text text;
 	const uint8_t *input = ptr;
 	const uint8_t *end = ptr + size;
 	uint_fast8_t ch;
@@ -1063,7 +1063,7 @@ out:
 int scan_value(struct schema *s, const uint8_t **bufptr, const uint8_t *end,
 	       int *idptr)
 {
-	struct text text;
+	struct corpus_text text;
 	const uint8_t *ptr = *bufptr;
 	uint_fast8_t ch;
 	int err, id;
@@ -1330,7 +1330,7 @@ out:
 int scan_field(struct schema *s, const uint8_t **bufptr, const uint8_t *end,
 	       int *name_idptr, int *type_idptr)
 {
-	struct text name;
+	struct corpus_text name;
 	const uint8_t *ptr = *bufptr;
 	int err, name_id, type_id;
 
@@ -1375,19 +1375,19 @@ error_inval_noname:
 error_inval_nocolon:
 	err = ERROR_INVAL;
 	logmsg(err, "missing colon after field name \"%.*s\" in record",
-	       (unsigned)TEXT_SIZE(&name), name.ptr);
+	       (unsigned)CORPUS_TEXT_SIZE(&name), name.ptr);
 	goto error;
 
 error_inval_noval:
 	err = ERROR_INVAL;
 	logmsg(err, "missing value for field \"%.*s\" in record",
-	       (unsigned)TEXT_SIZE(&name), name.ptr);
+	       (unsigned)CORPUS_TEXT_SIZE(&name), name.ptr);
 	goto error;
 
 error_inval_val:
 	err = ERROR_INVAL;
 	logmsg(err, "failed parsing value for field \"%.*s\" in record",
-	       (unsigned)TEXT_SIZE(&name), name.ptr);
+	       (unsigned)CORPUS_TEXT_SIZE(&name), name.ptr);
 	goto error;
 
 error:
@@ -1556,14 +1556,14 @@ int scan_infinity(const uint8_t **bufptr, const uint8_t *end)
 
 
 int scan_text(const uint8_t **bufptr, const uint8_t *end,
-	      struct text *text)
+	      struct corpus_text *text)
 {
 	const uint8_t *input = *bufptr;
 	const uint8_t *ptr = input;
 	uint_fast8_t ch;
 	int err, flags;
 
-	flags = TEXT_NOESCAPE;
+	flags = CORPUS_TEXT_NOESCAPE;
 	while (ptr != end) {
 		ch = *ptr;
 		if (ch == '"') {
@@ -1584,7 +1584,8 @@ error_noclose:
 	goto out;
 
 close:
-	if ((err = text_assign(text, input, (size_t)(ptr - input), flags))) {
+	if ((err = corpus_text_assign(text, input, (size_t)(ptr - input),
+				      flags))) {
 		err = ERROR_INVAL;
 		goto out;
 	}

@@ -26,10 +26,14 @@
 /* http://stackoverflow.com/a/11986885 */
 #define hextoi(ch) ((ch > '9') ? (ch &~ 0x20) - 'A' + 10 : (ch - '0'))
 
-static int assign_esc(struct text *text, const uint8_t *ptr, size_t size);
-static int assign_esc_unsafe(struct text *text, const uint8_t *ptr, size_t size);
-static int assign_raw(struct text *text, const uint8_t *ptr, size_t size);
-static int assign_raw_unsafe(struct text *text, const uint8_t *ptr, size_t size);
+static int assign_esc(struct corpus_text *text, const uint8_t *ptr,
+		      size_t size);
+static int assign_esc_unsafe(struct corpus_text *text, const uint8_t *ptr,
+			     size_t size);
+static int assign_raw(struct corpus_text *text, const uint8_t *ptr,
+		      size_t size);
+static int assign_raw_unsafe(struct corpus_text *text, const uint8_t *ptr,
+			     size_t size);
 
 static int decode_uescape(const uint8_t **inputptr, const uint8_t *end,
 			  uint32_t *codeptr);
@@ -37,9 +41,10 @@ static void decode_valid_escape(const uint8_t **inputptr, uint32_t *codeptr);
 static void decode_valid_uescape(const uint8_t **inputptr, uint32_t *codeptr);
 
 
-int text_init_copy(struct text *text, const struct text *other)
+int corpus_text_init_copy(struct corpus_text *text,
+			  const struct corpus_text *other)
 {
-        size_t size = TEXT_SIZE(other);
+        size_t size = CORPUS_TEXT_SIZE(other);
         size_t attr = other->attr;
 	int err;
 
@@ -56,24 +61,25 @@ int text_init_copy(struct text *text, const struct text *other)
 }
 
 
-void text_destroy(struct text *text)
+void corpus_text_destroy(struct corpus_text *text)
 {
         corpus_free(text->ptr);
 }
 
 
-int text_assign(struct text *text, const uint8_t *ptr, size_t size, int flags)
+int corpus_text_assign(struct corpus_text *text, const uint8_t *ptr,
+		       size_t size, int flags)
 {
 	int err;
 
-	if (flags & TEXT_NOESCAPE) {
-		if (flags & TEXT_NOVALIDATE) {
+	if (flags & CORPUS_TEXT_NOESCAPE) {
+		if (flags & CORPUS_TEXT_NOVALIDATE) {
 			err = assign_raw_unsafe(text, ptr, size);
 		} else {
 			err = assign_raw(text, ptr, size);
 		}
 	} else {
-		if (flags & TEXT_NOVALIDATE) {
+		if (flags & CORPUS_TEXT_NOVALIDATE) {
 			err = assign_esc_unsafe(text, ptr, size);
 		} else {
 			err = assign_esc(text, ptr, size);
@@ -85,17 +91,18 @@ int text_assign(struct text *text, const uint8_t *ptr, size_t size, int flags)
 
 
 
-void text_iter_make(struct text_iter *it, const struct text *text)
+void corpus_text_iter_make(struct corpus_text_iter *it,
+			   const struct corpus_text *text)
 {
 	it->ptr = text->ptr;
-	it->end = it->ptr + TEXT_SIZE(text);
+	it->end = it->ptr + CORPUS_TEXT_SIZE(text);
 	it->text_attr = text->attr;
 	it->attr = 0;
 	it->current = (uint32_t)-1;
 }
 
 
-int text_iter_advance(struct text_iter *it)
+int corpus_text_iter_advance(struct corpus_text_iter *it)
 {
 	const uint8_t *ptr = it->ptr;
 	size_t text_attr = it->text_attr;
@@ -110,14 +117,14 @@ int text_iter_advance(struct text_iter *it)
 	attr = 0;
 	code = *ptr++;
 
-	if (code == '\\' && (text_attr & TEXT_ESC_BIT)) {
-		attr = TEXT_ESC_BIT;
+	if (code == '\\' && (text_attr & CORPUS_TEXT_ESC_BIT)) {
+		attr = CORPUS_TEXT_ESC_BIT;
 		decode_valid_escape(&ptr, &code);
 		if (code >= 0x80) {
-			attr |= TEXT_UTF8_BIT;
+			attr |= CORPUS_TEXT_UTF8_BIT;
 		}
-	} else if ((text_attr & TEXT_UTF8_BIT) && code >= 0x80) {
-		attr = TEXT_UTF8_BIT;
+	} else if ((text_attr & CORPUS_TEXT_UTF8_BIT) && code >= 0x80) {
+		attr = CORPUS_TEXT_UTF8_BIT;
 		ptr--;
 		decode_utf8(&ptr, &code);
 	}
@@ -134,15 +141,15 @@ at_end:
 }
 
 
-void text_iter_reset(struct text_iter *it)
+void corpus_text_iter_reset(struct corpus_text_iter *it)
 {
-	it->ptr = it->end - (it->text_attr & TEXT_SIZE_MASK);
+	it->ptr = it->end - (it->text_attr & CORPUS_TEXT_SIZE_MASK);
 	it->current = (uint32_t)-1;
 	it->attr = 0;
 }
 
 
-int assign_raw(struct text *text, const uint8_t *ptr, size_t size)
+int assign_raw(struct corpus_text *text, const uint8_t *ptr, size_t size)
 {
 	const uint8_t *input = ptr;
 	const uint8_t *end = ptr + size;
@@ -155,7 +162,7 @@ int assign_raw(struct text *text, const uint8_t *ptr, size_t size)
 	while (ptr != end) {
 		ch = *ptr++;
 		if (ch & 0x80) {
-			attr |= TEXT_UTF8_BIT;
+			attr |= CORPUS_TEXT_UTF8_BIT;
 			ptr--;
 			if ((err = scan_utf8(&ptr, end))) {
 				goto error_inval_utf8;
@@ -165,11 +172,11 @@ int assign_raw(struct text *text, const uint8_t *ptr, size_t size)
 
 	// validate size
 	size = (size_t)(ptr - text->ptr);
-	if (size > TEXT_SIZE_MAX) {
+	if (size > CORPUS_TEXT_SIZE_MAX) {
 		goto error_overflow;
 	}
 
-	attr |= (size & TEXT_SIZE_MASK);
+	attr |= (size & CORPUS_TEXT_SIZE_MASK);
 	text->attr = attr;
 	return 0;
 
@@ -185,7 +192,7 @@ error_overflow:
 	err = ERROR_OVERFLOW;
 	logmsg(err, "text size (%"PRIu64" bytes)"
 		" exceeds maximum (%"PRIu64" bytes)",
-	       (uint64_t)size, (uint64_t)TEXT_SIZE_MAX);
+	       (uint64_t)size, (uint64_t)CORPUS_TEXT_SIZE_MAX);
 	goto error;
 
 error:
@@ -195,7 +202,7 @@ error:
 }
 
 
-int assign_raw_unsafe(struct text *text, const uint8_t *ptr, size_t size)
+int assign_raw_unsafe(struct corpus_text *text, const uint8_t *ptr, size_t size)
 {
 	const uint8_t *end = ptr + size;
 	size_t attr = 0;
@@ -207,18 +214,18 @@ int assign_raw_unsafe(struct text *text, const uint8_t *ptr, size_t size)
 	while (ptr != end) {
 		ch = *ptr++;
 		if (ch & 0x80) {
-			attr |= TEXT_UTF8_BIT;
+			attr |= CORPUS_TEXT_UTF8_BIT;
 			ptr += UTF8_TAIL_LEN(ch);
 		}
 	}
 
 	// validate size
 	size = (size_t)(ptr - text->ptr);
-	if (size > TEXT_SIZE_MAX) {
+	if (size > CORPUS_TEXT_SIZE_MAX) {
 		goto error_overflow;
 	}
 
-	attr |= (size & TEXT_SIZE_MASK);
+	attr |= (size & CORPUS_TEXT_SIZE_MASK);
 	text->attr = attr;
 	return 0;
 
@@ -226,7 +233,7 @@ error_overflow:
 	err = ERROR_OVERFLOW;
 	logmsg(err, "text size (%"PRIu64" bytes)"
 	       " exceeds maximum (%"PRIu64" bytes)",
-	       (uint64_t)size, (uint64_t)TEXT_SIZE_MAX);
+	       (uint64_t)size, (uint64_t)CORPUS_TEXT_SIZE_MAX);
 	goto error;
 
 error:
@@ -236,7 +243,7 @@ error:
 }
 
 
-int assign_esc(struct text *text, const uint8_t *ptr, size_t size)
+int assign_esc(struct corpus_text *text, const uint8_t *ptr, size_t size)
 {
 	const uint8_t *input = ptr;
 	const uint8_t *end = ptr + size;
@@ -250,7 +257,7 @@ int assign_esc(struct text *text, const uint8_t *ptr, size_t size)
 	while (ptr != end) {
 		ch = *ptr++;
 		if (ch == '\\') {
-			attr |= TEXT_ESC_BIT;
+			attr |= CORPUS_TEXT_ESC_BIT;
 
 			if (ptr == end) {
 				goto error_inval_incomplete;
@@ -272,14 +279,14 @@ int assign_esc(struct text *text, const uint8_t *ptr, size_t size)
 					goto error_inval_uesc;
 				}
 				if (code >= 0x80) {
-					attr |= TEXT_UTF8_BIT;
+					attr |= CORPUS_TEXT_UTF8_BIT;
 				}
 				break;
 			default:
 				goto error_inval_esc;
 			}
 		} else if (ch & 0x80) {
-			attr |= TEXT_UTF8_BIT;
+			attr |= CORPUS_TEXT_UTF8_BIT;
 			ptr--;
 			if ((err = scan_utf8(&ptr, end))) {
 				goto error_inval_utf8;
@@ -289,11 +296,11 @@ int assign_esc(struct text *text, const uint8_t *ptr, size_t size)
 
 	// validate size
 	size = (size_t)(ptr - text->ptr);
-	if (size > TEXT_SIZE_MAX) {
+	if (size > CORPUS_TEXT_SIZE_MAX) {
 		goto error_overflow;
 	}
 
-	attr |= (size & TEXT_SIZE_MASK);
+	attr |= (size & CORPUS_TEXT_SIZE_MASK);
 	text->attr = attr;
 	return 0;
 
@@ -323,7 +330,7 @@ error_overflow:
 	err = ERROR_OVERFLOW;
 	logmsg(err, "text size (%"PRIu64" bytes)"
 	       " exceeds maximum (%"PRIu64" bytes)",
-	       (uint64_t)size, (uint64_t)TEXT_SIZE_MAX);
+	       (uint64_t)size, (uint64_t)CORPUS_TEXT_SIZE_MAX);
 	goto error;
 
 error:
@@ -333,7 +340,7 @@ error:
 }
 
 
-int assign_esc_unsafe(struct text *text, const uint8_t *ptr, size_t size)
+int assign_esc_unsafe(struct corpus_text *text, const uint8_t *ptr, size_t size)
 {
 	const uint8_t *end = ptr + size;
 	size_t attr = 0;
@@ -346,32 +353,32 @@ int assign_esc_unsafe(struct text *text, const uint8_t *ptr, size_t size)
 	while (ptr != end) {
 		ch = *ptr++;
 		if (ch == '\\') {
-			attr |= TEXT_ESC_BIT;
+			attr |= CORPUS_TEXT_ESC_BIT;
 			ch = *ptr++;
 
 			switch (ch) {
 			case 'u':
 				decode_valid_uescape(&ptr, &code);
 				if (code >= 0x80) {
-					attr |= TEXT_UTF8_BIT;
+					attr |= CORPUS_TEXT_UTF8_BIT;
 				}
 				break;
 			default:
 				break;
 			}
 		} else if (ch & 0x80) {
-			attr |= TEXT_UTF8_BIT;
+			attr |= CORPUS_TEXT_UTF8_BIT;
 			ptr += UTF8_TAIL_LEN(ch);
 		}
 	}
 
 	// validate size
 	size = (size_t)(ptr - text->ptr);
-	if (size > TEXT_SIZE_MAX) {
+	if (size > CORPUS_TEXT_SIZE_MAX) {
 		goto error_overflow;
 	}
 
-	attr |= (size & TEXT_SIZE_MASK);
+	attr |= (size & CORPUS_TEXT_SIZE_MASK);
 	text->attr = attr;
 	return 0;
 
@@ -379,7 +386,7 @@ error_overflow:
 	err = ERROR_OVERFLOW;
 	logmsg(err, "text size (%"PRIu64" bytes)"
 	       " exceeds maximum (%"PRIu64" bytes)",
-	       (uint64_t)size, (uint64_t)TEXT_SIZE_MAX);
+	       (uint64_t)size, (uint64_t)CORPUS_TEXT_SIZE_MAX);
 	goto error;
 
 error:

@@ -54,7 +54,7 @@ enum word_type {
  * [uax29]: http://unicode.org/reports/tr29/
  */
 struct wordscan {
-	struct text text;	/**< the input text */
+	struct corpus_text text;/**< the input text */
 	size_t text_attr;	/**< the input text attributes */
 
 	uint32_t code;		/**< next code point */
@@ -62,12 +62,12 @@ struct wordscan {
 	int prop;		/**< next code's word break property */
 	const uint8_t *ptr;	/**< next code's start */
 
-	struct text_iter iter;	/**< an iterator over the input,
+	struct corpus_text_iter iter;	/**< an iterator over the input,
 				  positioned past next code */
 	int iter_prop;		/**< iterator code's word break property */
 	const uint8_t *iter_ptr;/**< iterator code's start */
 
-	struct text current;	/**< the current word */
+	struct corpus_text current;	/**< the current word */
 	enum word_type type;	/**< the type of the current word */
 };
 
@@ -77,7 +77,7 @@ struct wordscan {
  * \param scan the scanner to initialize
  * \param text the text
  */
-void wordscan_make(struct wordscan *scan, const struct text *text);
+void wordscan_make(struct wordscan *scan, const struct corpus_text *text);
 
 /**
  * Advance a scanner to the next word.

@@ -21,7 +21,7 @@
 #include "../src/text.h"
 #include "testutil.h"
 
-static struct text *mktext(const char *str, int flags);
+static struct corpus_text *mktext(const char *str, int flags);
 
 
 static void **allocs;
@@ -61,27 +61,27 @@ void *alloc(size_t size)
 }
 
 
-struct text *T(const char *str)
+struct corpus_text *T(const char *str)
 {
 	return mktext(str, 0);
 }
 
 
-struct text *S(const char *str)
+struct corpus_text *S(const char *str)
 {
-	return mktext(str, TEXT_NOESCAPE);
+	return mktext(str, CORPUS_TEXT_NOESCAPE);
 }
 
 
-struct text *mktext(const char *str, int flags)
+struct corpus_text *mktext(const char *str, int flags)
 {
-	struct text *text = alloc(sizeof(*text));
+	struct corpus_text *text = alloc(sizeof(*text));
 	size_t size = strlen(str);
 	uint8_t *ptr = alloc(size + 1);
 	int err;
 
 	memcpy(ptr, str, size + 1);
-	err = text_assign(text, ptr, size, flags);
+	err = corpus_text_assign(text, ptr, size, flags);
 	ck_assert(!err);
 
 	return text;

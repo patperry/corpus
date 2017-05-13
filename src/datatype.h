@@ -138,7 +138,7 @@ void schema_clear(struct schema *s);
  *
  * \returns 0 on success
  */
-int schema_name(struct schema *s, const struct text *name, int *idptr);
+int schema_name(struct schema *s, const struct corpus_text *name, int *idptr);
 
 /**
  * Create a new array type, or get the type's ID if it already exists.

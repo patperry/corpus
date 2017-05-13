@@ -27,7 +27,7 @@
  * Symbol table token.
  */
 struct symtab_token {
-	struct text text;	/**< the token text */
+	struct corpus_text text;/**< the token text */
 	int type_id;		/**< the ID of the token's type */
 };
 
@@ -35,7 +35,7 @@ struct symtab_token {
  * Symbol table type.
  */
 struct symtab_type {
-	struct text text;	/**< the type text */
+	struct corpus_text text;/**< the type text */
 	int *token_ids;		/**< the IDs of the tokens in the type */
 	int ntoken;		/**< the number of tokens in the type */
 };
@@ -92,7 +92,8 @@ void symtab_clear(struct symtab *tab);
  *
  * \returns 0 on success
  */
-int symtab_add_token(struct symtab *tab, const struct text *tok, int *idptr);
+int symtab_add_token(struct symtab *tab, const struct corpus_text *tok,
+		     int *idptr);
 
 /**
  * Add a type to a symbol table if it does not already exist there, and
@@ -104,7 +105,8 @@ int symtab_add_token(struct symtab *tab, const struct text *tok, int *idptr);
  *
  * \returns 0 on success
  */
-int symtab_add_type(struct symtab *tab, const struct text *typ, int *idptr);
+int symtab_add_type(struct symtab *tab, const struct corpus_text *typ,
+		    int *idptr);
 
 /**
  * Query whether a token exists in a symbol table.
@@ -115,7 +117,7 @@ int symtab_add_type(struct symtab *tab, const struct text *typ, int *idptr);
  *
  * \returns non-zero if the token exists in the table; zero otherwise
  */
-int symtab_has_token(const struct symtab *tab, const struct text *tok,
+int symtab_has_token(const struct symtab *tab, const struct corpus_text *tok,
 		     int *idptr);
 
 /**
@@ -127,7 +129,7 @@ int symtab_has_token(const struct symtab *tab, const struct text *tok,
  *
  * \returns non-zero if the type exists in the table; zero otherwise
  */
-int symtab_has_type(const struct symtab *tab, const struct text *typ,
+int symtab_has_type(const struct symtab *tab, const struct corpus_text *typ,
 		    int *idptr);
 
 #endif /* SYMTAB_H */

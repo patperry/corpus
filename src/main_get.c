@@ -53,7 +53,7 @@ Options:\n\
 int main_get(int argc, char * const argv[])
 {
 	struct data data, val;
-	struct text name;
+	struct corpus_text name;
 	struct schema schema;
 	struct filebuf buf;
 	struct filebuf_iter it;
@@ -100,7 +100,7 @@ int main_get(int argc, char * const argv[])
 		field_len -= 2;
 	}
 
-	if (text_assign(&name, (const uint8_t *)field, field_len, 0)) {
+	if (corpus_text_assign(&name, (const uint8_t *)field, field_len, 0)) {
 		fprintf(stderr, "Invalid field name (%s)\n", field);
 		return EXIT_FAILURE;
 	}

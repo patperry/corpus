@@ -19,12 +19,12 @@
 #include "sentscan.h"
 
 
-void sentscan_make(struct sentscan *scan, const struct text *text)
+void sentscan_make(struct sentscan *scan, const struct corpus_text *text)
 {
 	scan->text = *text;
-	scan->text_attr = text->attr & ~TEXT_SIZE_MASK;
+	scan->text_attr = text->attr & ~CORPUS_TEXT_SIZE_MASK;
 
-	text_iter_make(&scan->iter, text);
+	corpus_text_iter_make(&scan->iter, text);
 	sentscan_reset(scan);
 }
 
@@ -37,7 +37,7 @@ void sentscan_make(struct sentscan *scan, const struct text *text)
 		scan->attr = scan->iter.attr; \
 		scan->prop = scan->iter_prop; \
 		scan->iter_ptr = scan->iter.ptr; \
-		if (text_iter_advance(&scan->iter)) { \
+		if (corpus_text_iter_advance(&scan->iter)) { \
 			scan->iter_prop = sent_break(scan->iter.current); \
 		} else { \
 			scan->iter_prop = -1; \
@@ -54,7 +54,7 @@ void sentscan_make(struct sentscan *scan, const struct text *text)
 				|| scan->iter_prop == SENT_BREAK_FORMAT) { \
 			scan->attr |= scan->iter.attr; \
 			scan->iter_ptr = scan->iter.ptr; \
-			if (text_iter_advance(&scan->iter)) { \
+			if (corpus_text_iter_advance(&scan->iter)) { \
 				scan->iter_prop = \
 					sent_break(scan->iter.current); \
 			} else { \
@@ -89,16 +89,16 @@ void sentscan_reset(struct sentscan *scan)
 	scan->current.attr = 0;
 	scan->type = SENT_NONE;
 
-	text_iter_reset(&scan->iter);
+	corpus_text_iter_reset(&scan->iter);
 	scan->ptr = scan->iter.ptr;
 
-	if (text_iter_advance(&scan->iter)) {
+	if (corpus_text_iter_advance(&scan->iter)) {
 		scan->code = scan->iter.current;
 		scan->attr = scan->iter.attr;
 		scan->prop = sent_break(scan->code);
 
 		scan->iter_ptr = scan->iter.ptr;
-		if (text_iter_advance(&scan->iter)) {
+		if (corpus_text_iter_advance(&scan->iter)) {
 			scan->iter_prop = sent_break(scan->iter.current);
 		} else {
 			scan->iter_prop = -1;
@@ -117,7 +117,7 @@ void sentscan_reset(struct sentscan *scan)
 
 static int has_future_lower(const struct sentscan *scan)
 {
-	struct text_iter iter;
+	struct corpus_text_iter iter;
 	int prop, ret;
 
 	if (scan->iter_prop < 0) {
@@ -147,7 +147,7 @@ static int has_future_lower(const struct sentscan *scan)
 			break;
 		}
 
-		if (text_iter_advance(&iter)) {
+		if (corpus_text_iter_advance(&iter)) {
 			prop = sent_break(iter.current);
 		} else {
 			ret = 0;
@@ -351,8 +351,8 @@ STerm_Close_Sp:
 Break:
 	scan->current.attr |= (size_t)(scan->ptr - scan->current.ptr);
 
-	if (TEXT_SIZE(&scan->current) == 0) {
-		if (TEXT_SIZE(&scan->text) == 0 && !scan->at_end) {
+	if (CORPUS_TEXT_SIZE(&scan->current) == 0) {
+		if (CORPUS_TEXT_SIZE(&scan->text) == 0 && !scan->at_end) {
 			scan->at_end = 1;
 			return 1;
 		} else {

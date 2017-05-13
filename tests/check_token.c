@@ -23,16 +23,16 @@
 #include "testutil.h"
 
 
-struct text *get_type_stem(const struct text *tok, int flags,
-			   const char *stemmer)
+struct corpus_text *get_type_stem(const struct corpus_text *tok, int flags,
+				  const char *stemmer)
 {
-	struct text *typ;
+	struct corpus_text *typ;
 	struct typemap map;
 	size_t size;
 
 	ck_assert(!typemap_init(&map, flags, stemmer));
 	ck_assert(!typemap_set(&map, tok));
-	size = TEXT_SIZE(&map.type);
+	size = CORPUS_TEXT_SIZE(&map.type);
 
 	typ = alloc(sizeof(*typ));
 
@@ -47,19 +47,19 @@ struct text *get_type_stem(const struct text *tok, int flags,
 }
 
 
-struct text *get_type(const struct text *tok, int flags)
+struct corpus_text *get_type(const struct corpus_text *tok, int flags)
 {
 	return get_type_stem(tok, flags, NULL);
 }
 
 
-struct text *casefold(const struct text *tok)
+struct corpus_text *casefold(const struct corpus_text *tok)
 {
 	return get_type(tok, TYPE_CASEFOLD);
 }
 
 
-struct text *stem_en(const struct text *tok)
+struct corpus_text *stem_en(const struct corpus_text *tok)
 {
 	return get_type_stem(tok, 0, "english");
 }
@@ -186,7 +186,7 @@ END_TEST
 
 START_TEST(test_keep_control_ascii)
 {
-	const struct text *js, *t;
+	const struct corpus_text *js, *t;
 	char str[256];
 	uint8_t i;
 
@@ -216,7 +216,7 @@ END_TEST
 
 START_TEST(test_keep_control_utf8)
 {
-	const struct text *t, *js;
+	const struct corpus_text *t, *js;
 	uint8_t str[256];
 	uint8_t i;
 
@@ -264,7 +264,7 @@ END_TEST
 
 START_TEST(test_keep_ws_utf8)
 {
-	const struct text *t, *js, *typ;
+	const struct corpus_text *t, *js, *typ;
 	uint8_t str[256];
 	uint8_t *buf;
 	unsigned ws[] = { 0x0009, 0x000A, 0x000B, 0x000C, 0x000D,
@@ -326,7 +326,7 @@ END_TEST
 
 START_TEST(test_rm_ws_utf8)
 {
-	const struct text *t, *js;
+	const struct corpus_text *t, *js;
 	uint8_t str[256];
 	uint8_t *buf;
 	uint32_t ws[] = { 0x0009, 0x000A, 0x000B, 0x000C, 0x000D,
@@ -353,7 +353,7 @@ END_TEST
 
 START_TEST(test_casefold_ascii)
 {
-	const struct text *tok;
+	const struct corpus_text *tok;
 	uint8_t buf[2] = { 0, 0 };
 	uint8_t i;
 

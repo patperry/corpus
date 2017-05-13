@@ -56,7 +56,7 @@ int main_sentences(int argc, char * const argv[])
 {
 	struct sentscan scan;
 	struct data data, val;
-	struct text name, text;
+	struct corpus_text name, text;
 	struct schema schema;
 	struct filebuf buf;
 	struct filebuf_iter it;
@@ -103,7 +103,7 @@ int main_sentences(int argc, char * const argv[])
 
 	input = argv[0];
 
-	if (text_assign(&name, (const uint8_t *)field, field_len, 0)) {
+	if (corpus_text_assign(&name, (const uint8_t *)field, field_len, 0)) {
 		fprintf(stderr, "Invalid field name (%s)\n", field);
 		return EXIT_FAILURE;
 	}
@@ -159,7 +159,7 @@ int main_sentences(int argc, char * const argv[])
 			}
 
 			fprintf(stream, "\"%.*s\"",
-				(int)TEXT_SIZE(&scan.current),
+				(int)CORPUS_TEXT_SIZE(&scan.current),
 				(char *)scan.current.ptr);
 		}
 		fprintf(stream, "]\n");

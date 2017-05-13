@@ -90,12 +90,12 @@ void symtab_clear(struct symtab *tab)
 	int ntype = tab->ntype;
 
 	while (ntoken-- > 0) {
-		text_destroy(&tab->tokens[ntoken].text);
+		corpus_text_destroy(&tab->tokens[ntoken].text);
 	}
 	tab->ntoken = 0;
 
 	while (ntype-- > 0) {
-		text_destroy(&tab->types[ntype].text);
+		corpus_text_destroy(&tab->types[ntype].text);
 		corpus_free(tab->types[ntype].token_ids);
 	}
 	tab->ntype = 0;
@@ -105,7 +105,7 @@ void symtab_clear(struct symtab *tab)
 }
 
 
-int symtab_has_token(const struct symtab *tab, const struct text *tok,
+int symtab_has_token(const struct symtab *tab, const struct corpus_text *tok,
 		     int *idptr)
 {
 	struct corpus_table_probe probe;
@@ -131,7 +131,7 @@ out:
 }
 
 
-int symtab_has_type(const struct symtab *tab, const struct text *typ,
+int symtab_has_type(const struct symtab *tab, const struct corpus_text *typ,
 		    int *idptr)
 {
 	struct corpus_table_probe probe;
@@ -157,7 +157,8 @@ out:
 }
 
 
-int symtab_add_token(struct symtab *tab, const struct text *tok, int *idptr)
+int symtab_add_token(struct symtab *tab, const struct corpus_text *tok,
+		     int *idptr)
 {
 	int pos, token_id, type_id;
 	bool rehash = false;
@@ -196,7 +197,8 @@ int symtab_add_token(struct symtab *tab, const struct text *tok, int *idptr)
 		}
 
 		// allocate storage for the token
-		if ((err = text_init_copy(&tab->tokens[token_id].text, tok))) {
+		if ((err = corpus_text_init_copy(&tab->tokens[token_id].text,
+						 tok))) {
 			goto error;
 		}
 
@@ -205,7 +207,7 @@ int symtab_add_token(struct symtab *tab, const struct text *tok, int *idptr)
 
 		// add the token to the type
 		if ((err = type_add_token(&tab->types[type_id], token_id))) {
-			text_destroy(&tab->tokens[token_id].text);
+			corpus_text_destroy(&tab->tokens[token_id].text);
 			goto error;
 		}
 
@@ -235,7 +237,8 @@ error:
 }
 
 
-int symtab_add_type(struct symtab *tab, const struct text *typ, int *idptr)
+int symtab_add_type(struct symtab *tab, const struct corpus_text *typ,
+		    int *idptr)
 {
 	int pos, type_id;
 	bool rehash = false;
@@ -263,7 +266,8 @@ int symtab_add_type(struct symtab *tab, const struct text *typ, int *idptr)
 		}
 
 		// allocate storage for the type's text
-		if ((err = text_init_copy(&tab->types[type_id].text, typ))) {
+		if ((err = corpus_text_init_copy(&tab->types[type_id].text,
+						 typ))) {
 			goto error;
 		}
 

@@ -26,7 +26,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-struct text;
+struct corpus_text;
 
 /**
  * Values specifying render escape behavior. This allows replacing
@@ -188,6 +188,6 @@ void render_printf(struct render *r, const char *format, ...)
  * \param r the render object
  * \param text the text object
  */
-void render_text(struct render *r, const struct text *text);
+void render_text(struct render *r, const struct corpus_text *text);
 
 #endif /* RENDER_H */

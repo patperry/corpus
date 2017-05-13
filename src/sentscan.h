@@ -50,7 +50,7 @@ enum sent_type {
  * [uax29]: http://unicode.org/reports/tr29/
  */
 struct sentscan {
-	struct text text;	/**< the input text */
+	struct corpus_text text;/**< the input text */
 	size_t text_attr;	/**< the input text attributes */
 
 	uint32_t code;		/**< next code point */
@@ -58,12 +58,12 @@ struct sentscan {
 	int prop;		/**< next code's sentence break property */
 	const uint8_t *ptr;	/**< next code's start */
 
-	struct text_iter iter;	/**< an iterator over the input,
-				  positioned past next code */
+	struct corpus_text_iter iter;	/**< an iterator over the input,
+					  positioned past next code */
 	int iter_prop;		/**< iterator code's sentence break property */
 	const uint8_t *iter_ptr;/**< iterator code's start */
 
-	struct text current;	/**< the current word */
+	struct corpus_text current;	/**< the current word */
 	enum sent_type type;	/**< the type of the current sentence */
 	int at_end;		/**< whether the scanner is at the end of
 				  the text */
@@ -75,7 +75,7 @@ struct sentscan {
  * \param scan the scanner to initialize
  * \param text the text
  */
-void sentscan_make(struct sentscan *scan, const struct text *text);
+void sentscan_make(struct sentscan *scan, const struct corpus_text *text);
 
 /**
  * Advance a scanner to the next sentence.

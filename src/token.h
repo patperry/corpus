@@ -84,7 +84,7 @@ enum type_kind {
  * Type map, for normalizing tokens to types.
  */
 struct typemap {
-	struct text type;	/**< type of the token given to the most
+	struct corpus_text type;/**< type of the token given to the most
 				  recent typemap_set() call */
 	int8_t ascii_map[128];	/**< a lookup table for the mappings of ASCII
 				  characters; -1 indicates deletion */
@@ -132,7 +132,7 @@ void typemap_destroy(struct typemap *map);
  *
  * \returns 0 on success
  */
-int typemap_set(struct typemap *map, const struct text *tok);
+int typemap_set(struct typemap *map, const struct corpus_text *tok);
 
 /**
  * Compute a hash code from a token.
@@ -141,7 +141,7 @@ int typemap_set(struct typemap *map, const struct text *tok);
  *
  * \returns the hash code.
  */
-unsigned token_hash(const struct text *tok);
+unsigned token_hash(const struct corpus_text *tok);
 
 /**
  * Test whether two tokens are equal (bitwise). Bitwise equality is more
@@ -152,7 +152,8 @@ unsigned token_hash(const struct text *tok);
  *
  * \returns non-zero if the tokens are equal, zero otherwise
  */
-int token_equals(const struct text *tok1, const struct text *tok2);
+int token_equals(const struct corpus_text *tok1,
+		 const struct corpus_text *tok2);
 
 /**
  * Compare two types.
@@ -164,6 +165,7 @@ int token_equals(const struct text *tok1, const struct text *tok2);
  * 	if the first value is less than the second; a positive value
  * 	if the first value is greater than the second
  */
-int compare_type(const struct text *typ1, const struct text *typ2);
+int compare_type(const struct corpus_text *typ1,
+		 const struct corpus_text *typ2);
 
 #endif /* TOKEN_H */

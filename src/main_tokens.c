@@ -87,7 +87,7 @@ int main_tokens(int argc, char * const argv[])
 	struct wordscan scan;
 	struct symtab symtab;
 	struct data data, val;
-	struct text name, text, word;
+	struct corpus_text name, text, word;
 	struct schema schema;
 	struct filebuf buf;
 	struct filebuf_iter it;
@@ -169,7 +169,7 @@ int main_tokens(int argc, char * const argv[])
 
 	input = argv[0];
 
-	if (text_assign(&name, (const uint8_t *)field, field_len, 0)) {
+	if (corpus_text_assign(&name, (const uint8_t *)field, field_len, 0)) {
 		fprintf(stderr, "Invalid field name (%s)\n", field);
 		return EXIT_FAILURE;
 	}
@@ -231,7 +231,7 @@ int main_tokens(int argc, char * const argv[])
 			typid = symtab.tokens[tokid].type_id;
 			word = symtab.types[typid].text;
 
-			if (TEXT_SIZE(&word) == 0 && !zero) {
+			if (CORPUS_TEXT_SIZE(&word) == 0 && !zero) {
 				continue;
 			}
 
@@ -241,7 +241,8 @@ int main_tokens(int argc, char * const argv[])
 				start = 0;
 			}
 
-			fprintf(stream, "\"%.*s\"", (int)TEXT_SIZE(&word),
+			fprintf(stream, "\"%.*s\"",
+				(int)CORPUS_TEXT_SIZE(&word),
 				(char *)word.ptr);
 		}
 		fprintf(stream, "]\n");

@@ -126,7 +126,7 @@ int data_double(const struct data *d, double *valptr);
  * \returns 0 on success; #ERROR_INVAL if the data value is null or
  * 	not text
  */
-int data_text(const struct data *d, struct text *valptr);
+int data_text(const struct data *d, struct corpus_text *valptr);
 
 /**
  * Get the number of items (the length) of an array data value.

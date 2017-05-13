@@ -336,16 +336,16 @@ out:
 }
 
 
-void render_text(struct render *r, const struct text *text)
+void render_text(struct render *r, const struct corpus_text *text)
 {
-	struct text_iter it;
+	struct corpus_text_iter it;
 
 	if (r->error) {
 		return;
 	}
 
-	text_iter_make(&it, text);
-	while (text_iter_advance(&it)) {
+	corpus_text_iter_make(&it, text);
+	while (corpus_text_iter_advance(&it)) {
 		render_char(r, it.current);
 		if (r->error) {
 			return;

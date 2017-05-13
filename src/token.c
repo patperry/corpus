@@ -31,7 +31,8 @@ static void typemap_clear_kind(struct typemap *map);
 static int typemap_set_kind(struct typemap *map, int kind);
 
 static int typemap_reserve(struct typemap *map, size_t size);
-static int typemap_set_ascii(struct typemap *map, const struct text *tok);
+static int typemap_set_ascii(struct typemap *map,
+			     const struct corpus_text *tok);
 static int typemap_set_utf32(struct typemap *map, const uint32_t *ptr,
 			     const uint32_t *end);
 static int typemap_stem(struct typemap *map);
@@ -179,14 +180,14 @@ error_nomem:
 }
 
 
-int typemap_set(struct typemap *map, const struct text *tok)
+int typemap_set(struct typemap *map, const struct corpus_text *tok)
 {
-	struct text_iter it;
-	size_t size = TEXT_SIZE(tok);
+	struct corpus_text_iter it;
+	size_t size = CORPUS_TEXT_SIZE(tok);
 	uint32_t *dst;
 	int err;
 
-	if (TEXT_IS_ASCII(tok)) {
+	if (CORPUS_TEXT_IS_ASCII(tok)) {
 		if ((err = typemap_set_ascii(map, tok))) {
 			goto error;
 		}
@@ -198,8 +199,8 @@ int typemap_set(struct typemap *map, const struct text *tok)
 	}
 
 	dst = map->codes;
-	text_iter_make(&it, tok);
-	while (text_iter_advance(&it)) {
+	corpus_text_iter_make(&it, tok);
+	while (corpus_text_iter_advance(&it)) {
 		unicode_map(map->charmap_type, it.current, &dst);
 	}
 
@@ -231,7 +232,7 @@ int typemap_stem(struct typemap *map)
 		return 0;
 	}
 
-	size = TEXT_SIZE(&map->type);
+	size = CORPUS_TEXT_SIZE(&map->type);
 
 	if (size >= INT_MAX) {
 		err = ERROR_OVERFLOW;
@@ -255,8 +256,8 @@ int typemap_stem(struct typemap *map)
 	map->type.ptr[size] = '\0';
 
 	// keep old utf8 bit, but update to new size
-	map->type.attr &= ~TEXT_SIZE_MASK;
-	map->type.attr |= TEXT_SIZE_MASK & size;
+	map->type.attr &= ~CORPUS_TEXT_SIZE_MASK;
+	map->type.attr |= CORPUS_TEXT_SIZE_MASK & size;
 	err = 0;
 
 out:
@@ -489,24 +490,25 @@ int typemap_set_utf32(struct typemap *map, const uint32_t *ptr,
 	}
 
 	*dst = '\0'; // not necessary, but helps with debugging
-	map->type.attr = TEXT_SIZE_MASK & ((size_t)(dst - map->type.ptr));
+	map->type.attr = (CORPUS_TEXT_SIZE_MASK
+			  & ((size_t)(dst - map->type.ptr)));
 	if (utf8) {
-		map->type.attr |= TEXT_UTF8_BIT;
+		map->type.attr |= CORPUS_TEXT_UTF8_BIT;
 	}
 
 	return 0;
 }
 
 
-int typemap_set_ascii(struct typemap *map, const struct text *tok)
+int typemap_set_ascii(struct typemap *map, const struct corpus_text *tok)
 {
-	struct text_iter it;
-	size_t size = TEXT_SIZE(tok);
+	struct corpus_text_iter it;
+	size_t size = CORPUS_TEXT_SIZE(tok);
 	int8_t ch;
 	uint8_t *dst;
 	int err;
 
-	assert(TEXT_IS_ASCII(tok));
+	assert(CORPUS_TEXT_IS_ASCII(tok));
 
 	if ((err = typemap_reserve(map, size + 1))) {
 		goto error;
@@ -514,8 +516,8 @@ int typemap_set_ascii(struct typemap *map, const struct text *tok)
 
 	dst = map->type.ptr;
 
-	text_iter_make(&it, tok);
-	while (text_iter_advance(&it)) {
+	corpus_text_iter_make(&it, tok);
+	while (corpus_text_iter_advance(&it)) {
 		ch = map->ascii_map[it.current];
 		if (ch >= 0) {
 			*dst++ = (uint8_t)ch;
@@ -523,7 +525,8 @@ int typemap_set_ascii(struct typemap *map, const struct text *tok)
 	}
 
 	*dst = '\0'; // not necessary, but helps with debugging
-	map->type.attr = TEXT_SIZE_MASK & ((size_t)(dst - map->type.ptr));
+	map->type.attr = (CORPUS_TEXT_SIZE_MASK
+			  & ((size_t)(dst - map->type.ptr)));
 	return 0;
 
 error:
@@ -533,10 +536,10 @@ error:
 
 
 // Dan Bernstein's djb2 XOR hash: http://www.cse.yorku.ca/~oz/hash.html
-unsigned token_hash(const struct text *tok)
+unsigned token_hash(const struct corpus_text *tok)
 {
 	const uint8_t *ptr = tok->ptr;
-	const uint8_t *end = ptr + TEXT_SIZE(tok);
+	const uint8_t *end = ptr + CORPUS_TEXT_SIZE(tok);
 	unsigned hash = 5381;
 	uint_fast8_t ch;
 
@@ -549,17 +552,18 @@ unsigned token_hash(const struct text *tok)
 }
 
 
-int token_equals(const struct text *t1, const struct text *t2)
+int token_equals(const struct corpus_text *t1, const struct corpus_text *t2)
 {
-	return ((t1->attr & ~TEXT_UTF8_BIT) == (t2->attr & ~TEXT_UTF8_BIT)
-			&& !memcmp(t1->ptr, t2->ptr, TEXT_SIZE(t2)));
+	return ((t1->attr & ~CORPUS_TEXT_UTF8_BIT)
+			== (t2->attr & ~CORPUS_TEXT_UTF8_BIT)
+		&& !memcmp(t1->ptr, t2->ptr, CORPUS_TEXT_SIZE(t2)));
 }
 
 
-int compare_type(const struct text *typ1, const struct text *typ2)
+int compare_type(const struct corpus_text *typ1, const struct corpus_text *typ2)
 {
-	size_t n1 = TEXT_SIZE(typ1);
-	size_t n2 = TEXT_SIZE(typ2);
+	size_t n1 = CORPUS_TEXT_SIZE(typ1);
+	size_t n2 = CORPUS_TEXT_SIZE(typ2);
 	size_t n = (n1 < n2) ? n1 : n2;
 	return memcmp(typ1->ptr, typ2->ptr, n);
 }

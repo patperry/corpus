@@ -41,7 +41,7 @@ void teardown_symtab(void)
 }
 
 
-int has_type(const struct text *typ)
+int has_type(const struct corpus_text *typ)
 {
 	int ntoken = tab.ntoken;
 	int ntype = tab.ntype;
@@ -76,7 +76,7 @@ int has_type(const struct text *typ)
 }
 
 
-int has_token(const struct text *tok)
+int has_token(const struct corpus_text *tok)
 {
 	int ntoken = tab.ntoken;
 	int ntype = tab.ntype;
@@ -112,7 +112,7 @@ int has_token(const struct text *tok)
 
 
 
-int add_type(const struct text *typ)
+int add_type(const struct corpus_text *typ)
 {
 	int type_id;
 	int ntoken = tab.ntoken;
@@ -151,7 +151,7 @@ int add_type(const struct text *typ)
 }
 
 
-int add_token(const struct text *tok)
+int add_token(const struct corpus_text *tok)
 {
 	int i, token_id, type_id;
 	int ntoken = tab.ntoken;
@@ -299,7 +299,7 @@ START_TEST(test_many_add_typ)
 {
 	char buf[256];
 	int i, j, n = 100;
-	struct text *typ;
+	struct corpus_text *typ;
 
 	for (i = 0; i < n; i++) {
 		sprintf(buf, "type %d", i);
@@ -320,7 +320,7 @@ START_TEST(test_many_add_tok)
 {
 	char buf[256];
 	int i, j, n = 100;
-	struct text *tok;
+	struct corpus_text *tok;
 
 	for (i = 0; i < n; i++) {
 		sprintf(buf, "token %d", i);

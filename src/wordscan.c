@@ -19,12 +19,12 @@
 #include "wordscan.h"
 
 
-void wordscan_make(struct wordscan *scan, const struct text *text)
+void wordscan_make(struct wordscan *scan, const struct corpus_text *text)
 {
 	scan->text = *text;
-	scan->text_attr = text->attr & ~TEXT_SIZE_MASK;
+	scan->text_attr = text->attr & ~CORPUS_TEXT_SIZE_MASK;
 
-	text_iter_make(&scan->iter, text);
+	corpus_text_iter_make(&scan->iter, text);
 	wordscan_reset(scan);
 }
 
@@ -36,7 +36,7 @@ void wordscan_make(struct wordscan *scan, const struct text *text)
 		scan->attr = scan->iter.attr; \
 		scan->prop = scan->iter_prop; \
 		scan->iter_ptr = scan->iter.ptr; \
-		if (text_iter_advance(&scan->iter)) { \
+		if (corpus_text_iter_advance(&scan->iter)) { \
 			scan->iter_prop = word_break(scan->iter.current); \
 		} else { \
 			scan->iter_prop = -1; \
@@ -54,7 +54,7 @@ void wordscan_make(struct wordscan *scan, const struct text *text)
 				|| scan->iter_prop == WORD_BREAK_ZWJ) { \
 			scan->attr |= scan->iter.attr; \
 			scan->iter_ptr = scan->iter.ptr; \
-			if (text_iter_advance(&scan->iter)) { \
+			if (corpus_text_iter_advance(&scan->iter)) { \
 				scan->iter_prop = \
 					word_break(scan->iter.current); \
 			} else { \
@@ -90,16 +90,16 @@ void wordscan_reset(struct wordscan *scan)
 	scan->current.attr = 0;
 	scan->type = WORD_NONE;
 
-	text_iter_reset(&scan->iter);
+	corpus_text_iter_reset(&scan->iter);
 	scan->ptr = scan->iter.ptr;
 
-	if (text_iter_advance(&scan->iter)) {
+	if (corpus_text_iter_advance(&scan->iter)) {
 		scan->code = scan->iter.current;
 		scan->attr = scan->iter.attr;
 		scan->prop = word_break(scan->code);
 
 		scan->iter_ptr = scan->iter.ptr;
-		if (text_iter_advance(&scan->iter)) {
+		if (corpus_text_iter_advance(&scan->iter)) {
 			scan->iter_prop = word_break(scan->iter.current);
 		} else {
 			scan->iter_prop = -1;

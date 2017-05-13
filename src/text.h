@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TEXT_H
-#define TEXT_H
+#ifndef CORPUS_TEXT_H
+#define CORPUS_TEXT_H
 
 /**
  * \file text.h
@@ -32,7 +32,7 @@
  * escape codes which should be interpreted as such. The client assumes
  * all responsibility for managing the memory for the underlying UTF8-data.
  */
-struct text {
+struct corpus_text {
 	uint8_t *ptr;	/**< pointer to valid UTF-8 data */
 	size_t attr;	/**< text attributes */
 };
@@ -40,7 +40,7 @@ struct text {
 /**
  * An iterator over the decoded UTF-32 characters in a text.
  */
-struct text_iter {
+struct corpus_text_iter {
 	const uint8_t *ptr;	/**< current position in the text buffer*/
 	const uint8_t *end;	/**< end of the text buffer */
 	size_t text_attr;	/**< text attributes */
@@ -49,40 +49,42 @@ struct text_iter {
 };
 
 /** Whether the text might contain a non-ASCII UTF-8 character */
-#define TEXT_UTF8_BIT	((size_t)1 << (CHAR_BIT * sizeof(size_t) - 1))
+#define CORPUS_TEXT_UTF8_BIT	((size_t)1 << (CHAR_BIT * sizeof(size_t) - 1))
 
 /** Whether the text might contain a backslash (`\`) that should be
  * interpreted as an escape */
-#define TEXT_ESC_BIT	((size_t)1 << (CHAR_BIT * sizeof(size_t) - 2))
+#define CORPUS_TEXT_ESC_BIT	((size_t)1 << (CHAR_BIT * sizeof(size_t) - 2))
 
 /** Size of the encoded text, in bytes; (decoded size) <= (encoded size) */
-#define TEXT_SIZE_MASK	((size_t)SIZE_MAX >> 2)
+#define CORPUS_TEXT_SIZE_MASK	((size_t)SIZE_MAX >> 2)
 
 /** Maximum size of encode text, in bytes. */
-#define TEXT_SIZE_MAX	TEXT_SIZE_MASK
+#define CORPUS_TEXT_SIZE_MAX	CORPUS_TEXT_SIZE_MASK
 
 /** The encoded size of the text, in bytes */
-#define TEXT_SIZE(text)		((text)->attr & TEXT_SIZE_MASK)
+#define CORPUS_TEXT_SIZE(text)		((text)->attr & CORPUS_TEXT_SIZE_MASK)
 
 /** Indicates whether the text definitely decodes to ASCII. For this to be true,
  *  the text must be encoded in ASCII and not have any escapes that decode to
  *  non-ASCII codepoints.
  */
-#define TEXT_IS_ASCII(text)	(((text)->attr & TEXT_UTF8_BIT) ? 0 : 1)
+#define CORPUS_TEXT_IS_ASCII(text) \
+	(((text)->attr & CORPUS_TEXT_UTF8_BIT) ? 0 : 1)
 
 /** Indicates whether the text might contain a backslash (`\`) that should
  *  be interpreted as an escape code */
-#define TEXT_HAS_ESC(text)	(((text)->attr & TEXT_ESC_BIT) ? 1 : 0)
+#define CORPUS_TEXT_HAS_ESC(text) \
+	(((text)->attr & CORPUS_TEXT_ESC_BIT) ? 1 : 0)
 
 /**
- * Flags for text_assign().
+ * Flags for corpus_text_assign().
  */
-enum text_flag {
+enum corpus_text_flag {
 	/** do not interpret backslash (`\`) as an escape */
-	TEXT_NOESCAPE = (1 << 0),
+	CORPUS_TEXT_NOESCAPE = (1 << 0),
 
 	/** do not perform any validation on the input */
-	TEXT_NOVALIDATE = (1 << 1)
+	CORPUS_TEXT_NOVALIDATE = (1 << 1)
 };
 
 /**
@@ -94,14 +96,15 @@ enum text_flag {
  *
  * \returns 0 on success, or non-zero on memory allocation failure
  */
-int text_init_copy(struct text *text, const struct text *other);
+int corpus_text_init_copy(struct corpus_text *text,
+			  const struct corpus_text *other);
 
 /**
  * Free the resources associated with a text object.
  *
  * \param text the text object
  */
-void text_destroy(struct text *text);
+void corpus_text_destroy(struct corpus_text *text);
 
 /**
  * Assign a text value to point to data in the specified memory location
@@ -114,7 +117,8 @@ void text_destroy(struct text *text);
  *
  * \returns 0 on success
  */
-int text_assign(struct text *text, const uint8_t *ptr, size_t size, int flags);
+int corpus_text_assign(struct corpus_text *text, const uint8_t *ptr,
+		       size_t size, int flags);
 
 /**
  * Initialize a text iterator to start at the beginning of a text.
@@ -122,7 +126,8 @@ int text_assign(struct text *text, const uint8_t *ptr, size_t size, int flags);
  * \param it the iterator
  * \param text the text
  */
-void text_iter_make(struct text_iter *it, const struct text *text);
+void corpus_text_iter_make(struct corpus_text_iter *it,
+			   const struct corpus_text *text);
 
 /**
  * Advance to the next character in a text.
@@ -132,13 +137,13 @@ void text_iter_make(struct text_iter *it, const struct text *text);
  * \returns non-zero if the iterator successfully advanced; zero if
  * 	the iterator has passed the end of the text
  */
-int text_iter_advance(struct text_iter *it);
+int corpus_text_iter_advance(struct corpus_text_iter *it);
 
 /**
  * Reset an iterator to the beginning of the text.
  *
  * \param it the text iterator
  */
-void text_iter_reset(struct text_iter *it);
+void corpus_text_iter_reset(struct corpus_text_iter *it);
 
-#endif /* TEXT_H */
+#endif /* CORPUS_TEXT_H */

@@ -39,15 +39,15 @@ void teardown_scan(void)
 }
 
 
-void start(const struct text *text)
+void start(const struct corpus_text *text)
 {
 	sentscan_make(&scan, text);
 }
 
 
-const struct text *next(void)
+const struct corpus_text *next(void)
 {
-	struct text *sent;
+	struct corpus_text *sent;
 	if (!sentscan_advance(&scan)) {
 		return NULL;
 	}
@@ -110,7 +110,7 @@ struct unitest {
 	unsigned line;
 	int is_ascii;
 
-	struct text text;
+	struct corpus_text text;
 	uint8_t buf[4096];
 
 	uint32_t code[256];
@@ -186,7 +186,7 @@ void setup_unicode(void)
 			test->is_ascii = is_ascii;
 			test->text.attr = (size_t)(dst - test->text.ptr);
 			if (!is_ascii) {
-				test->text.attr |= TEXT_UTF8_BIT;
+				test->text.attr |= CORPUS_TEXT_UTF8_BIT;
 			}
 
 			if (ncode > 0) {
@@ -274,7 +274,7 @@ START_TEST(test_unicode)
 			ck_assert_ptr_eq(scan.current.ptr,
 					 test->break_begin[j]);
 			ck_assert_ptr_eq(scan.current.ptr
-					 + TEXT_SIZE(&scan.current),
+					 + CORPUS_TEXT_SIZE(&scan.current),
 					 test->break_end[j]);
 		}
 		ck_assert(!sentscan_advance(&scan));

@@ -183,9 +183,9 @@ out:
 }
 
 
-int data_text(const struct data *d, struct text *valptr)
+int data_text(const struct data *d, struct corpus_text *valptr)
 {
-	struct text val;
+	struct corpus_text val;
 	const uint8_t *ptr;
 	const uint8_t *end;
 	int err;
@@ -205,7 +205,8 @@ int data_text(const struct data *d, struct text *valptr)
 		end--;
 	}
 
-	err = text_assign(&val, ptr, (size_t)(end - ptr), TEXT_NOVALIDATE);
+	err = corpus_text_assign(&val, ptr, (size_t)(end - ptr),
+				 CORPUS_TEXT_NOVALIDATE);
 	goto out;
 
 nullval:
@@ -350,7 +351,7 @@ static int compare_int(const void *x1, const void *x2)
 
 int data_fields_advance(struct data_fields *it)
 {
-	struct text name;
+	struct corpus_text name;
 	const uint8_t *begin;
 	const uint8_t *ptr;
 	const uint8_t *end;
@@ -381,7 +382,7 @@ int data_fields_advance(struct data_fields *it)
 
 	// name
 	begin = ptr;
-	flags = TEXT_NOESCAPE;
+	flags = CORPUS_TEXT_NOESCAPE;
 	while (*ptr != '"') {
 		if (*ptr == '\\') {
 			flags = 0;
@@ -389,8 +390,8 @@ int data_fields_advance(struct data_fields *it)
 		}
 		ptr++;
 	}
-	text_assign(&name, begin, (size_t)(ptr - begin),
-		    flags | TEXT_NOVALIDATE);
+	corpus_text_assign(&name, begin, (size_t)(ptr - begin),
+			   flags | CORPUS_TEXT_NOVALIDATE);
 
 	// the call to schema_name always succeeds and does not
 	// create a new name, because the field name already
@@ -572,7 +573,7 @@ int data_field(const struct data *d, const struct schema *s, int name_id,
 	const uint8_t *begin;
 	const uint8_t *ptr = d->ptr;
 	const int *idptr;
-	struct text name;
+	struct corpus_text name;
 	int err, flags, id, type_id;
 
 	if (d->type_id < 0 || s->types[d->type_id].kind != DATATYPE_RECORD) {
@@ -603,7 +604,7 @@ int data_field(const struct data *d, const struct schema *s, int name_id,
 
 		// name
 		begin = ptr;
-		flags = TEXT_NOESCAPE;
+		flags = CORPUS_TEXT_NOESCAPE;
 		while (*ptr != '"') {
 			if (*ptr == '\\') {
 				flags = 0;
@@ -611,8 +612,8 @@ int data_field(const struct data *d, const struct schema *s, int name_id,
 			}
 			ptr++;
 		}
-		text_assign(&name, begin, (size_t)(ptr - begin),
-			    flags | TEXT_NOVALIDATE);
+		corpus_text_assign(&name, begin, (size_t)(ptr - begin),
+				   flags | CORPUS_TEXT_NOVALIDATE);
 
 		// the call to schema_name always succeeds and does not
 		// create a new name, because the field name already

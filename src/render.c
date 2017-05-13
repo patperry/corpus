@@ -42,8 +42,8 @@ static void render_grow(struct render *r, int nadd)
 		return;
 	}
 
-	if ((err = array_grow(&base, &size, sizeof(*r->string),
-			      r->length + 1, nadd))) {
+	if ((err = corpus_array_grow(&base, &size, sizeof(*r->string),
+				     r->length + 1, nadd))) {
 		r->error = err;
 		return;
 	}

@@ -265,7 +265,7 @@ int census_grow(struct census *c, int nadd)
 
 	wbase = c->weights;
 	size = c->nitem_max;
-	err = array_grow(&wbase, &size, sizeof(*c->weights), c->nitem,
+	err = corpus_array_grow(&wbase, &size, sizeof(*c->weights), c->nitem,
 			 nadd);
 	if (err) {
 		logmsg(err, "failed growing census weight array");

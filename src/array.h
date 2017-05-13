@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef ARRAY_H
-#define ARRAY_H
+#ifndef CORPUS_ARRAY_H
+#define CORPUS_ARRAY_H
 
 /**
  * \file array.h
@@ -37,6 +37,7 @@
  *
  * \returns 0 on success
  */
-int array_grow(void **baseptr, int *sizeptr, size_t width, int count, int nadd);
+int corpus_array_grow(void **baseptr, int *sizeptr, size_t width, int count,
+		      int nadd);
 
-#endif /* ARRAY_H */
+#endif /* CORPUS_ARRAY_H */

@@ -303,8 +303,8 @@ int symtab_grow_tokens(struct symtab *tab, int nadd)
 	int size = tab->ntoken_max;
 	int err;
 
-	if ((err = array_grow(&base, &size, sizeof(*tab->tokens),
-			      tab->ntoken, nadd))) {
+	if ((err = corpus_array_grow(&base, &size, sizeof(*tab->tokens),
+				     tab->ntoken, nadd))) {
 		logmsg(err, "failed allocating token array");
 		return err;
 	}
@@ -321,8 +321,8 @@ int symtab_grow_types(struct symtab *tab, int nadd)
 	int size = tab->ntype_max;
 	int err;
 
-	if ((err = array_grow(&base, &size, sizeof(*tab->types),
-			      tab->ntype, nadd))) {
+	if ((err = corpus_array_grow(&base, &size, sizeof(*tab->types),
+				     tab->ntype, nadd))) {
 		logmsg(err, "failed allocating type array");
 		return err;
 	}

@@ -114,8 +114,8 @@ int schema_buffer_grow(struct schema_buffer *buf, int nadd)
 	int size = buf->nfield_max;
 	int err;
 
-	if ((err = array_grow(&tbase, &size, sizeof(*buf->type_ids),
-			      buf->nfield, nadd))) {
+	if ((err = corpus_array_grow(&tbase, &size, sizeof(*buf->type_ids),
+				     buf->nfield, nadd))) {
 		logmsg(err, "failed allocating schema buffer");
 		return err;
 	}
@@ -192,7 +192,8 @@ int sorter_reserve(struct schema_sorter *sort, int length)
 
 	nadd = length - n;
 
-	if ((err = array_grow(&base, &n, sizeof(*sort->idptrs), n, nadd))) {
+	err = corpus_array_grow(&base, &n, sizeof(*sort->idptrs), n, nadd);
+	if (err) {
 		logmsg(err, "failed allocating schema sorter");
 		return err;
 	}
@@ -841,8 +842,8 @@ int schema_grow_types(struct schema *s, int nadd)
 	int size = s->ntype_max;
 	int err;
 
-	if ((err = array_grow(&base, &size, sizeof(*s->types),
-			      s->ntype, nadd))) {
+	if ((err = corpus_array_grow(&base, &size, sizeof(*s->types),
+				     s->ntype, nadd))) {
 		logmsg(err, "failed allocating type array");
 		return err;
 	}

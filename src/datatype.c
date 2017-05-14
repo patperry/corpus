@@ -116,7 +116,7 @@ int schema_buffer_grow(struct schema_buffer *buf, int nadd)
 
 	if ((err = corpus_array_grow(&tbase, &size, sizeof(*buf->type_ids),
 				     buf->nfield, nadd))) {
-		logmsg(err, "failed allocating schema buffer");
+		corpus_log(err, "failed allocating schema buffer");
 		return err;
 	}
 	buf->type_ids = tbase;
@@ -124,8 +124,8 @@ int schema_buffer_grow(struct schema_buffer *buf, int nadd)
 	if (size) {
 		nbase = corpus_realloc(nbase, (size_t)size * sizeof(*nbase));
 		if (!nbase) {
-			err = ERROR_NOMEM;
-			logmsg(err, "failed allocating schema buffer");
+			err = CORPUS_ERROR_NOMEM;
+			corpus_log(err, "failed allocating schema buffer");
 			return err;
 		}
 		buf->name_ids = nbase;
@@ -194,7 +194,7 @@ int sorter_reserve(struct schema_sorter *sort, int length)
 
 	err = corpus_array_grow(&base, &n, sizeof(*sort->idptrs), n, nadd);
 	if (err) {
-		logmsg(err, "failed allocating schema sorter");
+		corpus_log(err, "failed allocating schema sorter");
 		return err;
 	}
 
@@ -309,7 +309,7 @@ int schema_name(struct schema *s, const struct corpus_text *name, int *idptr)
 	goto out;
 
 error:
-	logmsg(err, "failed adding name to schema");
+	corpus_log(err, "failed adding name to schema");
 	id = -1;
 
 out:
@@ -370,7 +370,7 @@ int schema_array(struct schema *s, int type_id, int length, int *idptr)
 	goto out;
 
 error:
-	logmsg(err, "failed adding array type");
+	corpus_log(err, "failed adding array type");
 	id = DATATYPE_ANY;
 	if (rehash) {
 		schema_rehash_arrays(s);
@@ -569,7 +569,7 @@ sorted:
 		if (!t->meta.record.type_ids || !t->meta.record.type_ids) {
 			corpus_free(t->meta.record.type_ids);
 			corpus_free(t->meta.record.name_ids);
-			err = ERROR_NOMEM;
+			err = CORPUS_ERROR_NOMEM;
 			goto error;
 		}
 		memcpy(t->meta.record.type_ids, type_ids,
@@ -592,14 +592,14 @@ sorted:
 	goto out;
 
 error_duplicate:
-	err = ERROR_INVAL;
-	logmsg(err, "duplicate field name \"%.*s\" in record",
-		(int)CORPUS_TEXT_SIZE(&s->names.types[name_ids[index]].text),
-		s->names.types[name_ids[index]].text.ptr);
+	err = CORPUS_ERROR_INVAL;
+	corpus_log(err, "duplicate field name \"%.*s\" in record",
+		   (int)CORPUS_TEXT_SIZE(&s->names.types[name_ids[index]].text),
+		   s->names.types[name_ids[index]].text.ptr);
 	goto error;
 
 error:
-	logmsg(err, "failed adding record type");
+	corpus_log(err, "failed adding record type");
 	id = DATATYPE_ANY;
 	if (rehash) {
 		schema_rehash_records(s);
@@ -731,7 +731,7 @@ int schema_union_array(struct schema *s, int id1, int id2, int *idptr)
 	goto out;
 
 error:
-	logmsg(err, "failed computing union of array types");
+	corpus_log(err, "failed computing union of array types");
 	id = DATATYPE_ANY;
 
 out:
@@ -823,7 +823,7 @@ int schema_union_record(struct schema *s, int id1, int id2, int *idptr)
 	goto out;
 
 error:
-	logmsg(err, "failed computing union of record types");
+	corpus_log(err, "failed computing union of record types");
 	id = DATATYPE_ANY;
 	goto out;
 
@@ -844,7 +844,7 @@ int schema_grow_types(struct schema *s, int nadd)
 
 	if ((err = corpus_array_grow(&base, &size, sizeof(*s->types),
 				     s->ntype, nadd))) {
-		logmsg(err, "failed allocating type array");
+		corpus_log(err, "failed allocating type array");
 		return err;
 	}
 
@@ -925,7 +925,8 @@ void render_datatype(struct render *r, const struct schema *s, int id)
 		break;
 
 	default:
-		logmsg(ERROR_INTERNAL, "internal error: invalid datatype kind");
+		corpus_log(CORPUS_ERROR_INTERNAL,
+			   "internal error: invalid datatype kind");
 	}
 }
 
@@ -946,9 +947,9 @@ int write_datatype(FILE *stream, const struct schema *s, int id)
 
 	if (fwrite(r.string, 1, (size_t)r.length, stream) < (size_t)r.length
 			&& r.length) {
-		err = ERROR_OS;
-		logmsg(err, "failed writing to output stream: %s",
-		       strerror(errno));
+		err = CORPUS_ERROR_OS;
+		corpus_log(err, "failed writing to output stream: %s",
+			   strerror(errno));
 		goto error_fwrite;
 	}
 
@@ -959,7 +960,7 @@ error_render:
 	render_destroy(&r);
 error_init:
 	if (err) {
-		logmsg(err, "failed writing datatype to output stream");
+		corpus_log(err, "failed writing datatype to output stream");
 	}
 
 	return err;
@@ -1036,8 +1037,8 @@ int schema_scan(struct schema *s, const uint8_t *ptr, size_t size, int *idptr)
 
 	scan_spaces(&ptr, end);
 	if (ptr != end) {
-		err = ERROR_INVAL;
-		logmsg(err, "unexpected trailing characters");
+		err = CORPUS_ERROR_INVAL;
+		corpus_log(err, "unexpected trailing characters");
 		goto error;
 	}
 
@@ -1046,7 +1047,7 @@ success:
 	goto out;
 
 error:
-	logmsg(err, "failed parsing value (%.*s)", (unsigned)size, input);
+	corpus_log(err, "failed parsing value (%.*s)", (unsigned)size, input);
 	id = DATATYPE_ANY;
 	goto out;
 
@@ -1196,23 +1197,23 @@ close:
 	goto out;
 
 error_inval_noclose:
-	err = ERROR_INVAL;
-	logmsg(err, "no closing bracket (]) at end of array");
+	err = CORPUS_ERROR_INVAL;
+	corpus_log(err, "no closing bracket (]) at end of array");
 	goto error;
 
 error_inval_noval:
-	err = ERROR_INVAL;
-	logmsg(err, "missing value at index %d in array", length);
+	err = CORPUS_ERROR_INVAL;
+	corpus_log(err, "missing value at index %d in array", length);
 	goto error;
 
 error_inval_val:
-	err = ERROR_INVAL;
-	logmsg(err, "failed parsing value at index %d in array", length);
+	err = CORPUS_ERROR_INVAL;
+	corpus_log(err, "failed parsing value at index %d in array", length);
 	goto error;
 
 error_inval_nocomma:
-	err = ERROR_INVAL;
-	logmsg(err, "missing comma (,) after index %d in array",
+	err = CORPUS_ERROR_INVAL;
+	corpus_log(err, "missing comma (,) after index %d in array",
 	       length);
 	goto error;
 
@@ -1307,13 +1308,13 @@ close:
 	goto out;
 
 error_inval_noclose:
-	err = ERROR_INVAL;
-	logmsg(err, "no closing bracket (}) at end of record");
+	err = CORPUS_ERROR_INVAL;
+	corpus_log(err, "no closing bracket (}) at end of record");
 	goto error;
 
 error_inval_nocomma:
-	err = ERROR_INVAL;
-	logmsg(err, "missing comma (,) in record");
+	err = CORPUS_ERROR_INVAL;
+	corpus_log(err, "missing comma (,) in record");
 	goto error;
 
 error:
@@ -1368,26 +1369,26 @@ int scan_field(struct schema *s, const uint8_t **bufptr, const uint8_t *end,
 	goto out;
 
 error_inval_noname:
-	err = ERROR_INVAL;
-	logmsg(err, "missing field name in record");
+	err = CORPUS_ERROR_INVAL;
+	corpus_log(err, "missing field name in record");
 	goto error;
 
 error_inval_nocolon:
-	err = ERROR_INVAL;
-	logmsg(err, "missing colon after field name \"%.*s\" in record",
-	       (unsigned)CORPUS_TEXT_SIZE(&name), name.ptr);
+	err = CORPUS_ERROR_INVAL;
+	corpus_log(err, "missing colon after field name \"%.*s\" in record",
+		   (unsigned)CORPUS_TEXT_SIZE(&name), name.ptr);
 	goto error;
 
 error_inval_noval:
-	err = ERROR_INVAL;
-	logmsg(err, "missing value for field \"%.*s\" in record",
-	       (unsigned)CORPUS_TEXT_SIZE(&name), name.ptr);
+	err = CORPUS_ERROR_INVAL;
+	corpus_log(err, "missing value for field \"%.*s\" in record",
+		   (unsigned)CORPUS_TEXT_SIZE(&name), name.ptr);
 	goto error;
 
 error_inval_val:
-	err = ERROR_INVAL;
-	logmsg(err, "failed parsing value for field \"%.*s\" in record",
-	       (unsigned)CORPUS_TEXT_SIZE(&name), name.ptr);
+	err = CORPUS_ERROR_INVAL;
+	corpus_log(err, "failed parsing value for field \"%.*s\" in record",
+		   (unsigned)CORPUS_TEXT_SIZE(&name), name.ptr);
 	goto error;
 
 error:
@@ -1415,9 +1416,9 @@ int scan_numeric(const uint8_t **bufptr, const uint8_t *end, int *idptr)
 	// skip over optional sign
 	if (ch == '-' || ch == '+') {
 		if (ptr == end) {
-			err = ERROR_INVAL;
-			logmsg(err, "missing number after (%c) sign",
-			       (char)ch);
+			err = CORPUS_ERROR_INVAL;
+			corpus_log(err, "missing number after (%c) sign",
+				   (char)ch);
 			goto error_inval;
 		}
 		ch = *ptr++;
@@ -1505,34 +1506,34 @@ int scan_numeric(const uint8_t **bufptr, const uint8_t *end, int *idptr)
 	goto out;
 
 error_inval_start:
-	err = ERROR_INVAL;
+	err = CORPUS_ERROR_INVAL;
 	if (isprint(ch)) {
-		logmsg(err, "invalid character (%c) at start of value",
-		       (char)ch);
+		corpus_log(err, "invalid character (%c) at start of value",
+			   (char)ch);
 	} else {
-		logmsg(err, "invalid character (0x%02x) at start of value",
-		       (unsigned char)ch);
+		corpus_log(err, "invalid character (0x%02x) at start of value",
+			   (unsigned char)ch);
 	}
 	goto error_inval;
 
 error_inval_char:
-	err = ERROR_INVAL;
+	err = CORPUS_ERROR_INVAL;
 	if (isprint(ch)) {
-		logmsg(err, "invalid character (%c) in number",
-		       (char)ch);
+		corpus_log(err, "invalid character (%c) in number",
+			   (char)ch);
 	} else {
-		logmsg(err, "invalid character (0x%02x) in number",
-		       (unsigned char)ch);
+		corpus_log(err, "invalid character (0x%02x) in number",
+			   (unsigned char)ch);
 	}
 	goto error_inval;
 
 error_inval_exp:
-	err = ERROR_INVAL;
-	logmsg(err, "missing exponent at end of number");
+	err = CORPUS_ERROR_INVAL;
+	corpus_log(err, "missing exponent at end of number");
 	goto error_inval;
 
 error_inval:
-	//logmsg(err, "failed attempting to parse numeric value");
+	//corpus_log(err, "failed attempting to parse numeric value");
 
 out:
 	*bufptr = ptr;
@@ -1579,14 +1580,14 @@ int scan_text(const uint8_t **bufptr, const uint8_t *end,
 	}
 
 error_noclose:
-	err = ERROR_INVAL;
-	logmsg(err, "no trailing quote (\") at end of text value");
+	err = CORPUS_ERROR_INVAL;
+	corpus_log(err, "no trailing quote (\") at end of text value");
 	goto out;
 
 close:
 	if ((err = corpus_text_assign(text, input, (size_t)(ptr - input),
 				      flags))) {
-		err = ERROR_INVAL;
+		err = CORPUS_ERROR_INVAL;
 		goto out;
 	}
 
@@ -1678,20 +1679,20 @@ int scan_char(char c, const uint8_t **bufptr, const uint8_t *end)
 	int err;
 
 	if (ptr == end) {
-		err = ERROR_INVAL;
-		logmsg(err, "expecting '%c' but input ended", c);
+		err = CORPUS_ERROR_INVAL;
+		corpus_log(err, "expecting '%c' but input ended", c);
 		return err;
 	}
 
 	ch = *ptr;
 	if (ch != c) {
-		err = ERROR_INVAL;
+		err = CORPUS_ERROR_INVAL;
 		if (isprint(ch)) {
-			logmsg(err, "expecting '%c' but got '%c'", c,
-			       (char)ch);
+			corpus_log(err, "expecting '%c' but got '%c'", c,
+				   (char)ch);
 		} else {
-			logmsg(err, "expecting '%c' but got '0x%02x'", c,
-			       (unsigned char)ch);
+			corpus_log(err, "expecting '%c' but got '0x%02x'", c,
+				   (unsigned char)ch);
 		}
 		return err;
 	}

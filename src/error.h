@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef ERROR_H
-#define ERROR_H
+#ifndef CORPUS_ERROR_H
+#define CORPUS_ERROR_H
 
 /**
  * \file error.h
@@ -27,25 +27,25 @@
  * Maximum log message size, in bytes, including the trailing zero.
  * Longer messages get truncated.
  */
-#define LOGMSG_MAX 1024
+#define CORPUS_LOG_MAX 1024
 
 /**
  * Integer codes for errors and messages.
  */
 enum error_code {
-	NO_ERROR = 0,	/**< successful result */
-	ERROR_INVAL,	/**< invalid input */
-	ERROR_NOMEM,	/**< memory allocation failure */
-	ERROR_OS,	/**< operating system error */
-	ERROR_OVERFLOW,	/**< value is too big for data type */
-	ERROR_INTERNAL	/**< internal library error */
+	CORPUS_ERROR_NONE = 0,	/**< successful result */
+	CORPUS_ERROR_INVAL,	/**< invalid input */
+	CORPUS_ERROR_NOMEM,	/**< memory allocation failure */
+	CORPUS_ERROR_OS,	/**< operating system error */
+	CORPUS_ERROR_OVERFLOW,	/**< value is too big for data type */
+	CORPUS_ERROR_INTERNAL	/**< internal library error */
 };
 
 /**
  * If non-`NULL`, this function gets called to log a message. Otherwise,
  * messages get written to `stderr`. Initialized to `NULL`.
  */
-extern void (*logmsg_func)(int code, const char *message);
+extern void (*corpus_log_func)(int code, const char *message);
 
 /**
  * Get a human-readable string representation of an error code.
@@ -54,7 +54,7 @@ extern void (*logmsg_func)(int code, const char *message);
  *
  * \returns a string describing the error code
  */
-const char *error_string(int code);
+const char *corpus_error_string(int code);
 
 /**
  * Log a message.
@@ -62,11 +62,11 @@ const char *error_string(int code);
  * \param code the status code, an #error_code value
  * \param format a printf-style format string
  */
-void logmsg(int code, const char *format, ...)
+void corpus_log(int code, const char *format, ...)
 #if (defined(_WIN32) || defined(_WIN64))
 	;
 #else
 	__attribute__ ((format (printf, 2, 3)));
 #endif
 
-#endif /* ERROR_H */
+#endif /* CORPUS_ERROR_H */

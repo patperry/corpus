@@ -69,7 +69,7 @@ int data_bool(const struct data *d, int *valptr)
 
 	if (d->type_id != DATATYPE_BOOLEAN) {
 		val = INT_MIN;
-		err = ERROR_INVAL;
+		err = CORPUS_ERROR_INVAL;
 	} else {
 		val = *d->ptr == 't' ? 1 : 0;
 		err = 0;
@@ -97,13 +97,13 @@ int data_int(const struct data *d, int *valptr)
 	lval = strntoimax((const char *)d->ptr, d->size, NULL);
 	if (errno == ERANGE) {
 		val = lval > 0 ? INT_MAX : INT_MIN;
-		err = ERROR_OVERFLOW;
+		err = CORPUS_ERROR_OVERFLOW;
 	} else if (lval > INT_MAX) {
 		val = INT_MAX;
-		err = ERROR_OVERFLOW;
+		err = CORPUS_ERROR_OVERFLOW;
 	} else if (lval < INT_MIN) {
 		val = INT_MIN;
-		err = ERROR_OVERFLOW;
+		err = CORPUS_ERROR_OVERFLOW;
 	} else {
 		val = (int)lval;
 		err = 0;
@@ -113,7 +113,7 @@ int data_int(const struct data *d, int *valptr)
 
 nullval:
 	val = INT_MIN;
-	err = ERROR_INVAL;
+	err = CORPUS_ERROR_INVAL;
 
 out:
 	if (valptr) {
@@ -138,7 +138,7 @@ int data_double(const struct data *d, double *valptr)
 	val = strntod_c((const char *)d->ptr, d->size, (const char **)&ptr);
 	if (ptr != d->ptr) {
 		if (!isfinite(val)) {
-			err = ERROR_OVERFLOW;
+			err = CORPUS_ERROR_OVERFLOW;
 		} else {
 			err = 0;
 		}
@@ -171,7 +171,7 @@ int data_double(const struct data *d, double *valptr)
 	goto out;
 
 nullval:
-	err = ERROR_INVAL;
+	err = CORPUS_ERROR_INVAL;
 	val = (double)NAN;
 	goto out;
 
@@ -212,7 +212,7 @@ int data_text(const struct data *d, struct corpus_text *valptr)
 nullval:
 	val.ptr = NULL;
 	val.attr = 0;
-	err = ERROR_INVAL;
+	err = CORPUS_ERROR_INVAL;
 	goto out;
 
 out:
@@ -465,7 +465,7 @@ nullval:
 	it.current.size = 0;
 	it.current.type_id = DATATYPE_NULL;
 	it.index = -1;
-	err = ERROR_INVAL;
+	err = CORPUS_ERROR_INVAL;
 out:
 	if (valptr) {
 		*valptr = it;
@@ -497,7 +497,7 @@ int data_nitem(const struct data *d, const struct schema *s, int *nitemptr)
 
 nullval:
 	nitem = -1;
-	err = ERROR_INVAL;
+	err = CORPUS_ERROR_INVAL;
 out:
 	if (nitemptr) {
 		*nitemptr = nitem;
@@ -520,7 +520,7 @@ int data_nfield(const struct data *d, const struct schema *s, int *nfieldptr)
 
 nullval:
 	nfield = -1;
-	err = ERROR_INVAL;
+	err = CORPUS_ERROR_INVAL;
 out:
 	if (nfieldptr) {
 		*nfieldptr = nfield;
@@ -556,7 +556,7 @@ nullval:
 	it.current.size = 0;
 	it.current.type_id = DATATYPE_NULL;
 	it.name_id = -1;
-	err = ERROR_INVAL;
+	err = CORPUS_ERROR_INVAL;
 out:
 	if (valptr) {
 		*valptr = it;
@@ -664,7 +664,7 @@ nullval:
 	val.ptr = NULL;
 	val.size = 0;
 	val.type_id = DATATYPE_NULL;
-	err = ERROR_INVAL;
+	err = CORPUS_ERROR_INVAL;
 out:
 	if (valptr) {
 		*valptr = val;

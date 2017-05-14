@@ -55,7 +55,7 @@ int scan_utf8(const uint8_t **bufptr, const uint8_t *end)
 	int err;
 
 	if (ptr >= end) {
-		return ERROR_INVAL;
+		return CORPUS_ERROR_INVAL;
 	}
 
 	/* First byte
@@ -188,7 +188,7 @@ success:
 	goto out;
 backtrack:
 	ptr--;
-	err = ERROR_INVAL;
+	err = CORPUS_ERROR_INVAL;
 out:
 	*bufptr = ptr;
 	return err;

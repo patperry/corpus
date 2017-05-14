@@ -119,7 +119,7 @@ int main_sentences(int argc, char * const argv[])
 	if (output) {
 		if (!(stream = fopen(output, "w"))) {
 			perror("Failed opening output file");
-			err = ERROR_OS;
+			err = CORPUS_ERROR_OS;
 			goto error_output;
 		}
 	} else {
@@ -170,7 +170,7 @@ int main_sentences(int argc, char * const argv[])
 error:
 	if (output && fclose(stream) == EOF) {
 		perror("Failed closing output file");
-		err = ERROR_OS;
+		err = CORPUS_ERROR_OS;
 	}
 error_output:
 	filebuf_destroy(&buf);

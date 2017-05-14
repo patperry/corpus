@@ -31,9 +31,10 @@ void *corpus_calloc(size_t count, size_t size)
 	void *mem = calloc(count, size);
 
 	if (count && size && !mem) {
-		logmsg(ERROR_NOMEM,
-		       "failed to allocate %"PRIu64" objects of size %"PRIu64,
-		       (uint64_t)count, (uint64_t)size);
+		corpus_log(CORPUS_ERROR_NOMEM,
+			   "failed to allocate %"PRIu64" objects"
+			   " of size %"PRIu64,
+			   (uint64_t)count, (uint64_t)size);
 
 		if (corpus_alloc_fail_func) {
 			corpus_alloc_fail_func();
@@ -55,8 +56,9 @@ void *corpus_malloc(size_t size)
 	void *mem = malloc(size);
 
 	if (size && !mem) {
-		logmsg(ERROR_NOMEM, "failed to allocate %"PRIu64" bytes",
-			(uint64_t)size);
+		corpus_log(CORPUS_ERROR_NOMEM,
+			   "failed to allocate %"PRIu64" bytes",
+			   (uint64_t)size);
 
 		if (corpus_alloc_fail_func) {
 			corpus_alloc_fail_func();
@@ -72,8 +74,9 @@ void *corpus_realloc(void *ptr, size_t size)
 	void *mem = realloc(ptr, size);
 
 	if (size && !mem) {
-		logmsg(ERROR_NOMEM, "failed to allocate %"PRIu64" bytes",
-			(uint64_t)size);
+		corpus_log(CORPUS_ERROR_NOMEM,
+			   "failed to allocate %"PRIu64" bytes",
+			   (uint64_t)size);
 
 		if (corpus_alloc_fail_func) {
 			corpus_alloc_fail_func();

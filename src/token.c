@@ -53,12 +53,13 @@ int typemap_init(struct typemap *map, int kind, const char *stemmer)
 		map->stemmer = sb_stemmer_new(stemmer, "UTF_8");
 		if (!map->stemmer) {
 		       if (errno == ENOMEM) {
-			       err = ERROR_NOMEM;
-			       logmsg(err, "failed allocating stemmer");
+			       err = CORPUS_ERROR_NOMEM;
+			       corpus_log(err, "failed allocating stemmer");
 		       } else {
-				err = ERROR_INVAL;
-				logmsg(err, "unrecognized stemming algorithm"
-				       " (%s)", stemmer);
+				err = CORPUS_ERROR_INVAL;
+				corpus_log(err,
+					   "unrecognized stemming algorithm"
+					   " (%s)", stemmer);
 		       }
 		       goto out;
 		}
@@ -174,8 +175,8 @@ int typemap_reserve(struct typemap *map, size_t size)
 	return 0;
 
 error_nomem:
-	err = ERROR_NOMEM;
-	logmsg(err, "failed allocating type map buffer");
+	err = CORPUS_ERROR_NOMEM;
+	corpus_log(err, "failed allocating type map buffer");
 	return err;
 }
 
@@ -217,7 +218,7 @@ stem:
 	return err;
 
 error:
-	logmsg(err, "failed normalizing token");
+	corpus_log(err, "failed normalizing token");
 	return err;
 }
 
@@ -235,18 +236,19 @@ int typemap_stem(struct typemap *map)
 	size = CORPUS_TEXT_SIZE(&map->type);
 
 	if (size >= INT_MAX) {
-		err = ERROR_OVERFLOW;
-		logmsg(err, "type size (%"PRIu64" bytes)"
-		       " exceeds maximum (%d)", (uint64_t)size, INT_MAX - 1);
+		err = CORPUS_ERROR_OVERFLOW;
+		corpus_log(err, "type size (%"PRIu64" bytes)"
+			   " exceeds maximum (%d)",
+			   (uint64_t)size, INT_MAX - 1);
 		goto out;
 	}
 
 	buf = (const uint8_t *)sb_stemmer_stem(map->stemmer, map->type.ptr,
 					       (int)size);
 	if (buf == NULL) {
-		err = ERROR_NOMEM;
-		logmsg(err, "failed allocating memory to stem word"
-		       " of size %"PRIu64" bytes", (uint64_t)size);
+		err = CORPUS_ERROR_NOMEM;
+		corpus_log(err, "failed allocating memory to stem word"
+			   " of size %"PRIu64" bytes", (uint64_t)size);
 		goto out;
 	}
 
@@ -530,7 +532,7 @@ int typemap_set_ascii(struct typemap *map, const struct corpus_text *tok)
 	return 0;
 
 error:
-	logmsg(err, "failed normalizing token");
+	corpus_log(err, "failed normalizing token");
 	return err;
 }
 

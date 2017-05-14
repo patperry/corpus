@@ -19,23 +19,23 @@
 #include "error.h"
 
 
-void (*logmsg_func)(int code, const char *message) = NULL;
+void (*corpus_log_func)(int code, const char *message) = NULL;
 
 
-const char *error_string(int code)
+const char *corpus_error_string(int code)
 {
 	switch (code) {
-	case NO_ERROR:
+	case CORPUS_ERROR_NONE:
 		return "";
-	case ERROR_INVAL:
+	case CORPUS_ERROR_INVAL:
 		return "Input Error";
-	case ERROR_NOMEM:
+	case CORPUS_ERROR_NOMEM:
 		return "Memory Error";
-	case ERROR_OS:
+	case CORPUS_ERROR_OS:
 		return "OS Error";
-	case ERROR_OVERFLOW:
+	case CORPUS_ERROR_OVERFLOW:
 		return "Overflow Error";
-	case ERROR_INTERNAL:
+	case CORPUS_ERROR_INTERNAL:
 		return "Internal Error";
 	default:
 		return "Error";
@@ -43,19 +43,19 @@ const char *error_string(int code)
 }
 
 
-void logmsg(int code, const char *format, ...)
+void corpus_log(int code, const char *format, ...)
 {
-	char msg[LOGMSG_MAX];
+	char msg[CORPUS_LOG_MAX];
 	va_list ap;
 
 	va_start(ap, format);
-	vsnprintf(msg, LOGMSG_MAX, format, ap);
+	vsnprintf(msg, CORPUS_LOG_MAX, format, ap);
 	va_end(ap);
 
-	if (logmsg_func) {
-		logmsg_func(code, msg);
+	if (corpus_log_func) {
+		corpus_log_func(code, msg);
 	} else if (code) {
-		fprintf(stderr, "[%s] %s\n", error_string(code), msg);
+		fprintf(stderr, "[%s] %s\n", corpus_error_string(code), msg);
 	} else {
 		fprintf(stderr, "%s\n", msg);
 	}

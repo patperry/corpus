@@ -49,8 +49,8 @@ int corpus_text_init_copy(struct corpus_text *text,
 	int err;
 
         if (!(text->ptr = corpus_malloc(size + 1))) {
-                err = ERROR_NOMEM;
-                logmsg(err, "failed allocating text object");
+                err = CORPUS_ERROR_NOMEM;
+                corpus_log(err, "failed allocating text object");
                 return err;
         }
 
@@ -181,18 +181,19 @@ int assign_raw(struct corpus_text *text, const uint8_t *ptr, size_t size)
 	return 0;
 
 error_inval_utf8:
-	logmsg(err, "invalid UTF-8 byte (0x%02X)", (unsigned)*ptr);
+	corpus_log(err, "invalid UTF-8 byte (0x%02X)", (unsigned)*ptr);
 	goto error_inval;
 
 error_inval:
-	logmsg(err, "error in text at byte %"PRIu64, (uint64_t)(ptr - input));
+	corpus_log(err, "error in text at byte %"PRIu64,
+		   (uint64_t)(ptr - input));
 	goto error;
 
 error_overflow:
-	err = ERROR_OVERFLOW;
-	logmsg(err, "text size (%"PRIu64" bytes)"
-		" exceeds maximum (%"PRIu64" bytes)",
-	       (uint64_t)size, (uint64_t)CORPUS_TEXT_SIZE_MAX);
+	err = CORPUS_ERROR_OVERFLOW;
+	corpus_log(err, "text size (%"PRIu64" bytes)"
+		   " exceeds maximum (%"PRIu64" bytes)",
+		   (uint64_t)size, (uint64_t)CORPUS_TEXT_SIZE_MAX);
 	goto error;
 
 error:
@@ -230,10 +231,10 @@ int assign_raw_unsafe(struct corpus_text *text, const uint8_t *ptr, size_t size)
 	return 0;
 
 error_overflow:
-	err = ERROR_OVERFLOW;
-	logmsg(err, "text size (%"PRIu64" bytes)"
-	       " exceeds maximum (%"PRIu64" bytes)",
-	       (uint64_t)size, (uint64_t)CORPUS_TEXT_SIZE_MAX);
+	err = CORPUS_ERROR_OVERFLOW;
+	corpus_log(err, "text size (%"PRIu64" bytes)"
+		   " exceeds maximum (%"PRIu64" bytes)",
+		   (uint64_t)size, (uint64_t)CORPUS_TEXT_SIZE_MAX);
 	goto error;
 
 error:
@@ -305,32 +306,32 @@ int assign_esc(struct corpus_text *text, const uint8_t *ptr, size_t size)
 	return 0;
 
 error_inval_incomplete:
-	err = ERROR_INVAL;
-	logmsg(err, "incomplete escape code (\\)");
+	err = CORPUS_ERROR_INVAL;
+	corpus_log(err, "incomplete escape code (\\)");
 	goto error_inval;
 
 error_inval_esc:
-	err = ERROR_INVAL;
-	logmsg(err, "invalid escape code (\\%c)", ch);
+	err = CORPUS_ERROR_INVAL;
+	corpus_log(err, "invalid escape code (\\%c)", ch);
 	goto error_inval;
 
 error_inval_uesc:
 	goto error_inval;
 
 error_inval_utf8:
-	logmsg(err, "invalid UTF-8 byte (0x%02X)", (unsigned)*ptr);
+	corpus_log(err, "invalid UTF-8 byte (0x%02X)", (unsigned)*ptr);
 	goto error_inval;
 
 error_inval:
-	logmsg(err, "error in text at byte %"PRIu64,
-		(uint64_t)(ptr - input));
+	corpus_log(err, "error in text at byte %"PRIu64,
+		   (uint64_t)(ptr - input));
 	goto error;
 
 error_overflow:
-	err = ERROR_OVERFLOW;
-	logmsg(err, "text size (%"PRIu64" bytes)"
-	       " exceeds maximum (%"PRIu64" bytes)",
-	       (uint64_t)size, (uint64_t)CORPUS_TEXT_SIZE_MAX);
+	err = CORPUS_ERROR_OVERFLOW;
+	corpus_log(err, "text size (%"PRIu64" bytes)"
+		   " exceeds maximum (%"PRIu64" bytes)",
+		   (uint64_t)size, (uint64_t)CORPUS_TEXT_SIZE_MAX);
 	goto error;
 
 error:
@@ -383,10 +384,10 @@ int assign_esc_unsafe(struct corpus_text *text, const uint8_t *ptr, size_t size)
 	return 0;
 
 error_overflow:
-	err = ERROR_OVERFLOW;
-	logmsg(err, "text size (%"PRIu64" bytes)"
-	       " exceeds maximum (%"PRIu64" bytes)",
-	       (uint64_t)size, (uint64_t)CORPUS_TEXT_SIZE_MAX);
+	err = CORPUS_ERROR_OVERFLOW;
+	corpus_log(err, "text size (%"PRIu64" bytes)"
+		   " exceeds maximum (%"PRIu64" bytes)",
+		   (uint64_t)size, (uint64_t)CORPUS_TEXT_SIZE_MAX);
 	goto error;
 
 error:
@@ -447,36 +448,34 @@ int decode_uescape(const uint8_t **inputptr, const uint8_t *end,
 	goto out;
 
 error_inval_incomplete:
-	err = ERROR_INVAL;
-	logmsg(err, "incomplete escape code (\\u%.*s)",
-	       (int)(end - input), input);
+	err = CORPUS_ERROR_INVAL;
+	corpus_log(err, "incomplete escape code (\\u%.*s)",
+		   (int)(end - input), input);
 	goto error_inval;
 
 error_inval_hex:
-	err = ERROR_INVAL;
-	logmsg(err, "invalid hex value in escape code (\\u%.*s)", 4, input);
+	err = CORPUS_ERROR_INVAL;
+	corpus_log(err, "invalid hex value in escape code (\\u%.*s)",
+		   4, input);
 	goto error_inval;
 
 error_inval_nolow:
-	err = ERROR_INVAL;
-	logmsg(err,
-	       "missing UTF-16 low surrogate after high surrogate escape code"
-	       " (\\u%.*s)", 4, input);
+	err = CORPUS_ERROR_INVAL;
+	corpus_log(err, "missing UTF-16 low surrogate"
+		   " after high surrogate escape code (\\u%.*s)", 4, input);
 	goto error_inval;
 
 error_inval_low:
-	err = ERROR_INVAL;
-	logmsg(err,
-		"invalid UTF-16 low surrogate (\\u%.*s)"
-	        " after high surrogate escape code (\\u%.*s)",
-		4, input, 4, input - 6);
+	err = CORPUS_ERROR_INVAL;
+	corpus_log(err, "invalid UTF-16 low surrogate (\\u%.*s)"
+		   " after high surrogate escape code (\\u%.*s)",
+		   4, input, 4, input - 6);
 	goto error_inval;
 
 error_inval_nohigh:
-	err = ERROR_INVAL;
-	logmsg(err,
-	       "missing UTF-16 high surrogate before low surrogate escape code"
-	       " (\\u%.*s)", 4, input);
+	err = CORPUS_ERROR_INVAL;
+	corpus_log(err, "missing UTF-16 high surrogate"
+		   " before low surrogate escape code (\\u%.*s)", 4, input);
 	goto error_inval;
 
 error_inval:

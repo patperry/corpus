@@ -36,7 +36,7 @@ int census_init(struct census *c)
 	int err;
 
 	if ((err = corpus_table_init(&c->table))) {
-		logmsg(err, "failed initializing census");
+		corpus_log(err, "failed initializing census");
 		goto out;
 	}
 
@@ -72,8 +72,9 @@ int census_add(struct census *c, int item, double weight)
 	rehash = 0;
 
 	if (isnan(weight)) {
-		err = ERROR_INVAL;
-		logmsg(err, "invalid weight for census item %d (NaN)", item);
+		err = CORPUS_ERROR_INVAL;
+		corpus_log(err, "invalid weight for census item %d (NaN)",
+			   item);
 		goto error;
 	}
 
@@ -115,7 +116,7 @@ int census_add(struct census *c, int item, double weight)
 	goto out;
 
 error:
-	logmsg(err, "failed adding item to census");
+	corpus_log(err, "failed adding item to census");
 	if (rehash) {
 		census_rehash(c);
 	}
@@ -197,15 +198,16 @@ int census_sort(struct census *c)
 	int err;
 
 	if ((size_t)n > SIZE_MAX / sizeof(*array)) {
-		err = ERROR_OVERFLOW;
-		logmsg(err, "census items array size (%d)"
-		       " is too large to sort", n);
+		err = CORPUS_ERROR_OVERFLOW;
+		corpus_log(err, "census items array size (%d)"
+			   " is too large to sort", n);
 		goto out;
 	}
 
 	if (!(array = corpus_malloc((size_t)n * sizeof(*array)))) {
-		err = ERROR_NOMEM;
-		logmsg(err, "failed allocating memory to sort census items");
+		err = CORPUS_ERROR_NOMEM;
+		corpus_log(err,
+			   "failed allocating memory to sort census items");
 		goto out;
 	}
 
@@ -268,15 +270,15 @@ int census_grow(struct census *c, int nadd)
 	err = corpus_array_grow(&wbase, &size, sizeof(*c->weights), c->nitem,
 			 nadd);
 	if (err) {
-		logmsg(err, "failed growing census weight array");
+		corpus_log(err, "failed growing census weight array");
 		goto out;
 	}
 	c->weights = wbase;
 
 	ibase = corpus_realloc(c->items, (size_t)size * sizeof(*c->items));
 	if (!ibase) {
-		err = ERROR_NOMEM;
-		logmsg(err, "failed growing census items array");
+		err = CORPUS_ERROR_NOMEM;
+		corpus_log(err, "failed growing census items array");
 		goto out;
 	}
 	c->items = ibase;

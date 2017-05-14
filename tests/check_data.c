@@ -62,7 +62,7 @@ void teardown_data(void)
 {
 	schema_destroy(&schema);
 	teardown();
-	logmsg_func = NULL;
+	corpus_log_func = NULL;
 }
 
 
@@ -88,7 +88,7 @@ int is_error(const char *str)
 	size_t n = strlen(str);
 	int err, id;
 	err = schema_scan(&schema, (const uint8_t *)str, n, &id);
-	ck_assert(err == ERROR_INVAL || err == 0);
+	ck_assert(err == CORPUS_ERROR_INVAL || err == 0);
 	return (err != 0);
 }
 
@@ -132,7 +132,7 @@ int decode_int(const char *str)
 
 	ck_assert(!data_assign(&data, &schema, (const uint8_t *)str, n));
 	err = data_int(&data, &val);
-	ck_assert(err == 0 || err == ERROR_OVERFLOW);
+	ck_assert(err == 0 || err == CORPUS_ERROR_OVERFLOW);
 
 	return val;
 }
@@ -160,7 +160,7 @@ double decode_double(const char *str)
 
 	ck_assert(!data_assign(&data, &schema, (const uint8_t *)str, n));
 	err = data_double(&data, &val);
-	ck_assert(err == 0 || err == ERROR_OVERFLOW);
+	ck_assert(err == 0 || err == CORPUS_ERROR_OVERFLOW);
 
 	return val;
 }
@@ -244,7 +244,7 @@ END_TEST
 
 START_TEST(test_invalid_null)
 {
-	logmsg_func = ignore_message;
+	corpus_log_func = ignore_message;
 
 	ck_assert(is_error("n"));
 	ck_assert(is_error("nulll"));
@@ -267,7 +267,7 @@ END_TEST
 
 START_TEST(test_invalid_boolean)
 {
-	logmsg_func = ignore_message;
+	corpus_log_func = ignore_message;
 
 	ck_assert(is_error("tru"));
 	ck_assert(is_error("true1"));
@@ -328,7 +328,7 @@ END_TEST
 
 START_TEST(test_invalid_number)
 {
-	logmsg_func = ignore_message;
+	corpus_log_func = ignore_message;
 
 	ck_assert(is_error("1a"));
 	ck_assert(is_error("-"));
@@ -514,7 +514,7 @@ END_TEST
 
 START_TEST(test_invalid_text)
 {
-	logmsg_func = ignore_message;
+	corpus_log_func = ignore_message;
 
 	ck_assert(is_error("hello"));
 	ck_assert(is_error("\"hello\" world"));
@@ -547,7 +547,7 @@ END_TEST
 
 START_TEST(test_invalid_array)
 {
-	logmsg_func = ignore_message;
+	corpus_log_func = ignore_message;
 
 	ck_assert(is_error("[null, ]"));
 }
@@ -626,7 +626,7 @@ END_TEST
 
 START_TEST(test_invalid_record)
 {
-	logmsg_func = ignore_message;
+	corpus_log_func = ignore_message;
 
 	ck_assert(is_error("{ \"hello\": }"));
 	ck_assert(is_error("{ \"a\":1, }"));

@@ -39,17 +39,17 @@ int symtab_init(struct symtab *tab, int type_kind, const char *stemmer)
 	int err;
 
 	if ((err = typemap_init(&tab->typemap, type_kind, stemmer))) {
-		logmsg(err, "failed initializing type buffer");
+		corpus_log(err, "failed initializing type buffer");
 		goto error_typemap;
 	}
 
 	if ((err = corpus_table_init(&tab->type_table))) {
-		logmsg(err, "failed allocating type table");
+		corpus_log(err, "failed allocating type table");
 		goto error_type_table;
 	}
 
 	if ((err = corpus_table_init(&tab->token_table))) {
-		logmsg(err, "failed allocating token table");
+		corpus_log(err, "failed allocating token table");
 		goto error_token_table;
 	}
 
@@ -68,7 +68,7 @@ error_token_table:
 error_type_table:
 	typemap_destroy(&tab->typemap);
 error_typemap:
-	logmsg(err, "failed initializing symbol table");
+	corpus_log(err, "failed initializing symbol table");
 	return err;
 }
 
@@ -232,7 +232,7 @@ error:
 	if (rehash) {
 		symtab_rehash_tokens(tab);
 	}
-	logmsg(err, "failed adding token to symbol table");
+	corpus_log(err, "failed adding token to symbol table");
 	return err;
 }
 
@@ -296,7 +296,7 @@ error:
 	if (rehash) {
 		symtab_rehash_types(tab);
 	}
-	logmsg(err, "failed adding type to symbol table");
+	corpus_log(err, "failed adding type to symbol table");
 	return err;
 }
 
@@ -309,7 +309,7 @@ int symtab_grow_tokens(struct symtab *tab, int nadd)
 
 	if ((err = corpus_array_grow(&base, &size, sizeof(*tab->tokens),
 				     tab->ntoken, nadd))) {
-		logmsg(err, "failed allocating token array");
+		corpus_log(err, "failed allocating token array");
 		return err;
 	}
 
@@ -327,7 +327,7 @@ int symtab_grow_types(struct symtab *tab, int nadd)
 
 	if ((err = corpus_array_grow(&base, &size, sizeof(*tab->types),
 				     tab->ntype, nadd))) {
-		logmsg(err, "failed allocating type array");
+		corpus_log(err, "failed allocating type array");
 		return err;
 	}
 
@@ -377,7 +377,7 @@ int type_add_token(struct symtab_type *typ, int tok_id)
 	tok_ids = corpus_realloc(tok_ids,
 				 (size_t)(ntok + 1) * sizeof(*tok_ids));
 	if (!tok_ids) {
-		return ERROR_NOMEM;
+		return CORPUS_ERROR_NOMEM;
 	}
 
 	tok_ids[ntok] = tok_id;

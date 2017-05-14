@@ -39,7 +39,7 @@ void setup_text(void)
 void teardown_text(void)
 {
 	teardown();
-	logmsg_func = NULL;
+	corpus_log_func = NULL;
 }
 
 
@@ -91,7 +91,7 @@ END_TEST
 
 START_TEST(test_invalid_text)
 {
-	logmsg_func = ignore_message;
+	corpus_log_func = ignore_message;
 
 	ck_assert(!is_valid_text("invalid utf-8 \xBF"));
 	ck_assert(!is_valid_text("invalid utf-8 \xC2\x7F"));
@@ -130,7 +130,7 @@ END_TEST
 
 START_TEST(test_invalid_raw)
 {
-	logmsg_func = ignore_message;
+	corpus_log_func = ignore_message;
 
 	ck_assert(!is_valid_raw("invalid utf-8 \xBF"));
 	ck_assert(!is_valid_raw("invalid utf-8 \xC2\x7F"));

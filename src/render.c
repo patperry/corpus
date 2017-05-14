@@ -59,8 +59,8 @@ int render_init(struct render *r, int escape_flags)
 
 	r->string = corpus_malloc(1);
 	if (!r->string) {
-		err = ERROR_NOMEM;
-		logmsg(err, "failed initializing render object");
+		err = CORPUS_ERROR_NOMEM;
+		corpus_log(err, "failed initializing render object");
 		return err;
 	}
 
@@ -111,8 +111,8 @@ const char *render_set_tab(struct render *r, const char *tab)
 	assert(tab);
 
 	if ((len = strlen(tab)) >= INT_MAX) {
-		r->error = ERROR_OVERFLOW;
-		logmsg(r->error, "tab string length exceeds maximum (%d)", INT_MAX - 1);
+		r->error = CORPUS_ERROR_OVERFLOW;
+		corpus_log(r->error, "tab string length exceeds maximum (%d)", INT_MAX - 1);
 
 	} else {
 		r->tab = tab;
@@ -130,8 +130,8 @@ const char *render_set_newline(struct render *r, const char *newline)
 	assert(newline);
 
 	if ((len = strlen(newline)) >= INT_MAX) {
-		r->error = ERROR_OVERFLOW;
-		logmsg(r->error, "newline string length exceeds maximum (%d)", INT_MAX - 1);
+		r->error = CORPUS_ERROR_OVERFLOW;
+		corpus_log(r->error, "newline string length exceeds maximum (%d)", INT_MAX - 1);
 	} else {
 		r->newline = newline;
 		r->newline_length = (int)len;
@@ -316,8 +316,9 @@ void render_printf(struct render *r, const char *format, ...)
 
 	len = vsnprintf(NULL, 0, format, ap);
 	if (len < 0) {
-		err = ERROR_OS;
-		logmsg(err, "printf formatting error: %s", strerror(errno));
+		err = CORPUS_ERROR_OS;
+		corpus_log(err, "printf formatting error: %s",
+			   strerror(errno));
 		r->error = err;
 		goto out;
 	}

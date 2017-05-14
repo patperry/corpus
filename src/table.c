@@ -98,8 +98,8 @@ int corpus_table_init(struct corpus_table *tab)
 	return 0;
 
 error_nomem:
-	err = ERROR_NOMEM;
-	logmsg(err, "failed allocating table");
+	err = CORPUS_ERROR_NOMEM;
+	corpus_log(err, "failed allocating table");
 	return err;
 }
 
@@ -116,17 +116,18 @@ int corpus_table_reinit(struct corpus_table *tab, int min_capacity)
 		capacity = (int)(CORPUS_TABLE_LOAD_FACTOR * size);
 
 		if ((size_t)size > SIZE_MAX / sizeof(*items)) {
-			err = ERROR_OVERFLOW;
-			logmsg(err,
-			       "table size (%d) exceeds maximum (%"PRIu64")",
-			       size, (uint64_t)(SIZE_MAX / sizeof(*items)));
+			err = CORPUS_ERROR_OVERFLOW;
+			corpus_log(err, "table size (%d)"
+				   " exceeds maximum (%"PRIu64")",
+				   size,
+				   (uint64_t)(SIZE_MAX / sizeof(*items)));
 			return err;
 		}
 
 		items = corpus_realloc(items, size * sizeof(*items));
 		if (!items) {
-			err = ERROR_NOMEM;
-			logmsg(err, "failed allocating table");
+			err = CORPUS_ERROR_NOMEM;
+			corpus_log(err, "failed allocating table");
 			return err;
 		}
 

@@ -88,7 +88,7 @@ int main_tokens(int argc, char * const argv[])
 	struct corpus_symtab symtab;
 	struct data data, val;
 	struct corpus_text name, text, word;
-	struct schema schema;
+	struct corpus_schema schema;
 	struct corpus_filebuf buf;
 	struct corpus_filebuf_iter it;
 	const char *output = NULL;
@@ -175,7 +175,7 @@ int main_tokens(int argc, char * const argv[])
 		return EXIT_FAILURE;
 	}
 
-	if ((err = schema_init(&schema))) {
+	if ((err = corpus_schema_init(&schema))) {
 		goto error_schema;
 	}
 
@@ -197,7 +197,7 @@ int main_tokens(int argc, char * const argv[])
 		stream = stdout;
 	}
 
-	if ((err = schema_name(&schema, &name, &name_id))) {
+	if ((err = corpus_schema_name(&schema, &name, &name_id))) {
 		goto error;
 	}
 
@@ -262,7 +262,7 @@ error_output:
 error_filebuf:
 	corpus_symtab_destroy(&symtab);
 error_symtab:
-	schema_destroy(&schema);
+	corpus_schema_destroy(&schema);
 error_schema:
 	if (err) {
 		fprintf(stderr, "An error occurred.\n");

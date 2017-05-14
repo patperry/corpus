@@ -34,14 +34,14 @@
 #define STR_VALUE(x) #x
 #define STRING(x) STR_VALUE(x)
 
-struct schema schema;
+struct corpus_schema schema;
 
-const int Null = DATATYPE_NULL;
-const int Boolean = DATATYPE_BOOLEAN;
-const int Integer = DATATYPE_INTEGER;
-const int Real = DATATYPE_REAL;
-const int Text = DATATYPE_TEXT;
-const int Any = DATATYPE_ANY;
+const int Null = CORPUS_DATATYPE_NULL;
+const int Boolean = CORPUS_DATATYPE_BOOLEAN;
+const int Integer = CORPUS_DATATYPE_INTEGER;
+const int Real = CORPUS_DATATYPE_REAL;
+const int Text = CORPUS_DATATYPE_TEXT;
+const int Any = CORPUS_DATATYPE_ANY;
 
 
 void ignore_message(int code, const char *message)
@@ -54,13 +54,13 @@ void ignore_message(int code, const char *message)
 void setup_data(void)
 {
 	setup();
-	schema_init(&schema);
+	corpus_schema_init(&schema);
 }
 
 
 void teardown_data(void)
 {
-	schema_destroy(&schema);
+	corpus_schema_destroy(&schema);
 	teardown();
 	corpus_log_func = NULL;
 }
@@ -69,7 +69,7 @@ void teardown_data(void)
 int get_name(const char *str)
 {
 	int id;
-	ck_assert(!schema_name(&schema, S(str), &id));
+	ck_assert(!corpus_schema_name(&schema, S(str), &id));
 	return id;
 }
 
@@ -78,7 +78,7 @@ int get_type(const char *str)
 {
 	size_t n = strlen(str);
 	int id;
-	ck_assert(!schema_scan(&schema, (const uint8_t *)str, n, &id));
+	ck_assert(!corpus_schema_scan(&schema, (const uint8_t *)str, n, &id));
 	return id;
 }
 
@@ -87,7 +87,7 @@ int is_error(const char *str)
 {
 	size_t n = strlen(str);
 	int err, id;
-	err = schema_scan(&schema, (const uint8_t *)str, n, &id);
+	err = corpus_schema_scan(&schema, (const uint8_t *)str, n, &id);
 	ck_assert(err == CORPUS_ERROR_INVAL || err == 0);
 	return (err != 0);
 }
@@ -95,13 +95,13 @@ int is_error(const char *str)
 
 int is_null(const char *str)
 {
-	return (get_type(str) == DATATYPE_NULL);
+	return (get_type(str) == CORPUS_DATATYPE_NULL);
 }
 
 
 int is_boolean(const char *str)
 {
-	return (get_type(str) == DATATYPE_BOOLEAN);
+	return (get_type(str) == CORPUS_DATATYPE_BOOLEAN);
 }
 
 
@@ -120,7 +120,7 @@ int decode_boolean(const char *str)
 
 int is_integer(const char *str)
 {
-	return (get_type(str) == DATATYPE_INTEGER);
+	return (get_type(str) == CORPUS_DATATYPE_INTEGER);
 }
 
 
@@ -140,14 +140,14 @@ int decode_int(const char *str)
 
 int is_real(const char *str)
 {
-	return (get_type(str) == DATATYPE_REAL);
+	return (get_type(str) == CORPUS_DATATYPE_REAL);
 }
 
 
 int is_numeric(const char *str)
 {
 	int id = get_type(str);
-	return (id == DATATYPE_INTEGER || id == DATATYPE_REAL);
+	return (id == CORPUS_DATATYPE_INTEGER || id == CORPUS_DATATYPE_REAL);
 }
 
 
@@ -168,7 +168,7 @@ double decode_double(const char *str)
 
 int is_text(const char *str)
 {
-	return (get_type(str) == DATATYPE_TEXT);
+	return (get_type(str) == CORPUS_DATATYPE_TEXT);
 }
 
 
@@ -176,9 +176,9 @@ int assert_types_equal(int id1, int id2)
 {
 	if (id1 != id2) {
 		printf("unequal types: ");
-		write_datatype(stdout, &schema, id1);
+		corpus_write_datatype(stdout, &schema, id1);
 		printf(" != ");
-		write_datatype(stdout, &schema, id2);
+		corpus_write_datatype(stdout, &schema, id2);
 		printf("\n");
 		return 0;
 	}
@@ -193,7 +193,7 @@ int assert_types_equal(int id1, int id2)
 int Array(int length, int element_id)
 {
 	int id;
-	ck_assert(!schema_array(&schema, element_id, length, &id));
+	ck_assert(!corpus_schema_array(&schema, element_id, length, &id));
 	return id;
 }
 
@@ -216,7 +216,8 @@ int Record(int nfield, ...)
 
 	va_end(ap);
 
-	ck_assert(!schema_record(&schema, type_ids, name_ids, nfield, &id));
+	ck_assert(!corpus_schema_record(&schema, type_ids, name_ids, nfield,
+					&id));
 
 	return id;
 }
@@ -225,7 +226,7 @@ int Record(int nfield, ...)
 int Union (int id1, int id2)
 {
 	int id;
-	ck_assert(!schema_union(&schema, id1, id2, &id));
+	ck_assert(!corpus_schema_union(&schema, id1, id2, &id));
 	return id;
 }
 

@@ -38,7 +38,7 @@ static void scan_spaces(const uint8_t **bufptr);
 static void scan_spaces_safe(const uint8_t **bufptr, const uint8_t *end);
 
 
-int data_assign(struct data *d, struct schema *s, const uint8_t *ptr,
+int data_assign(struct data *d, struct corpus_schema *s, const uint8_t *ptr,
 		size_t size)
 {
 	const uint8_t *end = ptr + size;
@@ -46,7 +46,7 @@ int data_assign(struct data *d, struct schema *s, const uint8_t *ptr,
 
 	scan_spaces_safe(&ptr, end);
 
-	if ((err = schema_scan(s, ptr, (size_t)(end - ptr), &id))) {
+	if ((err = corpus_schema_scan(s, ptr, (size_t)(end - ptr), &id))) {
 		goto error;
 	}
 	goto out;
@@ -67,7 +67,7 @@ int data_bool(const struct data *d, int *valptr)
 	int val;
 	int err;
 
-	if (d->type_id != DATATYPE_BOOLEAN) {
+	if (d->type_id != CORPUS_DATATYPE_BOOLEAN) {
 		val = INT_MIN;
 		err = CORPUS_ERROR_INVAL;
 	} else {
@@ -89,7 +89,7 @@ int data_int(const struct data *d, int *valptr)
 	int val;
 	int err;
 
-	if (d->type_id != DATATYPE_INTEGER) {
+	if (d->type_id != CORPUS_DATATYPE_INTEGER) {
 		goto nullval;
 	}
 
@@ -131,7 +131,7 @@ int data_double(const struct data *d, double *valptr)
 	int err;
 	int neg = 0;
 
-	if (!(d->type_id == DATATYPE_REAL || d->type_id == DATATYPE_INTEGER)) {
+	if (!(d->type_id == CORPUS_DATATYPE_REAL || d->type_id == CORPUS_DATATYPE_INTEGER)) {
 		goto nullval;
 	}
 
@@ -190,7 +190,7 @@ int data_text(const struct data *d, struct corpus_text *valptr)
 	const uint8_t *end;
 	int err;
 
-	if (d->type_id != DATATYPE_TEXT) {
+	if (d->type_id != CORPUS_DATATYPE_TEXT) {
 		goto nullval;
 	}
 
@@ -223,16 +223,17 @@ out:
 }
 
 
-static void data_items_make(struct data_items *it, const struct schema *s,
+static void data_items_make(struct data_items *it,
+			    const struct corpus_schema *s,
 			    const uint8_t *ptr,
-			    const struct datatype_array *type)
+			    const struct corpus_datatype_array *type)
 {
 	it->schema = s;
 	it->item_type = type->type_id;
 	if (it->item_type >= 0) {
 		it->item_kind = s->types[it->item_type].kind;
 	} else {
-		it->item_kind = DATATYPE_ANY;
+		it->item_kind = CORPUS_DATATYPE_ANY;
 	}
 	it->length = type->length;
 	it->ptr = ptr;
@@ -240,9 +241,10 @@ static void data_items_make(struct data_items *it, const struct schema *s,
 }
 
 
-static void data_fields_make(struct data_fields *it, const struct schema *s,
+static void data_fields_make(struct data_fields *it,
+			     const struct corpus_schema *s,
 			     const uint8_t *ptr,
-			     const struct datatype_record *type)
+			     const struct corpus_datatype_record *type)
 {
 	it->schema = s;
 	it->field_types = type->type_ids;
@@ -258,7 +260,7 @@ void data_items_reset(struct data_items *it)
 	it->index = -1;
 	it->current.ptr = NULL;
 	it->current.size = 0;
-	it->current.type_id = DATATYPE_NULL;
+	it->current.type_id = CORPUS_DATATYPE_NULL;
 }
 
 
@@ -267,7 +269,7 @@ void data_fields_reset(struct data_fields *it)
 	it->name_id = -1;
 	it->current.ptr = NULL;
 	it->current.size = 0;
-	it->current.type_id = DATATYPE_NULL;
+	it->current.type_id = CORPUS_DATATYPE_NULL;
 }
 
 
@@ -303,8 +305,8 @@ int data_items_advance(struct data_items *it)
 	end = ptr;
 	scan_value(&end);
 
-	if (it->item_type == DATATYPE_ANY
-			|| it->item_kind == DATATYPE_RECORD) {
+	if (it->item_type == CORPUS_DATATYPE_ANY
+			|| it->item_kind == CORPUS_DATATYPE_RECORD) {
 		// we need to re-parse records to figure out exactly
 		// which fields are present (it->item_type is the union
 		// over all items in the array, and might include
@@ -313,7 +315,7 @@ int data_items_advance(struct data_items *it)
 		// the call to data_assign won't fail because we already
 		// have enough space in the schema buffer to parse the
 		// array item
-		data_assign(&it->current, (struct schema *)it->schema,
+		data_assign(&it->current, (struct corpus_schema *)it->schema,
 			    ptr, (size_t)(end - ptr));
 	} else {
 		it->current.ptr = ptr;
@@ -326,7 +328,7 @@ int data_items_advance(struct data_items *it)
 end:
 	it->current.ptr = ptr;
 	it->current.size = 0;
-	it->current.type_id = DATATYPE_NULL;
+	it->current.type_id = CORPUS_DATATYPE_NULL;
 	return 0;
 }
 
@@ -396,7 +398,7 @@ int data_fields_advance(struct data_fields *it)
 	// the call to schema_name always succeeds and does not
 	// create a new name, because the field name already
 	// exists as part of the type
-	schema_name((struct schema *)it->schema, &name, &name_id);
+	corpus_schema_name((struct corpus_schema *)it->schema, &name, &name_id);
 	it->name_id = name_id;
 
 	// "
@@ -419,10 +421,10 @@ int data_fields_advance(struct data_fields *it)
 	assert(idptr); // name exists in the record
 	type_id = it->field_types[idptr - it->field_names];
 
-	if (type_id == DATATYPE_ANY) {
+	if (type_id == CORPUS_DATATYPE_ANY) {
 		// this won't fail, because we already have enough
 		// space in the schema buffer to parse the array item
-		data_assign(&it->current, (struct schema *)it->schema,
+		data_assign(&it->current, (struct corpus_schema *)it->schema,
 			    ptr, (size_t)(end - ptr));
 	} else {
 		it->current.ptr = ptr;
@@ -434,19 +436,20 @@ int data_fields_advance(struct data_fields *it)
 end:
 	it->current.ptr = ptr;
 	it->current.size = 0;
-	it->current.type_id = DATATYPE_NULL;
+	it->current.type_id = CORPUS_DATATYPE_NULL;
 	return 0;
 }
 
 
-int data_items(const struct data *d, const struct schema *s,
+int data_items(const struct data *d, const struct corpus_schema *s,
 	       struct data_items *valptr)
 {
 	struct data_items it;
 	const uint8_t *ptr = d->ptr;
 	int err;
 
-	if (d->type_id < 0 || s->types[d->type_id].kind != DATATYPE_ARRAY) {
+	if (d->type_id < 0
+		|| s->types[d->type_id].kind != CORPUS_DATATYPE_ARRAY) {
 		goto nullval;
 	}
 
@@ -458,12 +461,12 @@ int data_items(const struct data *d, const struct schema *s,
 
 nullval:
 	it.schema = NULL;
-	it.item_type = DATATYPE_NULL;
+	it.item_type = CORPUS_DATATYPE_NULL;
 	it.length = -1;
 	it.ptr = NULL;
 	it.current.ptr = NULL;
 	it.current.size = 0;
-	it.current.type_id = DATATYPE_NULL;
+	it.current.type_id = CORPUS_DATATYPE_NULL;
 	it.index = -1;
 	err = CORPUS_ERROR_INVAL;
 out:
@@ -474,12 +477,14 @@ out:
 }
 
 
-int data_nitem(const struct data *d, const struct schema *s, int *nitemptr)
+int data_nitem(const struct data *d, const struct corpus_schema *s,
+	       int *nitemptr)
 {
 	struct data_items it;
 	int err, nitem;
 
-	if (d->type_id < 0 || s->types[d->type_id].kind != DATATYPE_ARRAY) {
+	if (d->type_id < 0
+		|| s->types[d->type_id].kind != CORPUS_DATATYPE_ARRAY) {
 		goto nullval;
 	}
 
@@ -506,11 +511,13 @@ out:
 }
 
 
-int data_nfield(const struct data *d, const struct schema *s, int *nfieldptr)
+int data_nfield(const struct data *d, const struct corpus_schema *s,
+		int *nfieldptr)
 {
 	int err, nfield;
 
-	if (d->type_id < 0 || s->types[d->type_id].kind != DATATYPE_RECORD) {
+	if (d->type_id < 0
+		|| s->types[d->type_id].kind != CORPUS_DATATYPE_RECORD) {
 		goto nullval;
 	}
 
@@ -529,14 +536,15 @@ out:
 }
 
 
-int data_fields(const struct data *d, const struct schema *s,
+int data_fields(const struct data *d, const struct corpus_schema *s,
 		struct data_fields *valptr)
 {
 	struct data_fields it;
 	const uint8_t *ptr = d->ptr;
 	int err;
 
-	if (d->type_id < 0 || s->types[d->type_id].kind != DATATYPE_RECORD) {
+	if (d->type_id < 0
+		|| s->types[d->type_id].kind != CORPUS_DATATYPE_RECORD) {
 		goto nullval;
 	}
 
@@ -554,7 +562,7 @@ nullval:
 	it.ptr = NULL;
 	it.current.ptr = NULL;
 	it.current.size = 0;
-	it.current.type_id = DATATYPE_NULL;
+	it.current.type_id = CORPUS_DATATYPE_NULL;
 	it.name_id = -1;
 	err = CORPUS_ERROR_INVAL;
 out:
@@ -565,10 +573,10 @@ out:
 }
 
 
-int data_field(const struct data *d, const struct schema *s, int name_id,
-	       struct data *valptr)
+int data_field(const struct data *d, const struct corpus_schema *s,
+	       int name_id, struct data *valptr)
 {
-	const struct datatype_record *rec;
+	const struct corpus_datatype_record *rec;
 	struct data val;
 	const uint8_t *begin;
 	const uint8_t *ptr = d->ptr;
@@ -576,7 +584,8 @@ int data_field(const struct data *d, const struct schema *s, int name_id,
 	struct corpus_text name;
 	int err, flags, id, type_id;
 
-	if (d->type_id < 0 || s->types[d->type_id].kind != DATATYPE_RECORD) {
+	if (d->type_id < 0
+		|| s->types[d->type_id].kind != CORPUS_DATATYPE_RECORD) {
 		goto nullval;
 	}
 
@@ -618,7 +627,7 @@ int data_field(const struct data *d, const struct schema *s, int name_id,
 		// the call to schema_name always succeeds and does not
 		// create a new name, because the field name already
 		// exists as part of the type
-		schema_name((struct schema *)s, &name, &id);
+		corpus_schema_name((struct corpus_schema *)s, &name, &id);
 
 		// "
 		ptr++;
@@ -663,7 +672,7 @@ found:
 nullval:
 	val.ptr = NULL;
 	val.size = 0;
-	val.type_id = DATATYPE_NULL;
+	val.type_id = CORPUS_DATATYPE_NULL;
 	err = CORPUS_ERROR_INVAL;
 out:
 	if (valptr) {

@@ -53,7 +53,7 @@ Options:\n\
 
 int main_scan(int argc, char * const argv[])
 {
-	struct schema schema;
+	struct corpus_schema schema;
 	struct corpus_filebuf buf;
 	struct corpus_filebuf_iter it;
 	const char *output = NULL;
@@ -92,7 +92,7 @@ int main_scan(int argc, char * const argv[])
 
 	input = argv[0];
 
-	if ((err = schema_init(&schema))) {
+	if ((err = corpus_schema_init(&schema))) {
 		goto error_schema;
 	}
 
@@ -114,25 +114,26 @@ int main_scan(int argc, char * const argv[])
 	fprintf(stream, "format: %s\n", "newline-delimited JSON");
 	fprintf(stream, "--\n");
 
-	type_id = DATATYPE_NULL;
+	type_id = CORPUS_DATATYPE_NULL;
 
 	corpus_filebuf_iter_make(&it, &buf);
 	lineno = 0;
 	while (corpus_filebuf_iter_advance(&it)) {
 		lineno++;
 
-		if ((err = schema_scan(&schema, it.current.ptr,
+		if ((err = corpus_schema_scan(&schema, it.current.ptr,
 					it.current.size, &id))) {
 			goto error_scan;
 		}
 
 		if (lines) {
 			fprintf(stream, "%"PRId64"\t", lineno);
-			write_datatype(stream, &schema, id);
+			corpus_write_datatype(stream, &schema, id);
 			fprintf(stream, "\n");
 		}
 
-		if ((err = schema_union(&schema, type_id, id, &type_id))) {
+		if ((err = corpus_schema_union(&schema, type_id, id,
+					       &type_id))) {
 			goto error_scan;
 		}
 	}
@@ -140,7 +141,7 @@ int main_scan(int argc, char * const argv[])
 	if (lines) {
 		fprintf(stream, "--\n");
 	}
-	write_datatype(stream, &schema, type_id);
+	corpus_write_datatype(stream, &schema, type_id);
 	fprintf(stream, "\n");
 	fprintf(stream, "%"PRId64" rows\n", lineno);
 	err = 0;
@@ -153,7 +154,7 @@ error_scan:
 error_output:
 	corpus_filebuf_destroy(&buf);
 error_filebuf:
-	schema_destroy(&schema);
+	corpus_schema_destroy(&schema);
 error_schema:
 	if (err) {
 		fprintf(stderr, "An error occurred.\n");

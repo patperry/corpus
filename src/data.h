@@ -26,7 +26,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-struct schema;
+struct corpus_schema;
 
 /**
  * A typed data value.
@@ -41,7 +41,7 @@ struct data {
  * An iterator over the items in an array.
  */
 struct data_items {
-	const struct schema *schema;	/**< the data schema */
+	const struct corpus_schema *schema;	/**< the data schema */
 	int item_type;			/**< the array item type ID */
 	int item_kind;			/**< the array item kind */
 	int length;			/**< the array length */
@@ -55,7 +55,7 @@ struct data_items {
  * An iterator over the fields in a record.
  */
 struct data_fields {
-	const struct schema *schema;	/**< the data schema */
+	const struct corpus_schema *schema;	/**< the data schema */
 	const int *field_types;		/**< the record field types */
 	const int *field_names;		/**< the record field names*/
 	int nfield;			/**< the number of record fields */
@@ -77,7 +77,7 @@ struct data_fields {
  * \returns 0 on success, nonzero for invalid input (a parse error), memory
  * 	allocation failure, or overflow error
  */
-int data_assign(struct data *d, struct schema *s, const uint8_t *ptr,
+int data_assign(struct data *d, struct corpus_schema *s, const uint8_t *ptr,
 		size_t size);
 
 /**
@@ -138,7 +138,8 @@ int data_text(const struct data *d, struct corpus_text *valptr);
  * \returns 0 on success; #ERROR_INVAL if the data value is null or
  * 	is not an array
  */
-int data_nitem(const struct data *d, const struct schema *s, int *nitemptr);
+int data_nitem(const struct data *d, const struct corpus_schema *s,
+	       int *nitemptr);
 
 /**
  * Get the array items from a data value.
@@ -150,7 +151,7 @@ int data_nitem(const struct data *d, const struct schema *s, int *nitemptr);
  * \returns 0 on success; #ERROR_INVAL if the data value is null or
  * 	is not an array
  */
-int data_items(const struct data *d, const struct schema *s,
+int data_items(const struct data *d, const struct corpus_schema *s,
 	       struct data_items *valptr);
 
 /**
@@ -179,7 +180,8 @@ void data_items_reset(struct data_items *it);
  * \returns 0 on success; #ERROR_INVAL if the data value is null or
  * 	is not a record
  */
-int data_nfield(const struct data *d, const struct schema *s, int *nfieldptr);
+int data_nfield(const struct data *d, const struct corpus_schema *s,
+		int *nfieldptr);
 
 /**
  * Get a record field from a data value.
@@ -193,8 +195,8 @@ int data_nfield(const struct data *d, const struct schema *s, int *nfieldptr);
  * 	is not a record, or is a record but does not have a field for
  * 	the given name
  */
-int data_field(const struct data *d, const struct schema *s, int name_id,
-	       struct data *valptr);
+int data_field(const struct data *d, const struct corpus_schema *s,
+	       int name_id, struct data *valptr);
 
 /**
  * Get the record fields from a data value.
@@ -206,7 +208,7 @@ int data_field(const struct data *d, const struct schema *s, int name_id,
  * \returns 0 on success; #ERROR_INVAL if the data value is null or
  * 	is not a record
  */
-int data_fields(const struct data *d, const struct schema *s,
+int data_fields(const struct data *d, const struct corpus_schema *s,
 		struct data_fields *valptr);
 
 /**

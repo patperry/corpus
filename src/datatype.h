@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATATYPE_H
-#define DATATYPE_H
+#ifndef CORPUS_DATATYPE_H
+#define CORPUS_DATATYPE_H
 
 /**
  * \file datatype.h
@@ -30,22 +30,25 @@ struct corpus_render;
 /**
  * A basic data type.
  */
-enum datatype_kind {
-	DATATYPE_ANY = -1,	/**< universal (top), supertype of all others */
-	DATATYPE_NULL = 0,	/**< empty (bottom), subtype of all others */
-	DATATYPE_BOOLEAN,	/**< boolean (true/false) value */
-	DATATYPE_INTEGER,	/**< integer-valued number */
-	DATATYPE_REAL,		/**< real-valued floating point number */
-	DATATYPE_TEXT,		/**< unicode text */
-	DATATYPE_ARRAY,		/**< array type */
-	DATATYPE_RECORD		/**< record type */
+enum corpus_datatype_kind {
+	CORPUS_DATATYPE_ANY = -1,	/**< universal (top), supertype
+					  of all others */
+	CORPUS_DATATYPE_NULL = 0,	/**< empty (bottom), subtype
+					  of all others */
+	CORPUS_DATATYPE_BOOLEAN,	/**< boolean (true/false) value */
+	CORPUS_DATATYPE_INTEGER,	/**< integer-valued number */
+	CORPUS_DATATYPE_REAL,		/**< real-valued floating point
+					  number */
+	CORPUS_DATATYPE_TEXT,		/**< unicode text */
+	CORPUS_DATATYPE_ARRAY,		/**< array type */
+	CORPUS_DATATYPE_RECORD		/**< record type */
 };
 
 /**
  * An array type, of fixed or variable length. Array elements all have the
  * same type.
  */
-struct datatype_array {
+struct corpus_datatype_array {
 	int type_id;	/**< the element type */
 	int length;	/**< the length (-1 for variable) */
 };
@@ -55,7 +58,7 @@ struct datatype_array {
  * we consider `{"a": 1, "b": true}` and `{"b": false, "a": 0}` to have the
  * same type.
  */
-struct datatype_record {
+struct corpus_datatype_record {
 	int *type_ids;	/**< the field types */
 	int *name_ids;	/**< the field names */
 	int nfield;	/**< the number of fields */
@@ -64,20 +67,20 @@ struct datatype_record {
 /**
  * A data type.
  */
-struct datatype {
+struct corpus_datatype {
 	int kind;	/**< the kind of data type, a #datatype_kind value */
 	union {
-		struct datatype_array array;
-			/**< metadata for kind #DATATYPE_ARRAY */
-		struct datatype_record record;
-			/**< metadata for kind #DATATYPE_RECORD */
+		struct corpus_datatype_array array;
+			/**< metadata for kind #CORPUS_DATATYPE_ARRAY */
+		struct corpus_datatype_record record;
+			/**< metadata for kind #CORPUS_DATATYPE_RECORD */
 	} meta;		/**< the data type's metadata */
 };
 
 /**
  * Used internally to store record (name,type) field descriptors.
  */
-struct schema_buffer {
+struct corpus_schema_buffer {
 	int *type_ids;	/**< type ID buffer */
 	int *name_ids;	/**< name ID buffer */
 	int nfield;	/**< number of occupied buffer slots */
@@ -87,7 +90,7 @@ struct schema_buffer {
 /**
  * Used internally to sort record names.
  */
-struct schema_sorter {
+struct corpus_schema_sorter {
 	const int **idptrs;	/**< name ID pointer buffer */
 	int size;		/**< buffer size */
 };
@@ -95,13 +98,13 @@ struct schema_sorter {
 /**
  * Data schema, mapping data types to integer IDs.
  */
-struct schema {
-	struct schema_buffer buffer;	/**< internal field buffer */
-	struct schema_sorter sorter;	/**< internal field name sorter */
+struct corpus_schema {
+	struct corpus_schema_buffer buffer;/**< internal field buffer */
+	struct corpus_schema_sorter sorter;/**< internal field name sorter */
 	struct corpus_symtab names;	/**< record field names */
 	struct corpus_table arrays;	/**< array type table */
 	struct corpus_table records;	/**< record type table */
-	struct datatype *types;		/**< data type array */
+	struct corpus_datatype *types;	/**< data type array */
 	int ntype;			/**< number of data types */
 	int narray;			/**< number of array types */
 	int nrecord;			/**< number of record types */
@@ -115,19 +118,19 @@ struct schema {
  *
  * \returns 0 on success
  */
-int schema_init(struct schema *s);
+int corpus_schema_init(struct corpus_schema *s);
 
 /**
  * Release a schema resources.
  *
  * \param s the schema
  */
-void schema_destroy(struct schema *s);
+void corpus_schema_destroy(struct corpus_schema *s);
 
 /**
  * Remove all names and non-atomic data types from the schema.
  */
-void schema_clear(struct schema *s);
+void corpus_schema_clear(struct corpus_schema *s);
 
 /**
  * Create a new field name, or get the name's ID if it already exists.
@@ -138,7 +141,8 @@ void schema_clear(struct schema *s);
  *
  * \returns 0 on success
  */
-int schema_name(struct schema *s, const struct corpus_text *name, int *idptr);
+int corpus_schema_name(struct corpus_schema *s,
+		       const struct corpus_text *name, int *idptr);
 
 /**
  * Create a new array type, or get the type's ID if it already exists.
@@ -150,7 +154,8 @@ int schema_name(struct schema *s, const struct corpus_text *name, int *idptr);
  *
  * \returns 0 on success
  */
-int schema_array(struct schema *s, int type_id, int length, int *idptr);
+int corpus_schema_array(struct corpus_schema *s, int type_id, int length,
+			int *idptr);
 
 /**
  * Create a new record type, or get the types ID if it already exists.
@@ -163,8 +168,8 @@ int schema_array(struct schema *s, int type_id, int length, int *idptr);
  *
  * \returns 0 on success
  */
-int schema_record(struct schema *s, const int *type_ids, const int *name_ids,
-		  int nfield, int *idptr);
+int corpus_schema_record(struct corpus_schema *s, const int *type_ids,
+			 const int *name_ids, int nfield, int *idptr);
 
 /**
  * Get or create a new type by taking the union of two other types.
@@ -176,7 +181,7 @@ int schema_record(struct schema *s, const int *type_ids, const int *name_ids,
  *
  * \returns 0 on success
  */
-int schema_union(struct schema *s, int id1, int id2, int *idptr);
+int corpus_schema_union(struct corpus_schema *s, int id1, int id2, int *idptr);
 
 /**
  * Scan an input value and add its data type to the schema.
@@ -188,7 +193,8 @@ int schema_union(struct schema *s, int id1, int id2, int *idptr);
  *
  * \returns 0 on success
  */
-int schema_scan(struct schema *s, const uint8_t *ptr, size_t size, int *idptr);
+int corpus_schema_scan(struct corpus_schema *s, const uint8_t *ptr,
+		       size_t size, int *idptr);
 
 /**
  * Render a textual representation of a data type.
@@ -197,8 +203,8 @@ int schema_scan(struct schema *s, const uint8_t *ptr, size_t size, int *idptr);
  * \param s the schema
  * \param id the type id
  */
-void corpus_render_datatype(struct corpus_render *r, const struct schema *s,
-			    int id);
+void corpus_render_datatype(struct corpus_render *r,
+			    const struct corpus_schema *s, int id);
 
 /**
  * Write a textual representation of a data type to the specified stream.
@@ -211,6 +217,6 @@ void corpus_render_datatype(struct corpus_render *r, const struct schema *s,
  *
  * \returns 0 on success
  */
-int write_datatype(FILE *stream, const struct schema *s, int id);
+int corpus_write_datatype(FILE *stream, const struct corpus_schema *s, int id);
 
-#endif /* DATATYPE_H */
+#endif /* CORPUS_DATATYPE_H */

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#define _POSIX_C_SOURCE 2 // for getopt
+
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>

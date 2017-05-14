@@ -3,7 +3,6 @@ CC     = gcc -std=c99
 CFLAGS = -Wall -Wextra -pedantic -Werror \
 	-Wno-cast-qual \
 	-Wno-padded \
-	-Wno-reserved-id-macro \
 	-Wno-unused-macros \
 	-g -O2
 

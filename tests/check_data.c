@@ -31,8 +31,6 @@
 #include "../src/datatype.h"
 #include "testutil.h"
 
-#define STR_VALUE(x) #x
-#define STRING(x) STR_VALUE(x)
 
 struct corpus_schema schema;
 
@@ -395,9 +393,9 @@ START_TEST(test_decode_number)
 	ck_assert(decode_double("-1.0") == -1.0);
 	ck_assert(decode_double("314E-2") == 314E-2);
 
-	ck_assert(decode_double(STRING(DBL_MAX)) == DBL_MAX);
-	ck_assert(decode_double(STRING(DBL_MIN)) == DBL_MIN);
-	ck_assert(decode_double(STRING(DBL_EPSILON)) == DBL_EPSILON);
+	ck_assert(decode_double("1.797693134862315708145e+308") == DBL_MAX);
+	ck_assert(decode_double("2.22507385850720138309e-308") == DBL_MIN);
+	ck_assert(decode_double("2.220446049250313080847e-16") == DBL_EPSILON);
 }
 END_TEST
 

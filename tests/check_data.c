@@ -108,11 +108,11 @@ int is_boolean(const char *str)
 int decode_boolean(const char *str)
 {
 	size_t n = strlen(str);
-	struct data data;
+	struct corpus_data data;
 	int val;
 
-	ck_assert(!data_assign(&data, &schema, (const uint8_t *)str, n));
-	ck_assert(!data_bool(&data, &val));
+	ck_assert(!corpus_data_assign(&data, &schema, (const uint8_t *)str, n));
+	ck_assert(!corpus_data_bool(&data, &val));
 
 	return val;
 }
@@ -127,11 +127,11 @@ int is_integer(const char *str)
 int decode_int(const char *str)
 {
 	size_t n = strlen(str);
-	struct data data;
+	struct corpus_data data;
 	int err, val;
 
-	ck_assert(!data_assign(&data, &schema, (const uint8_t *)str, n));
-	err = data_int(&data, &val);
+	ck_assert(!corpus_data_assign(&data, &schema, (const uint8_t *)str, n));
+	err = corpus_data_int(&data, &val);
 	ck_assert(err == 0 || err == CORPUS_ERROR_OVERFLOW);
 
 	return val;
@@ -154,12 +154,12 @@ int is_numeric(const char *str)
 double decode_double(const char *str)
 {
 	size_t n = strlen(str);
-	struct data data;
+	struct corpus_data data;
 	double val;
 	int err;
 
-	ck_assert(!data_assign(&data, &schema, (const uint8_t *)str, n));
-	err = data_double(&data, &val);
+	ck_assert(!corpus_data_assign(&data, &schema, (const uint8_t *)str, n));
+	err = corpus_data_double(&data, &val);
 	ck_assert(err == 0 || err == CORPUS_ERROR_OVERFLOW);
 
 	return val;
@@ -559,32 +559,32 @@ START_TEST(test_decode_record_array)
 {
 	const uint8_t *ptr = (uint8_t *)"[{}]";
 	size_t size = strlen((const char *)ptr);
-	struct data val;
-	struct data_items items;
-	struct data_fields fields;
+	struct corpus_data val;
+	struct corpus_data_items items;
+	struct corpus_data_fields fields;
 	int nitem, nfield;
 
 	// parse the value
-	ck_assert(!data_assign(&val, &schema, ptr, size));
+	ck_assert(!corpus_data_assign(&val, &schema, ptr, size));
 
 	// check that it is an array of length 1
-	ck_assert(!data_nitem(&val, &schema, &nitem));
+	ck_assert(!corpus_data_nitem(&val, &schema, &nitem));
 	ck_assert_int_eq(nitem, 1);
 
 	// parse the first item
-	ck_assert(!data_items(&val, &schema, &items));
-	ck_assert(data_items_advance(&items));
+	ck_assert(!corpus_data_items(&val, &schema, &items));
+	ck_assert(corpus_data_items_advance(&items));
 
 	// check that it is a record of length 0
-	ck_assert(!data_nfield(&items.current, &schema, &nfield));
+	ck_assert(!corpus_data_nfield(&items.current, &schema, &nfield));
 	ck_assert_int_eq(nfield, 0);
 
 	// check that iterating over the fields works
-	ck_assert(!data_fields(&items.current, &schema, &fields));
-	ck_assert(!data_fields_advance(&fields));
+	ck_assert(!corpus_data_fields(&items.current, &schema, &fields));
+	ck_assert(!corpus_data_fields_advance(&fields));
 
 	// check that there are no more items
-	ck_assert(!data_items_advance(&items));
+	ck_assert(!corpus_data_items_advance(&items));
 }
 END_TEST
 

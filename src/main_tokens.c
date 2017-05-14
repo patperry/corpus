@@ -86,7 +86,7 @@ int main_tokens(int argc, char * const argv[])
 {
 	struct corpus_wordscan scan;
 	struct corpus_symtab symtab;
-	struct data data, val;
+	struct corpus_data data, val;
 	struct corpus_text name, text, word;
 	struct corpus_schema schema;
 	struct corpus_filebuf buf;
@@ -203,15 +203,15 @@ int main_tokens(int argc, char * const argv[])
 
 	corpus_filebuf_iter_make(&it, &buf);
 	while (corpus_filebuf_iter_advance(&it)) {
-		if ((err = data_assign(&data, &schema, it.current.ptr,
-					it.current.size))) {
+		if ((err = corpus_data_assign(&data, &schema, it.current.ptr,
+					      it.current.size))) {
 				goto error;
 		}
 
-		if ((err = data_field(&data, &schema, name_id, &val))) {
-			err = data_text(&data, &text);
+		if ((err = corpus_data_field(&data, &schema, name_id, &val))) {
+			err = corpus_data_text(&data, &text);
 		} else {
-			err = data_text(&val, &text);
+			err = corpus_data_text(&val, &text);
 		}
 
 		if (err) {

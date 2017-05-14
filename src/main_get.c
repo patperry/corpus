@@ -52,7 +52,7 @@ Options:\n\
 
 int main_get(int argc, char * const argv[])
 {
-	struct data data, val;
+	struct corpus_data data, val;
 	struct corpus_text name;
 	struct corpus_schema schema;
 	struct corpus_filebuf buf;
@@ -129,12 +129,12 @@ int main_get(int argc, char * const argv[])
 
 	corpus_filebuf_iter_make(&it, &buf);
 	while (corpus_filebuf_iter_advance(&it)) {
-		if ((err = data_assign(&data, &schema, it.current.ptr,
-					it.current.size))) {
+		if ((err = corpus_data_assign(&data, &schema, it.current.ptr,
+					      it.current.size))) {
 			goto error_get;
 		}
 
-		if (data_field(&data, &schema, name_id, &val) == 0) {
+		if (corpus_data_field(&data, &schema, name_id, &val) == 0) {
 			// field exists
 			fprintf(stream, "%.*s\n", (int)val.size,
 				(const char *)val.ptr);

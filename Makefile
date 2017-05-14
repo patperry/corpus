@@ -240,7 +240,7 @@ src/filebuf.o: src/filebuf.c src/error.h src/memory.h src/filebuf.h
 src/main.o: src/main.c src/error.h src/filebuf.h src/table.h src/text.h \
 	src/token.h src/symtab.h src/datatype.h
 src/main_get.o: src/main_get.c src/error.h src/filebuf.h src/table.h \
-	src/text.h src/token.h src/symtab.h src/datatype.h
+	src/text.h src/token.h src/symtab.h src/datatype.h src/data.h
 src/main_scan.o: src/main_scan.c src/error.h src/filebuf.h src/table.h \
 	src/text.h src/token.h src/symtab.h src/datatype.h
 src/main_sentences.o: src/main_sentences.c src/error.h src/filebuf.h \

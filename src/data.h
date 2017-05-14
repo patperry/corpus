@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DATA_H
-#define DATA_H
+#ifndef CORPUS_DATA_H
+#define CORPUS_DATA_H
 
 /**
  * \file data.h
@@ -31,7 +31,7 @@ struct corpus_schema;
 /**
  * A typed data value.
  */
-struct data {
+struct corpus_data {
 	const uint8_t *ptr;	/**< the value memory location */
 	size_t size;		/**< the value size, in bytes */
 	int type_id;		/**< the type ID */
@@ -40,28 +40,28 @@ struct data {
 /**
  * An iterator over the items in an array.
  */
-struct data_items {
+struct corpus_data_items {
 	const struct corpus_schema *schema;	/**< the data schema */
 	int item_type;			/**< the array item type ID */
 	int item_kind;			/**< the array item kind */
 	int length;			/**< the array length */
 	const uint8_t *ptr;		/**< the array memory location */
 
-	struct data current;		/**< the current item value */
+	struct corpus_data current;	/**< the current item value */
 	int index;			/**< the current item index */
 };
 
 /**
  * An iterator over the fields in a record.
  */
-struct data_fields {
+struct corpus_data_fields {
 	const struct corpus_schema *schema;	/**< the data schema */
 	const int *field_types;		/**< the record field types */
 	const int *field_names;		/**< the record field names*/
 	int nfield;			/**< the number of record fields */
 	const uint8_t *ptr;		/**< the record memory location */
 
-	struct data current;		/**< the current field value */
+	struct corpus_data current;	/**< the current field value */
 	int name_id;			/**< the current field name */
 };
 
@@ -77,8 +77,8 @@ struct data_fields {
  * \returns 0 on success, nonzero for invalid input (a parse error), memory
  * 	allocation failure, or overflow error
  */
-int data_assign(struct data *d, struct corpus_schema *s, const uint8_t *ptr,
-		size_t size);
+int corpus_data_assign(struct corpus_data *d, struct corpus_schema *s,
+		       const uint8_t *ptr, size_t size);
 
 /**
  * Get the boolean value of a data value.
@@ -89,7 +89,7 @@ int data_assign(struct data *d, struct corpus_schema *s, const uint8_t *ptr,
  * \returns 0 on success, #ERROR_INVAL if the data value is null or
  * 	not boolean
  */
-int data_bool(const struct data *d, int *valptr);
+int corpus_data_bool(const struct corpus_data *d, int *valptr);
 
 /**
  * Get the integer value of a data value.
@@ -102,7 +102,7 @@ int data_bool(const struct data *d, int *valptr);
  * 	to store in an `int`, in which case it gets clipped
  * 	to `INT_MAX` or `INT_MIN`
  */
-int data_int(const struct data *d, int *valptr);
+int corpus_data_int(const struct corpus_data *d, int *valptr);
 
 /**
  * Get the double value of a data value.
@@ -115,7 +115,7 @@ int data_int(const struct data *d, int *valptr);
  * 	value is too big to store in a `double`, in which case it
  * 	gets set to `+Infinity` or `-Infinity`
  */
-int data_double(const struct data *d, double *valptr);
+int corpus_data_double(const struct corpus_data *d, double *valptr);
 
 /**
  * Get the text value of a data value.
@@ -126,7 +126,7 @@ int data_double(const struct data *d, double *valptr);
  * \returns 0 on success; #ERROR_INVAL if the data value is null or
  * 	not text
  */
-int data_text(const struct data *d, struct corpus_text *valptr);
+int corpus_data_text(const struct corpus_data *d, struct corpus_text *valptr);
 
 /**
  * Get the number of items (the length) of an array data value.
@@ -138,8 +138,8 @@ int data_text(const struct data *d, struct corpus_text *valptr);
  * \returns 0 on success; #ERROR_INVAL if the data value is null or
  * 	is not an array
  */
-int data_nitem(const struct data *d, const struct corpus_schema *s,
-	       int *nitemptr);
+int corpus_data_nitem(const struct corpus_data *d,
+		      const struct corpus_schema *s, int *nitemptr);
 
 /**
  * Get the array items from a data value.
@@ -151,8 +151,9 @@ int data_nitem(const struct data *d, const struct corpus_schema *s,
  * \returns 0 on success; #ERROR_INVAL if the data value is null or
  * 	is not an array
  */
-int data_items(const struct data *d, const struct corpus_schema *s,
-	       struct data_items *valptr);
+int corpus_data_items(const struct corpus_data *d,
+		      const struct corpus_schema *s,
+		      struct corpus_data_items *valptr);
 
 /**
  * Advance an array items iterator to the next item.
@@ -161,14 +162,14 @@ int data_items(const struct data *d, const struct corpus_schema *s,
  *
  * \returns zero if no next item exists, nonzero otherwise
  */
-int data_items_advance(struct data_items *it);
+int corpus_data_items_advance(struct corpus_data_items *it);
 
 /**
  * Reset an array items iterator to the beginning of the array.
  *
  * \param it the iterator
  */
-void data_items_reset(struct data_items *it);
+void corpus_data_items_reset(struct corpus_data_items *it);
 
 /**
  * Get the number of fields of a record data value.
@@ -180,8 +181,9 @@ void data_items_reset(struct data_items *it);
  * \returns 0 on success; #ERROR_INVAL if the data value is null or
  * 	is not a record
  */
-int data_nfield(const struct data *d, const struct corpus_schema *s,
-		int *nfieldptr);
+int corpus_data_nfield(const struct corpus_data *d,
+		       const struct corpus_schema *s,
+		       int *nfieldptr);
 
 /**
  * Get a record field from a data value.
@@ -195,8 +197,9 @@ int data_nfield(const struct data *d, const struct corpus_schema *s,
  * 	is not a record, or is a record but does not have a field for
  * 	the given name
  */
-int data_field(const struct data *d, const struct corpus_schema *s,
-	       int name_id, struct data *valptr);
+int corpus_data_field(const struct corpus_data *d,
+		      const struct corpus_schema *s,
+		      int name_id, struct corpus_data *valptr);
 
 /**
  * Get the record fields from a data value.
@@ -208,8 +211,9 @@ int data_field(const struct data *d, const struct corpus_schema *s,
  * \returns 0 on success; #ERROR_INVAL if the data value is null or
  * 	is not a record
  */
-int data_fields(const struct data *d, const struct corpus_schema *s,
-		struct data_fields *valptr);
+int corpus_data_fields(const struct corpus_data *d,
+		       const struct corpus_schema *s,
+		       struct corpus_data_fields *valptr);
 
 /**
  * Advance a record field iterator to the next field.
@@ -218,13 +222,13 @@ int data_fields(const struct data *d, const struct corpus_schema *s,
  *
  * \returns zero if no next field exists, nonzero otherwise
  */
-int data_fields_advance(struct data_fields *it);
+int corpus_data_fields_advance(struct corpus_data_fields *it);
 
 /**
  * Reset a record field iterator to the beginning of the record.
  *
  * \param it the iterator
  */
-void data_fields_reset(struct data_fields *it);
+void corpus_data_fields_reset(struct corpus_data_fields *it);
 
-#endif /* DATA_H */
+#endif /* CORPUS_DATA_H */

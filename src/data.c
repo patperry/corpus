@@ -38,8 +38,8 @@ static void scan_spaces(const uint8_t **bufptr);
 static void scan_spaces_safe(const uint8_t **bufptr, const uint8_t *end);
 
 
-int data_assign(struct data *d, struct corpus_schema *s, const uint8_t *ptr,
-		size_t size)
+int corpus_data_assign(struct corpus_data *d, struct corpus_schema *s,
+		       const uint8_t *ptr, size_t size)
 {
 	const uint8_t *end = ptr + size;
 	int err, id;
@@ -62,7 +62,7 @@ out:
 }
 
 
-int data_bool(const struct data *d, int *valptr)
+int corpus_data_bool(const struct corpus_data *d, int *valptr)
 {
 	int val;
 	int err;
@@ -83,7 +83,7 @@ int data_bool(const struct data *d, int *valptr)
 }
 
 
-int data_int(const struct data *d, int *valptr)
+int corpus_data_int(const struct corpus_data *d, int *valptr)
 {
 	intmax_t lval;
 	int val;
@@ -123,7 +123,7 @@ out:
 }
 
 
-int data_double(const struct data *d, double *valptr)
+int corpus_data_double(const struct corpus_data *d, double *valptr)
 {
 	const uint8_t *ptr;
 	uint_fast8_t ch;
@@ -183,7 +183,7 @@ out:
 }
 
 
-int data_text(const struct data *d, struct corpus_text *valptr)
+int corpus_data_text(const struct corpus_data *d, struct corpus_text *valptr)
 {
 	struct corpus_text val;
 	const uint8_t *ptr;
@@ -223,10 +223,10 @@ out:
 }
 
 
-static void data_items_make(struct data_items *it,
-			    const struct corpus_schema *s,
-			    const uint8_t *ptr,
-			    const struct corpus_datatype_array *type)
+static void corpus_data_items_make(struct corpus_data_items *it,
+				   const struct corpus_schema *s,
+				   const uint8_t *ptr,
+				   const struct corpus_datatype_array *type)
 {
 	it->schema = s;
 	it->item_type = type->type_id;
@@ -237,25 +237,25 @@ static void data_items_make(struct data_items *it,
 	}
 	it->length = type->length;
 	it->ptr = ptr;
-	data_items_reset(it);
+	corpus_data_items_reset(it);
 }
 
 
-static void data_fields_make(struct data_fields *it,
-			     const struct corpus_schema *s,
-			     const uint8_t *ptr,
-			     const struct corpus_datatype_record *type)
+static void corpus_data_fields_make(struct corpus_data_fields *it,
+				    const struct corpus_schema *s,
+				    const uint8_t *ptr,
+				    const struct corpus_datatype_record *type)
 {
 	it->schema = s;
 	it->field_types = type->type_ids;
 	it->field_names = type->name_ids;
 	it->nfield = type->nfield;
 	it->ptr = ptr;
-	data_fields_reset(it);
+	corpus_data_fields_reset(it);
 }
 
 
-void data_items_reset(struct data_items *it)
+void corpus_data_items_reset(struct corpus_data_items *it)
 {
 	it->index = -1;
 	it->current.ptr = NULL;
@@ -264,7 +264,7 @@ void data_items_reset(struct data_items *it)
 }
 
 
-void data_fields_reset(struct data_fields *it)
+void corpus_data_fields_reset(struct corpus_data_fields *it)
 {
 	it->name_id = -1;
 	it->current.ptr = NULL;
@@ -273,7 +273,7 @@ void data_fields_reset(struct data_fields *it)
 }
 
 
-int data_items_advance(struct data_items *it)
+int corpus_data_items_advance(struct corpus_data_items *it)
 {
 	const uint8_t *ptr;
 	const uint8_t *end;
@@ -315,8 +315,9 @@ int data_items_advance(struct data_items *it)
 		// the call to data_assign won't fail because we already
 		// have enough space in the schema buffer to parse the
 		// array item
-		data_assign(&it->current, (struct corpus_schema *)it->schema,
-			    ptr, (size_t)(end - ptr));
+		corpus_data_assign(&it->current,
+				   (struct corpus_schema *)it->schema,
+				   ptr, (size_t)(end - ptr));
 	} else {
 		it->current.ptr = ptr;
 		it->current.size = (size_t)(end - ptr);
@@ -351,7 +352,7 @@ static int compare_int(const void *x1, const void *x2)
 }
 
 
-int data_fields_advance(struct data_fields *it)
+int corpus_data_fields_advance(struct corpus_data_fields *it)
 {
 	struct corpus_text name;
 	const uint8_t *begin;
@@ -398,7 +399,8 @@ int data_fields_advance(struct data_fields *it)
 	// the call to schema_name always succeeds and does not
 	// create a new name, because the field name already
 	// exists as part of the type
-	corpus_schema_name((struct corpus_schema *)it->schema, &name, &name_id);
+	corpus_schema_name((struct corpus_schema *)it->schema, &name,
+			   &name_id);
 	it->name_id = name_id;
 
 	// "
@@ -424,8 +426,9 @@ int data_fields_advance(struct data_fields *it)
 	if (type_id == CORPUS_DATATYPE_ANY) {
 		// this won't fail, because we already have enough
 		// space in the schema buffer to parse the array item
-		data_assign(&it->current, (struct corpus_schema *)it->schema,
-			    ptr, (size_t)(end - ptr));
+		corpus_data_assign(&it->current,
+				   (struct corpus_schema *)it->schema,
+				   ptr, (size_t)(end - ptr));
 	} else {
 		it->current.ptr = ptr;
 		it->current.size = (size_t)(end - ptr);
@@ -441,10 +444,11 @@ end:
 }
 
 
-int data_items(const struct data *d, const struct corpus_schema *s,
-	       struct data_items *valptr)
+int corpus_data_items(const struct corpus_data *d,
+		      const struct corpus_schema *s,
+		      struct corpus_data_items *valptr)
 {
-	struct data_items it;
+	struct corpus_data_items it;
 	const uint8_t *ptr = d->ptr;
 	int err;
 
@@ -455,7 +459,7 @@ int data_items(const struct data *d, const struct corpus_schema *s,
 
 	scan_spaces(&ptr);
 
-	data_items_make(&it, s, ptr, &s->types[d->type_id].meta.array);
+	corpus_data_items_make(&it, s, ptr, &s->types[d->type_id].meta.array);
 	err = 0;
 	goto out;
 
@@ -477,10 +481,10 @@ out:
 }
 
 
-int data_nitem(const struct data *d, const struct corpus_schema *s,
-	       int *nitemptr)
+int corpus_data_nitem(const struct corpus_data *d,
+		      const struct corpus_schema *s, int *nitemptr)
 {
-	struct data_items it;
+	struct corpus_data_items it;
 	int err, nitem;
 
 	if (d->type_id < 0
@@ -492,8 +496,8 @@ int data_nitem(const struct data *d, const struct corpus_schema *s,
 
 	if (nitem < 0) {
 		nitem = 0;
-		data_items(d, s, &it);
-		while (data_items_advance(&it)) {
+		corpus_data_items(d, s, &it);
+		while (corpus_data_items_advance(&it)) {
 			nitem++;
 		}
 	}
@@ -511,8 +515,8 @@ out:
 }
 
 
-int data_nfield(const struct data *d, const struct corpus_schema *s,
-		int *nfieldptr)
+int corpus_data_nfield(const struct corpus_data *d,
+		       const struct corpus_schema *s, int *nfieldptr)
 {
 	int err, nfield;
 
@@ -536,10 +540,11 @@ out:
 }
 
 
-int data_fields(const struct data *d, const struct corpus_schema *s,
-		struct data_fields *valptr)
+int corpus_data_fields(const struct corpus_data *d,
+		       const struct corpus_schema *s,
+		       struct corpus_data_fields *valptr)
 {
-	struct data_fields it;
+	struct corpus_data_fields it;
 	const uint8_t *ptr = d->ptr;
 	int err;
 
@@ -550,7 +555,7 @@ int data_fields(const struct data *d, const struct corpus_schema *s,
 
 	scan_spaces(&ptr);
 
-	data_fields_make(&it, s, ptr, &s->types[d->type_id].meta.record);
+	corpus_data_fields_make(&it, s, ptr, &s->types[d->type_id].meta.record);
 	err = 0;
 	goto out;
 
@@ -573,11 +578,13 @@ out:
 }
 
 
-int data_field(const struct data *d, const struct corpus_schema *s,
-	       int name_id, struct data *valptr)
+int corpus_data_field(const struct corpus_data *d,
+		      const struct corpus_schema *s,
+		      int name_id,
+		      struct corpus_data *valptr)
 {
 	const struct corpus_datatype_record *rec;
-	struct data val;
+	struct corpus_data val;
 	const uint8_t *begin;
 	const uint8_t *ptr = d->ptr;
 	const int *idptr;

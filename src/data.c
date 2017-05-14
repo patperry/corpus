@@ -28,8 +28,8 @@
 #include "datatype.h"
 #include "data.h"
 
-double strntod_c(const char *string, size_t maxlen, const char **endPtr);
-intmax_t strntoimax(const char *string, size_t maxlen, char **endptr);
+double corpus_strntod(const char *string, size_t maxlen, const char **endPtr);
+intmax_t corpus_strntoimax(const char *string, size_t maxlen, char **endptr);
 
 static void scan_value(const uint8_t **bufptr);
 static void scan_numeric(const uint8_t **bufptr);
@@ -94,7 +94,7 @@ int corpus_data_int(const struct corpus_data *d, int *valptr)
 	}
 
 	errno = 0;
-	lval = strntoimax((const char *)d->ptr, d->size, NULL);
+	lval = corpus_strntoimax((const char *)d->ptr, d->size, NULL);
 	if (errno == ERANGE) {
 		val = lval > 0 ? INT_MAX : INT_MIN;
 		err = CORPUS_ERROR_OVERFLOW;
@@ -135,7 +135,8 @@ int corpus_data_double(const struct corpus_data *d, double *valptr)
 		goto nullval;
 	}
 
-	val = strntod_c((const char *)d->ptr, d->size, (const char **)&ptr);
+	val = corpus_strntod((const char *)d->ptr, d->size,
+			     (const char **)&ptr);
 	if (ptr != d->ptr) {
 		if (!isfinite(val)) {
 			err = CORPUS_ERROR_OVERFLOW;

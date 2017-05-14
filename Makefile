@@ -35,7 +35,7 @@ TEST_LIBS = `pkg-config --libs check`
 UNICODE = http://www.unicode.org/Public/9.0.0
 
 CORPUS_A = libcorpus.a
-LIB_O	= lib/strntod_c.o lib/strntoimax.o src/array.o src/census.o \
+LIB_O	= lib/strntod.o lib/strntoimax.o src/array.o src/census.o \
 	  src/data.o src/datatype.o src/error.o src/filebuf.o src/render.o \
 	  src/sentscan.o src/symtab.o src/table.o src/text.o src/token.o \
 	  src/unicode.o src/wordscan.o src/memory.o

@@ -20,7 +20,7 @@
 #include <stddef.h>
 
 
-intmax_t strntoimax(const char *string, size_t maxlen, char **endptr)
+intmax_t corpus_strntoimax(const char *string, size_t maxlen, char **endptr)
 {
 	const char *ptr = string;
 	const char *end = ptr + maxlen;

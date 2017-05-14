@@ -101,7 +101,7 @@ static long double POWERS_OF_5[] = {	// Binary powers of 5. Entry is
  * 	   %x0D )             ; Carriage return
  *
  */
-double strntod_c(const char *string, size_t maxlen, char **endPtr)
+double corpus_strntod(const char *string, size_t maxlen, char **endPtr)
 {
 	bool hasDec, sign, expSign;
 	long double fraction, dblExp5;

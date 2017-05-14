@@ -34,7 +34,7 @@
 #include <windows.h>
 
 
-int filebuf_init(struct filebuf *buf, const char *file_name)
+int corpus_filebuf_init(struct corpus_filebuf *buf, const char *file_name)
 {
 	HANDLE handle, mapping;
 	DWORD lo, hi;
@@ -116,7 +116,7 @@ out:
 }
 
 
-void filebuf_destroy(struct filebuf *buf)
+void corpus_filebuf_destroy(struct corpus_filebuf *buf)
 {
 	if (buf->map_addr) {
 		UnmapViewOfFile(buf->map_addr);
@@ -135,7 +135,7 @@ void filebuf_destroy(struct filebuf *buf)
 #include <unistd.h>	// close
 
 
-int filebuf_init(struct filebuf *buf, const char *file_name)
+int corpus_filebuf_init(struct corpus_filebuf *buf, const char *file_name)
 {
 	struct stat stat;
 	int access, err;
@@ -205,7 +205,7 @@ out:
 }
 
 
-void filebuf_destroy(struct filebuf *buf)
+void corpus_filebuf_destroy(struct corpus_filebuf *buf)
 {
 	if (buf->map_addr) {
 		//fprintf(stderr, "unmaping %"PRIu64" bytes from address %p\n",
@@ -222,15 +222,16 @@ void filebuf_destroy(struct filebuf *buf)
 #endif /* end of platform-specific code */ 
 
 
-void filebuf_iter_make(struct filebuf_iter *it, const struct filebuf *buf)
+void corpus_filebuf_iter_make(struct corpus_filebuf_iter *it,
+			      const struct corpus_filebuf *buf)
 {
 	it->begin = (uint8_t *)buf->map_addr;
 	it->end = it->begin + (size_t)buf->file_size;
-	filebuf_iter_reset(it);
+	corpus_filebuf_iter_reset(it);
 }
 
 
-void filebuf_iter_reset(struct filebuf_iter *it)
+void corpus_filebuf_iter_reset(struct corpus_filebuf_iter *it)
 {
 	it->ptr = it->begin;
 	it->current.ptr = NULL;
@@ -238,7 +239,7 @@ void filebuf_iter_reset(struct filebuf_iter *it)
 }
 
 
-int filebuf_iter_advance(struct filebuf_iter *it)
+int corpus_filebuf_iter_advance(struct corpus_filebuf_iter *it)
 {
 	const uint8_t *ptr = it->ptr;
 	const uint8_t *end = it->end;

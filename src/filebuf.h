@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef FILEBUF_H
-#define FILEBUF_H
+#ifndef CORPUS_FILEBUF_H
+#define CORPUS_FILEBUF_H
 
 /**
  * \file filebuf.h
@@ -29,7 +29,7 @@
  * file, letting the operating system move the data from the hard disk
  * to main memory whenever necessary.
  */
-struct filebuf {
+struct corpus_filebuf {
 	char *file_name;	/**< file name */
 	intptr_t handle;	/**< the file descriptor or handle */
 	uint64_t file_size;	/**< file size, in bytes */
@@ -41,7 +41,7 @@ struct filebuf {
 /**
  * A line in a file.
  */
-struct filebuf_line {
+struct corpus_filebuf_line {
 	const uint8_t *ptr;	/**< the start of the line */
 	size_t size;		/**< the size (in bytes) of the line */
 };
@@ -51,12 +51,12 @@ struct filebuf_line {
  * newline (`\\n`), if it exists. (The last line in the file may or
  * may not end in a newline; all other lines do.)
  */
-struct filebuf_iter {
+struct corpus_filebuf_iter {
 	const uint8_t *begin;	/**< the beginning of the file */
 	const uint8_t *ptr;	/**< the current position in the file */
 	const uint8_t *end;	/**< the end of the file */
 
-	struct filebuf_line current; /**< the current line */
+	struct corpus_filebuf_line current; /**< the current line */
 };
 
 /**
@@ -67,14 +67,14 @@ struct filebuf_iter {
  *
  * \returns 0 on success
  */
-int filebuf_init(struct filebuf *buf, const char *file_name);
+int corpus_filebuf_init(struct corpus_filebuf *buf, const char *file_name);
 
 /**
  * Release a buffer's resources.
  *
  * \param buf the buffer
  */
-void filebuf_destroy(struct filebuf *buf);
+void corpus_filebuf_destroy(struct corpus_filebuf *buf);
 
 /**
  * Get an iterator over the lines in a file.
@@ -82,7 +82,8 @@ void filebuf_destroy(struct filebuf *buf);
  * \param it the iterator to initialize
  * \param buf the file buffer
  */
-void filebuf_iter_make(struct filebuf_iter *it, const struct filebuf *buf);
+void corpus_filebuf_iter_make(struct corpus_filebuf_iter *it,
+			      const struct corpus_filebuf *buf);
 
 /**
  * Advance an iterator to the next line in the file.
@@ -91,13 +92,13 @@ void filebuf_iter_make(struct filebuf_iter *it, const struct filebuf *buf);
  *
  * \returns nonzero if a next line exists, zero if at the end of the file
  */
-int filebuf_iter_advance(struct filebuf_iter *it);
+int corpus_filebuf_iter_advance(struct corpus_filebuf_iter *it);
 
 /**
  * Reset an iterator to the beginning of the file.
  *
  * \param it the iterator
  */
-void filebuf_iter_reset(struct filebuf_iter *it);
+void corpus_filebuf_iter_reset(struct corpus_filebuf_iter *it);
 
-#endif /* FILEBUF_H */
+#endif /* CORPUS_FILEBUF_H */

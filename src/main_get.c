@@ -55,8 +55,8 @@ int main_get(int argc, char * const argv[])
 	struct data data, val;
 	struct corpus_text name;
 	struct schema schema;
-	struct filebuf buf;
-	struct filebuf_iter it;
+	struct corpus_filebuf buf;
+	struct corpus_filebuf_iter it;
 	const char *output = NULL;
 	const char *field, *input;
 	FILE *stream;
@@ -109,7 +109,7 @@ int main_get(int argc, char * const argv[])
 		goto error_schema;
 	}
 
-	if ((err = filebuf_init(&buf, input))) {
+	if ((err = corpus_filebuf_init(&buf, input))) {
 		goto error_filebuf;
 	}
 
@@ -127,8 +127,8 @@ int main_get(int argc, char * const argv[])
 		goto error_get;
 	}
 
-	filebuf_iter_make(&it, &buf);
-	while (filebuf_iter_advance(&it)) {
+	corpus_filebuf_iter_make(&it, &buf);
+	while (corpus_filebuf_iter_advance(&it)) {
 		if ((err = data_assign(&data, &schema, it.current.ptr,
 					it.current.size))) {
 			goto error_get;
@@ -152,7 +152,7 @@ error_get:
 		err = CORPUS_ERROR_OS;
 	}
 error_output:
-	filebuf_destroy(&buf);
+	corpus_filebuf_destroy(&buf);
 error_filebuf:
 	schema_destroy(&schema);
 error_schema:

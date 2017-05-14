@@ -54,8 +54,8 @@ Options:\n\
 int main_scan(int argc, char * const argv[])
 {
 	struct schema schema;
-	struct filebuf buf;
-	struct filebuf_iter it;
+	struct corpus_filebuf buf;
+	struct corpus_filebuf_iter it;
 	const char *output = NULL;
 	const char *input = NULL;
 	FILE *stream;
@@ -96,7 +96,7 @@ int main_scan(int argc, char * const argv[])
 		goto error_schema;
 	}
 
-	if ((err = filebuf_init(&buf, input))) {
+	if ((err = corpus_filebuf_init(&buf, input))) {
 		goto error_filebuf;
 	}
 
@@ -116,9 +116,9 @@ int main_scan(int argc, char * const argv[])
 
 	type_id = DATATYPE_NULL;
 
-	filebuf_iter_make(&it, &buf);
+	corpus_filebuf_iter_make(&it, &buf);
 	lineno = 0;
-	while (filebuf_iter_advance(&it)) {
+	while (corpus_filebuf_iter_advance(&it)) {
 		lineno++;
 
 		if ((err = schema_scan(&schema, it.current.ptr,
@@ -151,7 +151,7 @@ error_scan:
 		err = CORPUS_ERROR_OS;
 	}
 error_output:
-	filebuf_destroy(&buf);
+	corpus_filebuf_destroy(&buf);
 error_filebuf:
 	schema_destroy(&schema);
 error_schema:

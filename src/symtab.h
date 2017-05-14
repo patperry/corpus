@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Patrick O. Perry.
+ * Copyright 2017 Patrick O. Perry.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef SYMTAB_H
-#define SYMTAB_H
+#ifndef CORPUS_SYMTAB_H
+#define CORPUS_SYMTAB_H
 
 /**
  * \file symtab.h
@@ -26,7 +26,7 @@
 /**
  * Symbol table token.
  */
-struct symtab_token {
+struct corpus_symtab_token {
 	struct corpus_text text;/**< the token text */
 	int type_id;		/**< the ID of the token's type */
 };
@@ -34,7 +34,7 @@ struct symtab_token {
 /**
  * Symbol table type.
  */
-struct symtab_type {
+struct corpus_symtab_type {
 	struct corpus_text text;/**< the type text */
 	int *token_ids;		/**< the IDs of the tokens in the type */
 	int ntoken;		/**< the number of tokens in the type */
@@ -43,13 +43,13 @@ struct symtab_type {
 /**
  * Symbol table.
  */
-struct symtab {
+struct corpus_symtab {
 	struct typemap typemap;		/**< type map, for normalizing
 					  tokens to types */
 	struct corpus_table type_table;	/**< type hash table */
 	struct corpus_table token_table;/**< token hash table */
-	struct symtab_type *types;	/**< type array */
-	struct symtab_token *tokens;	/**< token array */
+	struct corpus_symtab_type *types;	/**< type array */
+	struct corpus_symtab_token *tokens;	/**< token array */
 	int ntype;			/**< type array length */
 	int ntype_max;			/**< type array capacity */
 	int ntoken;			/**< token array length */
@@ -66,21 +66,22 @@ struct symtab {
  *
  * \returns 0 on success
  */
-int symtab_init(struct symtab *tab, int type_kind, const char *stemmer);
+int corpus_symtab_init(struct corpus_symtab *tab, int type_kind,
+		       const char *stemmer);
 
 /**
  * Release the resources associated with a symbol table.
  *
  * \param tab the symbol table
  */
-void symtab_destroy(struct symtab *tab);
+void corpus_symtab_destroy(struct corpus_symtab *tab);
 
 /**
  * Remove all tokens and types from a symbol table.
  *
  * \param tab the symbol table
  */
-void symtab_clear(struct symtab *tab);
+void corpus_symtab_clear(struct corpus_symtab *tab);
 
 /**
  * Add a token to a symbol table if it does not already exist there, and
@@ -92,8 +93,8 @@ void symtab_clear(struct symtab *tab);
  *
  * \returns 0 on success
  */
-int symtab_add_token(struct symtab *tab, const struct corpus_text *tok,
-		     int *idptr);
+int corpus_symtab_add_token(struct corpus_symtab *tab,
+			    const struct corpus_text *tok, int *idptr);
 
 /**
  * Add a type to a symbol table if it does not already exist there, and
@@ -105,8 +106,8 @@ int symtab_add_token(struct symtab *tab, const struct corpus_text *tok,
  *
  * \returns 0 on success
  */
-int symtab_add_type(struct symtab *tab, const struct corpus_text *typ,
-		    int *idptr);
+int corpus_symtab_add_type(struct corpus_symtab *tab,
+			   const struct corpus_text *typ, int *idptr);
 
 /**
  * Query whether a token exists in a symbol table.
@@ -117,8 +118,8 @@ int symtab_add_type(struct symtab *tab, const struct corpus_text *typ,
  *
  * \returns non-zero if the token exists in the table; zero otherwise
  */
-int symtab_has_token(const struct symtab *tab, const struct corpus_text *tok,
-		     int *idptr);
+int corpus_symtab_has_token(const struct corpus_symtab *tab,
+			    const struct corpus_text *tok, int *idptr);
 
 /**
  * Query whether a type exists in a symbol table.
@@ -129,7 +130,7 @@ int symtab_has_token(const struct symtab *tab, const struct corpus_text *tok,
  *
  * \returns non-zero if the type exists in the table; zero otherwise
  */
-int symtab_has_type(const struct symtab *tab, const struct corpus_text *typ,
-		    int *idptr);
+int corpus_symtab_has_type(const struct corpus_symtab *tab,
+			   const struct corpus_text *typ, int *idptr);
 
-#endif /* SYMTAB_H */
+#endif /* CORPUS_SYMTAB_H */

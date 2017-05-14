@@ -26,15 +26,16 @@
 #include "token.h"
 #include "symtab.h"
 
-static int symtab_grow_tokens(struct symtab *tab, int nadd);
-static int symtab_grow_types(struct symtab *tab, int nadd);
-static void symtab_rehash_tokens(struct symtab *tab);
-static void symtab_rehash_types(struct symtab *tab);
+static int corpus_symtab_grow_tokens(struct corpus_symtab *tab, int nadd);
+static int corpus_symtab_grow_types(struct corpus_symtab *tab, int nadd);
+static void corpus_symtab_rehash_tokens(struct corpus_symtab *tab);
+static void corpus_symtab_rehash_types(struct corpus_symtab *tab);
 
-static int type_add_token(struct symtab_type *type, int token_id);
+static int type_add_token(struct corpus_symtab_type *type, int token_id);
 
 
-int symtab_init(struct symtab *tab, int type_kind, const char *stemmer)
+int corpus_symtab_init(struct corpus_symtab *tab, int type_kind,
+		       const char *stemmer)
 {
 	int err;
 
@@ -73,9 +74,9 @@ error_typemap:
 }
 
 
-void symtab_destroy(struct symtab *tab)
+void corpus_symtab_destroy(struct corpus_symtab *tab)
 {
-	symtab_clear(tab);
+	corpus_symtab_clear(tab);
 	corpus_free(tab->tokens);
 	corpus_free(tab->types);
 	corpus_table_destroy(&tab->token_table);
@@ -84,7 +85,7 @@ void symtab_destroy(struct symtab *tab)
 }
 
 
-void symtab_clear(struct symtab *tab)
+void corpus_symtab_clear(struct corpus_symtab *tab)
 {
 	int ntoken = tab->ntoken;
 	int ntype = tab->ntype;
@@ -105,8 +106,8 @@ void symtab_clear(struct symtab *tab)
 }
 
 
-int symtab_has_token(const struct symtab *tab, const struct corpus_text *tok,
-		     int *idptr)
+int corpus_symtab_has_token(const struct corpus_symtab *tab,
+			    const struct corpus_text *tok, int *idptr)
 {
 	struct corpus_table_probe probe;
 	unsigned hash = token_hash(tok);
@@ -131,8 +132,8 @@ out:
 }
 
 
-int symtab_has_type(const struct symtab *tab, const struct corpus_text *typ,
-		    int *idptr)
+int corpus_symtab_has_type(const struct corpus_symtab *tab,
+			   const struct corpus_text *typ, int *idptr)
 {
 	struct corpus_table_probe probe;
 	unsigned hash = token_hash(typ);
@@ -157,14 +158,14 @@ out:
 }
 
 
-int symtab_add_token(struct symtab *tab, const struct corpus_text *tok,
-		     int *idptr)
+int corpus_symtab_add_token(struct corpus_symtab *tab,
+			    const struct corpus_text *tok, int *idptr)
 {
 	int pos, token_id, type_id;
 	bool rehash = false;
 	int err;
 
-	if (symtab_has_token(tab, tok, &pos)) {
+	if (corpus_symtab_has_token(tab, tok, &pos)) {
 		token_id = pos;
 	} else {
 		token_id = tab->ntoken;
@@ -175,14 +176,14 @@ int symtab_add_token(struct symtab *tab, const struct corpus_text *tok,
 		}
 
 		// add the type
-		if ((err = symtab_add_type(tab, &tab->typemap.type,
-					   &type_id))) {
+		if ((err = corpus_symtab_add_type(tab, &tab->typemap.type,
+						  &type_id))) {
 			goto error;
 		}
 
 		// grow the token array if necessary
 		if (token_id == tab->ntoken_max) {
-			if ((err = symtab_grow_tokens(tab, 1))) {
+			if ((err = corpus_symtab_grow_tokens(tab, 1))) {
 				goto error;
 			}
 		}
@@ -216,7 +217,7 @@ int symtab_add_token(struct symtab *tab, const struct corpus_text *tok,
 
 		// set the bucket
 		if (rehash) {
-			symtab_rehash_tokens(tab);
+			corpus_symtab_rehash_tokens(tab);
 		} else {
 			tab->token_table.items[pos] = token_id;
 		}
@@ -230,28 +231,28 @@ int symtab_add_token(struct symtab *tab, const struct corpus_text *tok,
 
 error:
 	if (rehash) {
-		symtab_rehash_tokens(tab);
+		corpus_symtab_rehash_tokens(tab);
 	}
 	corpus_log(err, "failed adding token to symbol table");
 	return err;
 }
 
 
-int symtab_add_type(struct symtab *tab, const struct corpus_text *typ,
-		    int *idptr)
+int corpus_symtab_add_type(struct corpus_symtab *tab,
+			   const struct corpus_text *typ, int *idptr)
 {
 	int pos, type_id;
 	bool rehash = false;
 	int err;
 
-	if (symtab_has_type(tab, typ, &pos)) {
+	if (corpus_symtab_has_type(tab, typ, &pos)) {
 		type_id = pos;
 	} else {
 		type_id = tab->ntype;
 
 		// grow the type array if necessary
 		if (type_id == tab->ntype_max) {
-			if ((err = symtab_grow_types(tab, 1))) {
+			if ((err = corpus_symtab_grow_types(tab, 1))) {
 				goto error;
 			}
 		}
@@ -280,7 +281,7 @@ int symtab_add_type(struct symtab *tab, const struct corpus_text *typ,
 
 		// set the bucket
 		if (rehash) {
-			symtab_rehash_types(tab);
+			corpus_symtab_rehash_types(tab);
 		} else {
 			tab->type_table.items[pos] = type_id;
 		}
@@ -294,14 +295,14 @@ int symtab_add_type(struct symtab *tab, const struct corpus_text *typ,
 
 error:
 	if (rehash) {
-		symtab_rehash_types(tab);
+		corpus_symtab_rehash_types(tab);
 	}
 	corpus_log(err, "failed adding type to symbol table");
 	return err;
 }
 
 
-int symtab_grow_tokens(struct symtab *tab, int nadd)
+int corpus_symtab_grow_tokens(struct corpus_symtab *tab, int nadd)
 {
 	void *base = tab->tokens;
 	int size = tab->ntoken_max;
@@ -319,7 +320,7 @@ int symtab_grow_tokens(struct symtab *tab, int nadd)
 }
 
 
-int symtab_grow_types(struct symtab *tab, int nadd)
+int corpus_symtab_grow_types(struct corpus_symtab *tab, int nadd)
 {
 	void *base = tab->types;
 	int size = tab->ntype_max;
@@ -337,9 +338,9 @@ int symtab_grow_types(struct symtab *tab, int nadd)
 }
 
 
-void symtab_rehash_tokens(struct symtab *tab)
+void corpus_symtab_rehash_tokens(struct corpus_symtab *tab)
 {
-	const struct symtab_token *tokens = tab->tokens;
+	const struct corpus_symtab_token *tokens = tab->tokens;
 	struct corpus_table *token_table = &tab->token_table;
 	int i, n = tab->ntoken;
 	unsigned hash;
@@ -353,9 +354,9 @@ void symtab_rehash_tokens(struct symtab *tab)
 }
 
 
-void symtab_rehash_types(struct symtab *tab)
+void corpus_symtab_rehash_types(struct corpus_symtab *tab)
 {
-	const struct symtab_type *types = tab->types;
+	const struct corpus_symtab_type *types = tab->types;
 	struct corpus_table *type_table = &tab->type_table;
 	int i, n = tab->ntype;
 	unsigned hash;
@@ -369,7 +370,7 @@ void symtab_rehash_types(struct symtab *tab)
 }
 
 
-int type_add_token(struct symtab_type *typ, int tok_id)
+int type_add_token(struct corpus_symtab_type *typ, int tok_id)
 {
 	int *tok_ids = typ->token_ids;
 	int ntok = typ->ntoken;

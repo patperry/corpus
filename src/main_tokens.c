@@ -85,7 +85,7 @@ Options:\n\
 int main_tokens(int argc, char * const argv[])
 {
 	struct wordscan scan;
-	struct symtab symtab;
+	struct corpus_symtab symtab;
 	struct data data, val;
 	struct corpus_text name, text, word;
 	struct schema schema;
@@ -178,7 +178,7 @@ int main_tokens(int argc, char * const argv[])
 		goto error_schema;
 	}
 
-	if ((err = symtab_init(&symtab, flags, stemmer))) {
+	if ((err = corpus_symtab_init(&symtab, flags, stemmer))) {
 		goto error_symtab;
 	}
 
@@ -223,8 +223,9 @@ int main_tokens(int argc, char * const argv[])
 		start = 1;
 		while (wordscan_advance(&scan)) {
 
-			if ((err = symtab_add_token(&symtab, &scan.current,
-							&tokid))) {
+			if ((err = corpus_symtab_add_token(&symtab,
+							   &scan.current,
+							   &tokid))) {
 				goto error;
 			}
 
@@ -258,7 +259,7 @@ error:
 error_output:
 	filebuf_destroy(&buf);
 error_filebuf:
-	symtab_destroy(&symtab);
+	corpus_symtab_destroy(&symtab);
 error_symtab:
 	schema_destroy(&schema);
 error_schema:

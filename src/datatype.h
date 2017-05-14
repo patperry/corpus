@@ -98,7 +98,7 @@ struct schema_sorter {
 struct schema {
 	struct schema_buffer buffer;	/**< internal field buffer */
 	struct schema_sorter sorter;	/**< internal field name sorter */
-	struct symtab names;		/**< record field names */
+	struct corpus_symtab names;	/**< record field names */
 	struct corpus_table arrays;	/**< array type table */
 	struct corpus_table records;	/**< record type table */
 	struct datatype *types;		/**< data type array */

@@ -217,7 +217,7 @@ int schema_init(struct schema *s)
 		goto error_sorter;
 	}
 
-	if ((err = symtab_init(&s->names, 0, NULL))) {
+	if ((err = corpus_symtab_init(&s->names, 0, NULL))) {
 		goto error_names;
 	}
 
@@ -250,7 +250,7 @@ error_types:
 error_records:
 	corpus_table_destroy(&s->arrays);
 error_arrays:
-	symtab_destroy(&s->names);
+	corpus_symtab_destroy(&s->names);
 error_names:
 	sorter_destroy(&s->sorter);
 error_sorter:
@@ -265,7 +265,7 @@ void schema_destroy(struct schema *s)
 	schema_clear(s);
 
 	corpus_free(s->types);
-	symtab_destroy(&s->names);
+	corpus_symtab_destroy(&s->names);
 	corpus_table_destroy(&s->records);
 	corpus_table_destroy(&s->arrays);
 	sorter_destroy(&s->sorter);
@@ -291,7 +291,7 @@ void schema_clear(struct schema *s)
 
 	corpus_table_clear(&s->arrays);
 	corpus_table_clear(&s->records);
-	symtab_clear(&s->names);
+	corpus_symtab_clear(&s->names);
 }
 
 
@@ -300,7 +300,7 @@ int schema_name(struct schema *s, const struct corpus_text *name, int *idptr)
 	int tokid, id;
 	int err;
 
-	if ((err = symtab_add_token(&s->names, name, &tokid))) {
+	if ((err = corpus_symtab_add_token(&s->names, name, &tokid))) {
 		goto error;
 	}
 

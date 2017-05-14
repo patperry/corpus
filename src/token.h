@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TOKEN_H
-#define TOKEN_H
+#ifndef CORPUS_TOKEN_H
+#define CORPUS_TOKEN_H
 
 /**
  * \file token.h
@@ -68,22 +68,22 @@ struct sb_stemmer;
  *  	[White_Space=Yes](http://www.unicode.org/reports/tr44/#White_Space)
  *  	property
  */
-enum type_kind {
-	TYPE_NORMAL   = 0,        /**< transform to composed normal form */
-	TYPE_COMPAT   = (1 << 0), /**< apply compatibility mappings */
-	TYPE_CASEFOLD = (1 << 1), /**< perform case folding */
-	TYPE_DASHFOLD = (1 << 2), /**< replace dashes with `-` */
-	TYPE_QUOTFOLD = (1 << 3), /**< replace quotes with `'` */
-	TYPE_RMCC     = (1 << 4), /**< remove non-white-space control
-				    characters */
-	TYPE_RMDI     = (1 << 5), /**< remove default ignorables */
-	TYPE_RMWS     = (1 << 6)  /**< remove white space */
+enum corpus_type_kind {
+	CORPUS_TYPE_NORMAL   = 0, /**< transform to composed normal form */
+	CORPUS_TYPE_COMPAT   = (1 << 0), /**< apply compatibility mappings */
+	CORPUS_TYPE_CASEFOLD = (1 << 1), /**< perform case folding */
+	CORPUS_TYPE_DASHFOLD = (1 << 2), /**< replace dashes with `-` */
+	CORPUS_TYPE_QUOTFOLD = (1 << 3), /**< replace quotes with `'` */
+	CORPUS_TYPE_RMCC     = (1 << 4), /**< remove non-white-space control
+					   characters */
+	CORPUS_TYPE_RMDI     = (1 << 5), /**< remove default ignorables */
+	CORPUS_TYPE_RMWS     = (1 << 6)  /**< remove white space */
 };
 
 /**
  * Type map, for normalizing tokens to types.
  */
-struct typemap {
+struct corpus_typemap {
 	struct corpus_text type;/**< type of the token given to the most
 				  recent typemap_set() call */
 	int8_t ascii_map[128];	/**< a lookup table for the mappings of ASCII
@@ -94,7 +94,7 @@ struct typemap {
 	size_t size_max;	/**< token size maximum; normalizing a larger
 				 	token will force a reallocation */
 	int kind;		/**< the type map kind descriptor, a bit mask
-				  of #type_kind values */
+				  of #corpus_type_kind values */
 	int charmap_type;	/**< the unicode map type, a bit mask of
 				  #udecomp_type and #ucasefold_type values */
 };
@@ -104,25 +104,26 @@ struct typemap {
  *
  * \returns a NULL-terminated array of algorithm names
  */
-const char **stemmer_list(void);
+const char **corpus_stemmer_list(void);
 
 /**
  * Initialize a new type map of the specified kind.
  *
  * \param map the type map
- * \param kind a bitmask of #type_kind values, specifying the map type
+ * \param kind a bitmask of #corpus_type_kind values, specifying the map type
  * \param stemmer the stemming algorithm name, or NULL to disable stemming
  *
  * \returns 0 on success
  */
-int typemap_init(struct typemap *map, int kind, const char *stemmer);
+int corpus_typemap_init(struct corpus_typemap *map, int kind,
+			const char *stemmer);
 
 /**
  * Release the resources associated with a type map.
  * 
  * \param map the type map
  */
-void typemap_destroy(struct typemap *map);
+void corpus_typemap_destroy(struct corpus_typemap *map);
 
 /**
  * Given a token, set a map to the corresponding type.
@@ -132,7 +133,8 @@ void typemap_destroy(struct typemap *map);
  *
  * \returns 0 on success
  */
-int typemap_set(struct typemap *map, const struct corpus_text *tok);
+int corpus_typemap_set(struct corpus_typemap *map,
+		       const struct corpus_text *tok);
 
 /**
  * Compute a hash code from a token.
@@ -141,7 +143,7 @@ int typemap_set(struct typemap *map, const struct corpus_text *tok);
  *
  * \returns the hash code.
  */
-unsigned token_hash(const struct corpus_text *tok);
+unsigned corpus_token_hash(const struct corpus_text *tok);
 
 /**
  * Test whether two tokens are equal (bitwise). Bitwise equality is more
@@ -152,8 +154,8 @@ unsigned token_hash(const struct corpus_text *tok);
  *
  * \returns non-zero if the tokens are equal, zero otherwise
  */
-int token_equals(const struct corpus_text *tok1,
-		 const struct corpus_text *tok2);
+int corpus_token_equals(const struct corpus_text *tok1,
+			const struct corpus_text *tok2);
 
 /**
  * Compare two types.
@@ -165,7 +167,7 @@ int token_equals(const struct corpus_text *tok1,
  * 	if the first value is less than the second; a positive value
  * 	if the first value is greater than the second
  */
-int compare_type(const struct corpus_text *typ1,
-		 const struct corpus_text *typ2);
+int corpus_compare_type(const struct corpus_text *typ1,
+			const struct corpus_text *typ2);
 
-#endif /* TOKEN_H */
+#endif /* CORPUS_TOKEN_H */

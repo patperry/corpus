@@ -23,15 +23,24 @@
 #include "testutil.h"
 
 
+#define TYPE_CASEFOLD	CORPUS_TYPE_CASEFOLD
+#define TYPE_COMPAT	CORPUS_TYPE_COMPAT
+#define TYPE_DASHFOLD	CORPUS_TYPE_DASHFOLD
+#define TYPE_QUOTFOLD	CORPUS_TYPE_QUOTFOLD
+#define TYPE_RMCC	CORPUS_TYPE_RMCC
+#define TYPE_RMDI	CORPUS_TYPE_RMDI
+#define TYPE_RMWS	CORPUS_TYPE_RMWS
+
+
 struct corpus_text *get_type_stem(const struct corpus_text *tok, int flags,
 				  const char *stemmer)
 {
 	struct corpus_text *typ;
-	struct typemap map;
+	struct corpus_typemap map;
 	size_t size;
 
-	ck_assert(!typemap_init(&map, flags, stemmer));
-	ck_assert(!typemap_set(&map, tok));
+	ck_assert(!corpus_typemap_init(&map, flags, stemmer));
+	ck_assert(!corpus_typemap_set(&map, tok));
 	size = CORPUS_TEXT_SIZE(&map.type);
 
 	typ = alloc(sizeof(*typ));
@@ -41,7 +50,7 @@ struct corpus_text *get_type_stem(const struct corpus_text *tok, int flags,
 	typ->ptr[size] = '\0';
 	typ->attr = map.type.attr;
 
-	typemap_destroy(&map);
+	corpus_typemap_destroy(&map);
 
 	return typ;
 }
@@ -67,26 +76,26 @@ struct corpus_text *stem_en(const struct corpus_text *tok)
 
 START_TEST(test_equals)
 {
-	ck_assert(token_equals(S("hello"), S("hello")));
-	ck_assert(token_equals(S("hello"), T("hello")));
+	ck_assert_tok_eq(S("hello"), S("hello"));
+	ck_assert_tok_eq(S("hello"), T("hello"));
 
-	ck_assert(token_equals(S(""), S("")));
-	ck_assert(token_equals(S(""), T("")));
+	ck_assert_tok_eq(S(""), S(""));
+	ck_assert_tok_eq(S(""), T(""));
 }
 END_TEST
 
 
 START_TEST(test_not_equals)
 {
-	ck_assert(!token_equals(S("foo"), S("bar")));
+	ck_assert_tok_ne(S("foo"), S("bar"));
 }
 END_TEST
 
 
 START_TEST(test_equals_esc)
 {
-	ck_assert(!token_equals(S("\n"), T("\\n")));
-	ck_assert(!token_equals(S("\\n"), T("\\n")));
+	ck_assert_tok_ne(S("\n"), T("\\n"));
+	ck_assert_tok_ne(S("\\n"), T("\\n"));
 }
 END_TEST
 

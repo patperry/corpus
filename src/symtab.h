@@ -44,7 +44,7 @@ struct corpus_symtab_type {
  * Symbol table.
  */
 struct corpus_symtab {
-	struct typemap typemap;		/**< type map, for normalizing
+	struct corpus_typemap typemap;	/**< type map, for normalizing
 					  tokens to types */
 	struct corpus_table type_table;	/**< type hash table */
 	struct corpus_table token_table;/**< token hash table */
@@ -61,7 +61,8 @@ struct corpus_symtab {
  * Initialize an empty symbol table with types of the specified kind.
  *
  * \param tab the symbol table
- * \param type_kind the type kind specifier, a bit mask of #type_kind values
+ * \param type_kind the type kind specifier, a bit mask of #corpus_type_kind
+ * 	values
  * \param stemmer the stemming algorithm name, or NULL to disable stemming
  *
  * \returns 0 on success

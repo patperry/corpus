@@ -39,7 +39,7 @@ void usage_tokens(void);
 
 void usage_tokens(void)
 {
-	const char **stems = stemmer_list();
+	const char **stems = corpus_stemmer_list();
 	int i;
 
 	printf("\
@@ -99,9 +99,10 @@ int main_tokens(int argc, char * const argv[])
 	int flags;
 	int ch, err, name_id, start, tokid, typid, zero;
 
-	flags = (TYPE_COMPAT | TYPE_CASEFOLD | TYPE_DASHFOLD
-			| TYPE_QUOTFOLD | TYPE_RMCC | TYPE_RMDI
-			| TYPE_RMWS);
+	flags = (CORPUS_TYPE_COMPAT | CORPUS_TYPE_CASEFOLD
+			| CORPUS_TYPE_DASHFOLD | CORPUS_TYPE_QUOTFOLD
+			| CORPUS_TYPE_RMCC | CORPUS_TYPE_RMDI
+			| CORPUS_TYPE_RMWS);
 
 	field = "text";
 
@@ -110,34 +111,34 @@ int main_tokens(int argc, char * const argv[])
 	while ((ch = getopt(argc, argv, "cdf:iko:qwxz")) != -1) {
 		switch (ch) {
 		case 'c':
-			flags &= ~TYPE_CASEFOLD;
+			flags &= ~CORPUS_TYPE_CASEFOLD;
 			break;
 		case 'd':
-			flags &= ~TYPE_DASHFOLD;
+			flags &= ~CORPUS_TYPE_DASHFOLD;
 			break;
 		case 'f':
 			field = optarg;
 			break;
 		case 'i':
-			flags &= ~TYPE_RMDI;
+			flags &= ~CORPUS_TYPE_RMDI;
 			break;
 		case 'k':
-			flags &= ~TYPE_COMPAT;
+			flags &= ~CORPUS_TYPE_COMPAT;
 			break;
 		case 'o':
 			output = optarg;
 			break;
 		case 'q':
-			flags &= ~TYPE_QUOTFOLD;
+			flags &= ~CORPUS_TYPE_QUOTFOLD;
 			break;
 		case 's':
 			stemmer = optarg;
 			break;
 		case 'w':
-			flags &= ~TYPE_RMWS;
+			flags &= ~CORPUS_TYPE_RMWS;
 			break;
 		case 'x':
-			flags &= ~TYPE_RMCC;
+			flags &= ~CORPUS_TYPE_RMCC;
 			break;
 		case 'z':
 			zero = 1;

@@ -27,24 +27,26 @@
 #include "token.h"
 
 
-static void typemap_clear_kind(struct typemap *map);
-static int typemap_set_kind(struct typemap *map, int kind);
+static void corpus_typemap_clear_kind(struct corpus_typemap *map);
+static int corpus_typemap_set_kind(struct corpus_typemap *map, int kind);
 
-static int typemap_reserve(struct typemap *map, size_t size);
-static int typemap_set_ascii(struct typemap *map,
+static int corpus_typemap_reserve(struct corpus_typemap *map, size_t size);
+static int corpus_typemap_set_ascii(struct corpus_typemap *map,
 			     const struct corpus_text *tok);
-static int typemap_set_utf32(struct typemap *map, const uint32_t *ptr,
-			     const uint32_t *end);
-static int typemap_stem(struct typemap *map);
+static int corpus_typemap_set_utf32(struct corpus_typemap *map,
+				    const uint32_t *ptr,
+				    const uint32_t *end);
+static int corpus_typemap_stem(struct corpus_typemap *map);
 
 
-const char **stemmer_list(void)
+const char **corpus_stemmer_list(void)
 {
 	return sb_stemmer_list();
 }
 
 
-int typemap_init(struct typemap *map, int kind, const char *stemmer)
+int corpus_typemap_init(struct corpus_typemap *map, int kind,
+			const char *stemmer)
 {
 	int err;
 
@@ -71,14 +73,14 @@ int typemap_init(struct typemap *map, int kind, const char *stemmer)
 	map->codes = NULL;
 	map->size_max = 0;
 
-	typemap_clear_kind(map);
-	err = typemap_set_kind(map, kind);
+	corpus_typemap_clear_kind(map);
+	err = corpus_typemap_set_kind(map, kind);
 out:
 	return err;
 }
 
 
-void typemap_destroy(struct typemap *map)
+void corpus_typemap_destroy(struct corpus_typemap *map)
 {
 	corpus_free(map->codes);
 	corpus_free(map->type.ptr);
@@ -88,7 +90,7 @@ void typemap_destroy(struct typemap *map)
 }
 
 
-void typemap_clear_kind(struct typemap *map)
+void corpus_typemap_clear_kind(struct corpus_typemap *map)
 {
 	uint_fast8_t ch;
 
@@ -102,7 +104,7 @@ void typemap_clear_kind(struct typemap *map)
 }
 
 
-int typemap_set_kind(struct typemap *map, int kind)
+int corpus_typemap_set_kind(struct corpus_typemap *map, int kind)
 {
 	int_fast8_t ch;
 
@@ -110,13 +112,13 @@ int typemap_set_kind(struct typemap *map, int kind)
 		return 0;
 	}
 
-	typemap_clear_kind(map);
+	corpus_typemap_clear_kind(map);
 
-	if (kind & TYPE_COMPAT) {
+	if (kind & CORPUS_TYPE_COMPAT) {
 		map->charmap_type = UDECOMP_ALL;
 	}
 
-	if (kind & TYPE_CASEFOLD) {
+	if (kind & CORPUS_TYPE_CASEFOLD) {
 		for (ch = 'A'; ch <= 'Z'; ch++) {
 			map->ascii_map[ch] = ch + ('a' - 'A');
 		}
@@ -124,11 +126,11 @@ int typemap_set_kind(struct typemap *map, int kind)
 		map->charmap_type |= UCASEFOLD_ALL;
 	}
 
-	if (kind & TYPE_QUOTFOLD) {
+	if (kind & CORPUS_TYPE_QUOTFOLD) {
 		map->ascii_map['"'] = '\'';
 	}
 
-	if (kind & TYPE_RMCC) {
+	if (kind & CORPUS_TYPE_RMCC) {
 		for (ch = 0x00; ch <= 0x08; ch++) {
 			map->ascii_map[ch] = -1;
 		}
@@ -138,7 +140,7 @@ int typemap_set_kind(struct typemap *map, int kind)
 		map->ascii_map[0x7F] = -1;
 	}
 
-	if (kind & TYPE_RMWS) {
+	if (kind & CORPUS_TYPE_RMWS) {
 		for (ch = 0x09; ch <= 0x0D; ch++) {
 			map->ascii_map[ch] = -1;
 		}
@@ -151,7 +153,7 @@ int typemap_set_kind(struct typemap *map, int kind)
 }
 
 
-int typemap_reserve(struct typemap *map, size_t size)
+int corpus_typemap_reserve(struct corpus_typemap *map, size_t size)
 {
 	uint8_t *ptr = map->type.ptr;
 	uint32_t *codes = map->codes;
@@ -181,7 +183,8 @@ error_nomem:
 }
 
 
-int typemap_set(struct typemap *map, const struct corpus_text *tok)
+int corpus_typemap_set(struct corpus_typemap *map,
+		       const struct corpus_text *tok)
 {
 	struct corpus_text_iter it;
 	size_t size = CORPUS_TEXT_SIZE(tok);
@@ -189,13 +192,13 @@ int typemap_set(struct typemap *map, const struct corpus_text *tok)
 	int err;
 
 	if (CORPUS_TEXT_IS_ASCII(tok)) {
-		if ((err = typemap_set_ascii(map, tok))) {
+		if ((err = corpus_typemap_set_ascii(map, tok))) {
 			goto error;
 		}
 		goto stem;
 	}
 
-	if ((err = typemap_reserve(map, size + 1))) {
+	if ((err = corpus_typemap_reserve(map, size + 1))) {
 		goto error;
 	}
 
@@ -209,12 +212,13 @@ int typemap_set(struct typemap *map, const struct corpus_text *tok)
 	unicode_order(map->codes, size);
 	unicode_compose(map->codes, &size);
 
-	if ((err = typemap_set_utf32(map, map->codes, map->codes + size))) {
+	if ((err = corpus_typemap_set_utf32(map, map->codes,
+					    map->codes + size))) {
 		goto error;
 	}
 
 stem:
-	err = typemap_stem(map);
+	err = corpus_typemap_stem(map);
 	return err;
 
 error:
@@ -223,7 +227,7 @@ error:
 }
 
 
-int typemap_stem(struct typemap *map)
+int corpus_typemap_stem(struct corpus_typemap *map)
 {
 	size_t size;
 	const uint8_t *buf;
@@ -267,14 +271,14 @@ out:
 }
 
 
-int typemap_set_utf32(struct typemap *map, const uint32_t *ptr,
-		     const uint32_t *end)
+int corpus_typemap_set_utf32(struct corpus_typemap *map, const uint32_t *ptr,
+			     const uint32_t *end)
 {
-	bool fold_dash = map->kind & TYPE_DASHFOLD;
-	bool fold_quot = map->kind & TYPE_QUOTFOLD;
-	bool rm_cc = map->kind & TYPE_RMCC;
-	bool rm_di = map->kind & TYPE_RMDI;
-	bool rm_ws = map->kind & TYPE_RMWS;
+	bool fold_dash = map->kind & CORPUS_TYPE_DASHFOLD;
+	bool fold_quot = map->kind & CORPUS_TYPE_QUOTFOLD;
+	bool rm_cc = map->kind & CORPUS_TYPE_RMCC;
+	bool rm_di = map->kind & CORPUS_TYPE_RMDI;
+	bool rm_ws = map->kind & CORPUS_TYPE_RMWS;
 	uint8_t *dst = map->type.ptr;
 	uint32_t code;
 	int8_t ch;
@@ -502,7 +506,8 @@ int typemap_set_utf32(struct typemap *map, const uint32_t *ptr,
 }
 
 
-int typemap_set_ascii(struct typemap *map, const struct corpus_text *tok)
+int corpus_typemap_set_ascii(struct corpus_typemap *map,
+			     const struct corpus_text *tok)
 {
 	struct corpus_text_iter it;
 	size_t size = CORPUS_TEXT_SIZE(tok);
@@ -512,7 +517,7 @@ int typemap_set_ascii(struct typemap *map, const struct corpus_text *tok)
 
 	assert(CORPUS_TEXT_IS_ASCII(tok));
 
-	if ((err = typemap_reserve(map, size + 1))) {
+	if ((err = corpus_typemap_reserve(map, size + 1))) {
 		goto error;
 	}
 
@@ -538,7 +543,7 @@ error:
 
 
 // Dan Bernstein's djb2 XOR hash: http://www.cse.yorku.ca/~oz/hash.html
-unsigned token_hash(const struct corpus_text *tok)
+unsigned corpus_token_hash(const struct corpus_text *tok)
 {
 	const uint8_t *ptr = tok->ptr;
 	const uint8_t *end = ptr + CORPUS_TEXT_SIZE(tok);
@@ -554,7 +559,8 @@ unsigned token_hash(const struct corpus_text *tok)
 }
 
 
-int token_equals(const struct corpus_text *t1, const struct corpus_text *t2)
+int corpus_token_equals(const struct corpus_text *t1,
+			const struct corpus_text *t2)
 {
 	return ((t1->attr & ~CORPUS_TEXT_UTF8_BIT)
 			== (t2->attr & ~CORPUS_TEXT_UTF8_BIT)
@@ -562,7 +568,8 @@ int token_equals(const struct corpus_text *t1, const struct corpus_text *t2)
 }
 
 
-int compare_type(const struct corpus_text *typ1, const struct corpus_text *typ2)
+int corpus_compare_type(const struct corpus_text *typ1,
+			const struct corpus_text *typ2)
 {
 	size_t n1 = CORPUS_TEXT_SIZE(typ1);
 	size_t n2 = CORPUS_TEXT_SIZE(typ2);

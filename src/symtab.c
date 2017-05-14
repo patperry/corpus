@@ -39,7 +39,7 @@ int corpus_symtab_init(struct corpus_symtab *tab, int type_kind,
 {
 	int err;
 
-	if ((err = typemap_init(&tab->typemap, type_kind, stemmer))) {
+	if ((err = corpus_typemap_init(&tab->typemap, type_kind, stemmer))) {
 		corpus_log(err, "failed initializing type buffer");
 		goto error_typemap;
 	}
@@ -67,7 +67,7 @@ int corpus_symtab_init(struct corpus_symtab *tab, int type_kind,
 error_token_table:
 	corpus_table_destroy(&tab->type_table);
 error_type_table:
-	typemap_destroy(&tab->typemap);
+	corpus_typemap_destroy(&tab->typemap);
 error_typemap:
 	corpus_log(err, "failed initializing symbol table");
 	return err;
@@ -81,7 +81,7 @@ void corpus_symtab_destroy(struct corpus_symtab *tab)
 	corpus_free(tab->types);
 	corpus_table_destroy(&tab->token_table);
 	corpus_table_destroy(&tab->type_table);
-	typemap_destroy(&tab->typemap);
+	corpus_typemap_destroy(&tab->typemap);
 }
 
 
@@ -110,14 +110,14 @@ int corpus_symtab_has_token(const struct corpus_symtab *tab,
 			    const struct corpus_text *tok, int *idptr)
 {
 	struct corpus_table_probe probe;
-	unsigned hash = token_hash(tok);
+	unsigned hash = corpus_token_hash(tok);
 	int token_id = -1;
 	bool found = false;
 
 	corpus_table_probe_make(&probe, &tab->token_table, hash);
 	while (corpus_table_probe_advance(&probe)) {
 		token_id = probe.current;
-		if (token_equals(tok, &tab->tokens[token_id].text)) {
+		if (corpus_token_equals(tok, &tab->tokens[token_id].text)) {
 			found = true;
 			goto out;
 		}
@@ -136,14 +136,14 @@ int corpus_symtab_has_type(const struct corpus_symtab *tab,
 			   const struct corpus_text *typ, int *idptr)
 {
 	struct corpus_table_probe probe;
-	unsigned hash = token_hash(typ);
+	unsigned hash = corpus_token_hash(typ);
 	int type_id = -1;
 	bool found = false;
 
 	corpus_table_probe_make(&probe, &tab->type_table, hash);
 	while (corpus_table_probe_advance(&probe)) {
 		type_id = probe.current;
-		if (token_equals(typ, &tab->types[type_id].text)) {
+		if (corpus_token_equals(typ, &tab->types[type_id].text)) {
 			found = true;
 			goto out;
 		}
@@ -171,7 +171,7 @@ int corpus_symtab_add_token(struct corpus_symtab *tab,
 		token_id = tab->ntoken;
 
 		// compute the type
-		if ((err = typemap_set(&tab->typemap, tok))) {
+		if ((err = corpus_typemap_set(&tab->typemap, tok))) {
 			goto error;
 		}
 
@@ -348,7 +348,7 @@ void corpus_symtab_rehash_tokens(struct corpus_symtab *tab)
 	corpus_table_clear(token_table);
 
 	for (i = 0; i < n; i++) {
-		hash = token_hash(&tokens[i].text);
+		hash = corpus_token_hash(&tokens[i].text);
 		corpus_table_add(token_table, hash, i);
 	}
 }
@@ -364,7 +364,7 @@ void corpus_symtab_rehash_types(struct corpus_symtab *tab)
 	corpus_table_clear(type_table);
 
 	for (i = 0; i < n; i++) {
-		hash = token_hash(&types[i].text);
+		hash = corpus_token_hash(&types[i].text);
 		corpus_table_add(type_table, hash, i);
 	}
 }

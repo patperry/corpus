@@ -24,7 +24,7 @@
 #include "testutil.h"
 
 #define SENT_BREAK_TEST "data/ucd/auxiliary/SentenceBreakTest.txt"
-struct sentscan scan;
+struct corpus_sentscan scan;
 
 
 void setup_scan(void)
@@ -41,14 +41,14 @@ void teardown_scan(void)
 
 void start(const struct corpus_text *text)
 {
-	sentscan_make(&scan, text);
+	corpus_sentscan_make(&scan, text);
 }
 
 
 const struct corpus_text *next(void)
 {
 	struct corpus_text *sent;
-	if (!sentscan_advance(&scan)) {
+	if (!corpus_sentscan_advance(&scan)) {
 		return NULL;
 	}
 	sent = alloc(sizeof(*sent));
@@ -266,18 +266,18 @@ START_TEST(test_unicode)
 
 		//fprintf(stderr, "[%u]: ", i);
 		//write_unitest(stderr, test);
-		sentscan_make(&scan, &test->text);
+		corpus_sentscan_make(&scan, &test->text);
 
 		for (j = 0; j < test->nbreak; j++) {
 			//fprintf(stderr, "Break %u\n", j);
-			ck_assert(sentscan_advance(&scan));
+			ck_assert(corpus_sentscan_advance(&scan));
 			ck_assert_ptr_eq(scan.current.ptr,
 					 test->break_begin[j]);
 			ck_assert_ptr_eq(scan.current.ptr
 					 + CORPUS_TEXT_SIZE(&scan.current),
 					 test->break_end[j]);
 		}
-		ck_assert(!sentscan_advance(&scan));
+		ck_assert(!corpus_sentscan_advance(&scan));
 	}
 }
 END_TEST

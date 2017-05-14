@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef SENTSCAN_H
-#define SENTSCAN_H
+#ifndef CORPUS_SENTSCAN_H
+#define CORPUS_SENTSCAN_H
 
 /**
  * \file sentscan.h
@@ -29,14 +29,14 @@
 /**
  * A sentence break type.
  */
-enum sent_type {
-	SENT_NONE = -1,	/**< break at the end of the text */
-	SENT_PARASEP,	/**< break after a paragraph separator */
-	SENT_ATERM,	/**< break after a full stop (.) or other
-			  ambiguous terminator */
-	SENT_STERM	/**< break after a sentence terminator
-			  like a question or exclamation
-			  mark (? or !) */
+enum corpus_sent_type {
+	CORPUS_SENT_NONE = -1,	/**< break at the end of the text */
+	CORPUS_SENT_PARASEP,	/**< break after a paragraph separator */
+	CORPUS_SENT_ATERM,	/**< break after a full stop (.) or other
+				  ambiguous terminator */
+	CORPUS_SENT_STERM	/**< break after a sentence terminator
+				  like a question or exclamation
+				  mark (? or !) */
 };
 
 /**
@@ -49,7 +49,7 @@ enum sent_type {
  * [demo]: http://unicode.org/cldr/utility/breaks.jsp
  * [uax29]: http://unicode.org/reports/tr29/
  */
-struct sentscan {
+struct corpus_sentscan {
 	struct corpus_text text;/**< the input text */
 	size_t text_attr;	/**< the input text attributes */
 
@@ -64,7 +64,7 @@ struct sentscan {
 	const uint8_t *iter_ptr;/**< iterator code's start */
 
 	struct corpus_text current;	/**< the current word */
-	enum sent_type type;	/**< the type of the current sentence */
+	enum corpus_sent_type type;	/**< the type of the current sentence */
 	int at_end;		/**< whether the scanner is at the end of
 				  the text */
 };
@@ -75,7 +75,8 @@ struct sentscan {
  * \param scan the scanner to initialize
  * \param text the text
  */
-void sentscan_make(struct sentscan *scan, const struct corpus_text *text);
+void corpus_sentscan_make(struct corpus_sentscan *scan,
+			  const struct corpus_text *text);
 
 /**
  * Advance a scanner to the next sentence.
@@ -84,13 +85,13 @@ void sentscan_make(struct sentscan *scan, const struct corpus_text *text);
  *
  * \returns nonzero on success, zero if at the end of the text
  */
-int sentscan_advance(struct sentscan *scan);
+int corpus_sentscan_advance(struct corpus_sentscan *scan);
 
 /**
  * Reset a scanner to the beginning of the text.
  *
  * \param scan the scanner
  */
-void sentscan_reset(struct sentscan *scan);
+void corpus_sentscan_reset(struct corpus_sentscan *scan);
 
-#endif /* SENTSCAN_H */
+#endif /* CORPUS_SENTSCAN_H */

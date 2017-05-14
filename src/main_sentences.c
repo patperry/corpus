@@ -54,7 +54,7 @@ Options:\n\
 
 int main_sentences(int argc, char * const argv[])
 {
-	struct sentscan scan;
+	struct corpus_sentscan scan;
 	struct data data, val;
 	struct corpus_text name, text;
 	struct schema schema;
@@ -149,9 +149,9 @@ int main_sentences(int argc, char * const argv[])
 		}
 
 		fprintf(stream, "[");
-		sentscan_make(&scan, &text);
+		corpus_sentscan_make(&scan, &text);
 		start = 1;
-		while (sentscan_advance(&scan)) {
+		while (corpus_sentscan_advance(&scan)) {
 			if (!start) {
 				fprintf(stream, ", ");
 			} else {

@@ -19,13 +19,14 @@
 #include "sentscan.h"
 
 
-void sentscan_make(struct sentscan *scan, const struct corpus_text *text)
+void corpus_sentscan_make(struct corpus_sentscan *scan,
+			  const struct corpus_text *text)
 {
 	scan->text = *text;
 	scan->text_attr = text->attr & ~CORPUS_TEXT_SIZE_MASK;
 
 	corpus_text_iter_make(&scan->iter, text);
-	sentscan_reset(scan);
+	corpus_sentscan_reset(scan);
 }
 
 
@@ -83,11 +84,11 @@ void sentscan_make(struct sentscan *scan, const struct corpus_text *text)
 	} while (0)
 
 
-void sentscan_reset(struct sentscan *scan)
+void corpus_sentscan_reset(struct corpus_sentscan *scan)
 {
 	scan->current.ptr = 0;
 	scan->current.attr = 0;
-	scan->type = SENT_NONE;
+	scan->type = CORPUS_SENT_NONE;
 
 	corpus_text_iter_reset(&scan->iter);
 	scan->ptr = scan->iter.ptr;
@@ -115,7 +116,7 @@ void sentscan_reset(struct sentscan *scan)
 }
 
 
-static int has_future_lower(const struct sentscan *scan)
+static int has_future_lower(const struct corpus_sentscan *scan)
 {
 	struct corpus_text_iter iter;
 	int prop, ret;
@@ -160,11 +161,11 @@ out:
 }
 
 
-int sentscan_advance(struct sentscan *scan)
+int corpus_sentscan_advance(struct corpus_sentscan *scan)
 {
 	scan->current.ptr = (uint8_t *)scan->ptr;
 	scan->current.attr = 0;
-	scan->type = SENT_NONE;
+	scan->type = CORPUS_SENT_NONE;
 
 NoBreak:
 
@@ -212,7 +213,7 @@ CR:
 
 ParaSep:
 	// SB4: ParaSep +
-	scan->type = SENT_PARASEP;
+	scan->type = CORPUS_SENT_PARASEP;
 	goto Break;
 
 UpperLower:
@@ -273,7 +274,7 @@ ATerm_Close_Sp:
 
 	case SENT_BREAK_OLETTER:
 	case SENT_BREAK_UPPER:
-		scan->type = SENT_ATERM;
+		scan->type = CORPUS_SENT_ATERM;
 		goto Break;
 
 	case SENT_BREAK_LOWER:
@@ -296,7 +297,7 @@ ATerm_Close_Sp:
 		if (has_future_lower(scan)) {
 			goto NoBreak;
 		} else {
-			scan->type = SENT_ATERM;
+			scan->type = CORPUS_SENT_ATERM;
 			goto Break;
 		}
 	}
@@ -344,7 +345,7 @@ STerm_Close_Sp:
 		goto ATerm;
 
 	default:
-		scan->type = SENT_STERM;
+		scan->type = CORPUS_SENT_STERM;
 		goto Break;
 	}
 

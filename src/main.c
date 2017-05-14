@@ -31,7 +31,7 @@
 #include "data.h"
 
 #define PROGRAM_NAME	"corpus"
-#define PROGRAM_VERSION	"0.3.1"
+#define PROGRAM_VERSION	"0.4.0"
 
 void usage(void);
 void usage_get(void);

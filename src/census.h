@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CENSUS_H
-#define CENSUS_H
+#ifndef CORPUS_CENSUS_H
+#define CORPUS_CENSUS_H
 
 /**
  * \file census.h
@@ -26,7 +26,7 @@
 /**
  * Census table.
  */
-struct census {
+struct corpus_census {
 	struct corpus_table table;	/**< hash table for items */
 	int *items;			/**< item keys */
 	double *weights;		/**< item weights */
@@ -41,21 +41,21 @@ struct census {
  *
  * \returns 0 on success
  */
-int census_init(struct census *c);
+int corpus_census_init(struct corpus_census *c);
 
 /**
  * Release a census's resources.
  *
  * \param c the census
  */
-void census_destroy(struct census *c);
+void corpus_census_destroy(struct corpus_census *c);
 
 /**
  * Remove all items from a census.
  *
  * \param c the census
  */
-void census_clear(struct census *c);
+void corpus_census_clear(struct corpus_census *c);
 
 /**
  * Increment an item weight by the given amount.
@@ -66,7 +66,7 @@ void census_clear(struct census *c);
  *
  * \returns 0 on success
  */
-int census_add(struct census *c, int item, double weight);
+int corpus_census_add(struct corpus_census *c, int item, double weight);
 
 /**
  * Query whether a census has a specific item.
@@ -78,7 +78,8 @@ int census_add(struct census *c, int item, double weight);
  *
  * \returns nonzero if the item exists, zero otherwise
  */
-int census_has(const struct census *c, int item, double *weightptr);
+int corpus_census_has(const struct corpus_census *c, int item,
+		      double *weightptr);
 
 /**
  * Sort the census items by weight, in descending order. Break ties
@@ -88,6 +89,6 @@ int census_has(const struct census *c, int item, double *weightptr);
  *
  * \returns 0 on success
  */
-int census_sort(struct census *c);
+int corpus_census_sort(struct corpus_census *c);
 
-#endif /* CENSUS_H */
+#endif /* CORPUS_CENSUS_H */

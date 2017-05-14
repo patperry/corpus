@@ -24,14 +24,15 @@
 #include "census.h"
 
 
-static int census_find(const struct census *c, int item, int *indexptr);
-static int census_grow(struct census *c, int nadd);
-static void census_rehash(struct census *c);
+static int corpus_census_find(const struct corpus_census *c, int item,
+			      int *indexptr);
+static int corpus_census_grow(struct corpus_census *c, int nadd);
+static void corpus_census_rehash(struct corpus_census *c);
 
 static unsigned item_hash(int item);
 
 
-int census_init(struct census *c)
+int corpus_census_init(struct corpus_census *c)
 {
 	int err;
 
@@ -50,7 +51,7 @@ out:
 }
 
 
-void census_destroy(struct census *c)
+void corpus_census_destroy(struct corpus_census *c)
 {
 	corpus_free(c->weights);
 	corpus_free(c->items);
@@ -58,14 +59,14 @@ void census_destroy(struct census *c)
 }
 
 
-void census_clear(struct census *c)
+void corpus_census_clear(struct corpus_census *c)
 {
 	corpus_table_clear(&c->table);
 	c->nitem = 0;
 }
 
 
-int census_add(struct census *c, int item, double weight)
+int corpus_census_add(struct corpus_census *c, int item, double weight)
 {
 	int err, pos, i, rehash;
 
@@ -78,7 +79,7 @@ int census_add(struct census *c, int item, double weight)
 		goto error;
 	}
 
-	if (census_find(c, item, &i)) {
+	if (corpus_census_find(c, item, &i)) {
 		c->weights[i] += weight;
 		err = 0;
 		goto out;
@@ -88,7 +89,7 @@ int census_add(struct census *c, int item, double weight)
 
 	// grow the arrays if necessary
 	if (c->nitem == c->nitem_max) {
-		if ((err = census_grow(c, 1))) {
+		if ((err = corpus_census_grow(c, 1))) {
 			goto error;
 		}
 	}
@@ -107,7 +108,7 @@ int census_add(struct census *c, int item, double weight)
 	c->nitem++;
 
 	if (rehash) {
-		census_rehash(c);
+		corpus_census_rehash(c);
 	} else {
 		c->table.items[pos] = i;
 	}
@@ -118,19 +119,20 @@ int census_add(struct census *c, int item, double weight)
 error:
 	corpus_log(err, "failed adding item to census");
 	if (rehash) {
-		census_rehash(c);
+		corpus_census_rehash(c);
 	}
 out:
 	return err;
 }
 
 
-int census_has(const struct census *c, int item, double *weightptr)
+int corpus_census_has(const struct corpus_census *c, int item,
+		      double *weightptr)
 {
 	double weight;
 	int i, found;
 
-	if (census_find(c, item, &i)) {
+	if (corpus_census_find(c, item, &i)) {
 		found = 1;
 		weight = c->weights[i];
 	} else {
@@ -146,7 +148,7 @@ int census_has(const struct census *c, int item, double *weightptr)
 }
 
 
-struct census_item {
+struct corpus_census_item {
 	int item;
 	double weight;
 };
@@ -176,10 +178,10 @@ static int double_cmp(double x1, double x2)
 }
 
 
-static int census_item_cmp(const void *x1, const void *x2)
+static int corpus_census_item_cmp(const void *x1, const void *x2)
 {
-	const struct census_item *y1 = x1;
-	const struct census_item *y2 = x2;
+	const struct corpus_census_item *y1 = x1;
+	const struct corpus_census_item *y2 = x2;
 	int cmp;
 
 	cmp = -double_cmp(y1->weight, y2->weight); // weight descending
@@ -191,9 +193,9 @@ static int census_item_cmp(const void *x1, const void *x2)
 }
 
 
-int census_sort(struct census *c)
+int corpus_census_sort(struct corpus_census *c)
 {
-	struct census_item *array;
+	struct corpus_census_item *array;
 	int i, n = c->nitem;
 	int err;
 
@@ -216,14 +218,14 @@ int census_sort(struct census *c)
 		array[i].weight = c->weights[i];
 	}
 
-	qsort(array, (size_t)n, sizeof(*array), census_item_cmp);
+	qsort(array, (size_t)n, sizeof(*array), corpus_census_item_cmp);
 
 	for (i = 0; i < n; i++) {
 		c->items[i] = array[i].item;
 		c->weights[i] = array[i].weight;
 	}
 
-	census_rehash(c);
+	corpus_census_rehash(c);
 
 	corpus_free(array);
 	err = 0;
@@ -232,7 +234,7 @@ out:
 }
 
 
-int census_find(const struct census *c, int item, int *indexptr)
+int corpus_census_find(const struct corpus_census *c, int item, int *indexptr)
 {
 	struct corpus_table_probe probe;
 	unsigned hash = item_hash(item);
@@ -256,7 +258,7 @@ out:
 }
 
 
-int census_grow(struct census *c, int nadd)
+int corpus_census_grow(struct corpus_census *c, int nadd)
 {
 	void *ibase, *wbase;
 	int err, size;
@@ -290,7 +292,7 @@ out:
 }
 
 
-void census_rehash(struct census *c)
+void corpus_census_rehash(struct corpus_census *c)
 {
 	int item, i, n = c->nitem;
 	unsigned hash;

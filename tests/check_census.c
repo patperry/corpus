@@ -20,18 +20,18 @@
 #include "../src/census.h"
 #include "testutil.h"
 
-struct census census;
+struct corpus_census census;
 
 void setup_census(void)
 {
 	setup();
-	census_init(&census);
+	corpus_census_init(&census);
 }
 
 
 void teardown_census(void)
 {
-	census_destroy(&census);
+	corpus_census_destroy(&census);
 	teardown();
 }
 
@@ -48,7 +48,7 @@ double get(int i)
 		}
 	}
 
-	if (census_has(&census, i, &val)) {
+	if (corpus_census_has(&census, i, &val)) {
 		ck_assert_double_eq(val,  val0);
 	} else {
 		ck_assert_double_eq(0.0,  val0);
@@ -63,7 +63,7 @@ void add(int i, double x)
 	double oldval, newval;
 
 	oldval = get(i);
-	ck_assert(!census_add(&census, i, x));
+	ck_assert(!corpus_census_add(&census, i, x));
 	newval = get(i);
 
 	ck_assert_double_eq(newval, oldval + x);
@@ -72,7 +72,7 @@ void add(int i, double x)
 
 void clear()
 {
-	census_clear(&census);
+	corpus_census_clear(&census);
 	ck_assert_int_eq(census.nitem, 0);
 }
 
@@ -87,14 +87,14 @@ void sort()
 
 	for (i = 0; i < nval; i++) {
 		inds[i] = census.items[i];
-		if (census_has(&census, inds[i], &val)) {
+		if (corpus_census_has(&census, inds[i], &val)) {
 			vals[i] = val;
 		} else {
 			vals[i] = 0;
 		}
 	}
 
-	ck_assert(!census_sort(&census));
+	ck_assert(!corpus_census_sort(&census));
 
 	// check that the weights are in descending order
 	for (i = 1; i < census.nitem; i++) {
@@ -120,7 +120,7 @@ void sort()
 
 	// check the new values match the old values
 	for (i = 0; i < nval; i++) {
-		if (census_has(&census, inds[i], &val)) {
+		if (corpus_census_has(&census, inds[i], &val)) {
 			ck_assert_double_eq(vals[i], val);
 		} else {
 			ck_assert_double_eq(vals[i], 0);

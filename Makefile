@@ -1,6 +1,6 @@
 CC     = gcc -std=c99
 
-CFLAGS = -Weverything -pedantic -Werror \
+CFLAGS = -Wall -Wextra -pedantic -Werror \
 	-Wno-cast-qual \
 	-Wno-padded \
 	-Wno-reserved-id-macro \

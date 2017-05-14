@@ -86,7 +86,7 @@ int corpus_data_assign(struct corpus_data *d, struct corpus_schema *s,
  * \param d the data value
  * \param valptr if non-NULL, a location to store the value
  *
- * \returns 0 on success, #ERROR_INVAL if the data value is null or
+ * \returns 0 on success, #CORPUS_ERROR_INVAL if the data value is null or
  * 	not boolean
  */
 int corpus_data_bool(const struct corpus_data *d, int *valptr);
@@ -97,8 +97,8 @@ int corpus_data_bool(const struct corpus_data *d, int *valptr);
  * \param d the data value
  * \param valptr if non-NULL, a location to store the value
  *
- * \returns 0 on success; #ERROR_INVAL if the data value is null or
- * 	not integer; #ERROR_OVERFLOW if the data value is too big
+ * \returns 0 on success; #CORPUS_ERROR_INVAL if the data value is null or
+ * 	not integer; #CORPUS_ERROR_OVERFLOW if the data value is too big
  * 	to store in an `int`, in which case it gets clipped
  * 	to `INT_MAX` or `INT_MIN`
  */
@@ -110,8 +110,8 @@ int corpus_data_int(const struct corpus_data *d, int *valptr);
  * \param d the data value
  * \param valptr if non-NULL, a location to store the value
  *
- * \returns 0 on success; #ERROR_INVAL if the data value is null or
- * 	not numeric (integer or real); #ERROR_OVERFLOW if the data
+ * \returns 0 on success; #CORPUS_ERROR_INVAL if the data value is null or
+ * 	not numeric (integer or real); #CORPUS_ERROR_OVERFLOW if the data
  * 	value is too big to store in a `double`, in which case it
  * 	gets set to `+Infinity` or `-Infinity`
  */
@@ -123,7 +123,7 @@ int corpus_data_double(const struct corpus_data *d, double *valptr);
  * \param d the data value
  * \param valptr if non-NULL, a location to store the value
  *
- * \returns 0 on success; #ERROR_INVAL if the data value is null or
+ * \returns 0 on success; #CORPUS_ERROR_INVAL if the data value is null or
  * 	not text
  */
 int corpus_data_text(const struct corpus_data *d, struct corpus_text *valptr);
@@ -135,7 +135,7 @@ int corpus_data_text(const struct corpus_data *d, struct corpus_text *valptr);
  * \param s the data schema
  * \param nitemptr if non-NULL, a location to store the number of items
  *
- * \returns 0 on success; #ERROR_INVAL if the data value is null or
+ * \returns 0 on success; #CORPUS_ERROR_INVAL if the data value is null or
  * 	is not an array
  */
 int corpus_data_nitem(const struct corpus_data *d,
@@ -148,7 +148,7 @@ int corpus_data_nitem(const struct corpus_data *d,
  * \param s the data schema
  * \param valptr if non-NULL, a location to store the array items
  *
- * \returns 0 on success; #ERROR_INVAL if the data value is null or
+ * \returns 0 on success; #CORPUS_ERROR_INVAL if the data value is null or
  * 	is not an array
  */
 int corpus_data_items(const struct corpus_data *d,
@@ -178,7 +178,7 @@ void corpus_data_items_reset(struct corpus_data_items *it);
  * \param s the data schema
  * \param nfieldptr if non-NULL, a location to store the number of fields
  *
- * \returns 0 on success; #ERROR_INVAL if the data value is null or
+ * \returns 0 on success; #CORPUS_ERROR_INVAL if the data value is null or
  * 	is not a record
  */
 int corpus_data_nfield(const struct corpus_data *d,
@@ -193,7 +193,7 @@ int corpus_data_nfield(const struct corpus_data *d,
  * \param name_id the record field name ID
  * \param valptr if non-NULL, a location to store the field value
  *
- * \returns 0 on success; #ERROR_INVAL if the data value is null,
+ * \returns 0 on success; #CORPUS_ERROR_INVAL if the data value is null,
  * 	is not a record, or is a record but does not have a field for
  * 	the given name
  */
@@ -208,7 +208,7 @@ int corpus_data_field(const struct corpus_data *d,
  * \param s the data schema
  * \param valptr if non_NULL, a location to store the record fields 
  *
- * \returns 0 on success; #ERROR_INVAL if the data value is null or
+ * \returns 0 on success; #CORPUS_ERROR_INVAL if the data value is null or
  * 	is not a record
  */
 int corpus_data_fields(const struct corpus_data *d,

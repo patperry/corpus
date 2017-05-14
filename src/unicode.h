@@ -111,8 +111,8 @@ void corpus_decode_utf8(const uint8_t **bufptr, uint32_t *codeptr);
 
 /**
  * Encode a codepoint into a UTF-8 character buffer. The codepoint must
- * be a valid unicode character (according to #IS_UNICODE) and the buffer
- * must have space for at least #UTF8_ENCODE_LEN bytes.
+ * be a valid unicode character (according to #CORPUS_IS_UNICODE) and the buffer
+ * must have space for at least #CORPUS_UTF8_ENCODE_LEN bytes.
  *
  * \param code the codepoint
  * \param bufptr on input, a pointer to the start of the buffer;

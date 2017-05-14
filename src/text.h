@@ -113,7 +113,7 @@ void corpus_text_destroy(struct corpus_text *text);
  * \param text the text value
  * \param ptr a pointer to the underlying memory buffer
  * \param size the number of bytes in the underlying memory buffer
- * \param flags #text_flag bitmask specifying input type
+ * \param flags #corpus_text_flag bitmask specifying input type
  *
  * \returns 0 on success
  */

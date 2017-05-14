@@ -74,7 +74,7 @@ int corpus_table_reinit(struct corpus_table *tab, int min_capacity);
 void corpus_table_destroy(struct corpus_table *tab);
 
 /**
- * Set all hash table items to #TABLE_ITEM_EMPTY.
+ * Set all hash table items to #CORPUS_TABLE_ITEM_EMPTY.
  */
 void corpus_table_clear(struct corpus_table *tab);
 

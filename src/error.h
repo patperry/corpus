@@ -50,7 +50,7 @@ extern void (*corpus_log_func)(int code, const char *message);
 /**
  * Get a human-readable string representation of an error code.
  *
- * \param code an #error_code value
+ * \param code a #corpus_error_code value
  *
  * \returns a string describing the error code
  */
@@ -59,7 +59,7 @@ const char *corpus_error_string(int code);
 /**
  * Log a message.
  *
- * \param code the status code, an #error_code value
+ * \param code the status code, a #corpus_error_code value
  * \param format a printf-style format string
  */
 void corpus_log(int code, const char *format, ...)

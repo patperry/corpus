@@ -33,10 +33,10 @@ struct sb_stemmer;
  * composed normal form (NFC). Optionally, apply compatibility maps for
  * NFKC normal and/or apply other transformations:
  *
- *  + #TYPE_COMPAT: apply all compatibility maps required for
+ *  + #CORPUS_TYPE_COMPAT: apply all compatibility maps required for
  *  	[NFKC normal form](http://unicode.org/reports/tr15/#Norm_Forms)
  *
- *  + #TYPE_CASEFOLD: perform case folding, in most languages (including
+ *  + #CORPUS_TYPE_CASEFOLD: perform case folding, in most languages (including
  *  	English) mapping uppercase characters to their lowercase equivalents,
  *  	but also performing other normalizations like mapping the
  *  	German Eszett (&szlig;) to "ss"; see
@@ -45,26 +45,26 @@ struct sb_stemmer;
  *  	[Case Mapping FAQ](http://unicode.org/faq/casemap_charprop.html)
  *  	for more information
  *
- *  + #TYPE_DASHFOLD: dash fold, replace em-dashes, negative signs, and
+ *  + #CORPUS_TYPE_DASHFOLD: dash fold, replace em-dashes, negative signs, and
  *  	anything with the [Dash=Yes](http://unicode.org/reports/tr44/#Dash)
  *  	property with a dash (`-`)
  *
- *  + #TYPE_QUOTFOLD: quote fold, replace double quotes, apostrophes, and
+ *  + #CORPUS_TYPE_QUOTFOLD: quote fold, replace double quotes, apostrophes, and
  *      anything with the
  *  	[Quotation Mark=Yes](http://unicode.org/reports/tr44/#Quotation_Mark)
  *  	property with a single quote (`'`)
  *
- *  + #TYPE_RMCC: remove non-white-space control codes (Cc) like
+ *  + #CORPUS_TYPE_RMCC: remove non-white-space control codes (Cc) like
  *  	non-printable ASCII codes; these are defined in
  *  	_The Unicode Standard_ Sec. 23.1 "Control Codes"
  *
- *  + #TYPE_RMDI: remove default ignorables (DI) like soft hyphens and
+ *  + #CORPUS_TYPE_RMDI: remove default ignorables (DI) like soft hyphens and
  *  	zero-width spaces, anything with the
  *  	[Default_Ignorable_Code_Point=Yes]
  *  	(http://www.unicode.org/reports/tr44/#Default_Ignorable_Code_Point)
  *  	property
  *
- *  + #TYPE_RMWS: remove white space (WS), anything with the
+ *  + #CORPUS_TYPE_RMWS: remove white space (WS), anything with the
  *  	[White_Space=Yes](http://www.unicode.org/reports/tr44/#White_Space)
  *  	property
  */
@@ -96,7 +96,8 @@ struct corpus_typemap {
 	int kind;		/**< the type map kind descriptor, a bit mask
 				  of #corpus_type_kind values */
 	int charmap_type;	/**< the unicode map type, a bit mask of
-				  #udecomp_type and #ucasefold_type values */
+				  #corpus_udecomp_type and
+				  #corpus_ucasefold_type values */
 };
 
 /**

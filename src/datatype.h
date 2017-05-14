@@ -68,7 +68,8 @@ struct corpus_datatype_record {
  * A data type.
  */
 struct corpus_datatype {
-	int kind;	/**< the kind of data type, a #datatype_kind value */
+	int kind;	/**< the kind of data type,
+			  a #corpus_datatype_kind value */
 	union {
 		struct corpus_datatype_array array;
 			/**< metadata for kind #CORPUS_DATATYPE_ARRAY */

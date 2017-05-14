@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef RENDER_H
-#define RENDER_H
+#ifndef CORPUS_RENDER_H
+#define CORPUS_RENDER_H
 
 /**
  * \file render.h
@@ -33,12 +33,12 @@ struct corpus_text;
  * control codes or non-ASCII Unicode characters with JSON-style
  * backslash (\) escapes.
  */
-enum escape_type {
-	ESCAPE_NONE = 0,		/**< no escaping */
-	ESCAPE_CONTROL = (1 << 0),	/**< replace control codes
+enum corpus_escape_type {
+	CORPUS_ESCAPE_NONE = 0,			/**< no escaping */
+	CORPUS_ESCAPE_CONTROL = (1 << 0),/**< replace control codes
 					  (C0, delete, and C1) with
 					  JSON-style backslash escapes */
-	ESCAPE_UTF8 = (1 << 1)		/**< replace non-ASCII UTF-8
+	CORPUS_ESCAPE_UTF8 = (1 << 1)	/**< replace non-ASCII UTF-8
 					  characters with
 					  JSON-style backslash escapes */
 };
@@ -46,15 +46,16 @@ enum escape_type {
 /**
  * Renderer, for printing objects as strings.
  */
-struct render {
+struct corpus_render {
 	char *string;		/**< the rendered string (null terminated) */
 	int length;		/**< the length of the rendered string, not
 				  including the null terminator */
 	int length_max;		/**< the maximum capacity of the rendered
 				  string before requiring reallocation, not
 				  including the null terminator */
-	int escape_flags;	/**< the flags, a bitmask of #escape_type
-				 values, specifying escaping behavior */
+	int escape_flags;	/**< the flags, a bitmask of
+				  #corpus_escape_type values, specifying
+				  escaping behavior */
 
 	const char *tab;	/**< the tab string, for indenting */
 	int tab_length;		/**< the length in bytes of the tab string,
@@ -76,19 +77,19 @@ struct render {
  * Initialize a new render object.
  *
  * \param r the render object
- * \param escape_flags a bitmask of #escape_type flags specifying
+ * \param escape_flags a bitmask of #corpus_escape_type flags specifying
  * 	escaping behavior
  *
  * \returns 0 on success
  */
-int render_init(struct render *r, int escape_flags);
+int corpus_render_init(struct corpus_render *r, int escape_flags);
 
 /**
  * Release a render object's resources.
  *
  * \param r the render object
  */
-void render_destroy(struct render *r);
+void corpus_render_destroy(struct corpus_render *r);
 
 /**
  * Reset the render object to the empty string and set the indent level to 0.
@@ -97,17 +98,17 @@ void render_destroy(struct render *r);
  *
  * \param r the render object
  */
-void render_clear(struct render *r);
+void corpus_render_clear(struct corpus_render *r);
 
 /**
  * Set the escaping behavior.
  *
  * \param r the render object
- * \param flags a bit mask of #escape_type values
+ * \param flags a bit mask of #corpus_escape_type values
  *
  * \returns the old escape flags
  */
-int render_set_escape(struct render *r, int flags);
+int corpus_render_set_escape(struct corpus_render *r, int flags);
 
 /**
  * Set the tab string. The client must not free the passed-in tab
@@ -119,7 +120,7 @@ int render_set_escape(struct render *r, int flags);
  *
  * \returns the old tab string
  */
-const char *render_set_tab(struct render *r, const char *tab);
+const char *corpus_render_set_tab(struct corpus_render *r, const char *tab);
 
 /**
  * Set the new line string.  The client must not free the passed-in newline
@@ -131,7 +132,8 @@ const char *render_set_tab(struct render *r, const char *tab);
  *
  * \returns the old newline string
  */
-const char *render_set_newline(struct render *r, const char *newline);
+const char *corpus_render_set_newline(struct corpus_render *r,
+				      const char *newline);
 
 /**
  * Increase or decrease the indent level.
@@ -139,7 +141,7 @@ const char *render_set_newline(struct render *r, const char *newline);
  * \param r the render object
  * \param nlevel the number of levels add or subtract to the indent
  */
-void render_indent(struct render *r, int nlevel);
+void corpus_render_indent(struct corpus_render *r, int nlevel);
 
 /**
  * Add new lines.
@@ -147,7 +149,7 @@ void render_indent(struct render *r, int nlevel);
  * \param r the render object
  * \param nline the number of new lines to add
  */
-void render_newlines(struct render *r, int nline);
+void corpus_render_newlines(struct corpus_render *r, int nline);
 
 /**
  * Render a single character. If any render escape flags are set, filter
@@ -156,7 +158,7 @@ void render_newlines(struct render *r, int nline);
  * \param r the render object
  * \param ch the character (UTF-32)
  */
-void render_char(struct render *r, uint32_t ch);
+void corpus_render_char(struct corpus_render *r, uint32_t ch);
 
 /**
  * Render a string. If any render escape flags are set, filter
@@ -165,7 +167,7 @@ void render_char(struct render *r, uint32_t ch);
  * \param r the render object
  * \param str the string, valid UTF-8
  */
-void render_string(struct render *r, const char *str);
+void corpus_render_string(struct corpus_render *r, const char *str);
 
 /**
  * Render formatted text. If any render escape flags are set, filter
@@ -174,7 +176,7 @@ void render_string(struct render *r, const char *str);
  * \param r the render object
  * \param format the format string
  */
-void render_printf(struct render *r, const char *format, ...)
+void corpus_render_printf(struct corpus_render *r, const char *format, ...)
 #if (defined(_WIN32) || defined(_WIN64))
 	;
 #else
@@ -188,6 +190,7 @@ void render_printf(struct render *r, const char *format, ...)
  * \param r the render object
  * \param text the text object
  */
-void render_text(struct render *r, const struct corpus_text *text);
+void corpus_render_text(struct corpus_render *r,
+			const struct corpus_text *text);
 
-#endif /* RENDER_H */
+#endif /* CORPUS_RENDER_H */

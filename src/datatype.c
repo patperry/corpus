@@ -854,7 +854,8 @@ int schema_grow_types(struct schema *s, int nadd)
 }
 
 
-void render_datatype(struct render *r, const struct schema *s, int id)
+void corpus_render_datatype(struct corpus_render *r, const struct schema *s,
+			    int id)
 {
 	const struct corpus_text *name;
 	const struct datatype *t;
@@ -862,7 +863,7 @@ void render_datatype(struct render *r, const struct schema *s, int id)
 	int i, n;
 
 	if (id < 0) {
-		render_string(r, "any");
+		corpus_render_string(r, "any");
 		return;
 	}
 
@@ -870,58 +871,58 @@ void render_datatype(struct render *r, const struct schema *s, int id)
 
 	switch (t->kind) {
 	case DATATYPE_NULL:
-		render_string(r, "null");
+		corpus_render_string(r, "null");
 		break;
 
 	case DATATYPE_BOOLEAN:
-		render_string(r, "boolean");
+		corpus_render_string(r, "boolean");
 		break;
 
 	case DATATYPE_INTEGER:
-		render_string(r, "integer");
+		corpus_render_string(r, "integer");
 		break;
 
 	case DATATYPE_REAL:
-		render_string(r, "real");
+		corpus_render_string(r, "real");
 		break;
 
 	case DATATYPE_TEXT:
-		render_string(r, "text");
+		corpus_render_string(r, "text");
 		break;
 
 	case DATATYPE_ARRAY:
-		render_char(r, '[');
-		render_datatype(r, s, t->meta.array.type_id);
+		corpus_render_char(r, '[');
+		corpus_render_datatype(r, s, t->meta.array.type_id);
 		if (t->meta.array.length >= 0) {
-			render_printf(r, "; %d", t->meta.array.length);
+			corpus_render_printf(r, "; %d", t->meta.array.length);
 		}
-		render_char(r, ']');
+		corpus_render_char(r, ']');
 		break;
 
 	case DATATYPE_RECORD:
-		render_char(r, '{');
-		render_indent(r, +1);
+		corpus_render_char(r, '{');
+		corpus_render_indent(r, +1);
 
 		n = t->meta.record.nfield;
 		for (i = 0; i < n; i++) {
 			if (i > 0) {
-				render_string(r, ",");
+				corpus_render_string(r, ",");
 			}
-			render_newlines(r, 1);
+			corpus_render_newlines(r, 1);
 
 			name_id = t->meta.record.name_ids[i];
 			name = &s->names.types[name_id].text;
-			render_char(r, '"');
-			render_text(r, name);
-			render_string(r, "\": ");
+			corpus_render_char(r, '"');
+			corpus_render_text(r, name);
+			corpus_render_string(r, "\": ");
 
 			type_id = t->meta.record.type_ids[i];
-			render_datatype(r, s, type_id);
+			corpus_render_datatype(r, s, type_id);
 		}
 
-		render_indent(r, -1);
-		render_newlines(r, 1);
-		render_char(r, '}');
+		corpus_render_indent(r, -1);
+		corpus_render_newlines(r, 1);
+		corpus_render_char(r, '}');
 		break;
 
 	default:
@@ -933,14 +934,15 @@ void render_datatype(struct render *r, const struct schema *s, int id)
 
 int write_datatype(FILE *stream, const struct schema *s, int id)
 {
-	struct render r;
+	struct corpus_render r;
 	int err;
 
-	if ((err = render_init(&r, ESCAPE_CONTROL | ESCAPE_UTF8))) {
+	if ((err = corpus_render_init(&r, CORPUS_ESCAPE_CONTROL
+					  | CORPUS_ESCAPE_UTF8))) {
 		goto error_init;
 	}
 
-	render_datatype(&r, s, id);
+	corpus_render_datatype(&r, s, id);
 	if (r.error) {
 		goto error_render;
 	}
@@ -957,7 +959,7 @@ int write_datatype(FILE *stream, const struct schema *s, int id)
 
 error_fwrite:
 error_render:
-	render_destroy(&r);
+	corpus_render_destroy(&r);
 error_init:
 	if (err) {
 		corpus_log(err, "failed writing datatype to output stream");

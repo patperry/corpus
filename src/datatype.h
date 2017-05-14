@@ -25,7 +25,7 @@
 
 #include <stdio.h>
 
-struct render;
+struct corpus_render;
 
 /**
  * A basic data type.
@@ -197,7 +197,8 @@ int schema_scan(struct schema *s, const uint8_t *ptr, size_t size, int *idptr);
  * \param s the schema
  * \param id the type id
  */
-void render_datatype(struct render *r, const struct schema *s, int id);
+void corpus_render_datatype(struct corpus_render *r, const struct schema *s,
+			    int id);
 
 /**
  * Write a textual representation of a data type to the specified stream.

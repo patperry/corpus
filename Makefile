@@ -1,6 +1,6 @@
 CC     = gcc -std=c99
 
-CFLAGS = -Weverything -pedantic \
+CFLAGS = -Weverything -pedantic -Werror \
 	-Wno-cast-qual \
 	-Wno-padded \
 	-Wno-reserved-id-macro \
@@ -278,8 +278,8 @@ tests/check_text.o: tests/check_text.c src/error.h src/text.h src/unicode.h \
 tests/check_token.o: tests/check_token.c src/text.h src/token.h src/unicode.h \
 	tests/testutil.h
 tests/check_unicode.o: tests/check_unicode.c src/unicode.h tests/testutil.h
-tests/check_sentscan: tests/check_sentscan.c src/text.h src/token.h \
+tests/check_sentscan.o: tests/check_sentscan.c src/text.h src/token.h \
 	src/unicode.h src/wordscan.h tests/testutil.h
-tests/check_wordscan: tests/check_wordscan.c src/text.h src/token.h \
+tests/check_wordscan.o: tests/check_wordscan.c src/text.h src/token.h \
 	src/unicode.h src/wordscan.h tests/testutil.h
 tests/testutil.o: tests/testutil.c src/text.h tests/testutil.h

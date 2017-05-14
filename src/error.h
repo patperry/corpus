@@ -32,7 +32,7 @@
 /**
  * Integer codes for errors and messages.
  */
-enum error_code {
+enum corpus_error_code {
 	CORPUS_ERROR_NONE = 0,	/**< successful result */
 	CORPUS_ERROR_INVAL,	/**< invalid input */
 	CORPUS_ERROR_NOMEM,	/**< memory allocation failure */

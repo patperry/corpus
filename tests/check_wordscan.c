@@ -24,7 +24,7 @@
 #include "testutil.h"
 
 #define WORD_BREAK_TEST "data/ucd/auxiliary/WordBreakTest.txt"
-struct wordscan scan;
+struct corpus_wordscan scan;
 
 
 void setup_scan(void)
@@ -41,14 +41,14 @@ void teardown_scan(void)
 
 void start(const struct corpus_text *text)
 {
-	wordscan_make(&scan, text);
+	corpus_wordscan_make(&scan, text);
 }
 
 
 const struct corpus_text *next(void)
 {
 	struct corpus_text *word;
-	if (!wordscan_advance(&scan)) {
+	if (!corpus_wordscan_advance(&scan)) {
 		return NULL;
 	}
 	word = alloc(sizeof(*word));
@@ -270,18 +270,18 @@ START_TEST(test_unicode)
 		test = &unitests[i];
 
 		//write_unitest(stderr, test);
-		wordscan_make(&scan, &test->text);
+		corpus_wordscan_make(&scan, &test->text);
 
 		for (j = 0; j < test->nbreak; j++) {
 			//fprintf(stderr, "Break %u\n", j);
-			ck_assert(wordscan_advance(&scan));
+			ck_assert(corpus_wordscan_advance(&scan));
 			ck_assert_ptr_eq(scan.current.ptr,
 					 test->break_begin[j]);
 			ck_assert_ptr_eq(scan.current.ptr
 					 + CORPUS_TEXT_SIZE(&scan.current),
 					 test->break_end[j]);
 		}
-		ck_assert(!wordscan_advance(&scan));
+		ck_assert(!corpus_wordscan_advance(&scan));
 	}
 }
 END_TEST

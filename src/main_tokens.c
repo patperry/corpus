@@ -84,7 +84,7 @@ Options:\n\
 
 int main_tokens(int argc, char * const argv[])
 {
-	struct wordscan scan;
+	struct corpus_wordscan scan;
 	struct corpus_symtab symtab;
 	struct data data, val;
 	struct corpus_text name, text, word;
@@ -220,9 +220,9 @@ int main_tokens(int argc, char * const argv[])
 		}
 
 		fprintf(stream, "[");
-		wordscan_make(&scan, &text);
+		corpus_wordscan_make(&scan, &text);
 		start = 1;
-		while (wordscan_advance(&scan)) {
+		while (corpus_wordscan_advance(&scan)) {
 
 			if ((err = corpus_symtab_add_token(&symtab,
 							   &scan.current,

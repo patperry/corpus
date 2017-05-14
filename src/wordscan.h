@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef WORDSCAN_H
-#define WORDSCAN_H
+#ifndef CORPUS_CORPUS_WORDSCAN_H
+#define CORPUS_CORPUS_WORDSCAN_H
 
 /**
  * \file wordscan.h
@@ -29,19 +29,19 @@
 /**
  * The type of the first character in a word type.
  */
-enum word_type {
-	WORD_NONE = -1,		/**< no letter, at start or end of text */
-	WORD_NEWLINE = 0,	/**< newline */
-	WORD_ZWJ,		/**< emoji zero-width-joiner */
-	WORD_EBASE,		/**< emoji modifier base */
-	WORD_ALETTER,		/**< alphabetic letter */
-	WORD_NUMERIC,		/**< numeric character */
-	WORD_EXTEND,		/**< connector punctuation */
-	WORD_HEBREW,		/**< Hebrew or general category
+enum corpus_word_type {
+	CORPUS_WORD_NONE = -1,		/**< no letter, at start or end of text */
+	CORPUS_WORD_NEWLINE = 0,	/**< newline */
+	CORPUS_WORD_ZWJ,		/**< emoji zero-width-joiner */
+	CORPUS_WORD_EBASE,		/**< emoji modifier base */
+	CORPUS_WORD_ALETTER,		/**< alphabetic letter */
+	CORPUS_WORD_NUMERIC,		/**< numeric character */
+	CORPUS_WORD_EXTEND,		/**< connector punctuation */
+	CORPUS_WORD_HEBREW,		/**< Hebrew or general category
 				  "Other Letter" */
-	WORD_KATAKANA,		/**< Katakana letter */
-	WORD_REGIONAL,		/**< Regional indicator */
-	WORD_OTHER		/**< other character */
+	CORPUS_WORD_KATAKANA,		/**< Katakana letter */
+	CORPUS_WORD_REGIONAL,		/**< Regional indicator */
+	CORPUS_WORD_OTHER		/**< other character */
 };
 
 /**
@@ -53,7 +53,7 @@ enum word_type {
  * [demo]: http://unicode.org/cldr/utility/breaks.jsp
  * [uax29]: http://unicode.org/reports/tr29/
  */
-struct wordscan {
+struct corpus_wordscan {
 	struct corpus_text text;/**< the input text */
 	size_t text_attr;	/**< the input text attributes */
 
@@ -68,7 +68,7 @@ struct wordscan {
 	const uint8_t *iter_ptr;/**< iterator code's start */
 
 	struct corpus_text current;	/**< the current word */
-	enum word_type type;	/**< the type of the current word */
+	enum corpus_word_type type;	/**< the type of the current word */
 };
 
 /**
@@ -77,7 +77,8 @@ struct wordscan {
  * \param scan the scanner to initialize
  * \param text the text
  */
-void wordscan_make(struct wordscan *scan, const struct corpus_text *text);
+void corpus_wordscan_make(struct corpus_wordscan *scan,
+			  const struct corpus_text *text);
 
 /**
  * Advance a scanner to the next word.
@@ -86,13 +87,13 @@ void wordscan_make(struct wordscan *scan, const struct corpus_text *text);
  *
  * \returns nonzero on success, zero if at the end of the text
  */
-int wordscan_advance(struct wordscan *scan);
+int corpus_wordscan_advance(struct corpus_wordscan *scan);
 
 /**
  * Reset a scanner to the beginning of the text.
  *
  * \param scan the scanner
  */
-void wordscan_reset(struct wordscan *scan);
+void corpus_wordscan_reset(struct corpus_wordscan *scan);
 
-#endif /* WORDSCAN_H */
+#endif /* CORPUS_WORDSCAN_H */

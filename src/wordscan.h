@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CORPUS_CORPUS_WORDSCAN_H
-#define CORPUS_CORPUS_WORDSCAN_H
+#ifndef CORPUS_WORDSCAN_H
+#define CORPUS_WORDSCAN_H
 
 /**
  * \file wordscan.h

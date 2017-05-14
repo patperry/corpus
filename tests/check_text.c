@@ -71,7 +71,7 @@ const char *unescape(const struct corpus_text *text)
 
 	corpus_text_iter_make(&it, text);
 	while (corpus_text_iter_advance(&it)) {
-		encode_utf8(it.current, &ptr);
+		corpus_encode_utf8(it.current, &ptr);
 	}
 	*ptr = '\0';
 	return (const char *)buf;

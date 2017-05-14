@@ -320,7 +320,7 @@ START_TEST(test_keep_ws_utf8)
 		}
 
 		buf = str;
-		encode_utf8(ws[i], &buf);
+		corpus_encode_utf8(ws[i], &buf);
 		*buf = '\0';
 		t = S((char *)str);
 		ck_assert_tok_eq(get_type(t, TYPE_COMPAT), typ);
@@ -347,7 +347,7 @@ START_TEST(test_rm_ws_utf8)
 
 	for (i = 0; i < n; i++) {
 		buf = str;
-		encode_utf8(ws[i], &buf);
+		corpus_encode_utf8(ws[i], &buf);
 		*buf = '\0';
 		t = S((char *)str);
 		ck_assert_tok_eq(get_type(t, TYPE_RMWS), S(""));

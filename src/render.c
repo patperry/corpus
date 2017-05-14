@@ -224,7 +224,7 @@ void render_char(struct render *r, uint32_t ch)
 	}
 
 	end = r->string + r->length;
-	if (IS_ASCII(ch)) {
+	if (CORPUS_IS_ASCII(ch)) {
 		if ((ch <= 0x1F || ch == 0x7F)
 				&& r->escape_flags | ESCAPE_CONTROL) {
 			switch (ch) {
@@ -262,20 +262,20 @@ void render_char(struct render *r, uint32_t ch)
 		sprintf(end, "\\u%04x", ch);
 		r->length += 6;
 	} else if (r->escape_flags | ESCAPE_UTF8) {
-		if (UTF16_ENCODE_LEN(ch) == 1) {
+		if (CORPUS_UTF16_ENCODE_LEN(ch) == 1) {
 			sprintf(end, "\\u%04x", ch);
 			r->length += 6;
 		} else {
-			hi = UTF16_HIGH(ch);
-			lo = UTF16_LOW(ch);
+			hi = CORPUS_UTF16_HIGH(ch);
+			lo = CORPUS_UTF16_LOW(ch);
 			sprintf(end, "\\u%04x\\u%04x", hi, lo);
 			r->length += 12;
 		}
 	} else {
 		uend = (uint8_t *)end;
-		encode_utf8(ch, &uend);
+		corpus_encode_utf8(ch, &uend);
 		*uend = '\0';
-		r->length += UTF8_ENCODE_LEN(ch);
+		r->length += CORPUS_UTF8_ENCODE_LEN(ch);
 	}
 }
 
@@ -290,7 +290,7 @@ void render_string(struct render *r, const char *str)
 	}
 
 	while (1) {
-		decode_utf8(&ptr, &ch);
+		corpus_decode_utf8(&ptr, &ch);
 		if (ch == 0) {
 			return;
 		}

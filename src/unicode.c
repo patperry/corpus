@@ -47,7 +47,7 @@
 */
 
 
-int scan_utf8(const uint8_t **bufptr, const uint8_t *end)
+int corpus_scan_utf8(const uint8_t **bufptr, const uint8_t *end)
 {
 	const uint8_t *ptr = *bufptr;
 	uint_fast8_t ch, ch1;
@@ -195,7 +195,7 @@ out:
 }
 
 
-void decode_utf8(const uint8_t **bufptr, uint32_t *codeptr)
+void corpus_decode_utf8(const uint8_t **bufptr, uint32_t *codeptr)
 {
 	const uint8_t *ptr = *bufptr;
 	uint32_t code;
@@ -228,7 +228,7 @@ void decode_utf8(const uint8_t **bufptr, uint32_t *codeptr)
 
 
 // http://www.fileformat.info/info/unicode/utf8.htm
-void encode_utf8(uint32_t code, uint8_t **bufptr)
+void corpus_encode_utf8(uint32_t code, uint8_t **bufptr)
 {
 	uint8_t *ptr = *bufptr;
 	uint32_t x = code;
@@ -331,18 +331,18 @@ static void casefold(int type, uint32_t code, uint32_t **bufp)
 		*dst++ = code;
 		*bufp = dst;
 	} else if (length == 1) {
-		unicode_map(type, c.data, bufp);
+		corpus_unicode_map(type, c.data, bufp);
 	} else {
 		src = &casefold_mapping[c.data];
 		while (length-- > 0) {
-			unicode_map(type, *src, bufp);
+			corpus_unicode_map(type, *src, bufp);
 			src++;
 		}
 	}
 }
 
 
-void unicode_map(int type, uint32_t code, uint32_t **bufptr)
+void corpus_unicode_map(int type, uint32_t code, uint32_t **bufptr)
 {
 	const uint32_t block_size = DECOMPOSITION_BLOCK_SIZE;
 	unsigned i = decomposition_stage1[code / block_size];
@@ -352,7 +352,7 @@ void unicode_map(int type, uint32_t code, uint32_t **bufptr)
 	uint32_t *dst;
 
 	if (length == 0 || (d.type > 0 && !(type & (1 << (d.type - 1))))) {
-		if (type & UCASEFOLD_ALL) {
+		if (type & CORPUS_UCASEFOLD_ALL) {
 			casefold(type, code, bufptr);
 		} else {
 			dst = *bufptr;
@@ -360,11 +360,11 @@ void unicode_map(int type, uint32_t code, uint32_t **bufptr)
 			*bufptr = dst;
 		}
 	} else if (length == 1) {
-		unicode_map(type, d.data, bufptr);
+		corpus_unicode_map(type, d.data, bufptr);
 	} else if (d.type >= 0) {
 		src = &decomposition_mapping[d.data];
 		while (length-- > 0) {
-			unicode_map(type, *src, bufptr);
+			corpus_unicode_map(type, *src, bufptr);
 			src++;
 		}
 	} else {
@@ -373,7 +373,7 @@ void unicode_map(int type, uint32_t code, uint32_t **bufptr)
 }
 
 
-void unicode_order(uint32_t *ptr, size_t len)
+void corpus_unicode_order(uint32_t *ptr, size_t len)
 {
 	uint32_t *end = ptr + len;
 	uint32_t *c_begin, *c_end, *c_tail, *c_ptr;
@@ -525,7 +525,7 @@ static int has_combiner(uint32_t left, int offset, int length, uint32_t code,
 }
 
 
-void unicode_compose(uint32_t *ptr, size_t *lenptr)
+void corpus_unicode_compose(uint32_t *ptr, size_t *lenptr)
 {
 	size_t len = *lenptr;
 	uint32_t *begin = ptr;

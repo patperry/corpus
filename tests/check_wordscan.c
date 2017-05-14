@@ -237,7 +237,7 @@ void setup_unicode(void)
 				if (code > 0x7F) {
 					is_ascii = 0;
 				}
-				encode_utf8((uint32_t)code, &dst);
+				corpus_encode_utf8((uint32_t)code, &dst);
 				test->code_end[ncode] = dst;
 				ncode++;
 			} else {

@@ -126,7 +126,7 @@ int corpus_text_iter_advance(struct corpus_text_iter *it)
 	} else if ((text_attr & CORPUS_TEXT_UTF8_BIT) && code >= 0x80) {
 		attr = CORPUS_TEXT_UTF8_BIT;
 		ptr--;
-		decode_utf8(&ptr, &code);
+		corpus_decode_utf8(&ptr, &code);
 	}
 
 	it->ptr = ptr;
@@ -164,7 +164,7 @@ int assign_raw(struct corpus_text *text, const uint8_t *ptr, size_t size)
 		if (ch & 0x80) {
 			attr |= CORPUS_TEXT_UTF8_BIT;
 			ptr--;
-			if ((err = scan_utf8(&ptr, end))) {
+			if ((err = corpus_scan_utf8(&ptr, end))) {
 				goto error_inval_utf8;
 			}
 		}
@@ -216,7 +216,7 @@ int assign_raw_unsafe(struct corpus_text *text, const uint8_t *ptr, size_t size)
 		ch = *ptr++;
 		if (ch & 0x80) {
 			attr |= CORPUS_TEXT_UTF8_BIT;
-			ptr += UTF8_TAIL_LEN(ch);
+			ptr += CORPUS_UTF8_TAIL_LEN(ch);
 		}
 	}
 
@@ -289,7 +289,7 @@ int assign_esc(struct corpus_text *text, const uint8_t *ptr, size_t size)
 		} else if (ch & 0x80) {
 			attr |= CORPUS_TEXT_UTF8_BIT;
 			ptr--;
-			if ((err = scan_utf8(&ptr, end))) {
+			if ((err = corpus_scan_utf8(&ptr, end))) {
 				goto error_inval_utf8;
 			}
 		}
@@ -369,7 +369,7 @@ int assign_esc_unsafe(struct corpus_text *text, const uint8_t *ptr, size_t size)
 			}
 		} else if (ch & 0x80) {
 			attr |= CORPUS_TEXT_UTF8_BIT;
-			ptr += UTF8_TAIL_LEN(ch);
+			ptr += CORPUS_UTF8_TAIL_LEN(ch);
 		}
 	}
 
@@ -420,7 +420,7 @@ int decode_uescape(const uint8_t **inputptr, const uint8_t *end,
 		code = (code << 4) + hextoi(ch);
 	}
 
-	if (IS_UTF16_HIGH(code)) {
+	if (CORPUS_IS_UTF16_HIGH(code)) {
 		if (ptr + 6 > end || ptr[0] != '\\' || ptr[1] != 'u') {
 			goto error_inval_nolow;
 		}
@@ -435,12 +435,12 @@ int decode_uescape(const uint8_t **inputptr, const uint8_t *end,
 			}
 			low = (low << 4) + hextoi(ch);
 		}
-		if (!IS_UTF16_LOW(low)) {
+		if (!CORPUS_IS_UTF16_LOW(low)) {
 			ptr -= 6;
 			goto error_inval_low;
 		}
-		code = DECODE_UTF16_PAIR(code, low);
-	} else if (IS_UTF16_LOW(code)) {
+		code = CORPUS_DECODE_UTF16_PAIR(code, low);
+	} else if (CORPUS_IS_UTF16_LOW(code)) {
 		goto error_inval_nohigh;
 	}
 
@@ -479,7 +479,7 @@ error_inval_nohigh:
 	goto error_inval;
 
 error_inval:
-	code = UNICODE_REPLACEMENT;
+	code = CORPUS_UNICODE_REPLACEMENT;
 
 out:
 	*codeptr = code;
@@ -502,7 +502,7 @@ void decode_valid_uescape(const uint8_t **inputptr, uint32_t *codeptr)
 		code = (code << 4) + hextoi(ch);
 	}
 
-	if (IS_UTF16_HIGH(code)) {
+	if (CORPUS_IS_UTF16_HIGH(code)) {
 		// skip over \u
 		ptr += 2;
 
@@ -512,7 +512,7 @@ void decode_valid_uescape(const uint8_t **inputptr, uint32_t *codeptr)
 			low = (uint_fast16_t)(low << 4) + hextoi(ch);
 		}
 
-		code = DECODE_UTF16_PAIR(code, low);
+		code = CORPUS_DECODE_UTF16_PAIR(code, low);
 	}
 
 	*codeptr = code;

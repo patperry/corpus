@@ -222,7 +222,7 @@ int is_utf8(const char *str, size_t len)
         int err;
 
         while (ptr < end) {
-                if ((err = scan_utf8(&ptr, end))) {
+                if ((err = corpus_scan_utf8(&ptr, end))) {
 			return 0;
                 }
         }
@@ -390,14 +390,14 @@ static void roundtrip(uint32_t code)
 	uint32_t decode;
 
 	ptr = buf;
-	encode_utf8(code, &ptr);
+	corpus_encode_utf8(code, &ptr);
 
-	ck_assert_int_eq(ptr - buf, UTF8_ENCODE_LEN(code));
-	ck_assert(is_utf8((const char *)buf, UTF8_ENCODE_LEN(code)));
+	ck_assert_int_eq(ptr - buf, CORPUS_UTF8_ENCODE_LEN(code));
+	ck_assert(is_utf8((const char *)buf, CORPUS_UTF8_ENCODE_LEN(code)));
 
 	ptr = buf;
-	decode_utf8((const uint8_t **)&ptr, &decode);
-	ck_assert_int_eq(ptr - buf, UTF8_ENCODE_LEN(code));
+	corpus_decode_utf8((const uint8_t **)&ptr, &decode);
+	ck_assert_int_eq(ptr - buf, CORPUS_UTF8_ENCODE_LEN(code));
 	ck_assert_int_eq(code, decode);
 }
 
@@ -408,7 +408,7 @@ START_TEST(test_encode_decode_utf8)
 
 	// U+0000..U+FFFF
 	for (code = 0; code <= 0xFFFF; code++) {
-		if (!IS_UNICODE(code)) {
+		if (!CORPUS_IS_UNICODE(code)) {
 			continue;
 		}
 		roundtrip(code);
@@ -449,13 +449,13 @@ START_TEST(test_normalize_nfd)
 		dst = buf;
 		for (j = 0; j < test->source_len; j++) {
 			code = test->source[j];
-			unicode_map(0, code, &dst);
+			corpus_unicode_map(0, code, &dst);
 		}
 
 		len = (unsigned)(dst - buf);
 		ck_assert_int_eq(len, test->nfd_len);
 
-		unicode_order(buf, len);
+		corpus_unicode_order(buf, len);
 
 		for (j = 0; j < test->nfd_len; j++) {
 			if (buf[j] != test->nfd[j]) {
@@ -482,13 +482,13 @@ START_TEST(test_normalize_nfkd)
 		dst = buf;
 		for (j = 0; j < test->source_len; j++) {
 			code = test->source[j];
-			unicode_map(UDECOMP_ALL, code, &dst);
+			corpus_unicode_map(CORPUS_UDECOMP_ALL, code, &dst);
 		}
 
 		len = (unsigned)(dst - buf);
 		ck_assert_int_eq(len, test->nfkd_len);
 
-		unicode_order(buf, len);
+		corpus_unicode_order(buf, len);
 
 		for (j = 0; j < test->nfkd_len; j++) {
 			if (buf[j] != test->nfkd[j]) {
@@ -515,12 +515,12 @@ START_TEST(test_normalize_nfc)
 		dst = buf;
 		for (j = 0; j < test->source_len; j++) {
 			code = test->source[j];
-			unicode_map(0, code, &dst);
+			corpus_unicode_map(0, code, &dst);
 		}
 		len = (size_t)(dst - buf);
 
-		unicode_order(buf, len);
-		unicode_compose(buf, &len);
+		corpus_unicode_order(buf, len);
+		corpus_unicode_compose(buf, &len);
 
 		ck_assert_uint_eq(len, test->nfc_len);
 
@@ -549,12 +549,12 @@ START_TEST(test_normalize_nfkc)
 		dst = buf;
 		for (j = 0; j < test->source_len; j++) {
 			code = test->source[j];
-			unicode_map(UDECOMP_ALL, code, &dst);
+			corpus_unicode_map(CORPUS_UDECOMP_ALL, code, &dst);
 		}
 		len = (size_t)(dst - buf);
 
-		unicode_order(buf, len);
-		unicode_compose(buf, &len);
+		corpus_unicode_order(buf, len);
+		corpus_unicode_compose(buf, &len);
 
 		ck_assert_uint_eq(len, test->nfkc_len);
 

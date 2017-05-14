@@ -94,7 +94,7 @@ void corpus_typemap_clear_kind(struct corpus_typemap *map)
 {
 	uint_fast8_t ch;
 
-	map->charmap_type = UDECOMP_NORMAL | UCASEFOLD_NONE;
+	map->charmap_type = CORPUS_UDECOMP_NORMAL | CORPUS_UCASEFOLD_NONE;
 
 	for (ch = 0; ch < 0x80; ch++) {
 		map->ascii_map[ch] = (int8_t)ch;
@@ -115,7 +115,7 @@ int corpus_typemap_set_kind(struct corpus_typemap *map, int kind)
 	corpus_typemap_clear_kind(map);
 
 	if (kind & CORPUS_TYPE_COMPAT) {
-		map->charmap_type = UDECOMP_ALL;
+		map->charmap_type = CORPUS_UDECOMP_ALL;
 	}
 
 	if (kind & CORPUS_TYPE_CASEFOLD) {
@@ -123,7 +123,7 @@ int corpus_typemap_set_kind(struct corpus_typemap *map, int kind)
 			map->ascii_map[ch] = ch + ('a' - 'A');
 		}
 
-		map->charmap_type |= UCASEFOLD_ALL;
+		map->charmap_type |= CORPUS_UCASEFOLD_ALL;
 	}
 
 	if (kind & CORPUS_TYPE_QUOTFOLD) {
@@ -168,7 +168,8 @@ int corpus_typemap_reserve(struct corpus_typemap *map, size_t size)
 	}
 	map->type.ptr = ptr;
 
-	if (!(codes = corpus_realloc(codes, size * UNICODE_DECOMP_MAX))) {
+	if (!(codes = corpus_realloc(codes,
+				     size * CORPUS_UNICODE_DECOMP_MAX))) {
 		goto error_nomem;
 	}
 	map->codes = codes;
@@ -205,12 +206,12 @@ int corpus_typemap_set(struct corpus_typemap *map,
 	dst = map->codes;
 	corpus_text_iter_make(&it, tok);
 	while (corpus_text_iter_advance(&it)) {
-		unicode_map(map->charmap_type, it.current, &dst);
+		corpus_unicode_map(map->charmap_type, it.current, &dst);
 	}
 
 	size = (size_t)(dst - map->codes);
-	unicode_order(map->codes, size);
-	unicode_compose(map->codes, &size);
+	corpus_unicode_order(map->codes, size);
+	corpus_unicode_compose(map->codes, &size);
 
 	if ((err = corpus_typemap_set_utf32(map, map->codes,
 					    map->codes + size))) {
@@ -492,7 +493,7 @@ int corpus_typemap_set_utf32(struct corpus_typemap *map, const uint32_t *ptr,
 		if (code >= 0x80) {
 			utf8 = true;
 		}
-		encode_utf8(code, &dst);
+		corpus_encode_utf8(code, &dst);
 	}
 
 	*dst = '\0'; // not necessary, but helps with debugging

@@ -120,18 +120,16 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 {
 	scan->current.ptr = (uint8_t *)scan->ptr;
 	scan->current.attr = 0;
+	scan->type = CORPUS_WORD_NONE;
 
 	// Break at the start and end of text, unless the text is empty.
 	if (scan->prop < 0) {
-		scan->type = CORPUS_WORD_NONE;
 		// WB2: Any + eot
 		goto Break;
 	}
 
 	switch (scan->prop) {
 	case WORD_BREAK_CR:
-		scan->type = CORPUS_WORD_NEWLINE;
-
 		if (scan->iter_prop == WORD_BREAK_LF) {
 			// Do not break within CRLF
 			// WB3: CR * LF
@@ -147,13 +145,10 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 	case WORD_BREAK_LF:
 		// Break after Newlines
 		// WB3a: (Newline | LF) +
-		scan->type = CORPUS_WORD_NEWLINE;
 		NEXT();
 		goto Break;
 
 	case WORD_BREAK_ZWJ:
-		scan->type = CORPUS_WORD_ZWJ;
-
 		if (scan->iter_prop == WORD_BREAK_GLUE_AFTER_ZWJ) {
 			// Do not break within emoji zwj sequences
 			// WB3c: ZWJ * (Glue_After_Zwj | EBG)
@@ -172,43 +167,57 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 		goto Break;
 
 	case WORD_BREAK_ALETTER:
-		scan->type = CORPUS_WORD_ALETTER;
+		scan->type = CORPUS_WORD_LETTER;
 		NEXT();
 		goto ALetter;
 
 	case WORD_BREAK_NUMERIC:
-		scan->type = CORPUS_WORD_NUMERIC;
+		scan->type = CORPUS_WORD_NUMBER;
 		NEXT();
 		goto Numeric;
 
 	case WORD_BREAK_EXTENDNUMLET:
-		scan->type = CORPUS_WORD_EXTEND;
 		NEXT();
+		switch (scan->prop) {
+			case WORD_BREAK_EXTENDNUMLET:
+			case WORD_BREAK_ALETTER:
+			case WORD_BREAK_HEBREW_LETTER:
+				scan->type = CORPUS_WORD_LETTER;
+				break;
+
+			case WORD_BREAK_NUMERIC:
+				scan->type = CORPUS_WORD_NUMBER;
+				break;
+
+			case WORD_BREAK_KATAKANA:
+				scan->type = CORPUS_WORD_KANA;
+				break;
+
+			default:
+				break;
+		}
 		goto ExtendNumLet;
 
 	case WORD_BREAK_HEBREW_LETTER:
-		scan->type = CORPUS_WORD_HEBREW;
+		scan->type = CORPUS_WORD_LETTER;
 		NEXT();
 		goto Hebrew_Letter;
 
 	case WORD_BREAK_KATAKANA:
-		scan->type = CORPUS_WORD_KATAKANA;
+		scan->type = CORPUS_WORD_KANA;
 		NEXT();
 		goto Katakana;
 
 	case WORD_BREAK_E_BASE:
 	case WORD_BREAK_E_BASE_GAZ:
-		scan->type = CORPUS_WORD_EBASE;
 		NEXT();
 		goto E_Base;
 
 	case WORD_BREAK_REGIONAL_INDICATOR:
-		scan->type = CORPUS_WORD_REGIONAL;
 		NEXT();
 		goto Regional_Indicator;
 
 	default:
-		scan->type = CORPUS_WORD_OTHER;
 		NEXT();
 		goto Break;
 	}
@@ -463,5 +472,5 @@ Regional_Indicator:
 
 Break:
 	scan->current.attr |= (size_t)(scan->ptr - scan->current.ptr);
-	return (scan->type == CORPUS_WORD_NONE) ? 0 : 1;
+	return (scan->ptr == scan->current.ptr) ? 0 : 1;
 }

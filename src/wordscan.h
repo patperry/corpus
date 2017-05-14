@@ -30,18 +30,16 @@
  * The type of the first character in a word type.
  */
 enum corpus_word_type {
-	CORPUS_WORD_NONE = -1,		/**< no letter, at start or end of text */
-	CORPUS_WORD_NEWLINE = 0,	/**< newline */
-	CORPUS_WORD_ZWJ,		/**< emoji zero-width-joiner */
-	CORPUS_WORD_EBASE,		/**< emoji modifier base */
-	CORPUS_WORD_ALETTER,		/**< alphabetic letter */
-	CORPUS_WORD_NUMERIC,		/**< numeric character */
-	CORPUS_WORD_EXTEND,		/**< connector punctuation */
-	CORPUS_WORD_HEBREW,		/**< Hebrew or general category
-				  "Other Letter" */
-	CORPUS_WORD_KATAKANA,		/**< Katakana letter */
-	CORPUS_WORD_REGIONAL,		/**< Regional indicator */
-	CORPUS_WORD_OTHER		/**< other character */
+	CORPUS_WORD_NONE = 0,	/**< words that do not fit into any of
+				  the other categories; includes spaces
+				  and most punctuation */
+	CORPUS_WORD_NUMBER,	/**< words that appear to be numbers */
+	CORPUS_WORD_LETTER,	/**< words that contain letters, excluding
+				  hiragana, katakana, and ideographic
+				  characters */
+	CORPUS_WORD_KANA,	/**< words containing kana characters */
+	CORPUS_WORD_IDEO	/**< words containing ideographic
+				  characters */
 };
 
 /**

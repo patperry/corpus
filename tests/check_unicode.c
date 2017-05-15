@@ -435,73 +435,7 @@ START_TEST(test_encode_decode_utf8)
 END_TEST
 
 
-START_TEST(test_normalize_nfd)
-{
-	unsigned i, n = num_normalization_test;
-	unsigned j, len;
-	struct normalization_test *test;
-	uint32_t buf[128];
-	uint32_t *dst;
-	uint32_t code;
-
-	for (i = 0; i < n; i++) {
-		test = &normalization_tests[i];
-		dst = buf;
-		for (j = 0; j < test->source_len; j++) {
-			code = test->source[j];
-			corpus_unicode_map(0, code, &dst);
-		}
-
-		len = (unsigned)(dst - buf);
-		ck_assert_int_eq(len, test->nfd_len);
-
-		corpus_unicode_order(buf, len);
-
-		for (j = 0; j < test->nfd_len; j++) {
-			if (buf[j] != test->nfd[j]) {
-				write_normalization_test(stderr, test);
-			}
-			ck_assert_uint_eq(buf[j], test->nfd[j]);
-		}
-	}
-}
-END_TEST
-
-
-START_TEST(test_normalize_nfkd)
-{
-	unsigned i, n = num_normalization_test;
-	unsigned j, len;
-	struct normalization_test *test;
-	uint32_t buf[128];
-	uint32_t *dst;
-	uint32_t code;
-
-	for (i = 0; i < n; i++) {
-		test = &normalization_tests[i];
-		dst = buf;
-		for (j = 0; j < test->source_len; j++) {
-			code = test->source[j];
-			corpus_unicode_map(CORPUS_UDECOMP_ALL, code, &dst);
-		}
-
-		len = (unsigned)(dst - buf);
-		ck_assert_int_eq(len, test->nfkd_len);
-
-		corpus_unicode_order(buf, len);
-
-		for (j = 0; j < test->nfkd_len; j++) {
-			if (buf[j] != test->nfkd[j]) {
-				write_normalization_test(stderr, test);
-			}
-			ck_assert_uint_eq(buf[j], test->nfkd[j]);
-		}
-	}
-}
-END_TEST
-
-
-START_TEST(test_normalize_nfc)
+START_TEST(test_normalize_nfc_nfd)
 {
 	unsigned i, n = num_normalization_test;
 	size_t j, len;
@@ -517,11 +451,19 @@ START_TEST(test_normalize_nfc)
 			code = test->source[j];
 			corpus_unicode_map(0, code, &dst);
 		}
+
 		len = (size_t)(dst - buf);
+		ck_assert_int_eq(len, test->nfd_len);
 
 		corpus_unicode_order(buf, len);
-		corpus_unicode_compose(buf, &len);
+		for (j = 0; j < test->nfd_len; j++) {
+			if (buf[j] != test->nfd[j]) {
+				write_normalization_test(stderr, test);
+			}
+			ck_assert_uint_eq(buf[j], test->nfd[j]);
+		}
 
+		corpus_unicode_compose(buf, &len);
 		ck_assert_uint_eq(len, test->nfc_len);
 
 		for (j = 0; j < test->nfc_len; j++) {
@@ -535,7 +477,7 @@ START_TEST(test_normalize_nfc)
 END_TEST
 
 
-START_TEST(test_normalize_nfkc)
+START_TEST(test_normalize_nfkc_nfkd)
 {
 	unsigned i, n = num_normalization_test;
 	size_t j, len;
@@ -551,11 +493,20 @@ START_TEST(test_normalize_nfkc)
 			code = test->source[j];
 			corpus_unicode_map(CORPUS_UDECOMP_ALL, code, &dst);
 		}
+
 		len = (size_t)(dst - buf);
+		ck_assert_int_eq(len, test->nfkd_len);
 
 		corpus_unicode_order(buf, len);
-		corpus_unicode_compose(buf, &len);
 
+		for (j = 0; j < test->nfkd_len; j++) {
+			if (buf[j] != test->nfkd[j]) {
+				write_normalization_test(stderr, test);
+			}
+			ck_assert_uint_eq(buf[j], test->nfkd[j]);
+		}
+
+		corpus_unicode_compose(buf, &len);
 		ck_assert_uint_eq(len, test->nfkc_len);
 
 		for (j = 0; j < test->nfkc_len; j++) {
@@ -564,6 +515,7 @@ START_TEST(test_normalize_nfkc)
 			}
 			ck_assert_uint_eq(buf[j], test->nfkc[j]);
 		}
+
 	}
 }
 END_TEST
@@ -594,10 +546,8 @@ Suite *unicode_suite(void)
 	tc = tcase_create("utf32 normalization");
 	tcase_add_checked_fixture(tc, setup_normalization,
 				  teardown_normalization);
-	tcase_add_test(tc, test_normalize_nfd);
-	tcase_add_test(tc, test_normalize_nfkd);
-	tcase_add_test(tc, test_normalize_nfc);
-	tcase_add_test(tc, test_normalize_nfkc);
+	tcase_add_test(tc, test_normalize_nfc_nfd);
+	tcase_add_test(tc, test_normalize_nfkc_nfkd);
 	suite_add_tcase(s, tc);
 
 	return s;

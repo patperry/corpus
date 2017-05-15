@@ -105,7 +105,26 @@ struct corpus_typemap {
  *
  * \returns a NULL-terminated array of algorithm names
  */
-const char **corpus_stemmer_list(void);
+const char **corpus_stemmer_names(void);
+
+/**
+ * Get a list of stop words (common function words) encoded as
+ * NULL-terminated UTF-8 strings.
+ *
+ * \param name the stop word list name
+ * \param lenptr if non-NULL, a location to store the word list length
+ *
+ * \returns a list of stop words for the given language, or NULL if no
+ * 	stop word list exists for the given language
+ */
+const uint8_t **corpus_stopwords(const char *name, int *lenptr);
+
+/**
+ * Get a list of the stop word list names.
+ *
+ * \returns a NULL-terminated array of list names
+ */
+const char **corpus_stopword_names(void);
 
 /**
  * Initialize a new type map of the specified kind.

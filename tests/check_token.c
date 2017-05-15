@@ -467,6 +467,19 @@ START_TEST(test_stem_en)
 END_TEST
 
 
+START_TEST(test_stopwords_en)
+{
+	int len;
+	const uint8_t **words = corpus_stopwords("english", &len);
+
+	ck_assert_int_eq(len, 174);
+	ck_assert_tok_eq(S((char *)words[0]), S("a"));
+	ck_assert_tok_eq(S((char *)words[173]), S("yourselves"));
+	ck_assert(words[len] == NULL);
+}
+END_TEST
+
+
 Suite *token_suite(void)
 {
 	Suite *s;
@@ -502,6 +515,11 @@ Suite *token_suite(void)
 	tc = tcase_create("stem");
 	tcase_add_checked_fixture(tc, setup, teardown);
 	tcase_add_test(tc, test_stem_en);
+	suite_add_tcase(s, tc);
+
+	tc = tcase_create("stem");
+	tcase_add_checked_fixture(tc, setup, teardown);
+	tcase_add_test(tc, test_stopwords_en);
 	suite_add_tcase(s, tc);
 
 	return s;

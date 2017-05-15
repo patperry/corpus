@@ -137,6 +137,17 @@ data/ucd/auxiliary/WordBreakTest.txt:
 
 # Generated Sources
 
+src/private/stopwords.h: util/gen-stopwords.py \
+		data/snowball/danish.txt data/snowball/dutch.txt \
+		data/snowball/english.txt data/snowball/finnish.txt \
+		data/snowball/french.txt data/snowball/german.txt \
+		data/snowball/hungarian.txt data/snowball/italian.txt \
+		data/snowball/norwegian.txt data/snowball/portuguese.txt \
+		data/snowball/russian.txt data/snowball/spanish.txt \
+		data/snowball/swedish.txt
+	$(MKDIR_P) src/private
+	./util/gen-stopwords.py > $@
+
 src/unicode/casefold.h: util/gen-casefold.py \
 		data/ucd/CaseFolding.txt
 	$(MKDIR_P) src/unicode
@@ -256,8 +267,8 @@ src/symtab.o: src/symtab.c src/array.h src/error.h src/memory.h src/table.h \
 	src/text.h src/token.h src/symtab.h
 src/table.o: src/table.c src/error.h src/memory.h src/table.h
 src/text.o: src/text.c src/error.h src/memory.h src/unicode.h src/text.h
-src/token.o: src/token.c src/error.h src/memory.h src/text.h src/unicode.h \
-	src/token.h
+src/token.o: src/token.c src/error.h src/memory.h src/private/stopwords.h \
+	src/text.h src/unicode.h src/token.h
 src/unicode.o: src/unicode.c src/unicode/casefold.h src/unicode/combining.h \
 	src/unicode/compose.h src/unicode/decompose.h src/error.h \
 	src/unicode.h

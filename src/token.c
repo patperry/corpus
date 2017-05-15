@@ -20,6 +20,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "../lib/libstemmer_c/include/libstemmer.h"
+#include "private/stopwords.h"
 #include "error.h"
 #include "memory.h"
 #include "text.h"
@@ -39,9 +40,21 @@ static int corpus_typemap_set_utf32(struct corpus_typemap *map,
 static int corpus_typemap_stem(struct corpus_typemap *map);
 
 
-const char **corpus_stemmer_list(void)
+const char **corpus_stemmer_names(void)
 {
 	return sb_stemmer_list();
+}
+
+
+const uint8_t **corpus_stopwords(const char *name, int *lenptr)
+{
+	return stopwords(name, lenptr);
+}
+
+
+const char **corpus_stopword_names(void)
+{
+	return stopword_names();
 }
 
 

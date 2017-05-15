@@ -41,7 +41,7 @@ void usage_tokens(void);
 
 void usage_tokens(void)
 {
-	const char **stems = corpus_stemmer_list();
+	const char **stems = corpus_stemmer_names();
 	int i;
 
 	printf("\

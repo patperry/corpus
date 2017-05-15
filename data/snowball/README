@@ -1,0 +1,10 @@
+These stop word lists are taken from an old version of the Snowball
+stemming library, retrieved on May 15, 2017 from
+http://snowball.tartarus.org/dist/snowball_all.tgz .
+
+Stop word file `${language}.txt` is copied from the source file
+`snowball_all/algorithms/${language}/stop.txt`. All files are encoded
+in Latin-1, except for `russian.txt`, which is encoded in Windows-1251.
+
+The files are released under the Snowball license (BSD 3-clause); see
+LICENSE.Snowball.

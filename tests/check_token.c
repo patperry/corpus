@@ -480,6 +480,17 @@ START_TEST(test_stopwords_en)
 END_TEST
 
 
+START_TEST(test_stopwords_unknown)
+{
+	int len;
+	const uint8_t **words = corpus_stopwords("gibberish", &len);
+
+	ck_assert(words == NULL);
+	ck_assert_int_eq(len, 0);
+}
+END_TEST
+
+
 Suite *token_suite(void)
 {
 	Suite *s;
@@ -520,6 +531,7 @@ Suite *token_suite(void)
 	tc = tcase_create("stem");
 	tcase_add_checked_fixture(tc, setup, teardown);
 	tcase_add_test(tc, test_stopwords_en);
+	tcase_add_test(tc, test_stopwords_unknown);
 	suite_add_tcase(s, tc);
 
 	return s;

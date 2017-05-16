@@ -2535,11 +2535,11 @@ static const uint8_t **stopwords(const char *name, int *lenptr)
 {
 	const struct stopword_list *ptr = stopword_lists;
 
-	while (ptr != NULL && strcmp(ptr->name, name) != 0) {
+	while (ptr->name != NULL && strcmp(ptr->name, name) != 0) {
 		ptr++;
 	}
 
-	if (ptr == NULL) {
+	if (ptr->name == NULL) {
 		if(lenptr) {
 			*lenptr = 0;
 		}

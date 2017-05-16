@@ -3,7 +3,6 @@
 project.xcworkspace
 xcuserdata
 /corpus
-/data/ucd
 /doc/html
 /tests/check_census
 /tests/check_data

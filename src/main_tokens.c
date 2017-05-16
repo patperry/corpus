@@ -66,7 +66,6 @@ Options:\n\
 
 	printf("\nStemming Algorithms:");
 	if (*stems) {
-
 		for (i = 0; stems[i] != NULL; i++) {
 			if (i != 0) {
 				printf(",");
@@ -225,7 +224,6 @@ int main_tokens(int argc, char * const argv[])
 		corpus_wordscan_make(&scan, &text);
 		start = 1;
 		while (corpus_wordscan_advance(&scan)) {
-
 			if ((err = corpus_symtab_add_token(&symtab,
 							   &scan.current,
 							   &tokid))) {
@@ -253,7 +251,6 @@ int main_tokens(int argc, char * const argv[])
 	}
 
 	err = 0;
-
 error:
 	if (output && fclose(stream) == EOF) {
 		perror("Failed closing output file");

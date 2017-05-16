@@ -142,6 +142,7 @@
 		886533641E958CA60089FD91 /* wordscan.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = wordscan.h; path = src/wordscan.h; sourceTree = "<group>"; };
 		886533661E958CB80089FD91 /* wordbreakprop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = wordbreakprop.h; path = src/unicode/wordbreakprop.h; sourceTree = "<group>"; };
 		887D44811EC87CB8001C0E83 /* strntod.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = strntod.c; path = lib/strntod.c; sourceTree = "<group>"; };
+		888C91951ECB0C28008D9EEB /* stopwords.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stopwords.h; path = src/private/stopwords.h; sourceTree = "<group>"; };
 		88B565B71E96D4AE00FC9AEF /* sentbreakprop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sentbreakprop.h; path = src/unicode/sentbreakprop.h; sourceTree = "<group>"; };
 		88B565B81E96D4CE00FC9AEF /* main_get.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main_get.c; path = src/main_get.c; sourceTree = "<group>"; };
 		88B565B91E96D4CE00FC9AEF /* main_scan.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main_scan.c; path = src/main_scan.c; sourceTree = "<group>"; };
@@ -251,6 +252,7 @@
 		88351CC81E8DB5B5001DA3A8 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				888C91941ECB0C0D008D9EEB /* private */,
 				88351CF31E8DB67F001DA3A8 /* unicode */,
 				88351CD41E8DB64F001DA3A8 /* array.c */,
 				88351CD51E8DB64F001DA3A8 /* array.h */,
@@ -329,6 +331,14 @@
 				88EE9C811E9000BB00B1FEBA /* strntoimax.c */,
 			);
 			name = lib;
+			sourceTree = "<group>";
+		};
+		888C91941ECB0C0D008D9EEB /* private */ = {
+			isa = PBXGroup;
+			children = (
+				888C91951ECB0C28008D9EEB /* stopwords.h */,
+			);
+			name = private;
 			sourceTree = "<group>";
 		};
 		88CD841E1EBB7ECD00DF50CB /* libstemmer_c */ = {

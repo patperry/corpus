@@ -1,9 +1,22 @@
+# corpus 0.4.0
+
+* Prefix functions and data types with `corpus_`, to avoid namespace
+  clashes.
+
+* Add stopwords (from the Snowball library).
+
+* Fix Linux portability errors and warnings; everything should compile
+  smoothly on Linux now.
+
+* Simplify word types to None, Number, Letter, Kana, and Ideo, using
+  the same definitions as the ICU library.
+
 
 # corpus 0.3.0
 
-* Add NFC Unicode normalization; use this instead of NFD in typemap
+* Add NFC Unicode normalization; use this instead of NFD in typemap.
 
-* Add stemming (using the Snowball library)
+* Add stemming (using the Snowball library).
 
 
 # corpus 0.2.0

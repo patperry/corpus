@@ -35,6 +35,57 @@
 
 #define PROGRAM_NAME	"corpus"
 
+
+struct string_arg {
+	const char *name;
+	int value;
+	const char *desc;
+};
+
+
+static struct string_arg char_maps[] = {
+	{ "case", CORPUS_TYPE_CASEFOLD,
+		"Performs Unicode case-folding." },
+	{ "control", CORPUS_TYPE_RMCC,
+		"Remove non-white-space control characters."},
+	{ "compat", CORPUS_TYPE_COMPAT,
+		"Applies Unicode compatibility mappings."},
+	{ "dash", CORPUS_TYPE_DASHFOLD,
+		"Replaces Unicode dashes with ASCII dash (-)." },
+	{ "ignorable", CORPUS_TYPE_RMDI,
+		"Removes Unicode default ignorables." },
+	{ "quote", CORPUS_TYPE_QUOTFOLD,
+		"Replaces Unicode quotes with ASCII single quote (')." },
+	{ "space", CORPUS_TYPE_RMWS,
+		"Remove white-space characters."},
+	{ NULL, 0, NULL }
+};
+
+
+static struct string_arg word_classes[] = {
+	{ "symbol", 0, "Words that do not fit in any other category." },
+	{ "number", 0, "Words that appear to be numbers." },
+	{ "letter", 0,
+		"Words composed of letters (not kana or ideographic)." },
+	{ "kana", 0, "Words composed of kana characters." },
+	{ "ideo", 0, "Words composed of ideographic characters."},
+	{ NULL, 0, NULL }
+};
+
+
+
+static int get_arg(const struct string_arg options[], const char *name)
+{
+	int i;
+
+	for (i = 0; options[i].name != NULL; i++) {
+		if (strcmp(options[i].name, name) == 0) {
+			return i;
+		}
+	}
+	return -1;
+}
+
 int main_tokens(int argc, char * const argv[]);
 void usage_tokens(void);
 
@@ -42,6 +93,7 @@ void usage_tokens(void);
 void usage_tokens(void)
 {
 	const char **stems = corpus_stemmer_names();
+	const char **stops = corpus_stopword_names();
 	int i;
 
 	printf("\
@@ -51,18 +103,20 @@ Description:\n\
 \tSegment text into tokens.\n\
 \n\
 Options:\n\
-\t-c\t\tKeeps original case instead of case folding.\n\
-\t-d\t\tKeeps dashes instead of replacing them with \"-\".\n\
+\t-d <class>\tReplace words from the given class with 'null'.\n\
 \t-f <field>\tGets text from the given field (defaults to \"text\").\n\
-\t-i\t\tKeeps default ignorable characters like soft hyphens.\n\
-\t-k\t\tDoes not perform compatibility decompositions (NFKC).\n\
+\t-k <map>\tDoes not perform the given character map.\n\
 \t-o <path>\tSaves output at the given path.\n\
-\t-q\t\tKeeps quotes instead of replacing them with \"'\".\n\
 \t-s <stemmer>\tStems tokens with the given algorithm.\n\
-\t-w\t\tKeeps white space.\n\
-\t-x\t\tKeeps non-white-space control characters.\n\
+\t-t <stopwords>\tDrops words from the given stop word list.\n\
 \t-z\t\tKeeps zero-character (empty) tokens.\n\
 ", PROGRAM_NAME);
+	printf("\nCharacter Maps:\n");
+	for (i = 0; char_maps[i].name != NULL; i++) {
+		printf("\t%s%s\t%s\n", char_maps[i].name,
+			strlen(char_maps[i].name) < 8 ? "\t" : "",
+			char_maps[i].desc);
+	}
 
 	printf("\nStemming Algorithms:");
 	if (*stems) {
@@ -80,6 +134,30 @@ Options:\n\
 	} else {
 		printf("\n\t(none available)\n");
 	}
+
+	printf("\nStop Word Lists:");
+	if (*stops) {
+		for (i = 0; stops[i] != NULL; i++) {
+			if (i != 0) {
+				printf(",");
+			}
+			if (i % 6 == 0) {
+				printf("\n\t%s", stops[i]);
+			} else {
+				printf(" %s", stops[i]);
+			}
+		}
+		printf("\n");
+	} else {
+		printf("\n\t(none available)\n");
+	}
+
+	printf("\nWord Classes:\n");
+	for (i = 0; word_classes[i].name != NULL; i++) {
+		printf("\t%s%s\t%s\n", word_classes[i].name,
+			strlen(word_classes[i].name) < 8 ? "\t" : "",
+			word_classes[i].desc);
+	}
 }
 
 
@@ -94,13 +172,15 @@ int main_tokens(int argc, char * const argv[])
 	struct corpus_filebuf_iter it;
 	const char *output = NULL;
 	const char *stemmer = NULL;
+	const char *stopwords = NULL;
 	const char *field, *input;
 	FILE *stream;
 	size_t field_len;
-	int flags;
-	int ch, err, name_id, start, tokid, typid, zero;
+	int drop_flags, type_flags;
+	int ch, err, i, name_id, start, tokid, typid, zero;
 
-	flags = (CORPUS_TYPE_COMPAT | CORPUS_TYPE_CASEFOLD
+	drop_flags = 0;
+	type_flags = (CORPUS_TYPE_COMPAT | CORPUS_TYPE_CASEFOLD
 			| CORPUS_TYPE_DASHFOLD | CORPUS_TYPE_QUOTFOLD
 			| CORPUS_TYPE_RMCC | CORPUS_TYPE_RMDI
 			| CORPUS_TYPE_RMWS);
@@ -109,37 +189,41 @@ int main_tokens(int argc, char * const argv[])
 
 	zero = 0;
 
-	while ((ch = getopt(argc, argv, "cdf:iko:qwxz")) != -1) {
+	while ((ch = getopt(argc, argv, "d:f:k:o:s:t:z")) != -1) {
 		switch (ch) {
-		case 'c':
-			flags &= ~CORPUS_TYPE_CASEFOLD;
-			break;
 		case 'd':
-			flags &= ~CORPUS_TYPE_DASHFOLD;
+			i = get_arg(word_classes, optarg);
+			if (i < 0) {
+				fprintf(stderr,
+					"Unrecognized word class: '%s'.\n\n",
+					optarg);
+				usage_tokens();
+				return EXIT_FAILURE;
+			}
+			drop_flags &= ~(word_classes[i].value);
 			break;
 		case 'f':
 			field = optarg;
 			break;
-		case 'i':
-			flags &= ~CORPUS_TYPE_RMDI;
-			break;
 		case 'k':
-			flags &= ~CORPUS_TYPE_COMPAT;
+			i = get_arg(char_maps, optarg);
+			if (i < 0) {
+				fprintf(stderr,
+					"Unrecognized character map: '%s'.\n\n",
+					optarg);
+				usage_tokens();
+				return EXIT_FAILURE;
+			}
+			type_flags &= ~(char_maps[i].value);
 			break;
 		case 'o':
 			output = optarg;
 			break;
-		case 'q':
-			flags &= ~CORPUS_TYPE_QUOTFOLD;
-			break;
 		case 's':
 			stemmer = optarg;
 			break;
-		case 'w':
-			flags &= ~CORPUS_TYPE_RMWS;
-			break;
-		case 'x':
-			flags &= ~CORPUS_TYPE_RMCC;
+		case 't':
+			stopwords = optarg;
 			break;
 		case 'z':
 			zero = 1;
@@ -180,7 +264,7 @@ int main_tokens(int argc, char * const argv[])
 		goto error_schema;
 	}
 
-	if ((err = corpus_symtab_init(&symtab, flags, stemmer))) {
+	if ((err = corpus_symtab_init(&symtab, type_flags, stemmer))) {
 		goto error_symtab;
 	}
 

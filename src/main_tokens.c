@@ -30,9 +30,10 @@
 #include "textset.h"
 #include "typemap.h"
 #include "symtab.h"
+#include "wordscan.h"
 #include "datatype.h"
 #include "data.h"
-#include "wordscan.h"
+#include "filter.h"
 
 #define PROGRAM_NAME	"corpus"
 
@@ -67,11 +68,16 @@ static struct string_arg char_maps[] = {
 
 
 static struct string_arg word_classes[] = {
-	{ "symbol", 0, "Does not fit into any other category." },
-	{ "number", 0, "Appears to be a number." },
-	{ "letter", 0, "Composed of letters (not kana or ideographic)." },
-	{ "kana", 0, "Composed of kana characters." },
-	{ "ideo", 0, "Composed of ideographic characters."},
+	{ "symbol", CORPUS_FILTER_DROP_SYMBOL,
+		"Does not fit into any other category." },
+	{ "number", CORPUS_FILTER_DROP_NUMBER,
+		"Appears to be a number." },
+	{ "letter", CORPUS_FILTER_DROP_LETTER,
+		"Composed of letters (not kana or ideographic)." },
+	{ "kana", CORPUS_FILTER_DROP_KANA,
+		"Composed of kana characters." },
+	{ "ideo", CORPUS_FILTER_DROP_IDEO,
+		"Composed of ideographic characters."},
 	{ NULL, 0, NULL }
 };
 
@@ -162,31 +168,29 @@ Options:\n\
 
 int main_tokens(int argc, char * const argv[])
 {
-	struct corpus_wordscan scan;
-	struct corpus_symtab symtab;
+	struct corpus_filter filter;
 	struct corpus_data data, val;
 	struct corpus_text name, text, word;
+	const struct corpus_text *term;
 	struct corpus_schema schema;
 	struct corpus_filebuf buf;
 	struct corpus_filebuf_iter it;
 	const char *output = NULL;
 	const char *stemmer = NULL;
-	const char *stopwords = NULL;
+	const uint8_t **stopwords = NULL;
 	const char *field, *input;
 	FILE *stream;
 	size_t field_len;
-	int drop_flags, type_flags;
-	int ch, err, i, name_id, start, tokid, typid, zero;
+	int filter_flags, type_flags;
+	int ch, err, i, name_id, start, term_id;
 
-	drop_flags = 0;
+	filter_flags = CORPUS_FILTER_IGNORE_EMPTY;
 	type_flags = (CORPUS_TYPE_COMPAT | CORPUS_TYPE_CASEFOLD
 			| CORPUS_TYPE_DASHFOLD | CORPUS_TYPE_QUOTFOLD
 			| CORPUS_TYPE_RMCC | CORPUS_TYPE_RMDI
 			| CORPUS_TYPE_RMWS);
 
 	field = "text";
-
-	zero = 0;
 
 	while ((ch = getopt(argc, argv, "d:f:k:o:s:t:z")) != -1) {
 		switch (ch) {
@@ -199,7 +203,7 @@ int main_tokens(int argc, char * const argv[])
 				usage_tokens();
 				return EXIT_FAILURE;
 			}
-			drop_flags &= ~(word_classes[i].value);
+			filter_flags |= word_classes[i].value;
 			break;
 		case 'f':
 			field = optarg;
@@ -222,10 +226,16 @@ int main_tokens(int argc, char * const argv[])
 			stemmer = optarg;
 			break;
 		case 't':
-			stopwords = optarg;
+			if (!(stopwords = corpus_stopwords(optarg, NULL))) {
+				fprintf(stderr,
+					"Unrecognized stop word list: '%s'."
+					"\n\n", optarg);
+				usage_tokens();
+				return EXIT_FAILURE;
+			}
 			break;
 		case 'z':
-			zero = 1;
+			filter_flags &= ~CORPUS_FILTER_IGNORE_EMPTY;
 			break;
 		default:
 			usage_tokens();
@@ -263,8 +273,30 @@ int main_tokens(int argc, char * const argv[])
 		goto error_schema;
 	}
 
-	if ((err = corpus_symtab_init(&symtab, type_flags, stemmer))) {
-		goto error_symtab;
+	if ((err = corpus_filter_init(&filter, type_flags, stemmer,
+				      filter_flags))) {
+		goto error_filter;
+	}
+
+	if (stopwords) {
+		while (*stopwords) {
+			err = corpus_text_assign(&word, *stopwords,
+						 strlen((const char *)
+							*stopwords),
+						 CORPUS_TEXT_NOESCAPE);
+			if (err) {
+				fprintf(stderr, "Internal error:"
+					" stop word list is not valid UTF-8.");
+				goto error_stopwords;
+			}
+
+			err = corpus_filter_stem_except(&filter, &word);
+			if (err) {
+				goto error_stopwords;
+			}
+
+			stopwords++;
+		}
 	}
 
 	if ((err = corpus_filebuf_init(&buf, input))) {
@@ -304,20 +336,15 @@ int main_tokens(int argc, char * const argv[])
 		}
 
 		fprintf(stream, "[");
-		corpus_wordscan_make(&scan, &text);
 		start = 1;
-		while (corpus_wordscan_advance(&scan)) {
-			if ((err = corpus_symtab_add_token(&symtab,
-							   &scan.current,
-							   &tokid))) {
+
+		if ((err = corpus_filter_start(&filter, &text))) {
+			goto error;
+		}
+
+		while (corpus_filter_advance(&filter, &term_id)) {
+			if (filter.error) {
 				goto error;
-			}
-
-			typid = symtab.tokens[tokid].type_id;
-			word = symtab.types[typid].text;
-
-			if (CORPUS_TEXT_SIZE(&word) == 0 && !zero) {
-				continue;
 			}
 
 			if (!start) {
@@ -326,9 +353,15 @@ int main_tokens(int argc, char * const argv[])
 				start = 0;
 			}
 
-			fprintf(stream, "\"%.*s\"",
-				(int)CORPUS_TEXT_SIZE(&word),
-				(char *)word.ptr);
+			if (term_id < 0) {
+				fprintf(stream, "null");
+			} else {
+				term = corpus_filter_term(&filter, term_id);
+
+				fprintf(stream, "\"%.*s\"",
+					(int)CORPUS_TEXT_SIZE(term),
+					(char *)term->ptr);
+			}
 		}
 		fprintf(stream, "]\n");
 	}
@@ -342,8 +375,9 @@ error:
 error_output:
 	corpus_filebuf_destroy(&buf);
 error_filebuf:
-	corpus_symtab_destroy(&symtab);
-error_symtab:
+error_stopwords:
+	corpus_filter_destroy(&filter);
+error_filter:
 	corpus_schema_destroy(&schema);
 error_schema:
 	if (err) {

@@ -35,9 +35,9 @@ UNICODE = http://www.unicode.org/Public/9.0.0
 
 CORPUS_A = libcorpus.a
 LIB_O	= lib/strntod.o lib/strntoimax.o src/array.o src/census.o \
-	  src/data.o src/datatype.o src/error.o src/filebuf.o src/render.o \
-	  src/sentscan.o src/symtab.o src/table.o src/text.o src/textset.o \
-	  src/typemap.o src/unicode.o src/wordscan.o src/memory.o
+	  src/data.o src/datatype.o src/error.o src/filebuf.o src/filter.o \
+	  src/memory.o src/render.o src/sentscan.o src/symtab.o src/table.o \
+	  src/text.o src/textset.o src/typemap.o src/unicode.o src/wordscan.o
 
 STEMMER = lib/libstemmer_c
 STEMMER_O = $(STEMMER)/src_c/stem_UTF_8_arabic.o \
@@ -247,6 +247,9 @@ src/datatype.o: src/datatype.c src/array.h src/error.h src/memory.h \
 	src/symtab.h src/data.h src/datatype.h
 src/error.o: src/error.c src/error.h
 src/filebuf.o: src/filebuf.c src/error.h src/memory.h src/filebuf.h
+src/filter.o: src/filter.c src/array.h src/error.h src/memory.h src/table.h \
+	src/text.h src/textset.h src/typemap.h src/symtab.h src/wordscan.h \
+	src/filter.h
 src/main.o: src/main.c src/error.h src/filebuf.h src/table.h src/text.h \
 	src/textset.h src/typemap.h src/symtab.h src/datatype.h
 src/main_get.o: src/main_get.c src/error.h src/filebuf.h src/table.h \
@@ -258,8 +261,8 @@ src/main_sentences.o: src/main_sentences.c src/error.h src/filebuf.h \
 	src/sentscan.h src/table.h src/text.h src/textset.h src/typemap.h \
 	src/symtab.h src/data.h src/datatype.h
 src/main_tokens.o: src/main_tokens.c src/error.h src/filebuf.h src/table.h \
-	src/text.h src/textset.h src/typemap.h src/symtab.h src/data.h \
-	src/datatype.h src/wordscan.h
+	src/text.h src/textset.h src/typemap.h src/symtab.h src/wordscan.h \
+	src/data.h src/datatype.h src/filter.h
 src/memory.o: src/memory.c src/memory.h
 src/render.o: src/render.c src/array.h src/error.h src/memory.h src/text.h \
 	src/unicode.h src/render.h

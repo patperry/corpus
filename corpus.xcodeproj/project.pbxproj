@@ -12,11 +12,16 @@
 		88351CEA1E8DB64F001DA3A8 /* symtab.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CDB1E8DB64F001DA3A8 /* symtab.c */; };
 		88351CEB1E8DB64F001DA3A8 /* table.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CDD1E8DB64F001DA3A8 /* table.c */; };
 		88351CEC1E8DB64F001DA3A8 /* text.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CDF1E8DB64F001DA3A8 /* text.c */; };
-		88351CED1E8DB64F001DA3A8 /* token.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CE11E8DB64F001DA3A8 /* token.c */; };
 		88351CEE1E8DB64F001DA3A8 /* unicode.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CE31E8DB64F001DA3A8 /* unicode.c */; };
 		884A369C1E8EE3DF00465CE7 /* data.c in Sources */ = {isa = PBXBuildFile; fileRef = 884A36971E8EE3DF00465CE7 /* data.c */; };
 		884A369D1E8EE3DF00465CE7 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 884A36991E8EE3DF00465CE7 /* main.c */; };
 		884F5CAD1EBA67EE00DA1C24 /* census.c in Sources */ = {isa = PBXBuildFile; fileRef = 884F5CAB1EBA67ED00DA1C24 /* census.c */; };
+		88548A691ECE62F80063254E /* filter.c in Sources */ = {isa = PBXBuildFile; fileRef = 88548A631ECE62F80063254E /* filter.c */; };
+		88548A6A1ECE62F80063254E /* textset.c in Sources */ = {isa = PBXBuildFile; fileRef = 88548A651ECE62F80063254E /* textset.c */; };
+		88548A6B1ECE62F80063254E /* typemap.c in Sources */ = {isa = PBXBuildFile; fileRef = 88548A671ECE62F80063254E /* typemap.c */; };
+		88548A6C1ECE62FC0063254E /* filter.c in Sources */ = {isa = PBXBuildFile; fileRef = 88548A631ECE62F80063254E /* filter.c */; };
+		88548A6D1ECE63010063254E /* textset.c in Sources */ = {isa = PBXBuildFile; fileRef = 88548A651ECE62F80063254E /* textset.c */; };
+		88548A6E1ECE63060063254E /* typemap.c in Sources */ = {isa = PBXBuildFile; fileRef = 88548A671ECE62F80063254E /* typemap.c */; };
 		886533651E958CA60089FD91 /* wordscan.c in Sources */ = {isa = PBXBuildFile; fileRef = 886533631E958CA60089FD91 /* wordscan.c */; };
 		887D44821EC87CB8001C0E83 /* strntod.c in Sources */ = {isa = PBXBuildFile; fileRef = 887D44811EC87CB8001C0E83 /* strntod.c */; };
 		887D44831EC87CC2001C0E83 /* strntod.c in Sources */ = {isa = PBXBuildFile; fileRef = 887D44811EC87CB8001C0E83 /* strntod.c */; };
@@ -80,7 +85,6 @@
 		88EA69E11EAF94DE00D57BEB /* symtab.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CDB1E8DB64F001DA3A8 /* symtab.c */; };
 		88EA69E21EAF94DE00D57BEB /* table.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CDD1E8DB64F001DA3A8 /* table.c */; };
 		88EA69E31EAF94DE00D57BEB /* text.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CDF1E8DB64F001DA3A8 /* text.c */; };
-		88EA69E41EAF94DE00D57BEB /* token.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CE11E8DB64F001DA3A8 /* token.c */; };
 		88EA69E51EAF94DE00D57BEB /* unicode.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CE31E8DB64F001DA3A8 /* unicode.c */; };
 		88EA69E61EAF94DE00D57BEB /* wordscan.c in Sources */ = {isa = PBXBuildFile; fileRef = 886533631E958CA60089FD91 /* wordscan.c */; };
 		88EA69E81EAF94E400D57BEB /* testutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CF61E8DB6BB001DA3A8 /* testutil.c */; };
@@ -122,8 +126,6 @@
 		88351CDE1E8DB64F001DA3A8 /* table.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = table.h; path = src/table.h; sourceTree = "<group>"; };
 		88351CDF1E8DB64F001DA3A8 /* text.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = text.c; path = src/text.c; sourceTree = "<group>"; };
 		88351CE01E8DB64F001DA3A8 /* text.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = text.h; path = src/text.h; sourceTree = "<group>"; };
-		88351CE11E8DB64F001DA3A8 /* token.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = token.c; path = src/token.c; sourceTree = "<group>"; };
-		88351CE21E8DB64F001DA3A8 /* token.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = token.h; path = src/token.h; sourceTree = "<group>"; };
 		88351CE31E8DB64F001DA3A8 /* unicode.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = unicode.c; path = src/unicode.c; sourceTree = "<group>"; };
 		88351CE41E8DB64F001DA3A8 /* unicode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = unicode.h; path = src/unicode.h; sourceTree = "<group>"; };
 		88351CF01E8DB677001DA3A8 /* casefold.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = casefold.h; path = src/unicode/casefold.h; sourceTree = "<group>"; };
@@ -138,6 +140,12 @@
 		884F5CAB1EBA67ED00DA1C24 /* census.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = census.c; path = src/census.c; sourceTree = "<group>"; };
 		884F5CAC1EBA67ED00DA1C24 /* census.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = census.h; path = src/census.h; sourceTree = "<group>"; };
 		884F5CAE1EBA680D00DA1C24 /* check_census.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = check_census.c; path = tests/check_census.c; sourceTree = "<group>"; };
+		88548A631ECE62F80063254E /* filter.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = filter.c; path = src/filter.c; sourceTree = "<group>"; };
+		88548A641ECE62F80063254E /* filter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = filter.h; path = src/filter.h; sourceTree = "<group>"; };
+		88548A651ECE62F80063254E /* textset.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = textset.c; path = src/textset.c; sourceTree = "<group>"; };
+		88548A661ECE62F80063254E /* textset.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = textset.h; path = src/textset.h; sourceTree = "<group>"; };
+		88548A671ECE62F80063254E /* typemap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = typemap.c; path = src/typemap.c; sourceTree = "<group>"; };
+		88548A681ECE62F80063254E /* typemap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = typemap.h; path = src/typemap.h; sourceTree = "<group>"; };
 		886533631E958CA60089FD91 /* wordscan.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = wordscan.c; path = src/wordscan.c; sourceTree = "<group>"; };
 		886533641E958CA60089FD91 /* wordscan.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = wordscan.h; path = src/wordscan.h; sourceTree = "<group>"; };
 		886533661E958CB80089FD91 /* wordbreakprop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = wordbreakprop.h; path = src/unicode/wordbreakprop.h; sourceTree = "<group>"; };
@@ -266,6 +274,8 @@
 				88EA69C51EAF923D00D57BEB /* error.h */,
 				88351CD91E8DB64F001DA3A8 /* filebuf.c */,
 				88351CDA1E8DB64F001DA3A8 /* filebuf.h */,
+				88548A631ECE62F80063254E /* filter.c */,
+				88548A641ECE62F80063254E /* filter.h */,
 				884A36991E8EE3DF00465CE7 /* main.c */,
 				88B565B81E96D4CE00FC9AEF /* main_get.c */,
 				88B565B91E96D4CE00FC9AEF /* main_scan.c */,
@@ -283,8 +293,10 @@
 				88351CDE1E8DB64F001DA3A8 /* table.h */,
 				88351CDF1E8DB64F001DA3A8 /* text.c */,
 				88351CE01E8DB64F001DA3A8 /* text.h */,
-				88351CE11E8DB64F001DA3A8 /* token.c */,
-				88351CE21E8DB64F001DA3A8 /* token.h */,
+				88548A651ECE62F80063254E /* textset.c */,
+				88548A661ECE62F80063254E /* textset.h */,
+				88548A671ECE62F80063254E /* typemap.c */,
+				88548A681ECE62F80063254E /* typemap.h */,
 				88351CE31E8DB64F001DA3A8 /* unicode.c */,
 				88351CE41E8DB64F001DA3A8 /* unicode.h */,
 				886533631E958CA60089FD91 /* wordscan.c */,
@@ -515,18 +527,20 @@
 				88CD845E1EBB7FA000DF50CB /* stem_UTF_8_spanish.c in Sources */,
 				88B565BF1E96D4CE00FC9AEF /* main_tokens.c in Sources */,
 				88351CEB1E8DB64F001DA3A8 /* table.c in Sources */,
-				88351CED1E8DB64F001DA3A8 /* token.c in Sources */,
 				88EA69CB1EAF923D00D57BEB /* render.c in Sources */,
 				88CD84251EBB7F4A00DF50CB /* libstemmer_utf8.c in Sources */,
 				88CD845A1EBB7FA000DF50CB /* stem_UTF_8_porter.c in Sources */,
 				88351CEA1E8DB64F001DA3A8 /* symtab.c in Sources */,
 				88CD84591EBB7FA000DF50CB /* stem_UTF_8_norwegian.c in Sources */,
 				88CD84521EBB7FA000DF50CB /* stem_UTF_8_dutch.c in Sources */,
+				88548A6A1ECE62F80063254E /* textset.c in Sources */,
 				88B565BE1E96D4CE00FC9AEF /* main_scan.c in Sources */,
 				88CD845D1EBB7FA000DF50CB /* stem_UTF_8_russian.c in Sources */,
 				88CD84581EBB7FA000DF50CB /* stem_UTF_8_italian.c in Sources */,
 				886533651E958CA60089FD91 /* wordscan.c in Sources */,
+				88548A691ECE62F80063254E /* filter.c in Sources */,
 				88CD842B1EBB7F6000DF50CB /* utilities.c in Sources */,
+				88548A6B1ECE62F80063254E /* typemap.c in Sources */,
 				88CD84601EBB7FA000DF50CB /* stem_UTF_8_tamil.c in Sources */,
 				88351CE71E8DB64F001DA3A8 /* array.c in Sources */,
 				88CD845B1EBB7FA000DF50CB /* stem_UTF_8_portuguese.c in Sources */,
@@ -555,6 +569,7 @@
 				88CD84661EBB7FCA00DF50CB /* stem_UTF_8_danish.c in Sources */,
 				88CD84671EBB7FCA00DF50CB /* stem_UTF_8_dutch.c in Sources */,
 				88EA69E31EAF94DE00D57BEB /* text.c in Sources */,
+				88548A6D1ECE63010063254E /* textset.c in Sources */,
 				88EA69E21EAF94DE00D57BEB /* table.c in Sources */,
 				88CD84761EBB7FCA00DF50CB /* stem_UTF_8_turkish.c in Sources */,
 				88CD846E1EBB7FCA00DF50CB /* stem_UTF_8_norwegian.c in Sources */,
@@ -562,11 +577,13 @@
 				88CD84681EBB7FCA00DF50CB /* stem_UTF_8_english.c in Sources */,
 				88CD84621EBB7FAD00DF50CB /* libstemmer_utf8.c in Sources */,
 				88CD846F1EBB7FCA00DF50CB /* stem_UTF_8_porter.c in Sources */,
+				88548A6C1ECE62FC0063254E /* filter.c in Sources */,
 				88EA69DF1EAF94D300D57BEB /* render.c in Sources */,
 				88CD846D1EBB7FCA00DF50CB /* stem_UTF_8_italian.c in Sources */,
 				88CD84711EBB7FCA00DF50CB /* stem_UTF_8_romanian.c in Sources */,
 				88EA69E51EAF94DE00D57BEB /* unicode.c in Sources */,
 				88EA69E61EAF94DE00D57BEB /* wordscan.c in Sources */,
+				88548A6E1ECE63060063254E /* typemap.c in Sources */,
 				88CD846C1EBB7FCA00DF50CB /* stem_UTF_8_hungarian.c in Sources */,
 				88EA69E01EAF94DE00D57BEB /* sentscan.c in Sources */,
 				88EA69DA1EAF94C200D57BEB /* array.c in Sources */,
@@ -577,7 +594,6 @@
 				88EA69E11EAF94DE00D57BEB /* symtab.c in Sources */,
 				88EA69DB1EAF94C500D57BEB /* data.c in Sources */,
 				88EA69DE1EAF94D300D57BEB /* filebuf.c in Sources */,
-				88EA69E41EAF94DE00D57BEB /* token.c in Sources */,
 				88CD84651EBB7FCA00DF50CB /* stem_UTF_8_arabic.c in Sources */,
 				88CD84701EBB7FCA00DF50CB /* stem_UTF_8_portuguese.c in Sources */,
 				88EA69EA1EAF94F500D57BEB /* strntoimax.c in Sources */,

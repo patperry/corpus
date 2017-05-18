@@ -63,12 +63,11 @@ static struct string_arg char_maps[] = {
 
 
 static struct string_arg word_classes[] = {
-	{ "symbol", 0, "Words that do not fit in any other category." },
-	{ "number", 0, "Words that appear to be numbers." },
-	{ "letter", 0,
-		"Words composed of letters (not kana or ideographic)." },
-	{ "kana", 0, "Words composed of kana characters." },
-	{ "ideo", 0, "Words composed of ideographic characters."},
+	{ "symbol", 0, "Does not fit into any other category." },
+	{ "number", 0, "Appears to be a number." },
+	{ "letter", 0, "Composed of letters (not kana or ideographic)." },
+	{ "kana", 0, "Composed of kana characters." },
+	{ "ideo", 0, "Composed of ideographic characters."},
 	{ NULL, 0, NULL }
 };
 

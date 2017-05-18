@@ -35,6 +35,9 @@
 
 #define PROGRAM_NAME	"corpus"
 
+int main_tokens(int argc, char * const argv[]);
+void usage_tokens(void);
+
 
 struct string_arg {
 	const char *name;
@@ -72,7 +75,6 @@ static struct string_arg word_classes[] = {
 };
 
 
-
 static int get_arg(const struct string_arg options[], const char *name)
 {
 	int i;
@@ -84,9 +86,6 @@ static int get_arg(const struct string_arg options[], const char *name)
 	}
 	return -1;
 }
-
-int main_tokens(int argc, char * const argv[]);
-void usage_tokens(void);
 
 
 void usage_tokens(void)

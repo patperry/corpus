@@ -17,8 +17,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <check.h>
+#include "../src/table.h"
 #include "../src/text.h"
-#include "../src/token.h"
+#include "../src/textset.h"
+#include "../src/typemap.h"
 #include "../src/unicode.h"
 #include "testutil.h"
 
@@ -76,35 +78,35 @@ struct corpus_text *stem_en(const struct corpus_text *tok)
 
 START_TEST(test_equals)
 {
-	ck_assert_tok_eq(S("hello"), S("hello"));
-	ck_assert_tok_eq(S("hello"), T("hello"));
+	ck_assert_text_eq(S("hello"), S("hello"));
+	ck_assert_text_eq(S("hello"), T("hello"));
 
-	ck_assert_tok_eq(S(""), S(""));
-	ck_assert_tok_eq(S(""), T(""));
+	ck_assert_text_eq(S(""), S(""));
+	ck_assert_text_eq(S(""), T(""));
 }
 END_TEST
 
 
 START_TEST(test_not_equals)
 {
-	ck_assert_tok_ne(S("foo"), S("bar"));
+	ck_assert_text_ne(S("foo"), S("bar"));
 }
 END_TEST
 
 
 START_TEST(test_equals_esc)
 {
-	ck_assert_tok_ne(S("\n"), T("\\n"));
-	ck_assert_tok_ne(S("\\n"), T("\\n"));
+	ck_assert_text_ne(S("\n"), T("\\n"));
+	ck_assert_text_ne(S("\\n"), T("\\n"));
 }
 END_TEST
 
 
 START_TEST(test_typ_basic)
 {
-	ck_assert_tok_eq(get_type(S("hello"), 0), S("hello"));
-	ck_assert_tok_eq(get_type(S("world"), 0), T("world"));
-	ck_assert_tok_eq(get_type(T("foo"), 0), S("foo"));
+	ck_assert_text_eq(get_type(S("hello"), 0), S("hello"));
+	ck_assert_text_eq(get_type(S("world"), 0), T("world"));
+	ck_assert_text_eq(get_type(T("foo"), 0), S("foo"));
 }
 END_TEST
 
@@ -112,18 +114,18 @@ END_TEST
 START_TEST(test_typ_esc)
 {
 	// backslash
-	ck_assert_tok_eq(get_type(S("\\"), 0), S("\\"));
-	ck_assert_tok_eq(get_type(T("\\\\"), 0), S("\\"));
-	ck_assert_tok_eq(get_type(T("\\u005C"), 0), S("\\"));
-	ck_assert_tok_eq(get_type(S("\\\\"), 0), S("\\\\"));
-	ck_assert_tok_eq(get_type(S("\\u005C"), TYPE_CASEFOLD), S("\\u005c"));
+	ck_assert_text_eq(get_type(S("\\"), 0), S("\\"));
+	ck_assert_text_eq(get_type(T("\\\\"), 0), S("\\"));
+	ck_assert_text_eq(get_type(T("\\u005C"), 0), S("\\"));
+	ck_assert_text_eq(get_type(S("\\\\"), 0), S("\\\\"));
+	ck_assert_text_eq(get_type(S("\\u005C"), TYPE_CASEFOLD), S("\\u005c"));
 
 	// quote (")
-	ck_assert_tok_eq(get_type(S("\""), TYPE_QUOTFOLD), S("\'"));
-	ck_assert_tok_eq(get_type(T("\\\""), TYPE_QUOTFOLD), S("\'"));
-	ck_assert_tok_eq(get_type(T("\\u0022"), TYPE_QUOTFOLD), S("\'"));
-	ck_assert_tok_eq(get_type(S("\\\'"), TYPE_QUOTFOLD), S("\\\'"));
-	ck_assert_tok_eq(get_type(S("\\u0022"), TYPE_QUOTFOLD), S("\\u0022"));
+	ck_assert_text_eq(get_type(S("\""), TYPE_QUOTFOLD), S("\'"));
+	ck_assert_text_eq(get_type(T("\\\""), TYPE_QUOTFOLD), S("\'"));
+	ck_assert_text_eq(get_type(T("\\u0022"), TYPE_QUOTFOLD), S("\'"));
+	ck_assert_text_eq(get_type(S("\\\'"), TYPE_QUOTFOLD), S("\\\'"));
+	ck_assert_text_eq(get_type(S("\\u0022"), TYPE_QUOTFOLD), S("\\u0022"));
 }
 END_TEST
 
@@ -144,13 +146,13 @@ START_TEST(test_rm_control_ascii)
 	char str[256];
 	uint8_t i;
 
-	ck_assert_tok_eq(get_type(S("\a"), TYPE_RMCC), S(""));
-	ck_assert_tok_eq(get_type(S("\b"), TYPE_RMCC), S(""));
-	ck_assert_tok_eq(get_type(S("\t"), TYPE_RMCC), S("\t"));
-	ck_assert_tok_eq(get_type(S("\n"), TYPE_RMCC), S("\n"));
-	ck_assert_tok_eq(get_type(S("\v"), TYPE_RMCC), S("\v"));
-	ck_assert_tok_eq(get_type(S("\f"), TYPE_RMCC), S("\f"));
-	ck_assert_tok_eq(get_type(S("\r"), TYPE_RMCC), S("\r"));
+	ck_assert_text_eq(get_type(S("\a"), TYPE_RMCC), S(""));
+	ck_assert_text_eq(get_type(S("\b"), TYPE_RMCC), S(""));
+	ck_assert_text_eq(get_type(S("\t"), TYPE_RMCC), S("\t"));
+	ck_assert_text_eq(get_type(S("\n"), TYPE_RMCC), S("\n"));
+	ck_assert_text_eq(get_type(S("\v"), TYPE_RMCC), S("\v"));
+	ck_assert_text_eq(get_type(S("\f"), TYPE_RMCC), S("\f"));
+	ck_assert_text_eq(get_type(S("\r"), TYPE_RMCC), S("\r"));
 
 	// C0
 	for (i = 1; i < 0x20; i++) {
@@ -159,15 +161,15 @@ START_TEST(test_rm_control_ascii)
 		}
 
 		str[0] = (char)i; str[1] = '\0';
-		ck_assert_tok_eq(get_type(S(str), TYPE_RMCC), S(""));
+		ck_assert_text_eq(get_type(S(str), TYPE_RMCC), S(""));
 
 		sprintf(str, "\\u%04X", i);
-		ck_assert_tok_eq(get_type(T(str), TYPE_RMCC), S(""));
+		ck_assert_text_eq(get_type(T(str), TYPE_RMCC), S(""));
 	}
 
 	// delete
-	ck_assert_tok_eq(get_type(S("\x7F"), TYPE_RMCC), S(""));
-	ck_assert_tok_eq(get_type(T("\\u007F"), TYPE_RMCC), S(""));
+	ck_assert_text_eq(get_type(S("\x7F"), TYPE_RMCC), S(""));
+	ck_assert_text_eq(get_type(T("\\u007F"), TYPE_RMCC), S(""));
 }
 END_TEST
 
@@ -184,10 +186,10 @@ START_TEST(test_rm_control_utf8)
 		}
 
 		str[0] = 0xC2; str[1] = i; str[2] = '\0';
-		ck_assert_tok_eq(get_type(S((char *)str), TYPE_RMCC), S(""));
+		ck_assert_text_eq(get_type(S((char *)str), TYPE_RMCC), S(""));
 
 		sprintf((char *)str, "\\u%04X", i);
-		ck_assert_tok_eq(get_type(T((char *)str), TYPE_RMCC), S(""));
+		ck_assert_text_eq(get_type(T((char *)str), TYPE_RMCC), S(""));
 	}
 }
 END_TEST
@@ -199,8 +201,8 @@ START_TEST(test_keep_control_ascii)
 	char str[256];
 	uint8_t i;
 
-	ck_assert_tok_eq(get_type(S("\a"), 0), S("\a"));
-	ck_assert_tok_eq(get_type(S("\b"), 0), S("\b"));
+	ck_assert_text_eq(get_type(S("\a"), 0), S("\a"));
+	ck_assert_text_eq(get_type(S("\b"), 0), S("\b"));
 
 	// C0
 	for (i = 1; i < 0x20; i++) {
@@ -209,16 +211,16 @@ START_TEST(test_keep_control_ascii)
 		}
 		str[0] = (char)i; str[1] = '\0';
 		t = S(str);
-		ck_assert_tok_eq(get_type(t, 0), t);
+		ck_assert_text_eq(get_type(t, 0), t);
 
 		sprintf(str, "\\u%04X", i);
 		js = T(str);
-		ck_assert_tok_eq(get_type(js, 0), t);
+		ck_assert_text_eq(get_type(js, 0), t);
 	}
 
 	// delete
-	ck_assert_tok_eq(get_type(S("\x7F"), 0), S("\x7F"));
-	ck_assert_tok_eq(get_type(T("\\u007F"), 0), S("\x7F"));
+	ck_assert_text_eq(get_type(S("\x7F"), 0), S("\x7F"));
+	ck_assert_text_eq(get_type(T("\\u007F"), 0), S("\x7F"));
 }
 END_TEST
 
@@ -237,11 +239,11 @@ START_TEST(test_keep_control_utf8)
 
 		str[0] = 0xC2; str[1] = i; str[2] = '\0';
 		t = S((char *)str);
-		ck_assert_tok_eq(get_type(t, 0), t);
+		ck_assert_text_eq(get_type(t, 0), t);
 
 		sprintf((char *)str, "\\u%04X", i);
 		js = T((char *)str);
-		ck_assert_tok_eq(get_type(js, 0), t);
+		ck_assert_text_eq(get_type(js, 0), t);
 	}
 }
 END_TEST
@@ -249,24 +251,24 @@ END_TEST
 
 START_TEST(test_keep_ws_ascii)
 {
-	ck_assert_tok_eq(get_type(S("\t"), 0), S("\t"));
-	ck_assert_tok_eq(get_type(S("\n"), 0), S("\n"));
-	ck_assert_tok_eq(get_type(S("\v"), 0), S("\v"));
-	ck_assert_tok_eq(get_type(S("\f"), 0), S("\f"));
-	ck_assert_tok_eq(get_type(S("\r"), 0), S("\r"));
-	ck_assert_tok_eq(get_type(S(" "), 0), S(" "));
+	ck_assert_text_eq(get_type(S("\t"), 0), S("\t"));
+	ck_assert_text_eq(get_type(S("\n"), 0), S("\n"));
+	ck_assert_text_eq(get_type(S("\v"), 0), S("\v"));
+	ck_assert_text_eq(get_type(S("\f"), 0), S("\f"));
+	ck_assert_text_eq(get_type(S("\r"), 0), S("\r"));
+	ck_assert_text_eq(get_type(S(" "), 0), S(" "));
 }
 END_TEST
 
 
 START_TEST(test_rm_ws_ascii)
 {
-	ck_assert_tok_eq(get_type(S("\t"), TYPE_RMWS), S(""));
-	ck_assert_tok_eq(get_type(S("\n"), TYPE_RMWS), S(""));
-	ck_assert_tok_eq(get_type(S("\v"), TYPE_RMWS), S(""));
-	ck_assert_tok_eq(get_type(S("\f"), TYPE_RMWS), S(""));
-	ck_assert_tok_eq(get_type(S("\r"), TYPE_RMWS), S(""));
-	ck_assert_tok_eq(get_type(S(" "), TYPE_RMWS), S(""));
+	ck_assert_text_eq(get_type(S("\t"), TYPE_RMWS), S(""));
+	ck_assert_text_eq(get_type(S("\n"), TYPE_RMWS), S(""));
+	ck_assert_text_eq(get_type(S("\v"), TYPE_RMWS), S(""));
+	ck_assert_text_eq(get_type(S("\f"), TYPE_RMWS), S(""));
+	ck_assert_text_eq(get_type(S("\r"), TYPE_RMWS), S(""));
+	ck_assert_text_eq(get_type(S(" "), TYPE_RMWS), S(""));
 }
 END_TEST
 
@@ -323,11 +325,11 @@ START_TEST(test_keep_ws_utf8)
 		corpus_encode_utf8(ws[i], &buf);
 		*buf = '\0';
 		t = S((char *)str);
-		ck_assert_tok_eq(get_type(t, TYPE_COMPAT), typ);
+		ck_assert_text_eq(get_type(t, TYPE_COMPAT), typ);
 
 		sprintf((char *)str, "\\u%04x", ws[i]);
 		js = T((char *)str);
-		ck_assert_tok_eq(get_type(js, TYPE_COMPAT), typ);
+		ck_assert_text_eq(get_type(js, TYPE_COMPAT), typ);
 	}
 }
 END_TEST
@@ -350,11 +352,11 @@ START_TEST(test_rm_ws_utf8)
 		corpus_encode_utf8(ws[i], &buf);
 		*buf = '\0';
 		t = S((char *)str);
-		ck_assert_tok_eq(get_type(t, TYPE_RMWS), S(""));
+		ck_assert_text_eq(get_type(t, TYPE_RMWS), S(""));
 
 		sprintf((char *)str, "\\u%04x", ws[i]);
 		js = T((char *)str);
-		ck_assert_tok_eq(get_type(js, TYPE_RMWS), S(""));
+		ck_assert_text_eq(get_type(js, TYPE_RMWS), S(""));
 	}
 }
 END_TEST
@@ -366,103 +368,103 @@ START_TEST(test_casefold_ascii)
 	uint8_t buf[2] = { 0, 0 };
 	uint8_t i;
 
-	ck_assert_tok_eq(casefold(S("UPPER CASE")), S("upper case"));
-	ck_assert_tok_eq(casefold(S("lower case")), S("lower case"));
-	ck_assert_tok_eq(casefold(S("mIxEd CaSe")), S("mixed case"));
+	ck_assert_text_eq(casefold(S("UPPER CASE")), S("upper case"));
+	ck_assert_text_eq(casefold(S("lower case")), S("lower case"));
+	ck_assert_text_eq(casefold(S("mIxEd CaSe")), S("mixed case"));
 
 	for (i = 0x01; i < 'A'; i++) {
 		buf[0] = i;
 		tok = S((char *)buf);
-		ck_assert_tok_eq(casefold(tok), tok);
+		ck_assert_text_eq(casefold(tok), tok);
 	}
 	for (i = 'Z' + 1; i < 0x7F; i++) {
 		buf[0] = i;
 		tok = S((char *)buf);
-		ck_assert_tok_eq(casefold(tok), tok);
+		ck_assert_text_eq(casefold(tok), tok);
 	}
 
 	// upper
-	ck_assert_tok_eq(casefold(S("ABCDEFGHIJKLMNOPQRSTUVWXYZ")),
+	ck_assert_text_eq(casefold(S("ABCDEFGHIJKLMNOPQRSTUVWXYZ")),
 			 S("abcdefghijklmnopqrstuvwxyz"));
 
 	// lower
-	ck_assert_tok_eq(casefold(S("abcdefghijklmnopqrstuvwxyz")),
+	ck_assert_text_eq(casefold(S("abcdefghijklmnopqrstuvwxyz")),
 			 S("abcdefghijklmnopqrstuvwxyz"));
 
 	// digit
-	ck_assert_tok_eq(casefold(S("0123456789")), S("0123456789"));
+	ck_assert_text_eq(casefold(S("0123456789")), S("0123456789"));
 
 	// punct
-	ck_assert_tok_eq(casefold(S("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~")),
+	ck_assert_text_eq(casefold(S("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~")),
 			 S("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"));
 
 	// space
-	ck_assert_tok_eq(casefold(S("\t\n\v\f\r ")), S("\t\n\v\f\r "));
+	ck_assert_text_eq(casefold(S("\t\n\v\f\r ")), S("\t\n\v\f\r "));
 }
 END_TEST
 
 
 START_TEST(test_fold_dash)
 {
-	ck_assert_tok_eq(get_type(S("-"), TYPE_DASHFOLD), S("-"));
-	ck_assert_tok_eq(get_type(T("\\u058A"), TYPE_DASHFOLD), S("-"));
-	ck_assert_tok_eq(get_type(T("\\u2212"), TYPE_DASHFOLD), S("-"));
-	ck_assert_tok_eq(get_type(T("\\u2E3A"), TYPE_DASHFOLD), S("-"));
-	ck_assert_tok_eq(get_type(T("\\u2E3B"), TYPE_DASHFOLD), S("-"));
-	ck_assert_tok_eq(get_type(T("\\uFF0D"), TYPE_DASHFOLD), S("-"));
+	ck_assert_text_eq(get_type(S("-"), TYPE_DASHFOLD), S("-"));
+	ck_assert_text_eq(get_type(T("\\u058A"), TYPE_DASHFOLD), S("-"));
+	ck_assert_text_eq(get_type(T("\\u2212"), TYPE_DASHFOLD), S("-"));
+	ck_assert_text_eq(get_type(T("\\u2E3A"), TYPE_DASHFOLD), S("-"));
+	ck_assert_text_eq(get_type(T("\\u2E3B"), TYPE_DASHFOLD), S("-"));
+	ck_assert_text_eq(get_type(T("\\uFF0D"), TYPE_DASHFOLD), S("-"));
 }
 END_TEST
 
 
 START_TEST(test_nofold_dash)
 {
-	ck_assert_tok_eq(get_type(S("-"), 0), S("-"));
-	ck_assert_tok_eq(get_type(T("\\u058A"), 0), S("\xD6\x8A"));
-	ck_assert_tok_eq(get_type(T("\\u2212"), 0), S("\xE2\x88\x92"));
-	ck_assert_tok_eq(get_type(T("\\u2E3A"), 0), S("\xE2\xB8\xBA"));
-	ck_assert_tok_eq(get_type(T("\\u2E3B"), 0), S("\xE2\xB8\xBB"));
-	ck_assert_tok_eq(get_type(T("\\uFF0D"), 0), S("\xEF\xBC\x8D"));
+	ck_assert_text_eq(get_type(S("-"), 0), S("-"));
+	ck_assert_text_eq(get_type(T("\\u058A"), 0), S("\xD6\x8A"));
+	ck_assert_text_eq(get_type(T("\\u2212"), 0), S("\xE2\x88\x92"));
+	ck_assert_text_eq(get_type(T("\\u2E3A"), 0), S("\xE2\xB8\xBA"));
+	ck_assert_text_eq(get_type(T("\\u2E3B"), 0), S("\xE2\xB8\xBB"));
+	ck_assert_text_eq(get_type(T("\\uFF0D"), 0), S("\xEF\xBC\x8D"));
 }
 END_TEST
 
 
 START_TEST(test_fold_quote)
 {
-	ck_assert_tok_eq(get_type(S("'"), TYPE_QUOTFOLD), S("'"));
-	ck_assert_tok_eq(get_type(S("\""), TYPE_QUOTFOLD), S("'"));
-	ck_assert_tok_eq(get_type(T("\\u2018"), TYPE_QUOTFOLD), S("'"));
-	ck_assert_tok_eq(get_type(T("\\u2019"), TYPE_QUOTFOLD), S("'"));
-	ck_assert_tok_eq(get_type(T("\\u201A"), TYPE_QUOTFOLD), S("'"));
-	ck_assert_tok_eq(get_type(T("\\u201F"), TYPE_QUOTFOLD), S("'"));
+	ck_assert_text_eq(get_type(S("'"), TYPE_QUOTFOLD), S("'"));
+	ck_assert_text_eq(get_type(S("\""), TYPE_QUOTFOLD), S("'"));
+	ck_assert_text_eq(get_type(T("\\u2018"), TYPE_QUOTFOLD), S("'"));
+	ck_assert_text_eq(get_type(T("\\u2019"), TYPE_QUOTFOLD), S("'"));
+	ck_assert_text_eq(get_type(T("\\u201A"), TYPE_QUOTFOLD), S("'"));
+	ck_assert_text_eq(get_type(T("\\u201F"), TYPE_QUOTFOLD), S("'"));
 }
 END_TEST
 
 
 START_TEST(test_nofold_quote)
 {
-	ck_assert_tok_eq(get_type(S("'"), 0), S("'"));
-	ck_assert_tok_eq(get_type(S("\""), 0), S("\""));
-	ck_assert_tok_eq(get_type(T("\\u2018"), 0), S("\xE2\x80\x98"));
-	ck_assert_tok_eq(get_type(T("\\u2019"), 0), S("\xE2\x80\x99"));
-	ck_assert_tok_eq(get_type(T("\\u201A"), 0), S("\xE2\x80\x9A"));
-	ck_assert_tok_eq(get_type(T("\\u201F"), 0), S("\xE2\x80\x9F"));
+	ck_assert_text_eq(get_type(S("'"), 0), S("'"));
+	ck_assert_text_eq(get_type(S("\""), 0), S("\""));
+	ck_assert_text_eq(get_type(T("\\u2018"), 0), S("\xE2\x80\x98"));
+	ck_assert_text_eq(get_type(T("\\u2019"), 0), S("\xE2\x80\x99"));
+	ck_assert_text_eq(get_type(T("\\u201A"), 0), S("\xE2\x80\x9A"));
+	ck_assert_text_eq(get_type(T("\\u201F"), 0), S("\xE2\x80\x9F"));
 }
 END_TEST
 
 
 START_TEST(test_stem_en)
 {
-	ck_assert_tok_eq(stem_en(S("consign")), S("consign"));
-	ck_assert_tok_eq(stem_en(S("consigned")), S("consign"));
-	ck_assert_tok_eq(stem_en(S("consigning")), S("consign"));
-	ck_assert_tok_eq(stem_en(S("consignment")), S("consign"));
+	ck_assert_text_eq(stem_en(S("consign")), S("consign"));
+	ck_assert_text_eq(stem_en(S("consigned")), S("consign"));
+	ck_assert_text_eq(stem_en(S("consigning")), S("consign"));
+	ck_assert_text_eq(stem_en(S("consignment")), S("consign"));
 
-	ck_assert_tok_eq(stem_en(S("consolation")), S("consol"));
-	ck_assert_tok_eq(stem_en(S("consolations")), S("consol"));
-	ck_assert_tok_eq(stem_en(S("consolatory")), S("consolatori"));
-	ck_assert_tok_eq(stem_en(S("console")), S("consol"));
+	ck_assert_text_eq(stem_en(S("consolation")), S("consol"));
+	ck_assert_text_eq(stem_en(S("consolations")), S("consol"));
+	ck_assert_text_eq(stem_en(S("consolatory")), S("consolatori"));
+	ck_assert_text_eq(stem_en(S("console")), S("consol"));
 
-	ck_assert_tok_eq(stem_en(S("")), S(""));
+	ck_assert_text_eq(stem_en(S("")), S(""));
 }
 END_TEST
 
@@ -473,8 +475,8 @@ START_TEST(test_stopwords_en)
 	const uint8_t **words = corpus_stopwords("english", &len);
 
 	ck_assert_int_eq(len, 174);
-	ck_assert_tok_eq(S((char *)words[0]), S("a"));
-	ck_assert_tok_eq(S((char *)words[173]), S("yourselves"));
+	ck_assert_text_eq(S((char *)words[0]), S("a"));
+	ck_assert_text_eq(S((char *)words[173]), S("yourselves"));
 	ck_assert(words[len] == NULL);
 }
 END_TEST

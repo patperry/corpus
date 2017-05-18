@@ -20,7 +20,6 @@
 #include "memory.h"
 #include "table.h"
 #include "text.h"
-#include "token.h"
 #include "textset.h"
 
 static void corpus_textset_rehash(struct corpus_textset *set);
@@ -132,14 +131,14 @@ int corpus_textset_has(const struct corpus_textset *set,
 {
 
 	struct corpus_table_probe probe;
-	unsigned hash = corpus_token_hash(text);
+	unsigned hash = corpus_text_hash(text);
 	int id = -1;
 	int found = 0;
 
 	corpus_table_probe_make(&probe, &set->table, hash);
 	while (corpus_table_probe_advance(&probe)) {
 		id = probe.current;
-		if (corpus_token_equals(text, &set->items[id])) {
+		if (corpus_text_equals(text, &set->items[id])) {
 			found = 1;
 			goto out;
 		}
@@ -164,7 +163,7 @@ void corpus_textset_rehash(struct corpus_textset *set)
 	corpus_table_clear(table);
 
 	for (i = 0; i < n; i++) {
-		hash = corpus_token_hash(&items[i]);
+		hash = corpus_text_hash(&items[i]);
 		corpus_table_add(table, hash, i);
 	}
 }

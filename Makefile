@@ -37,7 +37,7 @@ CORPUS_A = libcorpus.a
 LIB_O	= lib/strntod.o lib/strntoimax.o src/array.o src/census.o \
 	  src/data.o src/datatype.o src/error.o src/filebuf.o src/render.o \
 	  src/sentscan.o src/symtab.o src/table.o src/text.o src/textset.o \
-	  src/token.o src/unicode.o src/wordscan.o src/memory.o
+	  src/typemap.o src/unicode.o src/wordscan.o src/memory.o
 
 STEMMER = lib/libstemmer_c
 STEMMER_O = $(STEMMER)/src_c/stem_UTF_8_arabic.o \
@@ -73,10 +73,10 @@ DATA    = data/ucd/CaseFolding.txt \
 	  data/ucd/auxiliary/WordBreakProperty.txt
 
 TESTS_T = tests/check_census tests/check_data tests/check_sentscan  \
-	  tests/check_symtab tests/check_text tests/check_token \
+	  tests/check_symtab tests/check_text tests/check_typemap \
 	  tests/check_unicode tests/check_wordscan
 TESTS_O = tests/check_census.o tests/check_data.o tests/check_sentscan.o \
-	  tests/check_symtab.o tests/check_text.o tests/check_token.o \
+	  tests/check_symtab.o tests/check_text.o tests/check_typemap.o \
 	  tests/check_unicode.o tests/check_wordscan.o tests/testutil.o
 
 TESTS_DATA = data/ucd/NormalizationTest.txt \
@@ -198,7 +198,7 @@ tests/check_symtab: tests/check_symtab.o tests/testutil.o $(CORPUS_A)
 tests/check_text: tests/check_text.o tests/testutil.o $(CORPUS_A)
 	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS) $^
 
-tests/check_token: tests/check_token.o tests/testutil.o $(CORPUS_A)
+tests/check_typemap: tests/check_typemap.o tests/testutil.o $(CORPUS_A)
 	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS) $^
 
 tests/check_unicode: tests/check_unicode.o $(CORPUS_A) \
@@ -240,37 +240,39 @@ tests/%.o: tests/%.c
 src/array.o: src/array.c src/error.h src/memory.h src/array.h
 src/census.o: src/census.c src/array.h src/error.h src/memory.h src/table.h \
 	src/census.h
-src/data.o: src/data.c src/error.h src/table.h src/text.h src/token.h \
-	src/symtab.h src/datatype.h src/data.h
+src/data.o: src/data.c src/error.h src/table.h src/text.h src/textset.h \
+	src/typemap.h src/symtab.h src/datatype.h src/data.h
 src/datatype.o: src/datatype.c src/array.h src/error.h src/memory.h \
-	src/render.h src/table.h src/text.h src/token.h src/symtab.h \
-	src/data.h src/datatype.h
+	src/render.h src/table.h src/text.h src/textset.h src/typemap.h \
+	src/symtab.h src/data.h src/datatype.h
 src/error.o: src/error.c src/error.h
 src/filebuf.o: src/filebuf.c src/error.h src/memory.h src/filebuf.h
 src/main.o: src/main.c src/error.h src/filebuf.h src/table.h src/text.h \
-	src/token.h src/symtab.h src/datatype.h
+	src/textset.h src/typemap.h src/symtab.h src/datatype.h
 src/main_get.o: src/main_get.c src/error.h src/filebuf.h src/table.h \
-	src/text.h src/token.h src/symtab.h src/datatype.h src/data.h
+	src/text.h src/textset.h src/typemap.h src/symtab.h src/datatype.h \
+	src/data.h
 src/main_scan.o: src/main_scan.c src/error.h src/filebuf.h src/table.h \
-	src/text.h src/token.h src/symtab.h src/datatype.h
+	src/text.h src/textset.h src/typemap.h src/symtab.h src/datatype.h
 src/main_sentences.o: src/main_sentences.c src/error.h src/filebuf.h \
-	src/sentscan.h src/table.h src/text.h src/data.h src/datatype.h
+	src/sentscan.h src/table.h src/text.h src/textset.h src/typemap.h \
+	src/symtab.h src/data.h src/datatype.h
 src/main_tokens.o: src/main_tokens.c src/error.h src/filebuf.h src/table.h \
-	src/text.h src/token.h src/symtab.h src/data.h src/datatype.h \
-	src/wordscan.h
+	src/text.h src/textset.h src/typemap.h src/symtab.h src/data.h \
+	src/datatype.h src/wordscan.h
 src/memory.o: src/memory.c src/memory.h
 src/render.o: src/render.c src/array.h src/error.h src/memory.h src/text.h \
 	src/unicode.h src/render.h
 src/sentscan.o: src/sentscan.c src/text.h src/unicode/sentbreakprop.h \
 	src/sentscan.h
 src/symtab.o: src/symtab.c src/array.h src/error.h src/memory.h src/table.h \
-	src/text.h src/token.h src/symtab.h
+	src/text.h src/textset.h src/typemap.h src/symtab.h
 src/table.o: src/table.c src/error.h src/memory.h src/table.h
 src/text.o: src/text.c src/error.h src/memory.h src/unicode.h src/text.h
 src/textset.o: src/textset.c src/array.h src/error.h src/memory.h src/table.h \
-	src/text.h src/token.h src/textset.h
-src/token.o: src/token.c src/error.h src/memory.h src/private/stopwords.h \
-	src/text.h src/unicode.h src/token.h
+	src/text.h src/textset.h
+src/typemap.o: src/typemap.c src/error.h src/memory.h src/private/stopwords.h \
+	src/table.h src/text.h src/unicode.h src/typemap.h
 src/unicode.o: src/unicode.c src/unicode/casefold.h src/unicode/combining.h \
 	src/unicode/compose.h src/unicode/decompose.h src/error.h \
 	src/unicode.h
@@ -280,18 +282,17 @@ src/wordscan.o: src/wordscan.c src/text.h src/unicode/wordbreakprop.h \
 tests/check_census.o: tests/check_census.c src/table.h src/census.h \
 	tests/testutil.h
 tests/check_data.o: tests/check_data.c src/error.h src/table.h src/text.h \
-	src/token.h src/symtab.h src/data.h src/datatype.h tests/testutil.h
-tests/check_sentscan.o: tests/check_sentscan.c src/text.h src/token.h \
-	src/unicode.h src/wordscan.h tests/testutil.h
-tests/check_symtab.o: tests/check_symtab.c src/table.h src/text.h src/token.h \
-	src/symtab.h tests/testutil.h
+	src/textset.h src/typemap.h src/symtab.h src/data.h src/datatype.h \
+	tests/testutil.h
+tests/check_sentscan.o: tests/check_sentscan.c src/text.h src/unicode.h \
+	src/wordscan.h tests/testutil.h
+tests/check_symtab.o: tests/check_symtab.c src/table.h src/text.h \
+	src/textset.h src/typemap.h src/symtab.h tests/testutil.h
 tests/check_text.o: tests/check_text.c src/error.h src/text.h src/unicode.h \
 	tests/testutil.h
-tests/check_token.o: tests/check_token.c src/text.h src/token.h src/unicode.h \
-	tests/testutil.h
+tests/check_typemap.o: tests/check_typemap.c src/table.h src/text.h \
+	src/textset.h src/typemap.h src/unicode.h tests/testutil.h
 tests/check_unicode.o: tests/check_unicode.c src/unicode.h tests/testutil.h
-tests/check_sentscan.o: tests/check_sentscan.c src/text.h src/token.h \
-	src/unicode.h src/wordscan.h tests/testutil.h
-tests/check_wordscan.o: tests/check_wordscan.c src/text.h src/token.h \
+tests/check_wordscan.o: tests/check_wordscan.c src/text.h \
 	src/unicode.h src/wordscan.h tests/testutil.h
 tests/testutil.o: tests/testutil.c src/text.h tests/testutil.h

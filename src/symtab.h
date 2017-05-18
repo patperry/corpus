@@ -85,6 +85,18 @@ void corpus_symtab_destroy(struct corpus_symtab *tab);
 void corpus_symtab_clear(struct corpus_symtab *tab);
 
 /**
+ * Add a type to the stem exception list. When a normalized token
+ * matches anything on this list, it does not get stemmed.
+ *
+ * \param tab the symbol table
+ * \param typ the normalized, unstemmed, type
+ *
+ * \returns 0 on success
+ */
+int corpus_symtab_stem_except(struct corpus_symtab *tab,
+			      const struct corpus_text *typ);
+
+/**
  * Add a token to a symbol table if it does not already exist there, and
  * get the id of the token in the table.
  *

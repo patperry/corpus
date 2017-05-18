@@ -18,7 +18,6 @@
 #include <stdlib.h>
 #include <check.h>
 #include "../src/text.h"
-#include "../src/token.h"
 #include "../src/unicode.h"
 #include "../src/sentscan.h"
 #include "testutil.h"
@@ -61,23 +60,23 @@ START_TEST(test_figure3)
 {
 	// Test Figure 3 from http://www.unicode.org/reports/tr29/
 	start(T("c.d"));
-	ck_assert_tok_eq(next(), T("c.d"));
+	ck_assert_text_eq(next(), T("c.d"));
 	ck_assert_ptr_eq(next(), NULL);
 
 	start(T("3.4"));
-	ck_assert_tok_eq(next(), T("3.4"));
+	ck_assert_text_eq(next(), T("3.4"));
 	ck_assert_ptr_eq(next(), NULL);
 
 	start(T("U.S."));
-	ck_assert_tok_eq(next(), T("U.S."));
+	ck_assert_text_eq(next(), T("U.S."));
 	ck_assert_ptr_eq(next(), NULL);
 
 	start(T("the resp. leaders are"));
-	ck_assert_tok_eq(next(), T("the resp. leaders are"));
+	ck_assert_text_eq(next(), T("the resp. leaders are"));
 	ck_assert_ptr_eq(next(), NULL);
 
 	start(T("etc.)\\u2019\\u2018(the"));
-	ck_assert_tok_eq(next(), T("etc.)\\u2019\\u2018(the"));
+	ck_assert_text_eq(next(), T("etc.)\\u2019\\u2018(the"));
 	ck_assert_ptr_eq(next(), NULL);
 }
 END_TEST
@@ -86,8 +85,8 @@ END_TEST
 START_TEST(test_figure4)
 {
 	start(T("She said \\u201cSee spot run.\\u201d John shook his head."));
-	ck_assert_tok_eq(next(), T("She said \\u201cSee spot run.\\u201d "));
-	ck_assert_tok_eq(next(), T("John shook his head."));
+	ck_assert_text_eq(next(), T("She said \\u201cSee spot run.\\u201d "));
+	ck_assert_text_eq(next(), T("John shook his head."));
 	ck_assert_ptr_eq(next(), NULL);
 }
 END_TEST
@@ -96,7 +95,7 @@ END_TEST
 START_TEST(test_empty)
 {
 	start(T(""));
-	ck_assert_tok_eq(next(), T(""));
+	ck_assert_text_eq(next(), T(""));
 	ck_assert_ptr_eq(next(), NULL);
 	ck_assert_ptr_eq(next(), NULL);
 }

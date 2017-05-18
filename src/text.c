@@ -554,3 +554,39 @@ void decode_valid_escape(const uint8_t **inputptr, uint32_t *codeptr)
 	*inputptr = ptr;
 	*codeptr = code;
 }
+
+
+// Dan Bernstein's djb2 XOR hash: http://www.cse.yorku.ca/~oz/hash.html
+unsigned corpus_text_hash(const struct corpus_text *text)
+{
+	const uint8_t *ptr = text->ptr;
+	const uint8_t *end = ptr + CORPUS_TEXT_SIZE(text);
+	unsigned hash = 5381;
+	uint_fast8_t ch;
+
+	while (ptr != end) {
+		ch = *ptr++;
+		hash = ((hash << 5) + hash) ^ ch;
+	}
+
+	return hash;
+}
+
+
+int corpus_text_equals(const struct corpus_text *text1,
+		       const struct corpus_text *text2)
+{
+	return ((text1->attr & ~CORPUS_TEXT_UTF8_BIT)
+			== (text2->attr & ~CORPUS_TEXT_UTF8_BIT)
+		&& !memcmp(text1->ptr, text2->ptr, CORPUS_TEXT_SIZE(text2)));
+}
+
+
+int corpus_compare_text(const struct corpus_text *text1,
+			const struct corpus_text *text2)
+{
+	size_t n1 = CORPUS_TEXT_SIZE(text1);
+	size_t n2 = CORPUS_TEXT_SIZE(text2);
+	size_t n = (n1 < n2) ? n1 : n2;
+	return memcmp(text1->ptr, text2->ptr, n);
+}

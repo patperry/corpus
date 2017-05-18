@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef CORPUS_TOKEN_H
-#define CORPUS_TOKEN_H
+#ifndef CORPUS_TYPEMAP_H
+#define CORPUS_TYPEMAP_H
 
 /**
  * \file token.h
  *
- * Tokens and normalization to types.
+ * Normalization map from tokens to types.
  */
 
 #include <stddef.h>
@@ -90,6 +90,8 @@ struct corpus_typemap {
 				  characters; -1 indicates deletion */
 	struct sb_stemmer *stemmer;
 				/**< the stemmer (NULL if none) */
+	struct corpus_textset excepts;
+				/**< types to exempt from stemming */
 	uint32_t *codes;	/**< buffer for intermediate UTF-32 decoding */
 	size_t size_max;	/**< token size maximum; normalizing a larger
 				 	token will force a reallocation */
@@ -157,37 +159,15 @@ int corpus_typemap_set(struct corpus_typemap *map,
 		       const struct corpus_text *tok);
 
 /**
- * Compute a hash code from a token.
+ * Add a type to the stem exception list. When a normalized token
+ * matches anything on this list, it does not get stemmed.
  *
- * \param tok the token
+ * \param map the type map
+ * \param typ the normalized, unstemmed, type
  *
- * \returns the hash code.
+ * \returns 0 on success
  */
-unsigned corpus_token_hash(const struct corpus_text *tok);
+int corpus_typemap_stem_except(struct corpus_typemap *map,
+			       const struct corpus_text *typ);
 
-/**
- * Test whether two tokens are equal (bitwise). Bitwise equality is more
- * stringent than decoding to the same value.
- *
- * \param tok1 the first token
- * \param tok2 the second token
- *
- * \returns non-zero if the tokens are equal, zero otherwise
- */
-int corpus_token_equals(const struct corpus_text *tok1,
-			const struct corpus_text *tok2);
-
-/**
- * Compare two types.
- *
- * \param typ1 archetype for the first type
- * \param typ2 archetype for the second type
- *
- * \returns zero if the two archetypes are identical; a negative value
- * 	if the first value is less than the second; a positive value
- * 	if the first value is greater than the second
- */
-int corpus_compare_type(const struct corpus_text *typ1,
-			const struct corpus_text *typ2);
-
-#endif /* CORPUS_TOKEN_H */
+#endif /* CORPUS_TYPEMAP_H */

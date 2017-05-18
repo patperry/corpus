@@ -21,20 +21,20 @@
 
 struct corpus_text;
 
-#define ck_assert_tok_eq(X, Y) do { \
+#define ck_assert_text_eq(X, Y) do { \
 	const struct corpus_text * _ck_x = (X); \
 	const struct corpus_text * _ck_y = (Y); \
-	ck_assert_msg(corpus_token_equals(_ck_y, _ck_x), \
+	ck_assert_msg(corpus_text_equals(_ck_y, _ck_x), \
 		"Assertion '%s == %s' failed: %s==\"%s\" (0x%zx)," \
 		" %s==\"%s\" (0x%zx)", \
 		#X, #Y, #X, _ck_x->ptr, _ck_x->attr, \
 		#Y, _ck_y->ptr, _ck_y->attr); \
 } while (0)
 
-#define ck_assert_tok_ne(X, Y) do { \
+#define ck_assert_text_ne(X, Y) do { \
 	const struct corpus_text * _ck_x = (X); \
 	const struct corpus_text * _ck_y = (Y); \
-	ck_assert_msg(!corpus_token_equals(_ck_y, _ck_x), \
+	ck_assert_msg(!corpus_text_equals(_ck_y, _ck_x), \
 		"Assertion '%s != %s' failed: %s==\"%s\" (0x%zx)," \
 		" %s==\"%s\" (0x%zx)", \
 		#X, #Y, #X, _ck_x->ptr, _ck_x->attr, \

@@ -20,7 +20,8 @@
 #include <check.h>
 #include "../src/table.h"
 #include "../src/text.h"
-#include "../src/token.h"
+#include "../src/textset.h"
+#include "../src/typemap.h"
 #include "../src/symtab.h"
 #include "testutil.h"
 
@@ -66,12 +67,12 @@ int has_type(const struct corpus_text *typ)
 		ck_assert_int_lt(type_id, tab.ntype);
 
 		// it should return a type id matching the query
-		ck_assert_tok_eq(&tab.types[type_id].text, typ);
+		ck_assert_text_eq(&tab.types[type_id].text, typ);
 	} else {
 		// when the return value is 'false'
 		//   the type should not be in the table
 		for (i = 0; i < tab.ntype; i++) {
-			ck_assert_tok_ne(&tab.types[i].text, typ);
+			ck_assert_text_ne(&tab.types[i].text, typ);
 		}
 	}
 
@@ -101,12 +102,12 @@ int has_token(const struct corpus_text *tok)
 		ck_assert_int_lt(tok_id, tab.ntoken);
 
 		// it should return a token id matching the query
-		ck_assert_tok_eq(&tab.tokens[tok_id].text, tok);
+		ck_assert_text_eq(&tab.tokens[tok_id].text, tok);
 	} else {
 		// when the return value is 'false'
 		//   the token should not be in the table
 		for (i = 0; i < tab.ntoken; i++) {
-			ck_assert_tok_ne(&tab.tokens[i].text, tok);
+			ck_assert_text_ne(&tab.tokens[i].text, tok);
 		}
 	}
 
@@ -142,7 +143,7 @@ int add_type(const struct corpus_text *typ)
 	ck_assert_int_lt(type_id, tab.ntype);
 
 	// it should return an id matching the insert
-	ck_assert_tok_eq(&tab.types[type_id].text, typ);
+	ck_assert_text_eq(&tab.types[type_id].text, typ);
 
 	if (!had_type) {
 		// when the type is new
@@ -194,7 +195,7 @@ int add_token(const struct corpus_text *tok)
 	ck_assert_int_lt(token_id, tab.ntoken);
 
 	// (b) should match the insert
-	ck_assert_tok_eq(&tab.tokens[token_id].text, tok);
+	ck_assert_text_eq(&tab.tokens[token_id].text, tok);
 
 	// (c) should should have a valid type id
 	ck_assert_int_lt(tab.tokens[token_id].type_id, tab.ntype);
@@ -354,7 +355,7 @@ START_TEST(test_casefold)
 	ck_assert(has_token(T("CRAZY_CASING")));
 	ck_assert(has_type(T("crazy_casing")));
 
-	ck_assert_tok_eq(&tab.types[typ_id1].text, T("crazy_casing"));
+	ck_assert_text_eq(&tab.types[typ_id1].text, T("crazy_casing"));
 	ck_assert_int_eq(typ_id1, typ_id2);
 	ck_assert_int_eq(typ_id1, typ_id3);
 }

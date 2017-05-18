@@ -146,4 +146,38 @@ int corpus_text_iter_advance(struct corpus_text_iter *it);
  */
 void corpus_text_iter_reset(struct corpus_text_iter *it);
 
+/**
+ * Compute a hash code from a text.
+ *
+ * \param text the text
+ *
+ * \returns the hash code.
+ */
+unsigned corpus_text_hash(const struct corpus_text *text);
+
+/**
+ * Test whether two texts are equal (bitwise). Bitwise equality is more
+ * stringent than decoding to the same value.
+ *
+ * \param text1 the first text
+ * \param text2 the second text
+ *
+ * \returns non-zero if the tokens are equal, zero otherwise
+ */
+int corpus_text_equals(const struct corpus_text *text1,
+			const struct corpus_text *text2);
+
+/**
+ * Compare two texts.
+ *
+ * \param text1 the first text
+ * \param text2 the second text
+ *
+ * \returns zero if the two encoded texts are identical; a negative value
+ * 	if the first value is less than the second; a positive value
+ * 	if the first value is greater than the second
+ */
+int corpus_compare_text(const struct corpus_text *text1,
+			const struct corpus_text *text2);
+
 #endif /* CORPUS_TEXT_H */

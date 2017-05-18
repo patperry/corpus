@@ -65,6 +65,11 @@ int corpus_typemap_init(struct corpus_typemap *map, int kind,
 {
 	int err;
 
+	if ((err = corpus_textset_init(&map->excepts))) {
+		corpus_log(err, "failed initializing stem exception set");
+		goto out;
+	}
+
 	if (stemmer) {
 		errno = 0;
 		map->stemmer = sb_stemmer_new(stemmer, "UTF_8");
@@ -102,6 +107,7 @@ void corpus_typemap_destroy(struct corpus_typemap *map)
 	if (map->stemmer) {
 		sb_stemmer_delete(map->stemmer);
 	}
+	corpus_textset_destroy(&map->excepts);
 }
 
 
@@ -246,9 +252,13 @@ error:
 int corpus_typemap_stem_except(struct corpus_typemap *map,
 			       const struct corpus_text *typ)
 {
-	(void)map;
-	(void)typ;
-	return 0;
+	int err;
+
+	if ((err = corpus_textset_add(&map->excepts, typ, NULL))) {
+		corpus_log(err, "failed adding type to stem exception set");
+	}
+
+	return err;
 }
 
 
@@ -259,6 +269,10 @@ int corpus_typemap_stem(struct corpus_typemap *map)
 	int err;
 
 	if (!map->stemmer) {
+		return 0;
+	}
+
+	if (corpus_textset_has(&map->excepts, &map->type, NULL)) {
 		return 0;
 	}
 

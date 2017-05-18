@@ -18,7 +18,7 @@
 #define CORPUS_TYPEMAP_H
 
 /**
- * \file token.h
+ * \file typemap.h
  *
  * Normalization map from tokens to types.
  */

@@ -36,8 +36,8 @@ UNICODE = http://www.unicode.org/Public/9.0.0
 CORPUS_A = libcorpus.a
 LIB_O	= lib/strntod.o lib/strntoimax.o src/array.o src/census.o \
 	  src/data.o src/datatype.o src/error.o src/filebuf.o src/render.o \
-	  src/sentscan.o src/symtab.o src/table.o src/text.o src/token.o \
-	  src/unicode.o src/wordscan.o src/memory.o
+	  src/sentscan.o src/symtab.o src/table.o src/text.o src/textset.o \
+	  src/token.o src/unicode.o src/wordscan.o src/memory.o
 
 STEMMER = lib/libstemmer_c
 STEMMER_O = $(STEMMER)/src_c/stem_UTF_8_arabic.o \
@@ -267,6 +267,8 @@ src/symtab.o: src/symtab.c src/array.h src/error.h src/memory.h src/table.h \
 	src/text.h src/token.h src/symtab.h
 src/table.o: src/table.c src/error.h src/memory.h src/table.h
 src/text.o: src/text.c src/error.h src/memory.h src/unicode.h src/text.h
+src/textset.o: src/textset.c src/array.h src/error.h src/memory.h src/table.h \
+	src/text.h src/token.h src/textset.h
 src/token.o: src/token.c src/error.h src/memory.h src/private/stopwords.h \
 	src/text.h src/unicode.h src/token.h
 src/unicode.o: src/unicode.c src/unicode/casefold.h src/unicode/combining.h \

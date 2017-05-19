@@ -1,3 +1,11 @@
+# corpus 0.5.0
+
+* Added new `filter` module with options for dropping, combining, and
+  selecting terms from a token stream.
+
+* Add the ability to exempt words from stemming.
+
+
 # corpus 0.4.0
 
 * Prefix functions and data types with `corpus_`, to avoid namespace

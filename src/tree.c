@@ -25,6 +25,8 @@ int corpus_tree_init(struct corpus_tree *t)
 	t->nodes = NULL;
 	t->nnode = 0;
 	t->nnode_max = 0;
+	t->depth = 0;
+	t->is_unsorted = 0;
 	return 0;
 }
 
@@ -65,5 +67,14 @@ int corpus_tree_has(const struct corpus_tree *t, int parent_id, int key,
 	(void)parent_id;
 	(void)key;
 	(void)idptr;
+	return 0;
+}
+
+
+int corpus_tree_sort(struct corpus_tree *t, void *base, size_t width)
+{
+	(void)t;
+	(void)base;
+	(void)width;
 	return 0;
 }

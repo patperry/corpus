@@ -23,15 +23,19 @@
  * N-ary tree, with integer keys.
  */
 
+#include <stddef.h>
+
 struct corpus_tree_node {
 	int *keys;
 	int *ids;
-	int size;
+	int nitem;
 };
 
 struct corpus_tree {
 	struct corpus_tree_node *nodes;
 	int nnode, nnode_max;
+	int depth;
+	int is_unsorted;
 };
 
 int corpus_tree_init(struct corpus_tree *t);
@@ -42,5 +46,8 @@ int corpus_tree_root(struct corpus_tree *t);
 int corpus_tree_add(struct corpus_tree *t, int parent_id, int key, int *idptr);
 int corpus_tree_has(const struct corpus_tree *t, int parent_id, int key,
 		    int *idptr);
+
+int corpus_tree_sort(struct corpus_tree *t, void *base, size_t width);
+
 
 #endif /* CORPUS_TREE_H */

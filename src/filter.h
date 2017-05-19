@@ -41,6 +41,9 @@ enum corpus_filter_type {
  */
 struct corpus_filter {
 	struct corpus_symtab symtab;	/**< token/type symbol table */
+	struct corpus_tree combine;	/**< word sequences to combine */
+	int *combine_rules;		/**< properties for nodes in the
+					  combine tree */
 	int *term_ids;			/**< term IDs for the types */
 	int *type_ids;			/**< type IDs for the terms */
 	int nterm;			/**< number of terms */
@@ -91,14 +94,11 @@ int corpus_filter_stem_except(struct corpus_filter *f,
  *
  * \param f the filter
  * \param term the term to build a combination rule from
- * \param idptr if non-NULL, a location to store the term ID
- * 	for the rule
  *
  * \returns 0 on success
  */
 int corpus_filter_combine(struct corpus_filter *f,
-			  const struct corpus_text *term,
-			  int *idptr);
+			  const struct corpus_text *term);
 
 /**
  * Add a term to the filter's drop list. Terms on this list get negative

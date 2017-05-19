@@ -22,6 +22,7 @@
 #include "table.h"
 #include "text.h"
 #include "textset.h"
+#include "tree.h"
 #include "typemap.h"
 #include "symtab.h"
 #include "wordscan.h"
@@ -39,6 +40,9 @@
 			return (value); \
 		} \
 	} while (0)
+
+static int corpus_filter_advance_raw(struct corpus_filter *f, int *idptr);
+static int corpus_filter_try_combine(struct corpus_filter *f, int *idptr);
 
 static int corpus_filter_add_type(struct corpus_filter *f,
 				  const struct corpus_text *type,
@@ -65,6 +69,11 @@ int corpus_filter_init(struct corpus_filter *f, int type_kind,
 		goto error_symtab;
 	}
 
+	if ((err = corpus_tree_init(&f->combine))) {
+		corpus_log(err, "failed initializing combination tree");
+		goto error_combine;
+	}
+	f->combine_rules = NULL;
 	f->term_ids = NULL;
 	f->type_ids = NULL;
 	f->nterm = 0;
@@ -74,6 +83,9 @@ int corpus_filter_init(struct corpus_filter *f, int type_kind,
 	f->has_scan = 0;
 	f->error = 0;
 	return 0;
+
+error_combine:
+	corpus_symtab_destroy(&f->symtab);
 
 error_symtab:
 	f->error = err;
@@ -85,6 +97,8 @@ void corpus_filter_destroy(struct corpus_filter *f)
 {
 	corpus_free(f->type_ids);
 	corpus_free(f->term_ids);
+	corpus_free(f->combine_rules);
+	corpus_tree_destroy(&f->combine);
 	corpus_symtab_destroy(&f->symtab);
 }
 
@@ -119,14 +133,109 @@ const struct corpus_text *corpus_filter_term(const struct corpus_filter *f,
 
 
 int corpus_filter_combine(struct corpus_filter *f,
-			  const struct corpus_text *term,
-			  int *idptr)
+			  const struct corpus_text *term)
 {
+	struct corpus_wordscan scan;
+	int *rules;
+	int err, has_scan, type_id, node_id, nnode0, nnode, parent_id,
+	    size0, size, id = -1;
+
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
-	(void)term;
-	(void)idptr;
-	return 0;
+	// save the state of the current scan
+	has_scan = f->has_scan;
+	if (has_scan) {
+		scan = f->scan;
+		f->has_scan = 0;
+	}
+
+	// root the combination tree
+	if (f->combine.nnode == 0) {
+		if ((err = corpus_tree_root(&f->combine))) {
+			goto out;
+		}
+
+		size = f->combine.nnode_max;
+		assert(size > 0);
+
+		rules = corpus_malloc(size * sizeof(*rules));
+		if (!rules) {
+			err = CORPUS_ERROR_NOMEM;
+			goto out;
+		}
+		rules[0] = -1;
+		f->combine_rules = rules;
+	}
+
+	// add a new type for the combined term
+	if ((err = corpus_filter_add_type(f, term, &id))) {
+		goto out;
+	}
+
+	parent_id = 0;
+	node_id = -1;
+
+	// iterate over all non-ignored types in the rule
+	if ((err = corpus_filter_start(f, term))) {
+		goto out;
+	}
+
+	while (corpus_filter_advance_raw(f, &type_id)) {
+		if (f->term_ids[type_id] == CORPUS_FILTER_IGNORED) {
+			continue;
+		}
+
+		nnode0 = f->combine.nnode;
+		size0 = f->combine.nnode_max;
+		if ((err = corpus_tree_add(&f->combine, parent_id, type_id,
+					   &node_id))) {
+		}
+		nnode = f->combine.nnode;
+
+		// check whether a new node got added
+		if (nnode0 < nnode) {
+			// expand the rules array if necessary
+			size = f->combine.nnode_max;
+			if (size0 < size) {
+				rules = f->combine_rules;
+				rules = corpus_realloc(rules,
+						       size * sizeof(*rules));
+				if (!rules) {
+					err = CORPUS_ERROR_NOMEM;
+					goto out;
+				}
+				f->combine_rules = rules;
+			}
+
+			// set the new rule
+			f->combine_rules[node_id] = -1;
+		}
+	}
+
+	if (f->error) {
+		err = f->error;
+		goto out;
+	}
+
+	if (node_id >= 0) {
+		f->combine_rules[node_id] = id;
+	}
+
+	err = 0;
+
+out:
+	// restore the old scan if one existed
+	if (has_scan) {
+		f->scan = scan;
+	}
+	f->has_scan = has_scan;
+
+	if (err) {
+		corpus_log(err, "failed adding combination rule to filter");
+		f->error = err;
+	}
+
+	return err;
 }
 
 
@@ -225,8 +334,108 @@ int corpus_filter_start(struct corpus_filter *f,
 
 int corpus_filter_advance(struct corpus_filter *f, int *idptr)
 {
+	int type_id, id;
+	int err, ret;
+
+	ret = corpus_filter_advance_raw(f, &type_id);
+
+	if (f->error) {
+		err = f->error;
+		goto out;
+	}
+
+	if ((err = corpus_filter_try_combine(f, &type_id))) {
+		goto out;
+	}
+
+	id = f->term_ids[type_id];
+	err = 0;
+
+out:
+	if (err) {
+		f->error = err;
+		id = -1;
+	}
+
+	if (idptr) {
+		*idptr = id;
+	}
+
+	return ret;
+}
+
+
+int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
+{
+	struct corpus_wordscan scan;
+	int err, has, id, type_id, node_id, parent_id;
+
+	if (!f->combine.nnode) {
+		return 0;
+	}
+
+	parent_id = 0;
+	id = *idptr;
+	if (!corpus_tree_has(&f->combine, parent_id, id, &node_id)) {
+		return 0;
+	}
+
+	// save the state of the current scan
+	scan = f->scan;
+
+	if (f->combine_rules[node_id] >= 0) {
+		has = 1;
+		id = f->combine_rules[node_id];
+	} else {
+		has = 0;
+	}
+
+	while (corpus_filter_advance_raw(f, &type_id)) {
+		parent_id = node_id;
+		if (!corpus_tree_has(&f->combine, parent_id, type_id,
+				     &node_id)) {
+			// no more potential matches
+			err = 0;
+			goto out;
+		}
+
+		// found a longer match
+		if (f->combine_rules[node_id] >= 0) {
+			scan = f->scan;
+			has = 1;
+			id = f->combine_rules[node_id];
+		}
+	}
+
+	if (f->error) {
+		err = f->error;
+		goto out;
+	}
+
+	err = 0;
+
+out:
+	// restore the state of the scan after the longest match
+	f->scan = scan;
+
+	if (err) {
+		corpus_log(err, "failed trying filter combination rule");
+		f->error = err;
+		id = -1;
+	}
+
+	if (idptr) {
+		*idptr = id;
+	}
+
+	return err;
+}
+
+
+int corpus_filter_advance_raw(struct corpus_filter *f, int *idptr)
+{
 	const struct corpus_text *token, *type;
-	int err, token_id, type_id, size0, size, id = -1;
+	int err, token_id, type_id, ntype0, ntype, size0, size, id = -1;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
@@ -243,10 +452,12 @@ ignored:
 
 	// add the token
 	token = &f->scan.current;
+	ntype0 = f->symtab.ntype;
 	size0 = f->symtab.ntype_max;
 	if ((err = corpus_symtab_add_token(&f->symtab, token, &token_id))) {
 		goto out;
 	}
+	ntype = f->symtab.ntype;
 	size = f->symtab.ntype_max;
 
 	// grow the term id array if necessary
@@ -260,7 +471,7 @@ ignored:
 	type_id = f->symtab.tokens[token_id].type_id;
 
 	// a new type got added
-	if (type_id + 1 == f->symtab.ntype) {
+	if (ntype0 != ntype) {
 		type = &f->symtab.types[type_id].text;
 		if ((err = corpus_filter_set_term(f, type, f->scan.type,
 						  type_id, &id))) {
@@ -282,7 +493,7 @@ out:
 		id = -1;
 	}
 	if (idptr) {
-		*idptr = id;
+		*idptr = type_id;
 	}
 	return err ? 0 : 1;
 }
@@ -291,22 +502,27 @@ out:
 int corpus_filter_add_type(struct corpus_filter *f,
 			   const struct corpus_text *type, int *idptr)
 {
-	int err, id, size0, size;
+	int err, id, ntype0, ntype, size0, size;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
+	ntype0 = f->symtab.ntype;
 	size0 = f->symtab.ntype_max;
 	if ((err = corpus_symtab_add_type(&f->symtab, type, &id))) {
 		goto out;
 	}
-	size = f->symtab.ntype_max;
-
-	if (size0 < size) {
-		corpus_filter_grow_types(f, size0, size);
-	}
+	ntype = f->symtab.ntype;
 
 	// a new type got added
-	if (id + 1 == f->symtab.ntype) {
+	if (ntype0 != ntype) {
+		size = f->symtab.ntype_max;
+		if (size0 < size) {
+			if ((err = corpus_filter_grow_types(f, size0,
+							    size))) {
+				goto out;
+			}
+		}
+
 		corpus_filter_set_term(f, type, -1, id, NULL);
 	}
 

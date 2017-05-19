@@ -48,13 +48,17 @@ int get_parent(int id, int *keyptr)
 		m = tree.nodes[i].nitem;
 		for (j = 0; j < m; j++) {
 			if (tree.nodes[i].ids[j] == id) {
-				*keyptr = tree.nodes[i].keys[j];
+				if (keyptr) {
+					*keyptr = tree.nodes[i].keys[j];
+				}
 				return i;
 			}
 		}
 	}
 
-	*keyptr = -1;
+	if (keyptr) {
+		*keyptr = -1;
+	}
 	return -1;
 }
 
@@ -80,8 +84,8 @@ int get_depth(int id)
 
 char *get_keys(int id)
 {
-	char *keys = alloc(tree.depth + 1);
-	int depth = tree.depth;
+	int depth = get_depth(id);
+	char *keys = alloc(depth + 1);
 	int key;
 	int parent_id;
 
@@ -93,14 +97,14 @@ char *get_keys(int id)
 		id = parent_id;
 	}
 
-	return &keys[depth];
+	return keys;
 }
 
 
 int compare_keys(const char *s1, const char *s2)
 {
-	int n1 = strlen(s1);
-	int n2 = strlen(s2);
+	int n1 = (int)strlen(s1);
+	int n2 = (int)strlen(s2);
 	int cmp;
 
 	if (n1 < n2) {
@@ -131,21 +135,25 @@ void teardown_tree(void)
 
 int has(const char *keys)
 {
-	int i, nkey = strlen(keys);
+	int i, nkey = (int)strlen(keys);
 	int j, m;
 	int id, parent_id;
 	int found;
-
-	id = 0;
-	found = 0;
 
 	if (tree.nnode == 0) {
 		return 0;
 	}
 
+	if (tree.nnode > 0 && nkey == 0) {
+		return 1;
+	}
+
+	id = 0;
+	found = 0;
+
 	for (i = 0; i < nkey; i++) {
 		parent_id = id;
-		found = corpus_tree_has(&tree, keys[i], parent_id, &id);
+		found = corpus_tree_has(&tree, parent_id, keys[i], &id);
 
 		m = tree.nodes[parent_id].nitem;
 		for (j = 0; j < m; j++) {
@@ -174,12 +182,13 @@ int has(const char *keys)
 void add(const char *keys)
 {
 	const char *k1, *k2;
-	int i, nkey = strlen(keys);
+	int i, nkey = (int)strlen(keys);
 	int j, m, n;
 	int id, parent_id;
 	int had;
 
-	ck_assert(corpus_tree_root(&tree));
+	ck_assert(!corpus_tree_root(&tree));
+	ck_assert_int_gt(tree.nnode, 0);
 	id = 0;
 
 	for (i = 0; i < nkey; i++) {
@@ -189,7 +198,7 @@ void add(const char *keys)
 		m = tree.nodes[parent_id].nitem;
 		n = tree.nnode;
 
-		ck_assert(corpus_tree_add(&tree, parent_id, keys[i], &id));
+		ck_assert(!corpus_tree_add(&tree, parent_id, keys[i], &id));
 		ck_assert_int_le(0, id);
 		ck_assert_int_lt(id, tree.nnode);
 
@@ -225,7 +234,7 @@ void add(const char *keys)
 }
 
 
-void clear()
+void tree_clear(void)
 {
 	corpus_tree_clear(&tree);
 	ck_assert_int_eq(tree.nnode, 0);
@@ -233,7 +242,7 @@ void clear()
 }
 
 
-void sort()
+void sort(void)
 {
 	int nnode = tree.nnode;
 	char **keys = alloc(nnode * sizeof(char *));
@@ -366,7 +375,7 @@ START_TEST(test_add_random)
 
 	for (seed = 0; seed < nseed; seed++) {
 		srand(seed);
-		clear();
+		tree_clear();
 
 		for (i = 0; i < 2 * nseed; i++) {
 			keys = random_keys();

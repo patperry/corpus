@@ -334,7 +334,7 @@ int corpus_filter_start(struct corpus_filter *f,
 
 int corpus_filter_advance(struct corpus_filter *f, int *idptr)
 {
-	int type_id, id;
+	int type_id, id = -1;
 	int err, ret;
 
 	ret = corpus_filter_advance_raw(f, &type_id);
@@ -435,7 +435,7 @@ out:
 int corpus_filter_advance_raw(struct corpus_filter *f, int *idptr)
 {
 	const struct corpus_text *token, *type;
-	int err, token_id, type_id, ntype0, ntype, size0, size, id = -1;
+	int err, token_id, id, ntype0, ntype, size0, size, type_id = -1;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 

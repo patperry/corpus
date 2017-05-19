@@ -34,7 +34,6 @@ struct corpus_tree_node {
 struct corpus_tree {
 	struct corpus_tree_node *nodes;
 	int nnode, nnode_max;
-	int depth;
 	int is_unsorted;
 };
 

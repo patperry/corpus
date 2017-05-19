@@ -279,7 +279,7 @@ src/table.o: src/table.c src/error.h src/memory.h src/table.h
 src/text.o: src/text.c src/error.h src/memory.h src/unicode.h src/text.h
 src/textset.o: src/textset.c src/array.h src/error.h src/memory.h src/table.h \
 	src/text.h src/textset.h
-src/tree.o: src/tree.c src/error.h src/memory.h src/tree.h
+src/tree.o: src/tree.c src/array.h src/error.h src/memory.h src/tree.h
 src/typemap.o: src/typemap.c src/error.h src/memory.h src/private/stopwords.h \
 	src/table.h src/text.h src/unicode.h src/typemap.h
 src/unicode.o: src/unicode.c src/unicode/casefold.h src/unicode/combining.h \

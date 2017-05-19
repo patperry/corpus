@@ -38,6 +38,11 @@
 
 #define PROGRAM_NAME	"corpus"
 
+#define COMBINE_MAX 256
+
+static const char *combine_rules[COMBINE_MAX];
+
+
 int main_tokens(int argc, char * const argv[]);
 void usage_tokens(void);
 
@@ -109,6 +114,7 @@ Description:\n\
 \tSegment text into tokens.\n\
 \n\
 Options:\n\
+\t-c <combine>\tAdds a combination rule.\n\
 \t-d <class>\tReplace words from the given class with 'null'.\n\
 \t-f <field>\tGets text from the given field (defaults to \"text\").\n\
 \t-k <map>\tDoes not perform the given character map.\n\
@@ -166,7 +172,6 @@ Options:\n\
 	}
 }
 
-
 int main_tokens(int argc, char * const argv[])
 {
 	struct corpus_filter filter;
@@ -183,7 +188,7 @@ int main_tokens(int argc, char * const argv[])
 	FILE *stream;
 	size_t field_len;
 	int filter_flags, type_flags;
-	int ch, err, i, name_id, start, term_id;
+	int ch, err, i, name_id, start, term_id, ncomb;
 
 	filter_flags = CORPUS_FILTER_IGNORE_EMPTY;
 	type_flags = (CORPUS_TYPE_COMPAT | CORPUS_TYPE_CASEFOLD
@@ -192,9 +197,21 @@ int main_tokens(int argc, char * const argv[])
 			| CORPUS_TYPE_RMWS);
 
 	field = "text";
+	ncomb = 0;
 
-	while ((ch = getopt(argc, argv, "d:f:k:o:s:t:z")) != -1) {
+	while ((ch = getopt(argc, argv, "c:d:f:k:o:s:t:z")) != -1) {
 		switch (ch) {
+		case 'c':
+			if (ncomb == COMBINE_MAX) {
+				fprintf(stderr, "Too many combination rules"
+					" (maximum is %d)\n", COMBINE_MAX);
+				return EXIT_FAILURE;
+			}
+
+			combine_rules[ncomb] = optarg;
+			ncomb++;
+			break;
+
 		case 'd':
 			i = get_arg(word_classes, optarg);
 			if (i < 0) {
@@ -305,6 +322,23 @@ int main_tokens(int argc, char * const argv[])
 		}
 	}
 
+	for (i = 0; i < ncomb; i++) {
+		err = corpus_text_assign(&word,
+					 (const uint8_t *)combine_rules[i],
+					 strlen(combine_rules[i]),
+					 CORPUS_TEXT_NOESCAPE);
+		if (err) {
+			fprintf(stderr,
+				"Combination rule ('%s') is not valid UTF-8.",
+				combine_rules[i]);
+			goto error_combine;
+		}
+
+		if ((err = corpus_filter_combine(&filter, &word))) {
+			goto error_combine;
+		}
+	}
+
 	if ((err = corpus_filebuf_init(&buf, input))) {
 		goto error_filebuf;
 	}
@@ -381,6 +415,7 @@ error:
 error_output:
 	corpus_filebuf_destroy(&buf);
 error_filebuf:
+error_combine:
 error_stopwords:
 	corpus_filter_destroy(&filter);
 error_filter:

@@ -16,6 +16,7 @@
 
 #include <assert.h>
 #include <stddef.h>
+#include <string.h>
 #include "array.h"
 #include "error.h"
 #include "memory.h"
@@ -145,8 +146,10 @@ int corpus_filter_combine(struct corpus_filter *f,
 	// save the state of the current scan
 	has_scan = f->has_scan;
 	if (has_scan) {
-		scan = f->scan;
 		f->has_scan = 0;
+		scan = f->scan;
+	} else {
+		memset(&scan, 0, sizeof(scan)); // not used; silence clang warning
 	}
 
 	// root the combination tree
@@ -172,8 +175,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 		goto out;
 	}
 
-	parent_id = 0;
-	node_id = -1;
+	node_id = 0;
 
 	// iterate over all non-ignored types in the rule
 	if ((err = corpus_filter_start(f, term))) {
@@ -185,10 +187,12 @@ int corpus_filter_combine(struct corpus_filter *f,
 			continue;
 		}
 
+		parent_id = node_id;
 		nnode0 = f->combine.nnode;
 		size0 = f->combine.nnode_max;
 		if ((err = corpus_tree_add(&f->combine, parent_id, type_id,
 					   &node_id))) {
+			goto out;
 		}
 		nnode = f->combine.nnode;
 
@@ -217,7 +221,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 		goto out;
 	}
 
-	if (node_id >= 0) {
+	if (node_id > 0) {
 		f->combine_rules[node_id] = id;
 	}
 

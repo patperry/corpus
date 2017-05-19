@@ -41,10 +41,15 @@ enum corpus_filter_type {
  */
 struct corpus_filter {
 	struct corpus_symtab symtab;	/**< token/type symbol table */
-	struct corpus_textset select;	/**< selection set */
-	int *ids;			/**< term IDs for each type */
+	int *term_ids;			/**< term IDs for the types */
+	int *type_ids;			/**< type IDs for the terms */
+	int nterm;			/**< number of terms */
+	int nterm_max;			/**< maximum number of terms before
+						requiring reallocation */
 	struct corpus_wordscan scan;	/**< current word scan */
 	int flags;			/**< filter flags */
+	int has_select;			/**< whether the filter has a
+					  selection set */
 	int has_scan;			/**< whether a scan is in progress */
 	int error;			/**< last error code */
 };

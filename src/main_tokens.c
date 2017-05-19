@@ -295,6 +295,11 @@ int main_tokens(int argc, char * const argv[])
 				goto error_stopwords;
 			}
 
+			err = corpus_filter_drop(&filter, &word);
+			if (err) {
+				goto error_stopwords;
+			}
+
 			stopwords++;
 		}
 	}

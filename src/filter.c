@@ -16,6 +16,7 @@
 
 #include <assert.h>
 #include <stddef.h>
+#include "array.h"
 #include "error.h"
 #include "memory.h"
 #include "table.h"
@@ -39,12 +40,19 @@
 		} \
 	} while (0)
 
-
 static int corpus_filter_add_type(struct corpus_filter *f,
 				  const struct corpus_text *type,
 				  int *idptr);
-static int corpus_filter_grow_ids(struct corpus_filter *f, int size0,
-				  int size);
+static int corpus_filter_set_term(struct corpus_filter *f,
+				  const struct corpus_text *term,
+				  int term_type, int type_id, int *idptr);
+static int corpus_filter_grow_terms(struct corpus_filter *f, int nadd);
+static int corpus_filter_grow_types(struct corpus_filter *f, int size0,
+				    int size);
+static int corpus_filter_term_prop(const struct corpus_filter *f,
+				   const struct corpus_text *term,
+				   int term_type);
+static int corpus_term_type(const struct corpus_text *term);
 
 
 int corpus_filter_init(struct corpus_filter *f, int type_kind,
@@ -56,19 +64,17 @@ int corpus_filter_init(struct corpus_filter *f, int type_kind,
 		corpus_log(err, "failed initializing symbol table");
 		goto error_symtab;
 	}
-	if ((err = corpus_textset_init(&f->select))) {
-		corpus_log(err, "failed initializing term selection set");
-		goto error_select;
-	}
 
-	f->ids = NULL;
-	f->has_scan = 0;
+	f->term_ids = NULL;
+	f->type_ids = NULL;
+	f->nterm = 0;
+	f->nterm_max = 0;
 	f->flags = flags;
+	f->has_select = 0;
+	f->has_scan = 0;
 	f->error = 0;
 	return 0;
 
-error_select:
-	corpus_symtab_destroy(&f->symtab);
 error_symtab:
 	f->error = err;
 	return err;
@@ -77,8 +83,8 @@ error_symtab:
 
 void corpus_filter_destroy(struct corpus_filter *f)
 {
-	corpus_free(f->ids);
-	corpus_textset_destroy(&f->select);
+	corpus_free(f->type_ids);
+	corpus_free(f->term_ids);
 	corpus_symtab_destroy(&f->symtab);
 }
 
@@ -102,17 +108,13 @@ int corpus_filter_stem_except(struct corpus_filter *f,
 const struct corpus_text *corpus_filter_term(const struct corpus_filter *f,
 					     int id)
 {
-	assert(id >= 0);
+	int type_id;
 
 	CHECK_ERROR(NULL);
+	assert(0 <= id && id < f->nterm);
 
-	if (f->select.nitem > 0) {
-		assert(id < f->select.nitem);
-		return &f->select.items[id];
-	} else {
-		assert(id < f->symtab.ntype);
-		return &f->symtab.types[id].text;
-	}
+	type_id = f->type_ids[id];
+	return &f->symtab.types[type_id].text;
 }
 
 
@@ -140,7 +142,9 @@ int corpus_filter_drop(struct corpus_filter *f,
 		f->error = err;
 		goto out;
 	}
-	f->ids[type_id] = CORPUS_FILTER_DROPPED;
+	if (f->term_ids[type_id] != CORPUS_FILTER_IGNORED) {
+		f->term_ids[type_id] = CORPUS_FILTER_DROPPED;
+	}
 	err = 0;
 out:
 	return err;
@@ -150,32 +154,46 @@ out:
 int corpus_filter_select(struct corpus_filter *f,
 			 const struct corpus_text *term, int *idptr)
 {
-	int empty, err, id, type_id, i, n;
+	int err, id, type_id, i, n;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
-	empty = f->select.nitem == 0;
-	if ((err = corpus_textset_add(&f->select, term, &id))) {
+	if ((err = corpus_filter_add_type(f, term, &type_id))) {
 		goto out;
 	}
 
-	if (empty) {
-		n = f->symtab.ntype_max;
+	if (!f->has_select) {
+		n = f->symtab.ntype;
+
 		for (i = 0; i < n; i++) {
-			switch (f->ids[i]) {
+			switch (f->term_ids[i]) {
 			case CORPUS_FILTER_IGNORED:
 			case CORPUS_FILTER_DROPPED:
 				break;
+
 			default:
-				f->ids[i] = CORPUS_FILTER_EXCLUDED;
+				f->term_ids[i] = CORPUS_FILTER_EXCLUDED;
+				break;
 			}
 		}
+
+		f->has_select = 1;
+		f->nterm = 0;
 	}
 
-	if (corpus_symtab_has_type(&f->symtab, term, &type_id)) {
-		if (f->ids[type_id] == CORPUS_FILTER_EXCLUDED) {
-			f->ids[type_id] = id;
+	id = f->term_ids[type_id];
+
+	// add the new term if it does not exist
+	if (id == CORPUS_FILTER_EXCLUDED) {
+		id = f->nterm;
+		if (f->nterm == f->nterm_max) {
+			if ((err = corpus_filter_grow_terms(f, 1))) {
+				goto out;
+			}
 		}
+		f->type_ids[id] = type_id;
+		f->term_ids[type_id] = id;
+		f->nterm++;
 	}
 
 	err = 0;
@@ -208,7 +226,7 @@ int corpus_filter_start(struct corpus_filter *f,
 int corpus_filter_advance(struct corpus_filter *f, int *idptr)
 {
 	const struct corpus_text *token, *type;
-	int err, token_id, type_id, size0, size, drop, ignore, id = -1;
+	int err, token_id, type_id, size0, size, id = -1;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
@@ -233,7 +251,7 @@ ignored:
 
 	// grow the term id array if necessary
 	if (size0 < size) {
-		if ((err = corpus_filter_grow_ids(f, size0, size))) {
+		if ((err = corpus_filter_grow_types(f, size0, size))) {
 			goto out;
 		}
 	}
@@ -244,54 +262,12 @@ ignored:
 	// a new type got added
 	if (type_id + 1 == f->symtab.ntype) {
 		type = &f->symtab.types[type_id].text;
-
-		// check whether to ignore or drop the new type
-		if (CORPUS_TEXT_SIZE(type) == 0
-				&& (f->flags & CORPUS_FILTER_IGNORE_EMPTY)) {
-			ignore = 1;
-			drop = 0;
-		} else {
-			ignore = 0;
-
-			switch (f->scan.type) {
-			case CORPUS_WORD_NUMBER:
-				drop = f->flags & CORPUS_FILTER_DROP_NUMBER;
-				break;
-
-			case CORPUS_WORD_LETTER:
-				drop = f->flags & CORPUS_FILTER_DROP_LETTER;
-				break;
-
-			case CORPUS_WORD_KANA:
-				drop = f->flags & CORPUS_FILTER_DROP_KANA;
-				break;
-
-			case CORPUS_WORD_IDEO:
-				drop = f->flags & CORPUS_FILTER_DROP_IDEO;
-				break;
-
-			default:
-				drop = f->flags & CORPUS_FILTER_DROP_SYMBOL;
-				break;
-			}
+		if ((err = corpus_filter_set_term(f, type, f->scan.type,
+						  type_id, &id))) {
+			goto out;
 		}
-
-		// set the new term id
-		if (ignore) {
-			id = CORPUS_FILTER_IGNORED;
-		} else if (drop) {
-			id = CORPUS_FILTER_DROPPED;
-		} else if (f->select.nitem) {
-			if (!corpus_textset_has(&f->select, type, &id)) {
-				id = CORPUS_FILTER_EXCLUDED;
-			}
-		} else {
-			id = type_id;
-		}
-
-		f->ids[type_id] = id;
 	} else {
-		id = f->ids[type_id];
+		id = f->term_ids[type_id];
 	}
 
 	if (id == CORPUS_FILTER_IGNORED) {
@@ -326,7 +302,12 @@ int corpus_filter_add_type(struct corpus_filter *f,
 	size = f->symtab.ntype_max;
 
 	if (size0 < size) {
-		corpus_filter_grow_ids(f, size0, size);
+		corpus_filter_grow_types(f, size0, size);
+	}
+
+	// a new type got added
+	if (id + 1 == f->symtab.ntype) {
+		corpus_filter_set_term(f, type, -1, id, NULL);
 	}
 
 	err = 0;
@@ -345,24 +326,77 @@ out:
 }
 
 
-int corpus_filter_grow_ids(struct corpus_filter *f, int size0, int size)
+int corpus_filter_set_term(struct corpus_filter *f,
+			   const struct corpus_text *term,
+			   int term_type, int type_id,
+			   int *idptr)
+{
+	int err, id, prop;
+
+	prop = corpus_filter_term_prop(f, term, term_type);
+
+	if (prop) {
+		id = prop;
+	} else if (f->has_select) {
+		id = CORPUS_FILTER_EXCLUDED;
+	} else {
+		// a new term got added
+		if (f->nterm == f->nterm_max) {
+			if ((err = corpus_filter_grow_terms(f, 1))) {
+				goto out;
+			}
+		}
+		id = f->nterm;
+		f->type_ids[id] = type_id;
+		f->nterm++;
+	}
+
+	f->term_ids[type_id] = id;
+	err = 0;
+
+out:
+	if (err) {
+		corpus_log(err, "failed setting term ID for type");
+		id = -1;
+	}
+
+	if (idptr) {
+		*idptr = id;
+	}
+
+	return err;
+}
+
+
+int corpus_filter_grow_terms(struct corpus_filter *f, int nadd)
+{
+	void *base = f->type_ids;
+	int size = f->nterm_max;
+	int err;
+
+	if ((err = corpus_array_grow(&base, &size, sizeof(*f->type_ids),
+				     f->nterm, nadd))) {
+		corpus_log(err, "failed allocating term array");
+		f->error = err;
+		return err;
+	}
+
+	f->type_ids = base;
+	f->nterm_max = size;
+	return 0;
+}
+
+
+int corpus_filter_grow_types(struct corpus_filter *f, int size0, int size)
 {
 	int *ids;
-	int err, i;
+	int err;
 
-	if (!(ids = corpus_realloc(f->ids, size * sizeof(*ids)))) {
+	if (!(ids = corpus_realloc(f->term_ids, size * sizeof(*ids)))) {
 		err = CORPUS_ERROR_NOMEM;
 		goto out;
 	}
-	f->ids = ids;
-
-	for (i = size0; i < size; i++) {
-		if (f->select.nitem > 0) {
-			f->ids[i] = CORPUS_FILTER_EXCLUDED;
-		} else {
-			f->ids[i] = i;
-		}
-	}
+	f->term_ids = ids;
 	err = 0;
 
 out:
@@ -371,5 +405,69 @@ out:
 		f->error = err;
 	}
 
+	(void)size0;
 	return err;
+}
+
+
+int corpus_filter_term_prop(const struct corpus_filter *f,
+			    const struct corpus_text *term, int term_type)
+{
+	int drop, prop;
+
+	prop = 0;
+
+	if (CORPUS_TEXT_SIZE(term) == 0
+			&& (f->flags & CORPUS_FILTER_IGNORE_EMPTY)) {
+		prop = CORPUS_FILTER_IGNORED;
+	} else {
+		if (term_type < 0) {
+			term_type = corpus_term_type(term);
+		}
+
+		switch (term_type) {
+		case CORPUS_WORD_NUMBER:
+			drop = f->flags & CORPUS_FILTER_DROP_NUMBER;
+			break;
+
+		case CORPUS_WORD_LETTER:
+			drop = f->flags & CORPUS_FILTER_DROP_LETTER;
+			break;
+
+		case CORPUS_WORD_KANA:
+			drop = f->flags & CORPUS_FILTER_DROP_KANA;
+			break;
+
+		case CORPUS_WORD_IDEO:
+			drop = f->flags & CORPUS_FILTER_DROP_IDEO;
+			break;
+
+		default:
+			drop = f->flags & CORPUS_FILTER_DROP_SYMBOL;
+			break;
+		}
+
+		if (drop) {
+			prop = CORPUS_FILTER_DROPPED;
+		}
+	}
+
+	return prop;
+}
+
+
+int corpus_term_type(const struct corpus_text *term)
+{
+	struct corpus_wordscan scan;
+	int type;
+
+	corpus_wordscan_make(&scan, term);
+
+	if (corpus_wordscan_advance(&scan)) {
+		type = scan.type;
+	} else {
+		type = CORPUS_WORD_NONE;
+	}
+
+	return type;
 }

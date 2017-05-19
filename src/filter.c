@@ -154,7 +154,7 @@ out:
 int corpus_filter_select(struct corpus_filter *f,
 			 const struct corpus_text *term, int *idptr)
 {
-	int err, id, type_id, i, n;
+	int err, type_id, i, n, id = -1;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
@@ -331,7 +331,7 @@ int corpus_filter_set_term(struct corpus_filter *f,
 			   int term_type, int type_id,
 			   int *idptr)
 {
-	int err, id, prop;
+	int err, prop, id = -1;
 
 	prop = corpus_filter_term_prop(f, term, term_type);
 

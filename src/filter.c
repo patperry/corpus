@@ -149,7 +149,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 		f->has_scan = 0;
 		scan = f->scan;
 	} else {
-		memset(&scan, 0, sizeof(scan)); // not used; silence clang warning
+		memset(&scan, 0, sizeof(scan)); // not used; silence warning
 	}
 
 	// root the combination tree
@@ -246,22 +246,92 @@ out:
 int corpus_filter_drop(struct corpus_filter *f,
 		       const struct corpus_text *term)
 {
-	int err, type_id;
+	int err, type_id, term_id, i, n;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
 	if ((err = corpus_filter_add_type(f, term, &type_id))) {
-		corpus_log(err, "failed adding term to drop list");
-		f->error = err;
 		goto out;
 	}
-	if (f->term_ids[type_id] != CORPUS_FILTER_IGNORED) {
+
+	term_id = f->term_ids[type_id];
+
+	switch (term_id) {
+	case CORPUS_FILTER_IGNORED:
+	case CORPUS_FILTER_DROPPED:
+		break;
+
+	case CORPUS_FILTER_EXCLUDED:
 		f->term_ids[type_id] = CORPUS_FILTER_DROPPED;
+		break;
+
+	default:
+		f->term_ids[type_id] = CORPUS_FILTER_DROPPED;
+
+		// remove the existing term; update old term IDs
+		n = f->nterm;
+		for (i = term_id; i + 1 < n; i++) {
+			f->type_ids[i] = f->type_ids[i + 1];
+			f->term_ids[f->type_ids[i]] = i;
+		}
+		f->nterm--;
+
+		break;
 	}
+
 	err = 0;
 out:
+	if (err) {
+		corpus_log(err, "failed adding term to drop list");
+		f->error = err;
+	}
+
 	return err;
 }
+
+
+int corpus_filter_drop_except(struct corpus_filter *f,
+			      const struct corpus_text *term)
+{
+	int err, term_id, type_id;
+
+	CHECK_ERROR(CORPUS_ERROR_INVAL);
+
+	if ((err = corpus_filter_add_type(f, term, &type_id))) {
+		goto out;
+	}
+
+	term_id = f->term_ids[type_id];
+
+	if (term_id == CORPUS_FILTER_DROPPED) {
+		if (f->has_select) {
+			term_id = CORPUS_FILTER_EXCLUDED;
+		} else {
+			// add a new term
+			if (f->nterm == f->nterm_max) {
+				if ((err = corpus_filter_grow_terms(f, 1))) {
+					goto out;
+				}
+			}
+
+			term_id = f->nterm;
+			f->type_ids[term_id] = type_id;
+			f->nterm++;
+		}
+
+		f->term_ids[type_id] = term_id;
+	}
+
+	err = 0;
+out:
+	if (err) {
+		corpus_log(err, "failed adding term to drop exception list");
+		f->error = err;
+	}
+
+	return err;
+}
+
 
 
 int corpus_filter_select(struct corpus_filter *f,

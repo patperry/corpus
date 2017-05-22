@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		881512761ED31D2100E974F1 /* check_filter.c in Sources */ = {isa = PBXBuildFile; fileRef = 881512741ED31D1A00E974F1 /* check_filter.c */; };
 		88351CE71E8DB64F001DA3A8 /* array.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CD41E8DB64F001DA3A8 /* array.c */; };
 		88351CE91E8DB64F001DA3A8 /* filebuf.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CD91E8DB64F001DA3A8 /* filebuf.c */; };
 		88351CEA1E8DB64F001DA3A8 /* symtab.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CDB1E8DB64F001DA3A8 /* symtab.c */; };
@@ -24,7 +25,6 @@
 		88548A6E1ECE63060063254E /* typemap.c in Sources */ = {isa = PBXBuildFile; fileRef = 88548A671ECE62F80063254E /* typemap.c */; };
 		88548A711ECF5BAA0063254E /* tree.c in Sources */ = {isa = PBXBuildFile; fileRef = 88548A6F1ECF5BAA0063254E /* tree.c */; };
 		88548A721ECF5BBE0063254E /* tree.c in Sources */ = {isa = PBXBuildFile; fileRef = 88548A6F1ECF5BAA0063254E /* tree.c */; };
-		88548A771ECF5BF70063254E /* check_tree.c in Sources */ = {isa = PBXBuildFile; fileRef = 88548A731ECF5BD90063254E /* check_tree.c */; };
 		88548A781ECF5CDF0063254E /* memory.c in Sources */ = {isa = PBXBuildFile; fileRef = 88E48C9B1EC76E17007F5449 /* memory.c */; };
 		886533651E958CA60089FD91 /* wordscan.c in Sources */ = {isa = PBXBuildFile; fileRef = 886533631E958CA60089FD91 /* wordscan.c */; };
 		887D44821EC87CB8001C0E83 /* strntod.c in Sources */ = {isa = PBXBuildFile; fileRef = 887D44811EC87CB8001C0E83 /* strntod.c */; };
@@ -119,6 +119,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		881512741ED31D1A00E974F1 /* check_filter.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = check_filter.c; path = tests/check_filter.c; sourceTree = "<group>"; };
 		88351CBE1E8DB4CE001DA3A8 /* corpus */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = corpus; sourceTree = BUILT_PRODUCTS_DIR; };
 		88351CD41E8DB64F001DA3A8 /* array.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = array.c; path = src/array.c; sourceTree = "<group>"; };
 		88351CD51E8DB64F001DA3A8 /* array.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = array.h; path = src/array.h; sourceTree = "<group>"; };
@@ -332,6 +333,7 @@
 			children = (
 				884F5CAE1EBA680D00DA1C24 /* check_census.c */,
 				88EA69D71EAF945300D57BEB /* check_data.c */,
+				881512741ED31D1A00E974F1 /* check_filter.c */,
 				88EA69EB1EAF952D00D57BEB /* check_sentscan.c */,
 				88EA69EC1EAF952D00D57BEB /* check_symtab.c */,
 				88EA69ED1EAF952D00D57BEB /* check_text.c */,
@@ -592,6 +594,7 @@
 				88EA69DF1EAF94D300D57BEB /* render.c in Sources */,
 				88CD846D1EBB7FCA00DF50CB /* stem_UTF_8_italian.c in Sources */,
 				88CD84711EBB7FCA00DF50CB /* stem_UTF_8_romanian.c in Sources */,
+				881512761ED31D2100E974F1 /* check_filter.c in Sources */,
 				88548A721ECF5BBE0063254E /* tree.c in Sources */,
 				88EA69E51EAF94DE00D57BEB /* unicode.c in Sources */,
 				88EA69E61EAF94DE00D57BEB /* wordscan.c in Sources */,
@@ -616,7 +619,6 @@
 				88CD84721EBB7FCA00DF50CB /* stem_UTF_8_russian.c in Sources */,
 				88CD84631EBB7FB000DF50CB /* api.c in Sources */,
 				88CD84751EBB7FCA00DF50CB /* stem_UTF_8_tamil.c in Sources */,
-				88548A771ECF5BF70063254E /* check_tree.c in Sources */,
 				88CD846A1EBB7FCA00DF50CB /* stem_UTF_8_french.c in Sources */,
 				88CD84691EBB7FCA00DF50CB /* stem_UTF_8_finnish.c in Sources */,
 			);
@@ -731,6 +733,7 @@
 		88EA69D51EAF943600D57BEB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = NO;
 				OTHER_CFLAGS = (
 					"-D_THREAD_SAFE",
 					"-I/usr/local/Cellar/check/0.11.0/include",
@@ -746,6 +749,7 @@
 		88EA69D61EAF943600D57BEB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = NO;
 				OTHER_CFLAGS = (
 					"-D_THREAD_SAFE",
 					"-I/usr/local/Cellar/check/0.11.0/include",

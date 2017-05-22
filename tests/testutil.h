@@ -21,7 +21,7 @@
 
 struct corpus_text;
 
-#define ck_assert_text_eq(X, Y) do { \
+#define assert_text_eq(X, Y) do { \
 	const struct corpus_text * _ck_x = (X); \
 	const struct corpus_text * _ck_y = (Y); \
 	ck_assert_msg(corpus_text_equals(_ck_y, _ck_x), \
@@ -31,7 +31,7 @@ struct corpus_text;
 		#Y, _ck_y->ptr, _ck_y->attr); \
 } while (0)
 
-#define ck_assert_text_ne(X, Y) do { \
+#define assert_text_ne(X, Y) do { \
 	const struct corpus_text * _ck_x = (X); \
 	const struct corpus_text * _ck_y = (Y); \
 	ck_assert_msg(!corpus_text_equals(_ck_y, _ck_x), \

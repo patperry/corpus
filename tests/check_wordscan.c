@@ -60,29 +60,29 @@ START_TEST(test_figure1)
 {
 	// Test Figure 1 from http://www.unicode.org/reports/tr29/
 	start(T("The quick (\"brown\") fox can't jump 32.3 feet, right?"));
-	ck_assert_text_eq(next(), T("The"));
-	ck_assert_text_eq(next(), T(" "));
-	ck_assert_text_eq(next(), T("quick"));
-	ck_assert_text_eq(next(), T(" "));
-	ck_assert_text_eq(next(), T("("));
-	ck_assert_text_eq(next(), T("\""));
-	ck_assert_text_eq(next(), T("brown"));
-	ck_assert_text_eq(next(), T("\""));
-	ck_assert_text_eq(next(), T(")"));
-	ck_assert_text_eq(next(), T(" "));
-	ck_assert_text_eq(next(), T("fox"));
-	ck_assert_text_eq(next(), T(" "));
-	ck_assert_text_eq(next(), T("can't"));
-	ck_assert_text_eq(next(), T(" "));
-	ck_assert_text_eq(next(), T("jump"));
-	ck_assert_text_eq(next(), T(" "));
-	ck_assert_text_eq(next(), T("32.3"));
-	ck_assert_text_eq(next(), T(" "));
-	ck_assert_text_eq(next(), T("feet"));
-	ck_assert_text_eq(next(), T(","));
-	ck_assert_text_eq(next(), T(" "));
-	ck_assert_text_eq(next(), T("right"));
-	ck_assert_text_eq(next(), T("?"));
+	assert_text_eq(next(), T("The"));
+	assert_text_eq(next(), T(" "));
+	assert_text_eq(next(), T("quick"));
+	assert_text_eq(next(), T(" "));
+	assert_text_eq(next(), T("("));
+	assert_text_eq(next(), T("\""));
+	assert_text_eq(next(), T("brown"));
+	assert_text_eq(next(), T("\""));
+	assert_text_eq(next(), T(")"));
+	assert_text_eq(next(), T(" "));
+	assert_text_eq(next(), T("fox"));
+	assert_text_eq(next(), T(" "));
+	assert_text_eq(next(), T("can't"));
+	assert_text_eq(next(), T(" "));
+	assert_text_eq(next(), T("jump"));
+	assert_text_eq(next(), T(" "));
+	assert_text_eq(next(), T("32.3"));
+	assert_text_eq(next(), T(" "));
+	assert_text_eq(next(), T("feet"));
+	assert_text_eq(next(), T(","));
+	assert_text_eq(next(), T(" "));
+	assert_text_eq(next(), T("right"));
+	assert_text_eq(next(), T("?"));
 	ck_assert_ptr_eq(next(), NULL);
 }
 END_TEST
@@ -90,18 +90,18 @@ END_TEST
 START_TEST(test_quote)
 {
 	start(T("both 'single' and \"double\"."));
-	ck_assert_text_eq(next(), T("both"));
-	ck_assert_text_eq(next(), T(" "));
-	ck_assert_text_eq(next(), T("'"));
-	ck_assert_text_eq(next(), T("single"));
-	ck_assert_text_eq(next(), T("'"));
-	ck_assert_text_eq(next(), T(" "));
-	ck_assert_text_eq(next(), T("and"));
-	ck_assert_text_eq(next(), T(" "));
-	ck_assert_text_eq(next(), T("\""));
-	ck_assert_text_eq(next(), T("double"));
-	ck_assert_text_eq(next(), T("\""));
-	ck_assert_text_eq(next(), T("."));
+	assert_text_eq(next(), T("both"));
+	assert_text_eq(next(), T(" "));
+	assert_text_eq(next(), T("'"));
+	assert_text_eq(next(), T("single"));
+	assert_text_eq(next(), T("'"));
+	assert_text_eq(next(), T(" "));
+	assert_text_eq(next(), T("and"));
+	assert_text_eq(next(), T(" "));
+	assert_text_eq(next(), T("\""));
+	assert_text_eq(next(), T("double"));
+	assert_text_eq(next(), T("\""));
+	assert_text_eq(next(), T("."));
 	ck_assert_ptr_eq(next(), NULL);
 }
 END_TEST

@@ -27,6 +27,7 @@
 		88548A721ECF5BBE0063254E /* tree.c in Sources */ = {isa = PBXBuildFile; fileRef = 88548A6F1ECF5BAA0063254E /* tree.c */; };
 		88548A781ECF5CDF0063254E /* memory.c in Sources */ = {isa = PBXBuildFile; fileRef = 88E48C9B1EC76E17007F5449 /* memory.c */; };
 		886533651E958CA60089FD91 /* wordscan.c in Sources */ = {isa = PBXBuildFile; fileRef = 886533631E958CA60089FD91 /* wordscan.c */; };
+		886D7CCE1ED32C5E00566B7B /* census.c in Sources */ = {isa = PBXBuildFile; fileRef = 884F5CAB1EBA67ED00DA1C24 /* census.c */; };
 		887D44821EC87CB8001C0E83 /* strntod.c in Sources */ = {isa = PBXBuildFile; fileRef = 887D44811EC87CB8001C0E83 /* strntod.c */; };
 		887D44831EC87CC2001C0E83 /* strntod.c in Sources */ = {isa = PBXBuildFile; fileRef = 887D44811EC87CB8001C0E83 /* strntod.c */; };
 		88B565BD1E96D4CE00FC9AEF /* main_get.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565B81E96D4CE00FC9AEF /* main_get.c */; };
@@ -600,6 +601,7 @@
 				88EA69E61EAF94DE00D57BEB /* wordscan.c in Sources */,
 				88548A6E1ECE63060063254E /* typemap.c in Sources */,
 				88CD846C1EBB7FCA00DF50CB /* stem_UTF_8_hungarian.c in Sources */,
+				886D7CCE1ED32C5E00566B7B /* census.c in Sources */,
 				88EA69E01EAF94DE00D57BEB /* sentscan.c in Sources */,
 				88EA69DA1EAF94C200D57BEB /* array.c in Sources */,
 				887D44831EC87CC2001C0E83 /* strntod.c in Sources */,

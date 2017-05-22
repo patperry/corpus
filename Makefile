@@ -299,7 +299,7 @@ tests/check_data.o: tests/check_data.c src/error.h src/table.h src/text.h \
 	tests/testutil.h
 tests/check_filter.o: tests/check_filter.c src/table.h src/text.h \
 	src/textset.h src/tree.h src/typemap.h src/symtab.h \
-	src/wordscan.h src/filter.h tests/testutil.h
+	src/wordscan.h src/filter.h src/census.h tests/testutil.h
 tests/check_sentscan.o: tests/check_sentscan.c src/text.h src/unicode.h \
 	src/wordscan.h tests/testutil.h
 tests/check_symtab.o: tests/check_symtab.c src/table.h src/text.h \

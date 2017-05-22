@@ -412,9 +412,9 @@ int corpus_filter_advance(struct corpus_filter *f, int *idptr)
 	int err, ret;
 
 	ret = corpus_filter_advance_raw(f, &type_id);
+	err = f->error;
 
-	if (f->error) {
-		err = f->error;
+	if (!ret || err) {
 		goto out;
 	}
 

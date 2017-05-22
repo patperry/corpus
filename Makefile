@@ -73,13 +73,14 @@ DATA    = data/ucd/CaseFolding.txt \
 	  data/ucd/UnicodeData.txt \
 	  data/ucd/auxiliary/WordBreakProperty.txt
 
-TESTS_T = tests/check_census tests/check_data tests/check_sentscan  \
-	  tests/check_symtab tests/check_text tests/check_tree \
-	  tests/check_typemap tests/check_unicode tests/check_wordscan
-TESTS_O = tests/check_census.o tests/check_data.o tests/check_sentscan.o \
-	  tests/check_symtab.o tests/check_text.o tests/check_tree.o \
-	  tests/check_typemap.o tests/check_unicode.o tests/check_wordscan.o \
-	  tests/testutil.o
+TESTS_T = tests/check_census tests/check_data tests/check_filter \
+	  tests/check_sentscan  tests/check_symtab tests/check_text \
+	  tests/check_tree tests/check_typemap tests/check_unicode \
+	  tests/check_wordscan
+TESTS_O = tests/check_census.o tests/check_data.o tests/check_filter.o \
+	  tests/check_sentscan.o tests/check_symtab.o tests/check_text.o \
+	  tests/check_tree.o tests/check_typemap.o tests/check_unicode.o \
+	  tests/check_wordscan.o tests/testutil.o
 
 TESTS_DATA = data/ucd/NormalizationTest.txt \
 	     data/ucd/auxiliary/SentenceBreakTest.txt \
@@ -189,6 +190,9 @@ tests/check_census: tests/check_census.o tests/testutil.o $(CORPUS_A)
 tests/check_data: tests/check_data.o tests/testutil.o $(CORPUS_A)
 	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS) $^
 
+tests/check_filter: tests/check_filter.o tests/testutil.o $(CORPUS_A)
+	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS) $^
+
 tests/check_sentscan: tests/check_sentscan.o tests/testutil.o $(CORPUS_A) \
 		data/ucd/auxiliary/SentenceBreakTest.txt
 	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS)  \
@@ -293,6 +297,9 @@ tests/check_census.o: tests/check_census.c src/table.h src/census.h \
 tests/check_data.o: tests/check_data.c src/error.h src/table.h src/text.h \
 	src/textset.h src/typemap.h src/symtab.h src/data.h src/datatype.h \
 	tests/testutil.h
+tests/check_filter.o: tests/check_filter.c src/table.h src/text.h \
+	src/textset.h src/tree.h src/typemap.h src/symtab.h \
+	src/wordscan.h src/filter.h tests/testutil.h
 tests/check_sentscan.o: tests/check_sentscan.c src/text.h src/unicode.h \
 	src/wordscan.h tests/testutil.h
 tests/check_symtab.o: tests/check_symtab.c src/table.h src/text.h \

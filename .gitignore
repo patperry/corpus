@@ -6,6 +6,7 @@ xcuserdata
 /doc/html
 /tests/check_census
 /tests/check_data
+/tests/check_filter
 /tests/check_sentscan
 /tests/check_symtab
 /tests/check_text

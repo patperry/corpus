@@ -15,8 +15,10 @@
  */
 
 #include <check.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include "../src/table.h"
 #include "../src/text.h"
 #include "../src/textset.h"
@@ -29,8 +31,8 @@
 
 #define IGNORE_EMPTY CORPUS_FILTER_IGNORE_EMPTY
 
-struct corpus_text dropped;
-const struct corpus_text *DROPPED;
+struct corpus_text dropped, eot;
+const struct corpus_text *DROPPED, *EOT;
 struct corpus_filter filter;
 int has_filter;
 
@@ -39,8 +41,12 @@ static void setup_filter(void)
 	setup();
 	has_filter = 0;
 	dropped.ptr = (uint8_t *)"<drop>";
-	dropped.attr = 0;
+	dropped.attr = strlen("<drop>");
+	eot.ptr = (uint8_t *)"<eot>";
+	eot.attr = strlen("<eot>");
+
 	DROPPED = &dropped;
+	EOT = &eot;
 }
 
 
@@ -89,7 +95,7 @@ static const struct corpus_text *next(void)
 		return &filter.symtab.types[type_id].text;
 	} else {
 		ck_assert(!filter.error);
-		return NULL;
+		return EOT;
 	}
 }
 
@@ -108,7 +114,7 @@ START_TEST(test_basic)
 	assert_text_eq(next(), T("a"));
 	assert_text_eq(next(), T("rose"));
 	assert_text_eq(next(), T("."));
-	assert_text_eq(next(), NULL);
+	assert_text_eq(next(), EOT);
 }
 END_TEST
 

@@ -442,7 +442,7 @@ out:
 int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 {
 	struct corpus_wordscan scan;
-	int err, has, id, type_id, node_id, parent_id;
+	int err, id, type_id, node_id, parent_id;
 
 	if (!f->combine.nnode) {
 		return 0;
@@ -457,11 +457,9 @@ int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 	// save the state of the current scan
 	scan = f->scan;
 
+	// check for a length-1 combine rule
 	if (f->combine_rules[node_id] >= 0) {
-		has = 1;
 		id = f->combine_rules[node_id];
-	} else {
-		has = 0;
 	}
 
 	while (corpus_filter_advance_raw(f, &type_id)) {
@@ -476,7 +474,6 @@ int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 		// found a longer match
 		if (f->combine_rules[node_id] >= 0) {
 			scan = f->scan;
-			has = 1;
 			id = f->combine_rules[node_id];
 		}
 	}

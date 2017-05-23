@@ -48,14 +48,18 @@ int corpus_text_init_copy(struct corpus_text *text,
         size_t attr = other->attr;
 	int err;
 
-        if (!(text->ptr = corpus_malloc(size + 1))) {
-                err = CORPUS_ERROR_NOMEM;
-                corpus_log(err, "failed allocating text object");
-                return err;
-        }
+	if (size) {
+		if (!(text->ptr = corpus_malloc(size + 1))) {
+			err = CORPUS_ERROR_NOMEM;
+			corpus_log(err, "failed allocating text object");
+			return err;
+		}
 
-        memcpy(text->ptr, other->ptr, size);
-        text->ptr[size] = '\0';
+		memcpy(text->ptr, other->ptr, size);
+		text->ptr[size] = '\0';
+	} else {
+		text->ptr = NULL;
+	}
         text->attr = attr;
         return 0;
 }

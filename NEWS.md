@@ -1,3 +1,6 @@
+# corpus 0.6.0
+
+
 # corpus 0.5.0
 
 * Added new `filter` module with options for dropping, combining, and

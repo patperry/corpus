@@ -29,7 +29,7 @@ char *random_keys(void)
 	char *keys = alloc(nkey + 1);
 
 	for (i = 0; i < nkey; i++) {
-		j = (int)rand % 4;
+		j = (int)rand() % 4;
 		keys[i] = 'a' + j;
 
 	}

@@ -41,6 +41,10 @@ static void decode_valid_escape(const uint8_t **inputptr, uint32_t *codeptr);
 static void decode_valid_uescape(const uint8_t **inputptr, uint32_t *codeptr);
 
 
+static void iter_retreat_escaped(struct corpus_text_iter *it);
+static void iter_retreat_raw(struct corpus_text_iter *it);
+
+
 int corpus_text_init_copy(struct corpus_text *text,
 			  const struct corpus_text *other)
 {
@@ -164,112 +168,159 @@ static int at_escape(const uint8_t *begin, const uint8_t *ptr)
 
 int corpus_text_iter_retreat(struct corpus_text_iter *it)
 {
+	if (it->ptr == it->begin) {
+		it->current = 0;
+		it->attr = 0;
+		return 0;
+	}
+
+	if (it->text_attr & CORPUS_TEXT_ESC_BIT) {
+		iter_retreat_escaped(it);
+	} else {
+		iter_retreat_raw(it);
+	}
+
+	return 1;
+}
+
+
+void iter_retreat_raw(struct corpus_text_iter *it)
+{
 	const uint8_t *ptr = it->ptr;
-	size_t text_attr = it->text_attr;
+	uint32_t code;
+	size_t attr;
+
+	code = *(--ptr);
+	attr = 0;
+
+	if (code < 0x80) {
+		it->ptr = (uint8_t *)ptr;
+		goto out;
+	}
+
+	while (*ptr < 0xC0) { // continuation byte
+		ptr--;
+	}
+	it->ptr = (uint8_t *)ptr;
+
+	corpus_decode_utf8(&ptr, &code);
+	attr = CORPUS_TEXT_UTF8_BIT;
+
+out:
+	it->current = code;
+	it->attr = 0;
+}
+
+
+void iter_retreat_escaped(struct corpus_text_iter *it)
+{
+	const uint8_t *ptr = it->ptr;
 	uint32_t code, hi;
 	size_t attr;
 	int i;
 
-	if (ptr == it->begin) {
-		goto at_begin;
-	}
-
-	attr = 0;
 	code = *(--ptr);
+	attr = 0;
 
-	if (text_attr & CORPUS_TEXT_ESC_BIT) {
-		switch (code) {
-		case '"':
-			if (at_escape(it->begin, ptr)) {
-				ptr--;
-				code = '"';
-				attr = CORPUS_TEXT_ESC_BIT;
-				goto out;
-			}
-			break;
-		case '\\':
-			if (at_escape(it->begin, ptr)) {
-				ptr--;
-				code = '\\';
-				attr = CORPUS_TEXT_ESC_BIT;
-				goto out;
-			}
-			break;
-		case '/':
-			if (at_escape(it->begin, ptr)) {
-				ptr--;
-				code = '/';
-				attr = CORPUS_TEXT_ESC_BIT;
-				goto out;
-			}
-			break;
-		case 'b':
-			if (at_escape(it->begin, ptr)) {
-				ptr--;
-				code = '\b';
-				attr = CORPUS_TEXT_ESC_BIT;
-				goto out;
-			}
-			break;
-		case 'f':
-			if (at_escape(it->begin, ptr)) {
-				ptr--;
-				code = '\f';
-				attr = CORPUS_TEXT_ESC_BIT;
-				goto out;
-			}
-			break;
-		case 'n':
-			if (at_escape(it->begin, ptr)) {
-				ptr--;
-				code = '\n';
-				attr = CORPUS_TEXT_ESC_BIT;
-				goto out;
-			}
-			break;
-		case 'r':
-			if (at_escape(it->begin, ptr)) {
-				ptr--;
-				code = '\r';
-				attr = CORPUS_TEXT_ESC_BIT;
-				goto out;
-			}
-			break;
-		case 't':
-			if (at_escape(it->begin, ptr)) {
-				ptr--;
-				code = '\t';
-				attr = CORPUS_TEXT_ESC_BIT;
-				goto out;
-			}
-			break;
-		}
-
-		if (isxdigit((int)code)) {
-			if (!(it->begin + 4 < ptr && ptr[-4] == 'u'
-					&& at_escape(it->begin, ptr - 4))) {
-				goto out;
-			}
+	switch (code) {
+	case '"':
+		if (at_escape(it->begin, ptr)) {
+			ptr--;
+			code = '"';
 			attr = CORPUS_TEXT_ESC_BIT;
-
-			code = 0;
-			for (i = 0; i < 4; i++) {
-				code = (code << 4) + hextoi(ptr[i-3]);
-			}
-			ptr -= 5;
-
-			if (CORPUS_IS_UTF16_LOW(code)) {
-				hi = 0;
-				for (i = 0; i < 4; i++) {
-					hi = (hi << 4) + hextoi(ptr[i-4]);
-				}
-				ptr -= 6;
-				code = CORPUS_DECODE_UTF16_PAIR(hi, code);
-			}
-
 			goto out;
 		}
+		break;
+
+	case '\\':
+		if (at_escape(it->begin, ptr)) {
+			ptr--;
+			code = '\\';
+			attr = CORPUS_TEXT_ESC_BIT;
+			goto out;
+		}
+		break;
+
+	case '/':
+		if (at_escape(it->begin, ptr)) {
+			ptr--;
+			code = '/';
+			attr = CORPUS_TEXT_ESC_BIT;
+			goto out;
+		}
+		break;
+
+	case 'b':
+		if (at_escape(it->begin, ptr)) {
+			ptr--;
+			code = '\b';
+			attr = CORPUS_TEXT_ESC_BIT;
+			goto out;
+		}
+		break;
+
+	case 'f':
+		if (at_escape(it->begin, ptr)) {
+			ptr--;
+			code = '\f';
+			attr = CORPUS_TEXT_ESC_BIT;
+			goto out;
+		}
+		break;
+
+	case 'n':
+		if (at_escape(it->begin, ptr)) {
+			ptr--;
+			code = '\n';
+			attr = CORPUS_TEXT_ESC_BIT;
+			goto out;
+		}
+		break;
+
+	case 'r':
+		if (at_escape(it->begin, ptr)) {
+			ptr--;
+			code = '\r';
+			attr = CORPUS_TEXT_ESC_BIT;
+			goto out;
+		}
+		break;
+	case 't':
+		if (at_escape(it->begin, ptr)) {
+			ptr--;
+			code = '\t';
+			attr = CORPUS_TEXT_ESC_BIT;
+			goto out;
+		}
+		break;
+
 	}
+
+	if (isxdigit((int)code)) {
+		if (!(it->begin + 4 < ptr && ptr[-4] == 'u'
+				&& at_escape(it->begin, ptr - 4))) {
+			goto out;
+		}
+		attr = CORPUS_TEXT_ESC_BIT;
+
+		code = 0;
+		for (i = 0; i < 4; i++) {
+			code = (code << 4) + hextoi(ptr[i-3]);
+		}
+		ptr -= 5;
+
+		if (CORPUS_IS_UTF16_LOW(code)) {
+			hi = 0;
+			for (i = 0; i < 4; i++) {
+				hi = (hi << 4) + hextoi(ptr[i-4]);
+			}
+			ptr -= 6;
+			code = CORPUS_DECODE_UTF16_PAIR(hi, code);
+		}
+
+		goto out;
+	}
+
 	if (code >= 0x80) {
 		// might be a continuation byte
 	}
@@ -279,13 +330,9 @@ out:
 	it->ptr = (uint8_t *)ptr;
 	it->current = code;
 	it->attr = attr;
-	return 1;
-
-at_begin:
-	it->current = 0;
-	it->attr = 0;
-	return 0;
 }
+
+
 
 
 int assign_raw(struct corpus_text *text, const uint8_t *ptr, size_t size)

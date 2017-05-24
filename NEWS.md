@@ -1,5 +1,7 @@
 # corpus 0.6.0
 
+* Added the ability to iterate backwards over the characters in a text.
+
 
 # corpus 0.5.0
 

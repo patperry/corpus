@@ -41,7 +41,6 @@ struct corpus_text {
  * An iterator over the decoded UTF-32 characters in a text.
  */
 struct corpus_text_iter {
-	const uint8_t *begin;	/**< begin of the text buffer */
 	const uint8_t *ptr;	/**< current position in the text buffer*/
 	const uint8_t *end;	/**< end of the text buffer */
 	size_t text_attr;	/**< text attributes */

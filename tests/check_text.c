@@ -240,6 +240,21 @@ START_TEST(test_iter_ascii)
 END_TEST
 
 
+START_TEST(test_iter_bidi)
+{
+	start(T("abc"));
+	ck_assert_int_eq(next(), 'a');
+	ck_assert_int_eq(next(), 'b');
+	ck_assert_int_eq(prev(), 'a');
+	ck_assert_int_eq(next(), 'b');
+	ck_assert_int_eq(prev(), 'a');
+	ck_assert_int_eq(next(), 'b');
+	ck_assert_int_eq(next(), 'c');
+	ck_assert_int_eq(next(), -1);
+}
+END_TEST
+
+
 START_TEST(test_iter_utf8)
 {
 	start(T("\xE2\x98\x83 \xF0\x9F\x99\x82 \xC2\xA7\xC2\xA4"));
@@ -413,9 +428,9 @@ START_TEST(test_iter_random)
 		ck_assert_int_eq(iter.current, types[id].value);
 		ck_assert_int_eq(iter.attr, types[id].attr);
 
+		ck_assert_ptr_eq(iter.ptr, ptr);
 		len = strlen(types[id].string);
 		ptr -= len;
-		ck_assert_ptr_eq(iter.ptr, ptr);
 	}
 
 	ck_assert(!corpus_text_iter_retreat(&iter));
@@ -450,6 +465,7 @@ Suite *text_suite(void)
 	tc = tcase_create("iteration");
         tcase_add_checked_fixture(tc, setup_text, teardown_text);
 	tcase_add_test(tc, test_iter_ascii);
+	tcase_add_test(tc, test_iter_bidi);
 	tcase_add_test(tc, test_iter_utf8);
 	tcase_add_test(tc, test_iter_escape);
 	tcase_add_test(tc, test_iter_uescape);

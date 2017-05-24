@@ -203,7 +203,10 @@ int corpus_text_iter_retreat(struct corpus_text_iter *it)
 		iter_retreat_raw(it);
 	}
 
-	// set the pointer to the end of the code
+	// now, it->code is the previous code, and it->ptr is the start
+	// of the previous code
+
+	// set the pointer to the end of the previous code
 	it->ptr = ptr;
 	return 1;
 }

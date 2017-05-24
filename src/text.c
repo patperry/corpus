@@ -163,6 +163,14 @@ void corpus_text_iter_reset(struct corpus_text_iter *it)
 }
 
 
+void corpus_text_iter_skip(struct corpus_text_iter *it)
+{
+	it->ptr = it->end;
+	it->current = CORPUS_TEXT_CODE_NONE;
+	it->attr = 0;
+}
+
+
 int corpus_text_iter_retreat(struct corpus_text_iter *it)
 {
 	const size_t size = (it->text_attr & CORPUS_TEXT_SIZE_MASK);

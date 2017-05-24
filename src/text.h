@@ -157,6 +157,13 @@ int corpus_text_iter_retreat(struct corpus_text_iter *it);
 void corpus_text_iter_reset(struct corpus_text_iter *it);
 
 /**
+ * Skip an iterator to the end of the text.
+ *
+ * \param it the text iterator
+ */
+void corpus_text_iter_skip(struct corpus_text_iter *it);
+
+/**
  * Compute a hash code from a text.
  *
  * \param text the text

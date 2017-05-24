@@ -204,6 +204,44 @@ static int prev(void)
 }
 
 
+START_TEST(test_iter_empty)
+{
+	start(T(""));
+	ck_assert_int_eq(next(), -1);
+	ck_assert_int_eq(prev(), -1);
+
+	start(T(""));
+	ck_assert_int_eq(prev(), -1);
+	ck_assert_int_eq(next(), -1);
+
+	start(T(""));
+	ck_assert_int_eq(next(), -1);
+	ck_assert_int_eq(next(), -1);
+	ck_assert_int_eq(prev(), -1);
+	ck_assert_int_eq(prev(), -1);
+
+	start(T(""));
+	ck_assert_int_eq(prev(), -1);
+	ck_assert_int_eq(prev(), -1);
+	ck_assert_int_eq(next(), -1);
+	ck_assert_int_eq(next(), -1);
+}
+END_TEST
+
+
+START_TEST(test_iter_single)
+{
+	start(T("a"));
+	ck_assert_int_eq(next(), 'a');
+	ck_assert_int_eq(prev(), -1);
+	ck_assert_int_eq(next(), 'a');
+	ck_assert_int_eq(next(), -1);
+	ck_assert_int_eq(prev(), 'a');
+	ck_assert_int_eq(prev(), -1);
+}
+END_TEST
+
+
 START_TEST(test_iter_ascii)
 {
 	start(T("abba zabba"));
@@ -240,7 +278,7 @@ START_TEST(test_iter_ascii)
 END_TEST
 
 
-START_TEST(test_iter_bidi)
+START_TEST(test_iter_bidi1)
 {
 	start(T("abc"));
 	ck_assert_int_eq(next(), 'a');
@@ -251,6 +289,22 @@ START_TEST(test_iter_bidi)
 	ck_assert_int_eq(next(), 'b');
 	ck_assert_int_eq(next(), 'c');
 	ck_assert_int_eq(next(), -1);
+}
+END_TEST
+
+
+START_TEST(test_iter_bidi2)
+{
+	start(T("ab"));
+	ck_assert_int_eq(next(), 'a');
+	ck_assert_int_eq(prev(), -1);
+	ck_assert_int_eq(next(), 'a');
+	ck_assert_int_eq(next(), 'b');
+	ck_assert_int_eq(next(), -1);
+	ck_assert_int_eq(prev(), 'b');
+	ck_assert_int_eq(prev(), 'a');
+	ck_assert_int_eq(prev(), -1);
+	ck_assert_int_eq(next(), 'a');
 }
 END_TEST
 
@@ -464,8 +518,11 @@ Suite *text_suite(void)
 
 	tc = tcase_create("iteration");
         tcase_add_checked_fixture(tc, setup_text, teardown_text);
+	tcase_add_test(tc, test_iter_empty);
+	tcase_add_test(tc, test_iter_single);
 	tcase_add_test(tc, test_iter_ascii);
-	tcase_add_test(tc, test_iter_bidi);
+	tcase_add_test(tc, test_iter_bidi1);
+	tcase_add_test(tc, test_iter_bidi2);
 	tcase_add_test(tc, test_iter_utf8);
 	tcase_add_test(tc, test_iter_escape);
 	tcase_add_test(tc, test_iter_uescape);

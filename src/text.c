@@ -157,15 +157,6 @@ void corpus_text_iter_reset(struct corpus_text_iter *it)
 }
 
 
-static int at_escape(const uint8_t *begin, const uint8_t *ptr)
-{
-	if (ptr < begin && ptr[-1] == '\\') {
-		return 1;
-	}
-	return 0;
-}
-
-
 int corpus_text_iter_retreat(struct corpus_text_iter *it)
 {
 	if (it->ptr == it->begin) {
@@ -212,90 +203,78 @@ out:
 }
 
 
+// we are at an escape if we are preceded by an odd number of
+// backslash (\) characters
+static int at_escape(const uint8_t *begin, const uint8_t *ptr)
+{
+	int at = 0;
+	uint_fast8_t prev;
+
+	while (begin < ptr) {
+		prev = *(--ptr);
+
+		if (prev != '\\') {
+			goto out;
+		}
+
+		at = ~at;
+	}
+
+out:
+	return at;
+}
+
+
 void iter_retreat_escaped(struct corpus_text_iter *it)
 {
 	const uint8_t *ptr = it->ptr;
-	uint32_t code, hi;
+	uint32_t code, unesc, hi;
 	size_t attr;
 	int i;
 
 	code = *(--ptr);
 	attr = 0;
 
+	// check for 2-byte escape
 	switch (code) {
 	case '"':
-		if (at_escape(it->begin, ptr)) {
-			ptr--;
-			code = '"';
-			attr = CORPUS_TEXT_ESC_BIT;
-			goto out;
-		}
-		break;
-
 	case '\\':
-		if (at_escape(it->begin, ptr)) {
-			ptr--;
-			code = '\\';
-			attr = CORPUS_TEXT_ESC_BIT;
-			goto out;
-		}
-		break;
-
 	case '/':
-		if (at_escape(it->begin, ptr)) {
-			ptr--;
-			code = '/';
-			attr = CORPUS_TEXT_ESC_BIT;
-			goto out;
-		}
+		unesc = code;
 		break;
 
 	case 'b':
-		if (at_escape(it->begin, ptr)) {
-			ptr--;
-			code = '\b';
-			attr = CORPUS_TEXT_ESC_BIT;
-			goto out;
-		}
+		unesc = '\b';
 		break;
 
 	case 'f':
-		if (at_escape(it->begin, ptr)) {
-			ptr--;
-			code = '\f';
-			attr = CORPUS_TEXT_ESC_BIT;
-			goto out;
-		}
+		unesc = '\f';
 		break;
-
 	case 'n':
-		if (at_escape(it->begin, ptr)) {
-			ptr--;
-			code = '\n';
-			attr = CORPUS_TEXT_ESC_BIT;
-			goto out;
-		}
+		unesc = '\n';
 		break;
 
 	case 'r':
-		if (at_escape(it->begin, ptr)) {
-			ptr--;
-			code = '\r';
-			attr = CORPUS_TEXT_ESC_BIT;
-			goto out;
-		}
-		break;
-	case 't':
-		if (at_escape(it->begin, ptr)) {
-			ptr--;
-			code = '\t';
-			attr = CORPUS_TEXT_ESC_BIT;
-			goto out;
-		}
+		unesc = '\r';
 		break;
 
+	case 't':
+		unesc = '\t';
+		break;
+
+	default:
+		unesc = 0;
+		break;
 	}
 
+	if (unesc && at_escape(it->begin, ptr)) {
+		ptr--;
+		code = unesc;
+		attr = CORPUS_TEXT_ESC_BIT;
+		goto out;
+	}
+
+	// check for 6-byte escape
 	if (isxdigit((int)code)) {
 		if (!(it->begin + 4 < ptr && ptr[-4] == 'u'
 				&& at_escape(it->begin, ptr - 4))) {
@@ -305,17 +284,22 @@ void iter_retreat_escaped(struct corpus_text_iter *it)
 
 		code = 0;
 		for (i = 0; i < 4; i++) {
-			code = (code << 4) + hextoi(ptr[i-3]);
+			code = (code << 4) + hextoi(ptr[i - 3]);
 		}
 		ptr -= 5;
+
+		if (code >= 0x80) {
+			attr |= CORPUS_TEXT_UTF8_BIT;
+		}
 
 		if (CORPUS_IS_UTF16_LOW(code)) {
 			hi = 0;
 			for (i = 0; i < 4; i++) {
-				hi = (hi << 4) + hextoi(ptr[i-4]);
+				hi = (hi << 4) + hextoi(ptr[i - 4]);
 			}
-			ptr -= 6;
+
 			code = CORPUS_DECODE_UTF16_PAIR(hi, code);
+			ptr -= 6;
 		}
 
 		goto out;

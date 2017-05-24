@@ -17,6 +17,7 @@
 #include <check.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include "../src/error.h"
 #include "../src/text.h"
 #include "../src/unicode.h"
@@ -177,6 +178,237 @@ START_TEST(test_unescape_utf16)
 END_TEST
 
 
+static struct corpus_text_iter iter;
+
+static void start (const struct corpus_text *text)
+{
+	corpus_text_iter_make(&iter, text);
+}
+
+static int next(void)
+{
+	if (corpus_text_iter_advance(&iter)) {
+		return (int)iter.current;
+	} else {
+		return -1;
+	}
+}
+
+static int prev(void)
+{
+	if (corpus_text_iter_retreat(&iter)) {
+		return (int)iter.current;
+	} else {
+		return -1;
+	}
+}
+
+
+START_TEST(test_iter_ascii)
+{
+	start(T("abba zabba"));
+
+	// forward
+	ck_assert_int_eq(prev(), -1);
+	ck_assert_int_eq(next(), 'a');
+	ck_assert_int_eq(next(), 'b');
+	ck_assert_int_eq(next(), 'b');
+	ck_assert_int_eq(next(), 'a');
+	ck_assert_int_eq(next(), ' ');
+	ck_assert_int_eq(next(), 'z');
+	ck_assert_int_eq(next(), 'a');
+	ck_assert_int_eq(next(), 'b');
+	ck_assert_int_eq(next(), 'b');
+	ck_assert_int_eq(next(), 'a');
+	ck_assert_int_eq(next(), -1);
+	ck_assert_int_eq(next(), -1);
+
+	// backward
+	ck_assert_int_eq(prev(), 'a');
+	ck_assert_int_eq(prev(), 'b');
+	ck_assert_int_eq(prev(), 'b');
+	ck_assert_int_eq(prev(), 'a');
+	ck_assert_int_eq(prev(), 'z');
+	ck_assert_int_eq(prev(), ' ');
+	ck_assert_int_eq(prev(), 'a');
+	ck_assert_int_eq(prev(), 'b');
+	ck_assert_int_eq(prev(), 'b');
+	ck_assert_int_eq(prev(), 'a');
+	ck_assert_int_eq(prev(), -1);
+	ck_assert_int_eq(prev(), -1);
+}
+END_TEST
+
+
+START_TEST(test_iter_utf8)
+{
+	start(T("\xE2\x98\x83 \xF0\x9F\x99\x82 \xC2\xA7\xC2\xA4"));
+
+	ck_assert_int_eq(next(), 0x2603); // \xE2\x98\x83
+	ck_assert_int_eq(next(), ' ');
+	ck_assert_int_eq(next(), 0x1F642); // \xF0\x9F\x99\x82
+	ck_assert_int_eq(next(), ' ');
+	ck_assert_int_eq(next(), 0xA7); // \xC2\xA7
+	ck_assert_int_eq(next(), 0xA4); // \xC2\xA4
+	ck_assert_int_eq(next(), -1);
+
+	ck_assert_int_eq(prev(), 0xA4);
+	ck_assert_int_eq(prev(), 0xA7);
+	ck_assert_int_eq(prev(), ' ');
+	ck_assert_int_eq(prev(), 0x1F642);
+	ck_assert_int_eq(prev(), ' ');
+	ck_assert_int_eq(prev(), 0x2603);
+	ck_assert_int_eq(prev(), -1);
+}
+END_TEST
+
+
+START_TEST(test_iter_escape)
+{
+	start(T("nn\\\\\\n\\nn\\\\n"));
+
+	ck_assert_int_eq(next(), 'n');
+	ck_assert_int_eq(next(), 'n');
+	ck_assert_int_eq(next(), '\\');
+	ck_assert_int_eq(next(), '\n');
+	ck_assert_int_eq(next(), '\n');
+	ck_assert_int_eq(next(), 'n');
+	ck_assert_int_eq(next(), '\\');
+	ck_assert_int_eq(next(), 'n');
+	ck_assert_int_eq(next(), -1);
+
+	ck_assert_int_eq(prev(), 'n');
+	ck_assert_int_eq(prev(), '\\');
+	ck_assert_int_eq(prev(), 'n');
+	ck_assert_int_eq(prev(), '\n');
+	ck_assert_int_eq(prev(), '\n');
+	ck_assert_int_eq(prev(), '\\');
+	ck_assert_int_eq(prev(), 'n');
+	ck_assert_int_eq(prev(), 'n');
+	ck_assert_int_eq(prev(), -1);
+}
+END_TEST
+
+
+START_TEST(test_iter_uescape)
+{
+	start(T("\\u2603 \\uD83D\\uDE42 \\u00a7\\u00a4"));
+
+	ck_assert_int_eq(next(), 0x2603);
+	ck_assert_int_eq(next(), ' ');
+	ck_assert_int_eq(next(), 0x1F642);
+	ck_assert_int_eq(next(), ' ');
+	ck_assert_int_eq(next(), 0xA7);
+	ck_assert_int_eq(next(), 0xA4);
+	ck_assert_int_eq(next(), -1);
+
+	ck_assert_int_eq(prev(), 0xA4);
+	ck_assert_int_eq(prev(), 0xA7);
+	ck_assert_int_eq(prev(), ' ');
+	ck_assert_int_eq(prev(), 0x1F642);
+	ck_assert_int_eq(prev(), ' ');
+	ck_assert_int_eq(prev(), 0x2603);
+	ck_assert_int_eq(prev(), -1);
+
+}
+END_TEST
+
+struct type {
+	const char *string;
+	int value;
+	size_t attr;
+};
+
+#define ESC CORPUS_TEXT_ESC_BIT
+#define UTF8 CORPUS_TEXT_UTF8_BIT
+
+START_TEST(test_iter_random)
+{
+	const struct type types[] = {
+		// escaped
+		{ "\\\"", '\"', ESC },
+		{ "\\\\", '\\', ESC },
+		{ "\\/", '/', ESC },
+		{ "\\b", '\b', ESC },
+		{ "\\f", '\f', ESC },
+		{ "\\n", '\n', ESC },
+		{ "\\r", '\r', ESC },
+		{ "\\t", '\t', ESC },
+
+		// not escaped
+		{ "\"", '\"', 0 },
+		{ "/", '/', 0 },
+		{ "b", 'b', 0 },
+		{ "f", 'f', 0 },
+		{ "n", 'n', 0 },
+		{ "r", 'r', 0 },
+		{ "t", 't', 0 },
+		{ "u", 'u', 0 },
+
+		// 2-byte UTF-8
+		{ "\xC2\xA7", 0xA7, UTF8 },
+		{ "\\u00a7", 0xA7, ESC|UTF8 },
+
+		// 3-byte UTF-8
+		{ "\xE2\x98\x83", 0x2603, UTF8 },
+		{ "\\u2603", 0x2603, ESC|UTF8 },
+
+		// 4-byte UTF-8
+		{ "\xE2\x98\x83", 0x2603, UTF8 },
+		{ "\\uD83D\\uDE42", 0x1F642, ESC|UTF8 }
+	};
+	unsigned ntype = sizeof(types) / sizeof(types[0]);
+
+	struct corpus_text text;
+	struct corpus_text_iter iter;
+	uint8_t buffer[1024 * 12];
+	int toks[1024];
+	int ntok_max = 1024 - 1;
+	int ntok;
+	size_t len, size;
+	int i, id;
+
+	srand(0);
+
+	ntok = (100 + rand()) % ntok_max;
+	size = 0;
+	for (i = 0; i < ntok; i++) {
+		id = rand() % ntype;
+		toks[i] = id;
+
+		len = strlen(types[id].string);
+		memcpy(buffer + size, types[id].string, len);
+		size += len;
+	}
+	toks[ntok] = -1;
+	buffer[size] = '\0';
+
+	ck_assert(!corpus_text_assign(&text, buffer, size, 0));
+	corpus_text_iter_make(&iter, &text);
+
+	// forward iteration
+	for (i = 0; i < ntok; i++) {
+		ck_assert(corpus_text_iter_advance(&iter));
+
+		id = toks[i];
+		ck_assert_int_eq(iter.current, types[id].value);
+		ck_assert_int_eq(iter.attr, types[id].attr);
+	}
+	ck_assert(!corpus_text_iter_advance(&iter));
+
+	// reverse iteration
+	while (i-- > 0) {
+		ck_assert(corpus_text_iter_retreat(&iter));
+
+		id = toks[i];
+		ck_assert_int_eq(iter.current, types[id].value);
+		ck_assert_int_eq(iter.attr, types[id].attr);
+	}
+	ck_assert(!corpus_text_iter_retreat(&iter));
+}
+END_TEST
+
+
 Suite *text_suite(void)
 {
 	Suite *s;
@@ -197,6 +429,15 @@ Suite *text_suite(void)
 	tcase_add_test(tc, test_unescape_escape);
 	tcase_add_test(tc, test_unescape_raw);
 	tcase_add_test(tc, test_unescape_utf16);
+	suite_add_tcase(s, tc);
+
+	tc = tcase_create("iteration");
+        tcase_add_checked_fixture(tc, setup_text, teardown_text);
+	tcase_add_test(tc, test_iter_ascii);
+	tcase_add_test(tc, test_iter_utf8);
+	tcase_add_test(tc, test_iter_escape);
+	tcase_add_test(tc, test_iter_uescape);
+	tcase_add_test(tc, test_iter_random);
 	suite_add_tcase(s, tc);
 
 	return s;

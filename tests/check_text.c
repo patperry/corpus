@@ -368,9 +368,9 @@ START_TEST(test_iter_random)
 	size_t len, size;
 	int i, id;
 
-	srand(0);
+	srand(_i);
 
-	ntok = (100 + rand()) % ntok_max;
+	ntok = (337 * (_i))  % ntok_max;
 	size = 0;
 	for (i = 0; i < ntok; i++) {
 		id = rand() % ntype;
@@ -383,6 +383,7 @@ START_TEST(test_iter_random)
 
 	ck_assert(!corpus_text_assign(&text, buffer, size, 0));
 	corpus_text_iter_make(&iter, &text);
+	ck_assert(!corpus_text_iter_retreat(&iter));
 
 	// forward iteration
 	for (i = 0; i < ntok; i++) {
@@ -393,6 +394,7 @@ START_TEST(test_iter_random)
 		ck_assert_int_eq(iter.attr, types[id].attr);
 	}
 	ck_assert(!corpus_text_iter_advance(&iter));
+	ck_assert(!corpus_text_iter_advance(&iter));
 
 	// reverse iteration
 	while (i-- > 0) {
@@ -402,6 +404,7 @@ START_TEST(test_iter_random)
 		ck_assert_int_eq(iter.current, types[id].value);
 		ck_assert_int_eq(iter.attr, types[id].attr);
 	}
+	ck_assert(!corpus_text_iter_retreat(&iter));
 	ck_assert(!corpus_text_iter_retreat(&iter));
 }
 END_TEST
@@ -435,7 +438,7 @@ Suite *text_suite(void)
 	tcase_add_test(tc, test_iter_utf8);
 	tcase_add_test(tc, test_iter_escape);
 	tcase_add_test(tc, test_iter_uescape);
-	tcase_add_test(tc, test_iter_random);
+	tcase_add_loop_test(tc, test_iter_random, 0, 50);
 	suite_add_tcase(s, tc);
 
 	return s;

@@ -179,27 +179,24 @@ void iter_retreat_raw(struct corpus_text_iter *it)
 {
 	const uint8_t *ptr = it->ptr;
 	uint32_t code;
-	size_t attr;
 
 	code = *(--ptr);
-	attr = 0;
 
 	if (code < 0x80) {
 		it->ptr = (uint8_t *)ptr;
-		goto out;
+		it->current = code;
+		it->attr = 0;
+	} else {
+		// skip over continuation bytes
+		do {
+			ptr--;
+		} while (*ptr < 0xC0);
+
+		it->ptr = (uint8_t *)ptr;
+
+		corpus_decode_utf8(&ptr, &it->current);
+		it->attr = CORPUS_TEXT_UTF8_BIT;
 	}
-
-	while (*ptr < 0xC0) { // continuation byte
-		ptr--;
-	}
-	it->ptr = (uint8_t *)ptr;
-
-	corpus_decode_utf8(&ptr, &code);
-	attr = CORPUS_TEXT_UTF8_BIT;
-
-out:
-	it->current = code;
-	it->attr = 0;
 }
 
 
@@ -267,11 +264,13 @@ void iter_retreat_escaped(struct corpus_text_iter *it)
 		break;
 	}
 
-	if (unesc && at_escape(it->begin, ptr)) {
-		ptr--;
-		code = unesc;
-		attr = CORPUS_TEXT_ESC_BIT;
-		goto out;
+	if (unesc) {
+	       if (at_escape(it->begin, ptr)) {
+		       ptr--;
+		       code = unesc;
+		       attr = CORPUS_TEXT_ESC_BIT;
+	       }
+	       goto out;
 	}
 
 	// check for 6-byte escape
@@ -305,10 +304,23 @@ void iter_retreat_escaped(struct corpus_text_iter *it)
 		goto out;
 	}
 
-	if (code >= 0x80) {
-		// might be a continuation byte
+	// check for ascii
+	if (code < 0x80) {
+		goto out;
 	}
 
+	// if we got here, then code is a continuation byte
+
+	// skip over preceding continuation bytes
+	do {
+		ptr--;
+	} while (*ptr < 0xC0);
+
+	// decode the utf-8 value
+	it->ptr = (uint8_t *)ptr;
+	corpus_decode_utf8(&ptr, &it->current);
+	it->attr = CORPUS_TEXT_UTF8_BIT;
+	return;
 
 out:
 	it->ptr = (uint8_t *)ptr;

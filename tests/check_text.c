@@ -380,8 +380,6 @@ START_TEST(test_iter_random)
 		memcpy(buffer + size, types[id].string, len);
 		size += len;
 	}
-	toks[ntok] = -1;
-	buffer[size] = '\0';
 
 	ck_assert(!corpus_text_assign(&text, buffer, size, 0));
 	corpus_text_iter_make(&iter, &text);

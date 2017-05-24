@@ -169,7 +169,6 @@ JSON string:
  + Unlike formal JSON, Corpus does allow escape sequences of the form `\uYYYY`
    where `YYYY` is a UTF-16 low surrogate unless the sequence is preceded by
    `\uXXXX`, where `XXXX` is a UTF-16 high surrogate.
-   valid Unicode.
 
 
 ### Arrays

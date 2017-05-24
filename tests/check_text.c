@@ -364,6 +364,7 @@ START_TEST(test_iter_random)
 	uint8_t buffer[1024 * 12];
 	int toks[1024];
 	int ntok_max = 1024 - 1;
+	const uint8_t *ptr;
 	int ntok;
 	size_t len, size;
 	int i, id;
@@ -381,9 +382,11 @@ START_TEST(test_iter_random)
 		size += len;
 	}
 
-	ck_assert(!corpus_text_assign(&text, buffer, size, 0));
+	ptr = buffer;
+	ck_assert(!corpus_text_assign(&text, ptr, size, 0));
 	corpus_text_iter_make(&iter, &text);
 	ck_assert(!corpus_text_iter_retreat(&iter));
+	ck_assert_ptr_eq(iter.ptr, ptr);
 
 	// forward iteration
 	for (i = 0; i < ntok; i++) {
@@ -392,9 +395,15 @@ START_TEST(test_iter_random)
 		id = toks[i];
 		ck_assert_int_eq(iter.current, types[id].value);
 		ck_assert_int_eq(iter.attr, types[id].attr);
+
+		len = strlen(types[id].string);
+		ptr += len;
+		ck_assert_ptr_eq(iter.ptr, ptr);
 	}
+
 	ck_assert(!corpus_text_iter_advance(&iter));
 	ck_assert(!corpus_text_iter_advance(&iter));
+	ck_assert_ptr_eq(iter.ptr, ptr);
 
 	// reverse iteration
 	while (i-- > 0) {
@@ -403,9 +412,15 @@ START_TEST(test_iter_random)
 		id = toks[i];
 		ck_assert_int_eq(iter.current, types[id].value);
 		ck_assert_int_eq(iter.attr, types[id].attr);
+
+		len = strlen(types[id].string);
+		ptr -= len;
+		ck_assert_ptr_eq(iter.ptr, ptr);
 	}
+
 	ck_assert(!corpus_text_iter_retreat(&iter));
 	ck_assert(!corpus_text_iter_retreat(&iter));
+	ck_assert_ptr_eq(iter.ptr, ptr);
 }
 END_TEST
 

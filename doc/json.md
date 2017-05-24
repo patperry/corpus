@@ -192,7 +192,7 @@ JSON object:
 
    *Examples:*
     `{" ": 1, "\u0020": 2}`,
-    `{"\u00e8": 3, "e\\u0300": 4}`
+    `{"\u00e8": 3, "e\u0300": 4}`
     (valid JSON but not accepted by Corpus)
 
 

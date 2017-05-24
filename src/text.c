@@ -214,7 +214,7 @@ static int at_escape(const uint8_t *begin, const uint8_t *ptr)
 			goto out;
 		}
 
-		at = ~at;
+		at = !at;
 	}
 
 out:

@@ -41,6 +41,7 @@ struct corpus_text {
  * An iterator over the decoded UTF-32 characters in a text.
  */
 struct corpus_text_iter {
+	const uint8_t *begin;	/**< begin of the text buffer */
 	const uint8_t *ptr;	/**< current position in the text buffer*/
 	const uint8_t *end;	/**< end of the text buffer */
 	size_t text_attr;	/**< text attributes */
@@ -140,7 +141,17 @@ void corpus_text_iter_make(struct corpus_text_iter *it,
 int corpus_text_iter_advance(struct corpus_text_iter *it);
 
 /**
- * Reset an iterator to the beginning of the text.
+ * Retreat to the previous character in a text.
+ *
+ * \param it the text iterator
+ *
+ * \returns non-zero if the iterator successfully backed up; zero if
+ * 	the iterator has passed the start of the text.
+ */
+int corpus_text_iter_retreat(struct corpus_text_iter *it);
+
+/**
+ * Reset an iterator to the start of the text.
  *
  * \param it the text iterator
  */

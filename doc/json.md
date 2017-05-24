@@ -83,7 +83,7 @@ record type, `P`. To define `P`, we just need to define the types for the
 fields of `P`. To do this, let `f` be any field name, and suppose that `R[f]`
 is the type of the field in record `R`, and `S[f]` is the type of the field in
 record `S`. Then, we set the parent record type for this field to `P[f] =
-parent(R[f], S[F])`.
+parent(R[f], S[f])`.
 
 
 ### Examples

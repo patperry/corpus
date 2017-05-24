@@ -8,11 +8,6 @@ Todo
   * Some sort of index for allowing KWIC queries.
 
 
-## Bugs
-
-  * Array types have an upper limit of `INT_MAX`. Do we check this?
-
-
 ## Sentence Segmentation
 
 Handle abbreviations correctly. Some references:

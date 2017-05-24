@@ -1200,6 +1200,10 @@ int scan_array(struct corpus_schema *s, const uint8_t **bufptr,
 				goto error;
 			}
 
+			if (length == INT_MAX) {
+				goto error_inval_length;
+			}
+
 			length++;
 			break;
 		default:
@@ -1210,6 +1214,11 @@ close:
 	ptr++;
 	err = corpus_schema_array(s, cur_id, length, &id);
 	goto out;
+
+error_inval_length:
+	err = CORPUS_ERROR_INVAL;
+	corpus_log(err, "array length exceeds maximum (%d)", INT_MAX);
+	goto error;
 
 error_inval_noclose:
 	err = CORPUS_ERROR_INVAL;
@@ -1298,6 +1307,10 @@ int scan_record(struct corpus_schema *s, const uint8_t **bufptr,
 				goto error;
 			}
 
+			if (nfield == INT_MAX) {
+				goto error_inval_nfield;
+			}
+
 			if (s->buffer.nfield == s->buffer.nfield_max) {
 				err = corpus_schema_buffer_grow(&s->buffer,
 								1);
@@ -1323,6 +1336,12 @@ close:
 	err = corpus_schema_record(s, s->buffer.type_ids + fstart,
 			    s->buffer.name_ids + fstart, nfield, &id);
 	goto out;
+
+error_inval_nfield:
+	err = CORPUS_ERROR_INVAL;
+	corpus_log(err, "number of record fields exceeds maximum (%d)",
+		   INT_MAX);
+	goto error;
 
 error_inval_noclose:
 	err = CORPUS_ERROR_INVAL;

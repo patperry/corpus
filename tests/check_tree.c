@@ -68,8 +68,8 @@ int get_depth(int id)
 	int parent_id;
 	int n;
 
-	ck_assert_int_le(0, id);
-	ck_assert_int_lt(id, tree.nnode);
+	ck_assert(0 <= id);
+	ck_assert(id < tree.nnode);
 
 	n = 0;
 	parent_id = id;
@@ -164,10 +164,10 @@ int has(const char *keys)
 		}
 
 		if (found) {
-			ck_assert_int_le(0, id);
-			ck_assert_int_lt(id, tree.nnode);
+			ck_assert(0 <= id);
+			ck_assert(id < tree.nnode);
 
-			ck_assert_int_lt(j, m);
+			ck_assert(j < m);
 			ck_assert_int_eq(tree.nodes[parent_id].ids[j], id);
 		} else {
 			ck_assert_int_eq(j, m);
@@ -199,8 +199,8 @@ void add(const char *keys)
 		n = tree.nnode;
 
 		ck_assert(!corpus_tree_add(&tree, parent_id, keys[i], &id));
-		ck_assert_int_le(0, id);
-		ck_assert_int_lt(id, tree.nnode);
+		ck_assert(0 <= id);
+		ck_assert(id < tree.nnode);
 
 		if (!had) {
 			ck_assert_int_eq(tree.nodes[parent_id].nitem, m + 1);
@@ -216,7 +216,7 @@ void add(const char *keys)
 			}
 		}
 
-		ck_assert_int_lt(j, m);
+		ck_assert(j < m);
 		ck_assert_int_eq(tree.nodes[parent_id].ids[j], id);
 		if (!had) {
 			ck_assert_int_eq(tree.nodes[id].nitem, 0);
@@ -228,7 +228,7 @@ void add(const char *keys)
 		for (i = 1; i < tree.nnode; i++) {
 			k1 = get_keys(i-1);
 			k2 = get_keys(i);
-			ck_assert_int_lt(compare_keys(k1, k2), 0);
+			ck_assert(compare_keys(k1, k2) < 0);
 		}
 	}
 }
@@ -260,7 +260,7 @@ void sort(void)
 	for (i = 1; i < tree.nnode; i++) {
 		k1 = get_keys(i-1);
 		k2 = get_keys(i);
-		ck_assert_int_lt(compare_keys(k1, k2), 0);
+		ck_assert(compare_keys(k1, k2) < 0);
 	}
 
 	// check that all items existed prior to the sorting
@@ -272,7 +272,7 @@ void sort(void)
 				break;
 			}
 		}
-		ck_assert_int_lt(j, nnode);
+		ck_assert(j < nnode);
 	}
 }
 

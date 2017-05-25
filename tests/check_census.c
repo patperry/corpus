@@ -49,9 +49,9 @@ double get(int i)
 	}
 
 	if (corpus_census_has(&census, i, &val)) {
-		ck_assert_double_eq(val,  val0);
+		ck_assert(val == val0);
 	} else {
-		ck_assert_double_eq(0.0,  val0);
+		ck_assert(0.0 == val0);
 	}
 
 	return val;
@@ -66,7 +66,7 @@ void add(int i, double x)
 	ck_assert(!corpus_census_add(&census, i, x));
 	newval = get(i);
 
-	ck_assert_double_eq(newval, oldval + x);
+	ck_assert(newval == oldval + x);
 }
 
 
@@ -100,30 +100,29 @@ void sort()
 	for (i = 1; i < census.nitem; i++) {
 		// if a tie, sort by item
 		if (census.weights[i-1] == census.weights[i]) {
-			ck_assert_int_lt(census.items[i-1], census.items[i]);
+			ck_assert(census.items[i-1] < census.items[i]);
 		} else {
-			ck_assert_double_gt(census.weights[i-1],
-					    census.weights[i]);
+			ck_assert(census.weights[i-1] > census.weights[i]);
 		}
 	}
 
 	// check that all indices existed prior to the sorting
-	ck_assert_int_le(census.nitem, nval);
+	ck_assert(census.nitem <= nval);
 	for (i = 0; i < census.nitem; i++) {
 		for (j = 0; j < nval; j++) {
 			if (inds[j] == census.items[i]) {
 				break;
 			}
 		}
-		ck_assert_int_lt(j, nval);
+		ck_assert(j < nval);
 	}
 
 	// check the new values match the old values
 	for (i = 0; i < nval; i++) {
 		if (corpus_census_has(&census, inds[i], &val)) {
-			ck_assert_double_eq(vals[i], val);
+			ck_assert(vals[i] == val);
 		} else {
-			ck_assert_double_eq(vals[i], 0);
+			ck_assert(vals[i] == 0);
 		}
 	}
 }

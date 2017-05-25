@@ -92,10 +92,10 @@ static int next_id(void)
 		if (term_id < 0) {
 			return ID_NONE;
 		}
-		ck_assert_int_lt(term_id, filter.nterm);
+		ck_assert(term_id < filter.nterm);
 		type_id = filter.type_ids[term_id];
-		ck_assert_int_le(0, type_id);
-		ck_assert_int_lt(type_id, filter.symtab.ntype);
+		ck_assert(0 <= type_id);
+		ck_assert(type_id < filter.symtab.ntype);
 		return term_id;
 	} else {
 		return ID_EOT;
@@ -161,13 +161,13 @@ START_TEST(test_basic_census)
 
 	ck_assert_int_eq(census.nitem, 4);
 	ck_assert_int_eq(census.items[0], 0); // a
-	ck_assert_double_eq(census.weights[0], 3);
+	ck_assert(census.weights[0] == 3);
 	ck_assert_int_eq(census.items[1], 1); // rose
-	ck_assert_double_eq(census.weights[1], 3);
+	ck_assert(census.weights[1] == 3);
 	ck_assert_int_eq(census.items[2], 2); // is
-	ck_assert_double_eq(census.weights[2], 2);
+	ck_assert(census.weights[2] == 2);
 	ck_assert_int_eq(census.items[3], 3); // .
-	ck_assert_double_eq(census.weights[3], 1);
+	ck_assert(census.weights[3] == 1);
 
 	corpus_census_destroy(&census);
 }

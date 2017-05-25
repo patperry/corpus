@@ -64,7 +64,7 @@ int has_type(const struct corpus_text *typ)
 	if (ans) {
 		// when the return value is true
 		//   it should return a valid type id
-		ck_assert_int_lt(type_id, tab.ntype);
+		ck_assert(type_id < tab.ntype);
 
 		// it should return a type id matching the query
 		assert_text_eq(&tab.types[type_id].text, typ);
@@ -99,7 +99,7 @@ int has_token(const struct corpus_text *tok)
 	if (ans) {
 		// when the return value is true
 		//   it should return a valid token id
-		ck_assert_int_lt(tok_id, tab.ntoken);
+		ck_assert(tok_id < tab.ntoken);
 
 		// it should return a token id matching the query
 		assert_text_eq(&tab.tokens[tok_id].text, tok);
@@ -140,7 +140,7 @@ int add_type(const struct corpus_text *typ)
 	}
 
 	// it should return a valid id
-	ck_assert_int_lt(type_id, tab.ntype);
+	ck_assert(type_id < tab.ntype);
 
 	// it should return an id matching the insert
 	assert_text_eq(&tab.types[type_id].text, typ);
@@ -192,13 +192,13 @@ int add_token(const struct corpus_text *tok)
 
 	// the returned token
 	// (a) should have a valid id
-	ck_assert_int_lt(token_id, tab.ntoken);
+	ck_assert(token_id < tab.ntoken);
 
 	// (b) should match the insert
 	assert_text_eq(&tab.tokens[token_id].text, tok);
 
 	// (c) should should have a valid type id
-	ck_assert_int_lt(tab.tokens[token_id].type_id, tab.ntype);
+	ck_assert(tab.tokens[token_id].type_id < tab.ntype);
 
 	// (d) should be a member of the indicated type
 	type_id = tab.tokens[token_id].type_id;
@@ -207,7 +207,7 @@ int add_token(const struct corpus_text *tok)
 			break;
 		}
 	}
-	ck_assert_int_lt(i, tab.types[type_id].ntoken);
+	ck_assert(i < tab.types[type_id].ntoken);
 
 	// (e) it should only appear once in the types token set
 	for (i = i + 1; i < tab.types[type_id].ntoken; i++) {

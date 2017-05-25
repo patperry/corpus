@@ -11,7 +11,8 @@ install:
 
 script:
   - make check
-  - gcov src/*.c lib/strntod.c lib/strntoimax.c
+  - gcov -o src src/*.c
+  - gcov -o lib lib/strntod.c lib/strntoimax.c
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

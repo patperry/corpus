@@ -225,7 +225,7 @@ the client can iterate over its fields using `corpus_data_fields`, or she can
 access specific fields by name using the `corpus_data_field` function.
 
 
-The relevant interfaces are `[data.h][data_h]` and `[datatype.h][datatype_h`.
+The relevant interfaces are [data.h][data_h] and [datatype.h][datatype_h].
 
 
 [array-len]: https://stackoverflow.com/a/6155063

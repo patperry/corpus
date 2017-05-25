@@ -462,8 +462,8 @@ START_TEST(test_iter_random)
 		ck_assert(corpus_text_iter_advance(&iter));
 
 		id = toks[i];
-		ck_assert_int_eq(iter.current, types[id].value);
-		ck_assert_int_eq(iter.attr, types[id].attr);
+		ck_assert_uint_eq(iter.current, types[id].value);
+		ck_assert_uint_eq(iter.attr, types[id].attr);
 
 		len = strlen(types[id].string);
 		ptr += len;

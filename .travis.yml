@@ -1,0 +1,10 @@
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y check doxygen
+
+install:
+  - make
+  - make doc
+
+script:
+  - make check

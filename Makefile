@@ -1,13 +1,13 @@
-CC     = gcc -std=c99
+CC     += -std=c99
 
-CFLAGS = -Wall -Wextra -pedantic -Werror \
+CFLAGS += -Wall -Wextra -pedantic -Werror \
 	-Wno-cast-qual \
 	-Wno-padded \
 	-Wno-unused-macros \
-	-g -O2
+	-g
 
-LDFLAGS =
-LIBS    = -lm
+#LDFLAGS +=
+LIBS    += -lm
 AR      = ar rcu
 RANLIB  = ranlib
 MKDIR_P = mkdir -p

@@ -3,9 +3,15 @@ language: c
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y check
+  - export CFLAGS="-coverage -O0"
+  - export LDFLAGS="-coverage"
 
 install:
   - make
 
 script:
   - make check
+
+after_success:
+  - gcov src/*.c lib/strntod.c lib/strntoimax.c
+  - bash <(curl -s https://codecov.io/bash)

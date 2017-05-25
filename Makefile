@@ -185,7 +185,7 @@ src/unicode/wordbreakprop.h: util/gen-wordbreak.py \
 # Tests
 
 tests/check_census: tests/check_census.o tests/testutil.o $(CORPUS_A)
-	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS) $^
+	$(CC) -o $@ $^ $(LIBS) $(TEST_LIBS) $(LDFLAGS)
 
 tests/check_data: tests/check_data.o tests/testutil.o $(CORPUS_A)
 	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS) $^

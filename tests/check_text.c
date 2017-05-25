@@ -455,7 +455,7 @@ START_TEST(test_iter_random)
 	ck_assert(!corpus_text_assign(&text, ptr, size, 0));
 	corpus_text_iter_make(&iter, &text);
 	ck_assert(!corpus_text_iter_retreat(&iter));
-	ck_assert_ptr_eq(iter.ptr, ptr);
+	ck_assert(iter.ptr == ptr);
 
 	// forward iteration
 	for (i = 0; i < ntok; i++) {
@@ -467,12 +467,12 @@ START_TEST(test_iter_random)
 
 		len = strlen(types[id].string);
 		ptr += len;
-		ck_assert_ptr_eq(iter.ptr, ptr);
+		ck_assert(iter.ptr == ptr);
 	}
 
 	ck_assert(!corpus_text_iter_advance(&iter));
 	ck_assert(!corpus_text_iter_advance(&iter));
-	ck_assert_ptr_eq(iter.ptr, ptr);
+	ck_assert(iter.ptr == ptr);
 
 	// reverse iteration
 	while (i-- > 0) {
@@ -482,14 +482,14 @@ START_TEST(test_iter_random)
 		ck_assert_int_eq(iter.current, types[id].value);
 		ck_assert_int_eq(iter.attr, types[id].attr);
 
-		ck_assert_ptr_eq(iter.ptr, ptr);
+		ck_assert(iter.ptr == ptr);
 		len = strlen(types[id].string);
 		ptr -= len;
 	}
 
 	ck_assert(!corpus_text_iter_retreat(&iter));
 	ck_assert(!corpus_text_iter_retreat(&iter));
-	ck_assert_ptr_eq(iter.ptr, ptr);
+	ck_assert(iter.ptr == ptr);
 }
 END_TEST
 

@@ -61,23 +61,23 @@ START_TEST(test_figure3)
 	// Test Figure 3 from http://www.unicode.org/reports/tr29/
 	start(T("c.d"));
 	assert_text_eq(next(), T("c.d"));
-	ck_assert_ptr_eq(next(), NULL);
+	ck_assert(next() == NULL);
 
 	start(T("3.4"));
 	assert_text_eq(next(), T("3.4"));
-	ck_assert_ptr_eq(next(), NULL);
+	ck_assert(next() == NULL);
 
 	start(T("U.S."));
 	assert_text_eq(next(), T("U.S."));
-	ck_assert_ptr_eq(next(), NULL);
+	ck_assert(next() == NULL);
 
 	start(T("the resp. leaders are"));
 	assert_text_eq(next(), T("the resp. leaders are"));
-	ck_assert_ptr_eq(next(), NULL);
+	ck_assert(next() == NULL);
 
 	start(T("etc.)\\u2019\\u2018(the"));
 	assert_text_eq(next(), T("etc.)\\u2019\\u2018(the"));
-	ck_assert_ptr_eq(next(), NULL);
+	ck_assert(next() == NULL);
 }
 END_TEST
 
@@ -87,7 +87,7 @@ START_TEST(test_figure4)
 	start(T("She said \\u201cSee spot run.\\u201d John shook his head."));
 	assert_text_eq(next(), T("She said \\u201cSee spot run.\\u201d "));
 	assert_text_eq(next(), T("John shook his head."));
-	ck_assert_ptr_eq(next(), NULL);
+	ck_assert(next() == NULL);
 }
 END_TEST
 
@@ -96,8 +96,8 @@ START_TEST(test_empty)
 {
 	start(T(""));
 	assert_text_eq(next(), T(""));
-	ck_assert_ptr_eq(next(), NULL);
-	ck_assert_ptr_eq(next(), NULL);
+	ck_assert(next() == NULL);
+	ck_assert(next() == NULL);
 }
 END_TEST
 
@@ -163,7 +163,7 @@ void setup_unicode(void)
 	test->text.ptr = &test->buf[0];
 	dst = test->text.ptr;
 
-	ck_assert_msg(file, "file '"SENT_BREAK_TEST"' not found");
+	ck_assert_msg(file != NULL, "file '"SENT_BREAK_TEST"' not found");
 	while ((ch = fgetc(file)) != EOF) {
 		switch (ch) {
 		case '#':
@@ -270,11 +270,10 @@ START_TEST(test_unicode)
 		for (j = 0; j < test->nbreak; j++) {
 			//fprintf(stderr, "Break %u\n", j);
 			ck_assert(corpus_sentscan_advance(&scan));
-			ck_assert_ptr_eq(scan.current.ptr,
-					 test->break_begin[j]);
-			ck_assert_ptr_eq(scan.current.ptr
-					 + CORPUS_TEXT_SIZE(&scan.current),
-					 test->break_end[j]);
+			ck_assert(scan.current.ptr == test->break_begin[j]);
+			ck_assert(scan.current.ptr
+					+ CORPUS_TEXT_SIZE(&scan.current)
+					== test->break_end[j]);
 		}
 		ck_assert(!corpus_sentscan_advance(&scan));
 	}

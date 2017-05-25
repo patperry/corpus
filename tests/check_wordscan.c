@@ -83,7 +83,7 @@ START_TEST(test_figure1)
 	assert_text_eq(next(), T(" "));
 	assert_text_eq(next(), T("right"));
 	assert_text_eq(next(), T("?"));
-	ck_assert_ptr_eq(next(), NULL);
+	ck_assert(next() == NULL);
 }
 END_TEST
 
@@ -102,7 +102,7 @@ START_TEST(test_quote)
 	assert_text_eq(next(), T("double"));
 	assert_text_eq(next(), T("\""));
 	assert_text_eq(next(), T("."));
-	ck_assert_ptr_eq(next(), NULL);
+	ck_assert(next() == NULL);
 }
 END_TEST
 
@@ -168,7 +168,7 @@ void setup_unicode(void)
 	test->text.ptr = &test->buf[0];
 	dst = test->text.ptr;
 
-	ck_assert_msg(file, "file '"WORD_BREAK_TEST"' not found");
+	ck_assert_msg(file != NULL, "file '"WORD_BREAK_TEST"' not found");
 	while ((ch = fgetc(file)) != EOF) {
 		switch (ch) {
 		case '#':
@@ -274,11 +274,10 @@ START_TEST(test_unicode)
 		for (j = 0; j < test->nbreak; j++) {
 			//fprintf(stderr, "Break %u\n", j);
 			ck_assert(corpus_wordscan_advance(&scan));
-			ck_assert_ptr_eq(scan.current.ptr,
-					 test->break_begin[j]);
-			ck_assert_ptr_eq(scan.current.ptr
-					 + CORPUS_TEXT_SIZE(&scan.current),
-					 test->break_end[j]);
+			ck_assert(scan.current.ptr == test->break_begin[j]);
+			ck_assert(scan.current.ptr
+					+ CORPUS_TEXT_SIZE(&scan.current)
+					== test->break_end[j]);
 		}
 		ck_assert(!corpus_wordscan_advance(&scan));
 	}

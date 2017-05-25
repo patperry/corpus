@@ -11,9 +11,9 @@ install:
 
 script:
   - make check
+
+after_success:
   - rm src/main*.c # hack to exclude from gcov
   - gcov -o src src/*.c
   - gcov -o lib lib/strntod.c lib/strntoimax.c
-
-after_success:
   - bash <(curl -s https://codecov.io/bash)

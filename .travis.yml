@@ -2,7 +2,7 @@ language: c
 
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y check pkg-config
+  - sudo apt-get install -y check
 
 install:
   - make

@@ -192,11 +192,11 @@ void setup_normalization(void)
 		case ' ':
 			break;
 		case '@':
-			(void)fscanf(file, "Part%d", &part);
+			ck_assert(fscanf(file, "Part%d", &part));
 			break;
 		default:
 			ungetc(ch, file);
-			(void)fscanf(file, "%X", &code);
+			ck_assert(fscanf(file, "%X", &code));
 			*dst++ = (uint32_t)code;
 			*lenp = *lenp + 1;
 			break;

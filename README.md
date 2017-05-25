@@ -1,3 +1,9 @@
+The Corpus Text Processing Library
+==================================
+
+[![Build Status](https://api.travis-ci.org/patperry/corpus.svg?branch=master)](https://travis-ci.org/patperry/corpus)
+
+
 Overview
 --------
 

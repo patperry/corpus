@@ -100,7 +100,7 @@ $(CORPUS_A): $(LIB_O) $(STEMMER_O)
 	$(RANLIB) $@
 
 $(CORPUS_T): $(CORPUS_O) $(CORPUS_A)
-	$(CC) -o $@ $(LDFLAGS) $(CORPUS_O) $(CORPUS_A) $(LIBS)
+	$(CC) -o $@ $(CORPUS_O) $(CORPUS_A) $(LIBS) $(LDFLAGS)
 
 
 # Data
@@ -188,37 +188,37 @@ tests/check_census: tests/check_census.o tests/testutil.o $(CORPUS_A)
 	$(CC) -o $@ $^ $(LIBS) $(TEST_LIBS) $(LDFLAGS)
 
 tests/check_data: tests/check_data.o tests/testutil.o $(CORPUS_A)
-	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS) $^
+	$(CC) -o $@ $^ $(LIBS) $(TEST_LIBS) $(LDFLAGS)
 
 tests/check_filter: tests/check_filter.o tests/testutil.o $(CORPUS_A)
-	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS) $^
+	$(CC) -o $@ $^ $(LIBS) $(TEST_LIBS) $(LDFLAGS)
 
 tests/check_sentscan: tests/check_sentscan.o tests/testutil.o $(CORPUS_A) \
 		data/ucd/auxiliary/SentenceBreakTest.txt
-	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS)  \
-		tests/check_sentscan.o tests/testutil.o $(CORPUS_A)
+	$(CC) -o $@ tests/check_sentscan.o tests/testutil.o $(CORPUS_A) \
+		$(LIBS) $(TEST_LIBS) $(LDFLAGS)
 
 tests/check_symtab: tests/check_symtab.o tests/testutil.o $(CORPUS_A)
-	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS) $^
+	$(CC) -o $@ $^ $(LIBS) $(TEST_LIBS) $(LDFLAGS)
 
 tests/check_text: tests/check_text.o tests/testutil.o $(CORPUS_A)
-	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS) $^
+	$(CC) -o $@ $^ $(LIBS) $(TEST_LIBS) $(LDFLAGS)
 
 tests/check_tree: tests/check_tree.o tests/testutil.o $(CORPUS_A)
-	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS) $^
+	$(CC) -o $@ $^ $(LIBS) $(TEST_LIBS) $(LDFLAGS)
 
 tests/check_typemap: tests/check_typemap.o tests/testutil.o $(CORPUS_A)
-	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS) $^
+	$(CC) -o $@ $^ $(LIBS) $(TEST_LIBS) $(LDFLAGS)
 
 tests/check_unicode: tests/check_unicode.o $(CORPUS_A) \
 		data/ucd/NormalizationTest.txt
-	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS) \
-		tests/check_unicode.o $(CORPUS_A)
+	$(CC) -o $@ tests/check_unicode.o $(CORPUS_A) \
+		$(LIBS) $(TEST_LIBS) $(LDFLAGS)
 
 tests/check_wordscan: tests/check_wordscan.o tests/testutil.o $(CORPUS_A) \
 		data/ucd/auxiliary/WordBreakTest.txt
-	$(CC) -o $@ $(LDFLAGS) $(LIBS) $(TEST_LIBS)  \
-		tests/check_wordscan.o tests/testutil.o $(CORPUS_A)
+	$(CC) -o $@ tests/check_wordscan.o tests/testutil.o $(CORPUS_A) \
+		$(LIBS) $(TEST_LIBS) $(LDFLAGS)
 
 
 # Special Rules

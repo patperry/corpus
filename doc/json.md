@@ -12,7 +12,8 @@ format][ndjson].
 
 Here, we describe the type system Corpus uses for JSON values, and we document
 the differences between JSON as understood by Corpus and JSON as formally
-specified.
+specified. Finally, we describe the JSON parser, which follows a very
+different model from most other JSON parsers.
 
 
 Typed JSON values
@@ -196,7 +197,40 @@ JSON object:
     (valid JSON but not accepted by Corpus)
 
 
+Decoding JSON data
+------------------
+
+Most JSON libraries decode JSON-encoded values in a single pass; whenever the
+parser encounters a new value it calls a client-supplied callback function.
+Corpus takes a different approach, which requires two passes over the input
+data. In the first pass, Corpus validates the input data and determines its
+type. In the second pass, the client decodes the typed value to a native type.
+
+
+The first pass over the value (a call to `corpus_data_assign`) scans the input
+and determines its type. If, in the process of scanning, Corpus encounters a
+new data type, it adds this type to the passed-in schema object, assigning a
+new integer ID for the type. After scanning, Corpus initializes a
+`struct corpus_data` value containing a pointer to the encoded value, its size
+(in bytes), and the integer ID of the value's type. The first pass over the
+data does not allocate any memory, except to add new types to the data schema
+if necessary.
+
+
+Once the value has been typed, the client can use `corpus_data_bool`,
+`corpus_data_int`, `corpus_data_double`, or `corpus_data_text` to decode the
+value to a native type. If the value is an array, the client can iterate over
+its values using the `corpus_data_items` function. If the value is a record,
+the client can iterate over its fields using `corpus_data_fields`, or she can
+access specific fields by name using the `corpus_data_field` function.
+
+
+The relevant interfaces are `[data.h][data_h]` and `[datatype.h][datatype_h`.
+
+
 [array-len]: https://stackoverflow.com/a/6155063
+[data_h]: https://github.com/patperry/corpus/blob/master/src/data.h
+[datatype_h]: https://github.com/patperry/corpus/blob/master/src/datatype.h
 [json]: http://json.org/
 [ndjson]: http://ndjson.org/
 [nfc]: http://unicode.org/reports/tr15/

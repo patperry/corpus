@@ -11,6 +11,7 @@ install:
 
 script:
   - make check
+  - rm src/main*.c # hack to exclude from gcov
   - gcov -o src src/*.c
   - gcov -o lib lib/strntod.c lib/strntoimax.c
 

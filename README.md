@@ -1,7 +1,11 @@
-The Corpus Text Processing Library
-==================================
+Corpus (C Library)
+==================
 
 [![Build Status](https://api.travis-ci.org/patperry/corpus.svg?branch=master)](https://travis-ci.org/patperry/corpus)
+[![Coverage Status](https://codecov.io/github/patperry/corpus/coverage.svg?branch=master)](https://codecov.io/github/patperry/corpus?branch=master)
+
+
+Text corpus analysis.
 
 
 Overview

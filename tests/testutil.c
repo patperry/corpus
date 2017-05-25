@@ -49,10 +49,10 @@ void *alloc(size_t size)
 	void *ptr;
 
 	allocs = realloc(allocs, (size_t)(nalloc + 1) * sizeof(*allocs));
-	ck_assert(allocs);
+	ck_assert(allocs != NULL);
 
 	ptr = malloc(size);
-	ck_assert(ptr || !size);
+	ck_assert(ptr != NULL || size == 0);
 
 	allocs[nalloc] = ptr;
 	nalloc++;

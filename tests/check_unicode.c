@@ -18,6 +18,8 @@
 #include <stdlib.h>
 #include <check.h>
 #include "../src/unicode.h"
+#include "testutil.h"
+
 
 #define NORMALIZATION_TEST "data/ucd/NormalizationTest.txt"
 
@@ -112,7 +114,7 @@ void setup_normalization(void)
 	if (!file) {
 		file = fopen("../"NORMALIZATION_TEST, "r");
 	}
-	ck_assert_msg(file, "file '"NORMALIZATION_TEST"' not found");
+	ck_assert_msg(file != NULL, "file '"NORMALIZATION_TEST"' not found");
 
 	ntest = 0;
 	test = &normalization_tests[ntest];
@@ -190,11 +192,11 @@ void setup_normalization(void)
 		case ' ':
 			break;
 		case '@':
-			fscanf(file, "Part%d", &part);
+			(void)fscanf(file, "Part%d", &part);
 			break;
 		default:
 			ungetc(ch, file);
-			fscanf(file, "%X", &code);
+			(void)fscanf(file, "%X", &code);
 			*dst++ = (uint32_t)code;
 			*lenp = *lenp + 1;
 			break;

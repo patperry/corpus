@@ -188,7 +188,7 @@ void add(const char *keys)
 	int had;
 
 	ck_assert(!corpus_tree_root(&tree));
-	ck_assert_int_gt(tree.nnode, 0);
+	ck_assert(tree.nnode > 0);
 	id = 0;
 
 	for (i = 0; i < nkey; i++) {

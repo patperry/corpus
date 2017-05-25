@@ -197,8 +197,8 @@ JSON object:
     (valid JSON but not accepted by Corpus)
 
 
-Decoding JSON data
-------------------
+Decoding JSON values
+--------------------
 
 Most JSON libraries decode JSON-encoded values in a single pass; whenever the
 parser encounters a new value it calls a client-supplied callback function.

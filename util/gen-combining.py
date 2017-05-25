@@ -67,8 +67,8 @@ def compute_tables(block_size):
 
 
 def stage1_item_size(nstage2):
-    nbyte = math.ceil(math.log2(nstage2) / 8)
-    size = 2**math.ceil(math.log2(nbyte))
+    nbyte = math.ceil(math.log(nstage2, 2) / 8)
+    size = 2**math.ceil(math.log(nbyte, 2))
     return size
 
 page_size = 4096

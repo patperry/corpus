@@ -1,13 +1,11 @@
 language: c
-python: 3.6
 
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y check doxygen
+  - sudo apt-get install -y check
 
 install:
   - make
-  - make doc
 
 script:
   - make check

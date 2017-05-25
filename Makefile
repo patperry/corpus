@@ -21,7 +21,7 @@ LIB_CFLAGS = \
 	-Wno-sign-conversion \
 	-Wno-unreachable-code-break
 
-TEST_CFLAGS = `pkg-config --cflags check` \
+TEST_CFLAGS = $(shell pkg-config --cflags check) \
 	-Wno-double-promotion \
 	-Wno-float-equal \
 	-Wno-gnu-zero-variadic-macro-arguments \
@@ -29,7 +29,7 @@ TEST_CFLAGS = `pkg-config --cflags check` \
 	-Wno-missing-variable-declarations \
 	-Wno-reserved-id-macro
 
-TEST_LIBS = `pkg-config --libs check`
+TEST_LIBS = $(shell pkg-config --libs check)
 
 UNICODE = http://www.unicode.org/Public/9.0.0
 

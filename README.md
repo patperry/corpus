@@ -29,6 +29,9 @@ you can let the operating system move data between the hard drive and RAM
 whenever necessary.  You can process a large data set seamlessly without
 loading everything into RAM at the same time.
 
+For more information on JSON support in Corpus, see the notes on
+[JSON as understood by Corpus][corpus-json].
+
 
 ### Text segmentation
 
@@ -108,6 +111,7 @@ subject to the terms of the [Unicode Licence][unicode].
 
 [apache]: https://www.apache.org/licenses/LICENSE-2.0.html
 [check]: https://libcheck.github.io/check/
+[corpus-json]: https://github.com/patperry/corpus/blob/master/doc/json.md
 [doxygen]: http://www.stack.nl/~dimitri/doxygen/
 [json]: http://www.json.org/
 [ndjson]: http://ndjson.org/

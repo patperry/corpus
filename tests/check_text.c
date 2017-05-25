@@ -384,7 +384,7 @@ END_TEST
 
 struct type {
 	const char *string;
-	int value;
+	uint32_t value;
 	size_t attr;
 };
 
@@ -479,8 +479,8 @@ START_TEST(test_iter_random)
 		ck_assert(corpus_text_iter_retreat(&iter));
 
 		id = toks[i];
-		ck_assert_int_eq(iter.current, types[id].value);
-		ck_assert_int_eq(iter.attr, types[id].attr);
+		ck_assert_uint_eq(iter.current, types[id].value);
+		ck_assert_uint_eq(iter.attr, types[id].attr);
 
 		ck_assert(iter.ptr == ptr);
 		len = strlen(types[id].string);

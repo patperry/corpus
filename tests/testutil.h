@@ -17,9 +17,18 @@
 #ifndef TESTUTIL_H
 #define TESTUTIL_H
 
+#include <check.h>
 #include <stddef.h>
+#include <stdint.h>
+
 
 struct corpus_text;
+
+// not available in old versions of check
+#ifndef ck_assert_uint_eq
+#  define ck_assert_uint_eq(X, Y) ck_assert_int_eq((intmax_t)(X), (intmax_t)(Y))
+#endif
+
 
 #define assert_text_eq(X, Y) do { \
 	const struct corpus_text * _ck_x = (X); \

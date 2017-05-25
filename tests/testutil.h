@@ -21,29 +21,37 @@
 #include <stddef.h>
 #include <stdint.h>
 
-
 struct corpus_text;
 
+/**
+ * This macro is broken on the old version of check (0.9.8) that Travis CI
+ * uses, so we re-define it.
+ */
 #ifdef ck_assert_int_eq
 #  undef ck_assert_int_eq
 #endif
-
 #define ck_assert_int_eq(X, Y) do { \
 	intmax_t _ck_x = (X); \
 	intmax_t _ck_y = (Y); \
-	ck_assert_msg(_ck_x == _ck_y, "Assertion '%s' failed: %s == %jd, %s == %jd", #X " == " #Y, #X, _ck_x, #Y, _ck_y); \
+	ck_assert_msg(_ck_x == _ck_y, \
+			"Assertion '%s' failed: %s == %jd, %s == %jd", \
+			#X " == " #Y, #X, _ck_x, #Y, _ck_y); \
 } while (0)
 
+
+/**
+ * This macro doesn't exist on check version 0.9.8.
+ */
 #ifdef ck_assert_uint_eq
 #  undef ck_assert_uint_eq
 #endif
-
 #define ck_assert_uint_eq(X, Y) do { \
 	uintmax_t _ck_x = (X); \
 	uintmax_t _ck_y = (Y); \
-	ck_assert_msg(_ck_x == _ck_y, "Assertion '%s' failed: %s == %ju, %s == %ju", #X " == " #Y, #X, _ck_x, #Y, _ck_y); \
+	ck_assert_msg(_ck_x == _ck_y, \
+			"Assertion '%s' failed: %s == %ju, %s == %ju", \
+			#X " == " #Y, #X, _ck_x, #Y, _ck_y); \
 } while (0)
-
 
 
 #define assert_text_eq(X, Y) do { \
@@ -55,6 +63,7 @@ struct corpus_text;
 		#X, #Y, #X, _ck_x->ptr, _ck_x->attr, \
 		#Y, _ck_y->ptr, _ck_y->attr); \
 } while (0)
+
 
 #define assert_text_ne(X, Y) do { \
 	const struct corpus_text * _ck_x = (X); \

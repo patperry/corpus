@@ -31,7 +31,7 @@ struct corpus_text;
 #define ck_assert_int_eq(X, Y) do { \
 	intmax_t _ck_x = (X); \
 	intmax_t _ck_y = (Y); \
-	ck_assert_msg(_ck_x == _ck_y, "Assertion '%s' failed: %s == %jd, %s == %jd", #X" "==" "#Y, #X, _ck_x, #Y, _ck_y); \
+	ck_assert_msg(_ck_x == _ck_y, "Assertion '%s' failed: %s == %jd, %s == %jd", #X " == " #Y, #X, _ck_x, #Y, _ck_y); \
 } while (0)
 
 #ifdef ck_assert_uint_eq
@@ -41,7 +41,7 @@ struct corpus_text;
 #define ck_assert_uint_eq(X, Y) do { \
 	uintmax_t _ck_x = (X); \
 	uintmax_t _ck_y = (Y); \
-	ck_assert_msg(_ck_x == _ck_y, "Assertion '%s' failed: %s == %ju, %s == %ju", #X" "==" "#Y, #X, _ck_x, #Y, _ck_y); \
+	ck_assert_msg(_ck_x == _ck_y, "Assertion '%s' failed: %s == %ju, %s == %ju", #X " == " #Y, #X, _ck_x, #Y, _ck_y); \
 } while (0)
 
 

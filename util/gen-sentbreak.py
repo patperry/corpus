@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2016 Patrick O. Perry.
+# Copyright 2017 Patrick O. Perry.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ try:
 except ModuleNotFoundError:
     from util import property
 
-PROPERTY = "data/ucd/auxiliary/SentenceBreakProperty.txt"
-code_props = property.read(PROPERTY)
+SENTENCE_BREAK_PROPERTY = "data/ucd/auxiliary/SentenceBreakProperty.txt"
+code_props = property.read(SENTENCE_BREAK_PROPERTY)
 
 for i in range(len(code_props)):
     if code_props[i] is None:

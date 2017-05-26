@@ -181,7 +181,7 @@ src/unicode/decompose.h: util/gen-decompose.py util/unicode_data.py \
 	$(MKDIR_P) src/unicode
 	./util/gen-decompose.py > $@
 
-src/unicode/sentbreakprop.h: util/gen-sentbreak.py \
+src/unicode/sentbreakprop.h: util/gen-sentbreak.py util/property.py \
 		data/ucd/auxiliary/SentenceBreakProperty.txt
 	$(MKDIR_P) src/unicode
 	./util/gen-sentbreak.py > $@

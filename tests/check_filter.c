@@ -31,6 +31,11 @@
 #include "testutil.h"
 
 #define IGNORE_EMPTY CORPUS_FILTER_IGNORE_EMPTY
+#define DROP_SYMBOL CORPUS_FILTER_DROP_SYMBOL
+#define DROP_NUMBER CORPUS_FILTER_DROP_NUMBER
+#define DROP_LETTER CORPUS_FILTER_DROP_LETTER
+#define DROP_KANA CORPUS_FILTER_DROP_KANA
+#define DROP_IDEO CORPUS_FILTER_DROP_IDEO
 
 #define ID_EOT	(-1)
 #define ID_NONE (-2)
@@ -174,6 +179,17 @@ START_TEST(test_basic_census)
 END_TEST
 
 
+START_TEST(test_drop_ideo)
+{
+	init(NULL, DROP_IDEO);
+	start(T("\\u53d1\\u5c55"));
+	assert_text_eq(next_term(), TERM_NONE);
+	assert_text_eq(next_term(), TERM_NONE);
+	assert_text_eq(next_term(), TERM_EOT);
+}
+END_TEST
+
+
 Suite *filter_suite(void)
 {
 	Suite *s;
@@ -185,6 +201,7 @@ Suite *filter_suite(void)
 	tcase_add_checked_fixture(tc, setup_filter, teardown_filter);
         tcase_add_test(tc, test_basic);
         tcase_add_test(tc, test_basic_census);
+        tcase_add_test(tc, test_drop_ideo);
 	suite_add_tcase(s, tc);
 
 	return s;

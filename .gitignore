@@ -1,5 +1,6 @@
 *.a
 *.o
+__pycache__
 project.xcworkspace
 xcuserdata
 /corpus

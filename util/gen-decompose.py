@@ -16,21 +16,13 @@
 
 import operator
 import math
-import re
-
-UNICODE_DATA = 'data/ucd/UnicodeData.txt'
-UNICODE_MAX = 0x10FFFF
-
-decomp_pattern = re.compile(r"""^(<(\w+)>)?\s* # decomposition type
-                                 ((\s*[0-9A-Fa-f]+)+) # decomposition mapping
-                                 \s*$""", re.X)
-
-# Parse UnicodeData.txt
 
 try:
-    file = open(UNICODE_DATA, 'r')
-except FileNotFoundError:
-    file = open('../' + UNICODE_DATA, 'r')
+    import ucd
+except ModuleNotFoundError:
+    from util import ucd
+
+UNICODE_MAX = ucd.UNICODE_MAX
 
 decomp_vals = {
     'hangul': -1, 'none': 0,
@@ -41,43 +33,34 @@ decomp_vals = {
 
 decomp_map = []
 decomp = []
-decomp_len_max = 0
-ndecomp = 0
 
-with file:
-    for line in file:
-        fields = line.split(';')
-        code = int(fields[0], 16)
-        while code > len(decomp):
-            decomp.append(None)
-        assert code == len(decomp)
+for code in range(len(ucd.uchars)):
+    u = ucd.uchars[code]
+    while code > len(decomp):
+        decomp.append(None)
 
-        f = fields[5]
-        if f != '':
-            m = decomp_pattern.match(f)
-            assert m
-            d_type = m.group(2)
-            if d_type:
-                assert d_type in decomp_vals
+    if u is None or u.decomp is None:
+        decomp.append(None)
+        continue
 
-            d_map = [int(x, 16) for x in m.group(3).split()]
-            d_len = len(d_map)
-            if d_len > decomp_len_max:
-                decomp_len_max = d_len
+    d = u.decomp
+    if d.map is not None:
+        d_len = len(d.map)
 
-            if d_len > 1:
-                d_data = len(decomp_map)
-                decomp_map.extend(d_map)
-            else:
-                d_data = d_map[0]
-
-            decomp.append((d_type, d_len, d_data))
-            ndecomp += 1
+        if d_len > 1:
+            d_data = len(decomp_map)
+            decomp_map.extend(d.map)
         else:
-            decomp.append(None)
+            d_data = d.map[0]
 
-for code in range(0xAC00, 0xD7A4):
-    decomp[code] = ('hangul', 2, 0)
+        decomp.append((d.type, d_len, d_data))
+
+    elif d.type == 'hangul':
+        decomp.append(('hangul', 2, 0))
+
+    else:
+        decomp.append(None)
+
 
 while len(decomp) <= UNICODE_MAX:
     decomp.append(None)

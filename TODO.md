@@ -1,9 +1,22 @@
 Todo
 ====
 
-## Features
+## Bugs
 
-  * Word count matrix ("dfm" in quanteda lingo).
+  * Need to set the word type properly for Ideographic and Kana words. See
+    icu4c/source/data/brkitr/rules/word.txt for the rules that ICU uses, and
+    icu4c/source/common/unicode/ubrk.h for the numeric values:
+
+    None: [  0, 100)
+    Num:  [100, 200)
+    Let:  [200, 300)
+    Kana: [300, 400)
+    Ideo: [400, 500)
+
+    It looks like type '300' (Kana) was removed; all Kana words get
+    classified as Ideo.
+
+## Features
 
   * Some sort of index for allowing KWIC queries.
 

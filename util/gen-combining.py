@@ -21,7 +21,6 @@ try:
 except ModuleNotFoundError:
     from util import ucd
 
-UNICODE_MAX = ucd.UNICODE_MAX
 
 combin_vals = set([0])
 combin = []
@@ -38,7 +37,7 @@ for code in range(len(ucd.uchars)):
 
 
 def compute_tables(block_size):
-    nblock = (UNICODE_MAX + 1) // block_size
+    nblock = len(combin) // block_size
     stage1 = [None] * nblock
     stage2 = []
     stage2_dict = {}
@@ -67,7 +66,7 @@ block_size = 256
 nbytes = {}
 
 best_block_size = 1
-smallest_size = UNICODE_MAX + 1
+smallest_size = len(combin)
 
 for i in range(1,17):
     block_size = 2**i

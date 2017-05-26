@@ -22,14 +22,13 @@ try:
 except ModuleNotFoundError:
     from util import ucd
 
-UNICODE_MAX = ucd.UNICODE_MAX
-
 decomp_vals = {
     'hangul': -1, 'none': 0,
     'font': 1, 'noBreak': 2, 'initial': 3, 'medial': 4, 'final': 5,
     'isolated': 6, 'circle': 7, 'super': 8, 'sub': 9, 'vertical': 10,
     'wide': 11, 'narrow': 12, 'small': 13, 'square': 14, 'fraction': 15,
     'compat': 16 }
+
 
 decomp_map = []
 decomp = []
@@ -61,7 +60,7 @@ for code in range(len(ucd.uchars)):
 
 
 def compute_tables(block_size):
-    nblock = (UNICODE_MAX + 1) // block_size
+    nblock = len(decomp) // block_size
     stage1 = [None] * nblock
     stage2 = []
     stage2_dict = {}
@@ -90,7 +89,7 @@ block_size = 256
 nbytes = {}
 
 best_block_size = 1
-smallest_size = UNICODE_MAX + 1
+smallest_size = len(decomp)
 
 for i in range(1,17):
     block_size = 2**i

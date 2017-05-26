@@ -17,44 +17,34 @@
 import math
 import re
 
-EXCLUSIONS = 'data/ucd/CompositionExclusions.txt'
-UNICODE_DATA = 'data/ucd/UnicodeData.txt'
-UNICODE_MAX = 0x10FFFF
-
-decomp_pattern = re.compile(r"""^(<(\w+)>)?\s* # decomposition type
-                                 ((\s*[0-9A-Fa-f]+)+) # decomposition mapping
-                                 \s*$""", re.X)
-
-# Parse UnicodeData.txt to get decomposition pairs p -> (l, c)
-
 try:
-    file = open(UNICODE_DATA, 'r')
-except FileNotFoundError:
-    file = open('../' + UNICODE_DATA, 'r')
+    import ucd
+except ModuleNotFoundError:
+    from util import ucd
+
+
+EXCLUSIONS = 'data/ucd/CompositionExclusions.txt'
+
+# get the length-2 decomposition maps (excluding hangul and compatibility maps)
 
 decomp_map = {}
-starter = [None] * UNICODE_MAX
+starter = [None] * len(ucd.uchars)
 
-with file:
-    for line in file:
-        fields = line.split(';')
-        code = int(fields[0], 16)
+for code in range(len(ucd.uchars)):
+    u = ucd.uchars[code]
+    if u is None:
+        continue
 
-        ccc = fields[3]
-        if ccc == '0' or ccc == '':
-            starter[code] = True
-        else:
-            starter[code] = False
-        f = fields[5]
+    ccc = u.ccc
+    if ccc is None or ccc == 0:
+        starter[code] = True
+    else:
+        starter[code] = False
 
-        if f != '':
-            m = decomp_pattern.match(f)
-            assert m
-            d_type = m.group(2)
-            if d_type is None:
-                d_map = [int(x, 16) for x in m.group(3).split()]
-                if len(d_map) == 2:
-                    decomp_map[code] = tuple(d_map)
+    d = u.decomp
+    if d is not None and d.type is None:
+        if len(d.map) == 2:
+            decomp_map[code] = tuple(d.map)
 
 
 # exclude non-starter decomposiitons
@@ -99,7 +89,7 @@ compose = []
 combiner = []
 primary = []
 off = 0
-for code in range(UNICODE_MAX + 1):
+for code in range(len(ucd.uchars)):
     if code in compose_map:
         maps = compose_map[code]
         maps.sort()
@@ -123,7 +113,7 @@ for code in range(0xAC00, 0xD7A4):
 
 
 def compute_tables(block_size):
-    nblock = (UNICODE_MAX + 1) // block_size
+    nblock = len(compose) // block_size
     stage1 = [None] * nblock
     stage2 = []
     stage2_dict = {}
@@ -152,7 +142,7 @@ block_size = 256
 nbytes = {}
 
 best_block_size = 1
-smallest_size = UNICODE_MAX + 1
+smallest_size = len(compose)
 
 for i in range(1,17):
     block_size = 2**i

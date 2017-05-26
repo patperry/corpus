@@ -36,8 +36,6 @@ decomp = []
 
 for code in range(len(ucd.uchars)):
     u = ucd.uchars[code]
-    while code > len(decomp):
-        decomp.append(None)
 
     if u is None or u.decomp is None:
         decomp.append(None)
@@ -60,34 +58,6 @@ for code in range(len(ucd.uchars)):
 
     else:
         decomp.append(None)
-
-
-while len(decomp) <= UNICODE_MAX:
-    decomp.append(None)
-
-
-def compute_len(code):
-    d = decomp[code]
-    if d is None:
-        return 1
-    elif d[0] == 'hangul':
-        if (code - 0xAC00) % 0x1C == 0:
-            return 2
-        else:
-            return 3
-    else:
-        if d[1] == 1:
-            x = [d[2]]
-        else:
-            x = decomp_map[d[2]:(d[2] + d[1])]
-        return sum([compute_len(y) for y in x])
-
-lmax = 0
-for code in range(UNICODE_MAX + 1):
-    l = compute_len(code)
-    if l > lmax:
-        lmax = l
-assert lmax == 18
 
 
 def compute_tables(block_size):

@@ -15,49 +15,33 @@
 # limitations under the License.
 
 import math
-import re
-
-WORD_BREAK_PROPERTY = "data/ucd/auxiliary/WordBreakProperty.txt"
-
-pattern = re.compile(r"""^([0-9A-Fa-f]+)        # (first code)
-                          (\.\.([0-9A-Fa-f]+))? # (.. last code)?
-                          \s*
-                          ;                     # ;
-                          \s*
-                          (\w+)                 # (property name)
-                          \s*
-                          (\#.*)?$              # (# comment)?""", re.X)
-
-UNICODE_MAX = 0x10FFFF
-
-# Parse WordBreakProperty.txt
 
 try:
-    file = open(WORD_BREAK_PROPERTY, "r")
-except FileNotFoundError:
-    file = open("../" + WORD_BREAK_PROPERTY, "r")
+    import property
+except ModuleNotFoundError:
+    from util import property
 
-code_props = ['Other'] * (UNICODE_MAX + 1)
-prop_names = set()
-code_max = 0
 
-properties = set({})
-with file:
-    for line in file:
-        line = line.split("#")[0] # remove comment
-        m = pattern.match(line)
-        if m:
-            first = int(m.group(1), 16)
-            if m.group(3):
-                last = int(m.group(3), 16)
-            else:
-                last = first
-            name = m.group(4)
-            for u in range(first, last + 1):
-                code_props[u] = name
-            prop_names.add(name)
-            if last > code_max:
-                code_max = last
+WORD_BREAK_PROPERTY = "data/ucd/auxiliary/WordBreakProperty.txt"
+code_props = property.read(WORD_BREAK_PROPERTY)
+
+for i in range(len(code_props)):
+    if code_props[i] is None:
+        code_props[i] = 'Other'
+
+prop_names = set(code_props)
+prop_names.remove('Other')
+
+
+# add special property for Kana and Ideographic characters
+##assert 'Ideo_Kana' not in prop_names
+##prop_names.add('Ideo_Kana')
+
+for code in range(len(code_props)):
+    if False: # add test for ideo
+        if code_props[code] == 'Other':
+            code_props[code] = 'Ideo_Kana'
+
 
 prop_vals = {}
 prop_vals['Other'] = 0;
@@ -67,7 +51,7 @@ for p in sorted(prop_names):
 
 
 def compute_tables(block_size):
-    nblock = (UNICODE_MAX + 1) // block_size
+    nblock = len(code_props) // block_size
     stage1 = [None] * nblock
     stage2 = []
     stage2_dict = {}
@@ -96,7 +80,7 @@ block_size = 256
 nbytes = {}
 
 best_block_size = 1
-smallest_size = UNICODE_MAX + 1
+smallest_size = len(code_props)
 
 for i in range(1,17):
     block_size = 2**i
@@ -130,7 +114,6 @@ else:
     type1 = 'uint64_t'
 
 type2 = 'int8_t'
-
 
 
 # Write wordbreakprop.h to stdout

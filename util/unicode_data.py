@@ -1,4 +1,4 @@
-# uchar
+# unicode_data
 
 import collections
 import re

@@ -18,9 +18,9 @@ import operator
 import math
 
 try:
-    import ucd
+    import unicode_data
 except ModuleNotFoundError:
-    from util import ucd
+    from util import unicode_data
 
 decomp_vals = {
     'hangul': -1, 'none': 0,
@@ -33,8 +33,8 @@ decomp_vals = {
 decomp_map = []
 decomp = []
 
-for code in range(len(ucd.uchars)):
-    u = ucd.uchars[code]
+for code in range(len(unicode_data.uchars)):
+    u = unicode_data.uchars[code]
 
     if u is None or u.decomp is None:
         decomp.append(None)

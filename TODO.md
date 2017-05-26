@@ -16,6 +16,9 @@ Todo
     It looks like type '300' (Kana) was removed; all Kana words get
     classified as Ideo.
 
+    ucd/PropList.txt defines 'Ideographic'
+    ucd/Scripts.txt defines 'Han', 'Hiragana'
+
 ## Features
 
   * Some sort of index for allowing KWIC queries.

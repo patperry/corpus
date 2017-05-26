@@ -69,8 +69,10 @@ CORPUS_O = src/main.o src/main_get.o src/main_scan.o src/main_sentences.o \
 
 DATA    = data/ucd/CaseFolding.txt \
 	  data/ucd/CompositionExclusions.txt \
-	  data/ucd/auxiliary/SentenceBreakProperty.txt \
+	  data/ucd/PropList.txt \
+	  data/ucd/Scripts.txt \
 	  data/ucd/UnicodeData.txt \
+	  data/ucd/auxiliary/SentenceBreakProperty.txt \
 	  data/ucd/auxiliary/WordBreakProperty.txt
 
 TESTS_T = tests/check_census tests/check_data tests/check_filter \
@@ -117,6 +119,18 @@ data/ucd/NormalizationTest.txt:
 	$(MKDIR_P) data/ucd
 	$(CURL) -o $@ $(UNICODE)/ucd/NormalizationTest.txt
 
+data/ucd/PropList.txt:
+	$(MKDIR_P) data/ucd
+	$(CURL) -o $@ $(UNICODE)/ucd/PropList.txt
+
+data/ucd/Scripts.txt:
+	$(MKDIR_P) data/ucd
+	$(CURL) -o $@ $(UNICODE)/ucd/Scripts.txt
+
+data/ucd/UnicodeData.txt:
+	$(MKDIR_P) data/ucd
+	$(CURL) -o $@ $(UNICODE)/ucd/UnicodeData.txt
+
 data/ucd/auxiliary/SentenceBreakProperty.txt:
 	$(MKDIR_P) data/ucd/auxiliary
 	$(CURL) -o $@ $(UNICODE)/ucd/auxiliary/SentenceBreakProperty.txt
@@ -124,10 +138,6 @@ data/ucd/auxiliary/SentenceBreakProperty.txt:
 data/ucd/auxiliary/SentenceBreakTest.txt:
 	$(MKDIR_P) data/ucd/auxiliary
 	$(CURL) -o $@ $(UNICODE)/ucd/auxiliary/SentenceBreakTest.txt
-
-data/ucd/UnicodeData.txt:
-	$(MKDIR_P) data/ucd
-	$(CURL) -o $@ $(UNICODE)/ucd/UnicodeData.txt
 
 data/ucd/auxiliary/WordBreakProperty.txt:
 	$(MKDIR_P) data/ucd/auxiliary
@@ -156,17 +166,17 @@ src/unicode/casefold.h: util/gen-casefold.py \
 	$(MKDIR_P) src/unicode
 	./util/gen-casefold.py > $@
 
-src/unicode/combining.h: util/gen-combining.py \
+src/unicode/combining.h: util/gen-combining.py util/unicode_data.py \
 		data/ucd/UnicodeData.txt
 	$(MKDIR_P) src/unicode
 	./util/gen-combining.py > $@
 
-src/unicode/compose.h: util/gen-compose.py \
+src/unicode/compose.h: util/gen-compose.py util/unicode_data.py \
 		data/ucd/CompositionExclusions.txt data/ucd/UnicodeData.txt
 	$(MKDIR_P) src/unicode
 	./util/gen-compose.py > $@
 
-src/unicode/decompose.h: util/gen-decompose.py \
+src/unicode/decompose.h: util/gen-decompose.py util/unicode_data.py \
 		data/ucd/UnicodeData.txt
 	$(MKDIR_P) src/unicode
 	./util/gen-decompose.py > $@
@@ -176,7 +186,9 @@ src/unicode/sentbreakprop.h: util/gen-sentbreak.py \
 	$(MKDIR_P) src/unicode
 	./util/gen-sentbreak.py > $@
 
-src/unicode/wordbreakprop.h: util/gen-wordbreak.py \
+src/unicode/wordbreakprop.h: util/gen-wordbreak.py util/property.py \
+		data/ucd/PropList.txt \
+		data/ucd/Scripts.txt \
 		data/ucd/auxiliary/WordBreakProperty.txt
 	$(MKDIR_P) src/unicode
 	./util/gen-wordbreak.py > $@

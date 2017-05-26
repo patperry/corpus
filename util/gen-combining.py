@@ -17,16 +17,16 @@
 import math
 
 try:
-    import ucd
+    import unicode_data
 except ModuleNotFoundError:
-    from util import ucd
+    from util import unicode_data
 
 
 combin_vals = set([0])
 combin = []
 
-for code in range(len(ucd.uchars)):
-    u = ucd.uchars[code]
+for code in range(len(unicode_data.uchars)):
+    u = unicode_data.uchars[code]
 
     if u is None or u.ccc is None:
         combin.append(0)

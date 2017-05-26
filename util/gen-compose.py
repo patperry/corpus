@@ -18,9 +18,9 @@ import math
 import re
 
 try:
-    import ucd
+    import unicode_data
 except ModuleNotFoundError:
-    from util import ucd
+    from util import unicode_data
 
 
 EXCLUSIONS = 'data/ucd/CompositionExclusions.txt'
@@ -28,10 +28,10 @@ EXCLUSIONS = 'data/ucd/CompositionExclusions.txt'
 # get the length-2 decomposition maps (excluding hangul and compatibility maps)
 
 decomp_map = {}
-starter = [None] * len(ucd.uchars)
+starter = [None] * len(unicode_data.uchars)
 
-for code in range(len(ucd.uchars)):
-    u = ucd.uchars[code]
+for code in range(len(unicode_data.uchars)):
+    u = unicode_data.uchars[code]
     if u is None:
         continue
 
@@ -89,7 +89,7 @@ compose = []
 combiner = []
 primary = []
 off = 0
-for code in range(len(ucd.uchars)):
+for code in range(len(unicode_data.uchars)):
     if code in compose_map:
         maps = compose_map[code]
         maps.sort()

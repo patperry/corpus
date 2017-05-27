@@ -150,12 +150,16 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 
 	case WORD_BREAK_ZWJ:
 		if (scan->iter_prop == WORD_BREAK_GLUE_AFTER_ZWJ) {
+			scan->type = CORPUS_WORD_SYMBOL;
+
 			// Do not break within emoji zwj sequences
 			// WB3c: ZWJ * (Glue_After_Zwj | EBG)
 			NEXT();
 			NEXT();
 			goto Break;
 		} else if (scan->iter_prop == WORD_BREAK_E_BASE_GAZ) {
+			scan->type = CORPUS_WORD_SYMBOL;
+
 			// WB3c: ZWJ * (Glue_After_Zwj | EBG)
 			NEXT();
 			NEXT();
@@ -212,10 +216,12 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 
 	case WORD_BREAK_E_BASE:
 	case WORD_BREAK_E_BASE_GAZ:
+		scan->type = CORPUS_WORD_SYMBOL;
 		NEXT();
 		goto E_Base;
 
 	case WORD_BREAK_REGIONAL_INDICATOR:
+		scan->type = CORPUS_WORD_SYMBOL;
 		NEXT();
 		goto Regional_Indicator;
 
@@ -239,15 +245,15 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 		NEXT();
 		goto Break;
 
+	case WORD_BREAK_E_MODIFIER:
+	case WORD_BREAK_GLUE_AFTER_ZWJ:
 	case WORD_BREAK_SYMBOL:
 		scan->type = CORPUS_WORD_SYMBOL;
 		NEXT();
 		goto Break;
 
-	case WORD_BREAK_EXTEND:
-	case WORD_BREAK_E_MODIFIER:
-	case WORD_BREAK_FORMAT:
-	case WORD_BREAK_GLUE_AFTER_ZWJ:
+	case WORD_BREAK_EXTEND: // Mc, Me, Mn combining marks + Cf
+	case WORD_BREAK_FORMAT: // Cf format controls
 	case WORD_BREAK_OTHER:
 	default:
 		NEXT();

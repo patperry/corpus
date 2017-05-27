@@ -30,7 +30,8 @@
  * The type of the first character in a word type.
  */
 enum corpus_word_type {
-	CORPUS_WORD_NONE = 0,	/**< spaces and control characters */
+	CORPUS_WORD_NONE = 0,	/**< spaces, control characters, and
+				  combining marks */
 	CORPUS_WORD_PUNCT,	/**< punctuation */
 	CORPUS_WORD_SYMBOL,	/**< symbols */
 	CORPUS_WORD_NUMBER,	/**< words that appear to be numbers */

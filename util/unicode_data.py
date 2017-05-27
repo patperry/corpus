@@ -67,6 +67,12 @@ def parse_int(field):
     else:
         return None
 
+def parse_str(field):
+    if field == '':
+        return None
+    else:
+        return field
+
 
 uchars = [None] * (UNICODE_MAX + 1)
 
@@ -75,7 +81,7 @@ with unicode_data:
         fields = line.strip().split(';')
         code = int(fields[0], 16)
         uchars[code] = UChar(name = fields[ids.name],
-                             category = fields[ids.category],
+                             category = parse_str(fields[ids.category]),
                              ccc = parse_int(fields[ids.ccc]),
                              bidi = fields[ids.bidi],
                              decomp = parse_decomp(code, fields[ids.decomp]),

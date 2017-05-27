@@ -18,8 +18,10 @@ import math
 
 try:
     import property
+    import unicode_data
 except ModuleNotFoundError:
     from util import property
+    from util import unicode_data
 
 
 WORD_BREAK_PROPERTY = "data/ucd/auxiliary/WordBreakProperty.txt"
@@ -37,6 +39,16 @@ scripts = property.read(SCRIPTS, sets=True)
 han = scripts['Han']
 hiragana = scripts['Hiragana']
 kana_kanji = han.union(hiragana).union(katakana)
+
+punct = set()
+punct_cats = set(('Pc', 'Pd', 'Pe', 'Pf', 'Pi', 'Po', 'Ps'))
+
+for code in range(len(unicode_data.uchars)):
+    u = unicode_data.uchars[code]
+    if u is None or u.category is None:
+        continue
+    if u.category in punct_cats:
+        punct.add(code)
 
 
 for i in range(len(code_props)):
@@ -57,6 +69,17 @@ for code in range(len(code_props)):
     if code in han_hiragana_ideo:
         if code_props[code] == 'Other':
             code_props[code] = 'Ideo_Kana'
+
+
+# add special property for punctuation
+
+assert 'Punct' not in prop_names
+prop_names.add('Punct')
+
+for code in range(len(code_props)):
+    if code in punct:
+        if code_props[code] == 'Other':
+            code_props[code] = 'Punct'
 
 prop_vals = {}
 prop_vals['Other'] = 0;

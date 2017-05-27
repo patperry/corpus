@@ -31,8 +31,8 @@
  */
 enum corpus_word_type {
 	CORPUS_WORD_NONE = 0,	/**< words that do not fit into any of
-				  the other categories; includes spaces
-				  and most punctuation */
+				  the other categories */
+	CORPUS_WORD_PUNCT,	/**< punctuation */
 	CORPUS_WORD_NUMBER,	/**< words that appear to be numbers */
 	CORPUS_WORD_LETTER	/**< words that contain letters */
 };

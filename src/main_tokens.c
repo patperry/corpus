@@ -76,6 +76,8 @@ static struct string_arg char_maps[] = {
 static struct string_arg word_classes[] = {
 	{ "symbol", CORPUS_FILTER_DROP_SYMBOL,
 		"Does not fit into any other category." },
+	{ "symbol", CORPUS_FILTER_DROP_PUNCT,
+		"Punctuation." },
 	{ "number", CORPUS_FILTER_DROP_NUMBER,
 		"Appears to be a number." },
 	{ "letter", CORPUS_FILTER_DROP_LETTER,

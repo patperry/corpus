@@ -177,6 +177,8 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 		goto Numeric;
 
 	case WORD_BREAK_EXTENDNUMLET:
+		// low line (_) and similar
+		scan->type = CORPUS_WORD_LETTER;
 		NEXT();
 		switch (scan->prop) {
 			case WORD_BREAK_EXTENDNUMLET:
@@ -222,6 +224,21 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 		NEXT();
 		goto Break;
 
+	case WORD_BREAK_DOUBLE_QUOTE:
+	case WORD_BREAK_MIDLETTER:
+	case WORD_BREAK_MIDNUM:
+	case WORD_BREAK_MIDNUMLET:
+	case WORD_BREAK_PUNCT:
+	case WORD_BREAK_SINGLE_QUOTE:
+		scan->type = CORPUS_WORD_PUNCT;
+		NEXT();
+		goto Break;
+
+	case WORD_BREAK_EXTEND:
+	case WORD_BREAK_E_MODIFIER:
+	case WORD_BREAK_FORMAT:
+	case WORD_BREAK_GLUE_AFTER_ZWJ:
+	case WORD_BREAK_OTHER:
 	default:
 		NEXT();
 		goto Break;

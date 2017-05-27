@@ -32,6 +32,7 @@
 enum corpus_word_type {
 	CORPUS_WORD_NONE = 0,	/**< spaces, control characters, and
 				  combining marks */
+	CORPUS_WORD_MARK,	/**< mark */
 	CORPUS_WORD_PUNCT,	/**< punctuation */
 	CORPUS_WORD_SYMBOL,	/**< symbols */
 	CORPUS_WORD_NUMBER,	/**< words that appear to be numbers */

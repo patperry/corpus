@@ -713,6 +713,13 @@ int corpus_filter_term_prop(const struct corpus_filter *f,
 		}
 
 		switch (term_type) {
+		case CORPUS_WORD_MARK:
+			drop = 0;
+			if (f->flags & CORPUS_FILTER_IGNORE_MARK) {
+				prop = CORPUS_FILTER_IGNORED;
+			}
+			break;
+
 		case CORPUS_WORD_PUNCT:
 			drop = f->flags & CORPUS_FILTER_DROP_PUNCT;
 			break;

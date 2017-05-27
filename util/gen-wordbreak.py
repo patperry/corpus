@@ -41,11 +41,13 @@ hiragana = scripts['Hiragana']
 kana_kanji = han.union(hiragana).union(katakana)
 
 letter = set()
+mark = set()
 number = set()
 punct = set()
 symbol = set()
-letter_cats = set(('Ll', 'Lm', 'Lo', 'Lt', 'Lu'))
-number_cats = set(('Nd', 'Nl', 'No'))
+letter_cats = set(('Ll', 'Lm', 'Lo', 'Lt', 'Lu', 'Nl')) # Note: Lm in mark
+mark_cats = set(('Lm', 'Mc', 'Me', 'Mn'))
+number_cats = set(('Nd', 'No')) # Note: Nl in 'letter'
 punct_cats = set(('Pc', 'Pd', 'Pe', 'Pf', 'Pi', 'Po', 'Ps'))
 symbol_cats = set(('Sc', 'Sk', 'Sm', 'So'))
 
@@ -56,6 +58,8 @@ for code in range(len(unicode_data.uchars)):
         continue
     if u.category in letter_cats:
         letter.add(code)
+    elif u.category in mark_cats:
+        mark.add(code)
     elif u.category in number_cats:
         number.add(code)
     elif u.category in punct_cats:
@@ -74,10 +78,12 @@ prop_names.remove('Other')
 
 assert 'Other_Letter' not in prop_names
 assert 'Other_Number' not in prop_names
+assert 'Mark' not in prop_names
 assert 'Punct' not in prop_names
 assert 'Symbol' not in prop_names
 prop_names.add('Other_Letter')
 prop_names.add('Other_Number')
+prop_names.add('Mark')
 prop_names.add('Punct')
 prop_names.add('Symbol')
 
@@ -87,6 +93,8 @@ for code in range(len(code_props)):
             code_props[code] = 'Other_Letter'
         elif code in number:
             code_props[code] = 'Other_Number'
+        elif code in mark:
+            code_props[code] = 'Mark'
         elif code in punct:
             code_props[code] = 'Punct'
         elif code in symbol:

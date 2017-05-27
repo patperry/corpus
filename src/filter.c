@@ -717,6 +717,10 @@ int corpus_filter_term_prop(const struct corpus_filter *f,
 			drop = f->flags & CORPUS_FILTER_DROP_PUNCT;
 			break;
 
+		case CORPUS_WORD_SYMBOL:
+			drop = f->flags & CORPUS_FILTER_DROP_SYMBOL;
+			break;
+
 		case CORPUS_WORD_NUMBER:
 			drop = f->flags & CORPUS_FILTER_DROP_NUMBER;
 			break;
@@ -726,7 +730,8 @@ int corpus_filter_term_prop(const struct corpus_filter *f,
 			break;
 
 		default:
-			drop = f->flags & CORPUS_FILTER_DROP_SYMBOL;
+			// space or control character
+			drop = 0;
 			break;
 		}
 

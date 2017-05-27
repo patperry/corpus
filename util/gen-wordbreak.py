@@ -40,15 +40,28 @@ han = scripts['Han']
 hiragana = scripts['Hiragana']
 kana_kanji = han.union(hiragana).union(katakana)
 
+letter = set()
+number = set()
 punct = set()
+symbol = set()
+letter_cats = set(('Ll', 'Lm', 'Lo', 'Lt', 'Lu'))
+number_cats = set(('Nd', 'Nl', 'No'))
 punct_cats = set(('Pc', 'Pd', 'Pe', 'Pf', 'Pi', 'Po', 'Ps'))
+symbol_cats = set(('Sc', 'Sk', 'Sm', 'So'))
+
 
 for code in range(len(unicode_data.uchars)):
     u = unicode_data.uchars[code]
     if u is None or u.category is None:
         continue
-    if u.category in punct_cats:
+    if u.category in letter_cats:
+        letter.add(code)
+    elif u.category in number_cats:
+        number.add(code)
+    elif u.category in punct_cats:
         punct.add(code)
+    elif u.category in symbol_cats:
+        symbol.add(code)
 
 
 for i in range(len(code_props)):
@@ -59,30 +72,55 @@ prop_names = set(code_props)
 prop_names.remove('Other')
 
 
+assert 'Other_Letter' not in prop_names
+assert 'Other_Number' not in prop_names
+assert 'Punct' not in prop_names
+assert 'Symbol' not in prop_names
+prop_names.add('Other_Letter')
+prop_names.add('Other_Number')
+prop_names.add('Punct')
+prop_names.add('Symbol')
 
-# add special property for Kana and Ideographic characters
-assert 'Ideo_Kana' not in prop_names
-prop_names.add('Ideo_Kana')
+for code in range(len(code_props)):
+    if code_props[code] == 'Other':
+        if code in letter:
+            code_props[code] = 'Other_Letter'
+        elif code in number:
+            code_props[code] = 'Other_Number'
+        elif code in punct:
+            code_props[code] = 'Punct'
+        elif code in symbol:
+            code_props[code] = 'Symbol'
+
+
+# make sure we didn't miss any Kana or Ideographic characters
 
 han_hiragana_ideo = han.union(hiragana).union(ideographic)
 for code in range(len(code_props)):
     if code in han_hiragana_ideo:
         if code_props[code] == 'Other':
-            code_props[code] = 'Ideo_Kana'
+            u = unicode_data.uchars[code]
+            print('Uncagetorized Kana or Ideographic:')
+            print('U+{:04X}'.format(code), u.category, u.name)
+            assert False
 
 
-# add special property for punctuation
+# make sure we didn't miss anything
 
-assert 'Punct' not in prop_names
-prop_names.add('Punct')
-
+other_cats = set(('Cc', 'Cf', 'Cn', 'Co', 'Cs', 'Zs'))
 for code in range(len(code_props)):
-    if code in punct:
-        if code_props[code] == 'Other':
-            code_props[code] = 'Punct'
+    if code_props[code] == 'Other':
+        u = unicode_data.uchars[code]
+        if u is not None and u.category not in other_cats:
+            print('Unrecognized category:')
+            print('U+{:04X}'.format(code), u.category, u.name)
+            assert False
+
+
 
 prop_vals = {}
 prop_vals['Other'] = 0;
+
 
 for p in sorted(prop_names):
     prop_vals[p] = len(prop_vals)

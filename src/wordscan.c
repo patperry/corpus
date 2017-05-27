@@ -219,8 +219,13 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 		NEXT();
 		goto Regional_Indicator;
 
-	case WORD_BREAK_IDEO_KANA:
+	case WORD_BREAK_OTHER_LETTER:
 		scan->type = CORPUS_WORD_LETTER;
+		NEXT();
+		goto Break;
+
+	case WORD_BREAK_OTHER_NUMBER:
+		scan->type = CORPUS_WORD_NUMBER;
 		NEXT();
 		goto Break;
 
@@ -231,6 +236,11 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 	case WORD_BREAK_PUNCT:
 	case WORD_BREAK_SINGLE_QUOTE:
 		scan->type = CORPUS_WORD_PUNCT;
+		NEXT();
+		goto Break;
+
+	case WORD_BREAK_SYMBOL:
+		scan->type = CORPUS_WORD_SYMBOL;
 		NEXT();
 		goto Break;
 

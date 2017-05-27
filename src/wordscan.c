@@ -252,7 +252,7 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 		NEXT();
 		goto Break;
 
-	case WORD_BREAK_EXTEND: // Mc, Me, Mn combining marks + Cf
+	case WORD_BREAK_EXTEND:
 	case WORD_BREAK_MARK:
 		scan->type = CORPUS_WORD_MARK;
 		NEXT();

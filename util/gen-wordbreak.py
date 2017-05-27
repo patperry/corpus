@@ -115,6 +115,18 @@ for code in range(len(code_props)):
 
 # make sure we didn't miss anything
 
+# Other: (Cc | Cf | Cn | Co | Cs)
+# Cc: Control
+# Cf: Format
+# Cn: Unassigned
+# Co: Private Use
+# Cs: Surrogate
+#
+# Separator: Z = (Zl | Zp | Zs)
+# Zl: Line Separator
+# Zp: Paragraph Separator
+# Zs: Space Separator
+
 other_cats = set(('Cc', 'Cf', 'Cn', 'Co', 'Cs', 'Zs'))
 for code in range(len(code_props)):
     if code_props[code] == 'Other':

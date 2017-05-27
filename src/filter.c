@@ -700,51 +700,50 @@ out:
 int corpus_filter_term_prop(const struct corpus_filter *f,
 			    const struct corpus_text *term, int term_type)
 {
-	int drop, prop;
+	int drop, ignore, prop;
 
-	prop = 0;
+	if (term_type < 0) {
+		term_type = corpus_term_type(term);
+	}
 
-	if (CORPUS_TEXT_SIZE(term) == 0
-			&& (f->flags & CORPUS_FILTER_IGNORE_EMPTY)) {
+	ignore = 0;
+	drop = 0;
+
+	switch (term_type) {
+	case CORPUS_WORD_NONE:
+		ignore = (f->flags & CORPUS_FILTER_IGNORE_OTHER);
+		break;
+
+	case CORPUS_WORD_MARK:
+		drop = (f->flags & CORPUS_FILTER_DROP_MARK);
+		break;
+
+	case CORPUS_WORD_PUNCT:
+		drop = f->flags & CORPUS_FILTER_DROP_PUNCT;
+		break;
+
+	case CORPUS_WORD_SYMBOL:
+		drop = f->flags & CORPUS_FILTER_DROP_SYMBOL;
+		break;
+
+	case CORPUS_WORD_NUMBER:
+		drop = f->flags & CORPUS_FILTER_DROP_NUMBER;
+		break;
+
+	case CORPUS_WORD_LETTER:
+		drop = f->flags & CORPUS_FILTER_DROP_LETTER;
+		break;
+
+	default:
+		break;
+	}
+
+	if (ignore) {
 		prop = CORPUS_FILTER_IGNORED;
+	} else if (drop) {
+		prop = CORPUS_FILTER_DROPPED;
 	} else {
-		if (term_type < 0) {
-			term_type = corpus_term_type(term);
-		}
-
-		switch (term_type) {
-		case CORPUS_WORD_MARK:
-			drop = 0;
-			if (f->flags & CORPUS_FILTER_IGNORE_MARK) {
-				prop = CORPUS_FILTER_IGNORED;
-			}
-			break;
-
-		case CORPUS_WORD_PUNCT:
-			drop = f->flags & CORPUS_FILTER_DROP_PUNCT;
-			break;
-
-		case CORPUS_WORD_SYMBOL:
-			drop = f->flags & CORPUS_FILTER_DROP_SYMBOL;
-			break;
-
-		case CORPUS_WORD_NUMBER:
-			drop = f->flags & CORPUS_FILTER_DROP_NUMBER;
-			break;
-
-		case CORPUS_WORD_LETTER:
-			drop = f->flags & CORPUS_FILTER_DROP_LETTER;
-			break;
-
-		default:
-			// space or control character
-			drop = 0;
-			break;
-		}
-
-		if (drop) {
-			prop = CORPUS_FILTER_DROPPED;
-		}
+		prop = 0;
 	}
 
 	return prop;

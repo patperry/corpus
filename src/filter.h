@@ -28,8 +28,8 @@
  */
 enum corpus_filter_type {
 	CORPUS_FILTER_NONE = 0,		/**< do not filter any word types */
-	CORPUS_FILTER_IGNORE_EMPTY = (1 << 0),	/**< ignore empty types */
-	CORPUS_FILTER_IGNORE_MARK = (1 << 1),	/**< ignore marks */
+	CORPUS_FILTER_IGNORE_OTHER = (1 << 0),	/**< ignore other words */
+	CORPUS_FILTER_DROP_MARK = (1 << 1),	/**< ignore mark words */
 	CORPUS_FILTER_DROP_PUNCT = (1 << 2),	/**< drop punctuation words */
 	CORPUS_FILTER_DROP_SYMBOL = (1 << 3),	/**< drop symbol words */
 	CORPUS_FILTER_DROP_NUMBER = (1 << 4),	/**< drop number words */

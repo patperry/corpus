@@ -74,14 +74,11 @@ static struct string_arg char_maps[] = {
 
 
 static struct string_arg word_classes[] = {
-	{ "symbol", CORPUS_FILTER_DROP_SYMBOL,
-		"Symbols." },
-	{ "symbol", CORPUS_FILTER_DROP_PUNCT,
-		"Punctuation." },
-	{ "number", CORPUS_FILTER_DROP_NUMBER,
-		"Appears to be a number." },
-	{ "letter", CORPUS_FILTER_DROP_LETTER,
-		"Composed of letters." },
+	{ "mark", CORPUS_FILTER_DROP_MARK, "Marks." },
+	{ "symbol", CORPUS_FILTER_DROP_SYMBOL, "Symbols." },
+	{ "symbol", CORPUS_FILTER_DROP_PUNCT, "Punctuation." },
+	{ "number", CORPUS_FILTER_DROP_NUMBER, "Appears to be a number." },
+	{ "letter", CORPUS_FILTER_DROP_LETTER, "Composed of letters." },
 	{ NULL, 0, NULL }
 };
 
@@ -119,7 +116,7 @@ Options:\n\
 \t-o <path>\tSaves output at the given path.\n\
 \t-s <stemmer>\tStems tokens with the given algorithm.\n\
 \t-t <stopwords>\tDrops words from the given stop word list.\n\
-\t-z\t\tKeeps zero-character (empty) tokens.\n\
+\t-z\t\tKeeps separator, control, and mark tokens.\n\
 ", PROGRAM_NAME);
 	printf("\nCharacter Maps:\n");
 	for (i = 0; char_maps[i].name != NULL; i++) {
@@ -188,7 +185,7 @@ int main_tokens(int argc, char * const argv[])
 	int filter_flags, type_flags;
 	int ch, err, i, name_id, start, term_id, ncomb;
 
-	filter_flags = CORPUS_FILTER_IGNORE_EMPTY;
+	filter_flags = CORPUS_FILTER_IGNORE_OTHER;
 	type_flags = (CORPUS_TYPE_COMPAT | CORPUS_TYPE_CASEFOLD
 			| CORPUS_TYPE_DASHFOLD | CORPUS_TYPE_QUOTFOLD
 			| CORPUS_TYPE_RMCC | CORPUS_TYPE_RMDI
@@ -251,7 +248,7 @@ int main_tokens(int argc, char * const argv[])
 			}
 			break;
 		case 'z':
-			filter_flags &= ~CORPUS_FILTER_IGNORE_EMPTY;
+			filter_flags &= ~CORPUS_FILTER_IGNORE_OTHER;
 			break;
 		default:
 			usage_tokens();

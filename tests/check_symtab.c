@@ -31,9 +31,9 @@ struct corpus_symtab tab;
 void setup_empty_symtab(void)
 {
 	setup();
-	corpus_symtab_init(&tab,
-			   CORPUS_TYPE_COMPAT | CORPUS_TYPE_CASEFOLD
-			   	| CORPUS_TYPE_RMDI,
+	corpus_symtab_init(&tab, (CORPUS_TYPE_MAPCASE
+				  | CORPUS_TYPE_MAPCOMPAT
+				  | CORPUS_TYPE_RMDI),
 			   NULL);
 }
 

@@ -56,15 +56,13 @@ struct string_arg {
 
 
 static struct string_arg char_maps[] = {
-	{ "case", CORPUS_TYPE_CASEFOLD,
+	{ "case", CORPUS_TYPE_MAPCASE,
 		"Performs Unicode case-folding." },
-	{ "compat", CORPUS_TYPE_COMPAT,
+	{ "compat", CORPUS_TYPE_MAPCOMPAT,
 		"Applies Unicode compatibility mappings."},
-	{ "dash", CORPUS_TYPE_DASHFOLD,
-		"Replaces Unicode dashes with ASCII dash (-)." },
 	{ "ignorable", CORPUS_TYPE_RMDI,
 		"Removes Unicode default ignorables." },
-	{ "quote", CORPUS_TYPE_QUOTFOLD,
+	{ "quote", CORPUS_TYPE_MAPQUOTE,
 		"Replaces Unicode quotes with ASCII single quote (')." },
 	{ NULL, 0, NULL }
 };
@@ -184,9 +182,8 @@ int main_tokens(int argc, char * const argv[])
 	int ch, err, i, name_id, start, term_id, ncomb;
 
 	filter_flags = CORPUS_FILTER_IGNORE_OTHER;
-	type_flags = (CORPUS_TYPE_COMPAT | CORPUS_TYPE_CASEFOLD
-			| CORPUS_TYPE_DASHFOLD | CORPUS_TYPE_QUOTFOLD
-			| CORPUS_TYPE_RMDI);
+	type_flags = (CORPUS_TYPE_MAPCASE | CORPUS_TYPE_MAPCOMPAT
+			| CORPUS_TYPE_MAPQUOTE | CORPUS_TYPE_RMDI);
 
 	field = "text";
 	ncomb = 0;

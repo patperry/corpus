@@ -17,7 +17,6 @@
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
-#include <stdbool.h>
 #include <string.h>
 #include "../lib/libstemmer_c/include/libstemmer.h"
 #include "private/stopwords.h"
@@ -135,11 +134,7 @@ int corpus_typemap_set_kind(struct corpus_typemap *map, int kind)
 
 	corpus_typemap_clear_kind(map);
 
-	if (kind & CORPUS_TYPE_COMPAT) {
-		map->charmap_type = CORPUS_UDECOMP_ALL;
-	}
-
-	if (kind & CORPUS_TYPE_CASEFOLD) {
+	if (kind & CORPUS_TYPE_MAPCASE) {
 		for (ch = 'A'; ch <= 'Z'; ch++) {
 			map->ascii_map[ch] = ch + ('a' - 'A');
 		}
@@ -147,25 +142,12 @@ int corpus_typemap_set_kind(struct corpus_typemap *map, int kind)
 		map->charmap_type |= CORPUS_UCASEFOLD_ALL;
 	}
 
-	if (kind & CORPUS_TYPE_QUOTFOLD) {
+	if (kind & CORPUS_TYPE_MAPCOMPAT) {
+		map->charmap_type = CORPUS_UDECOMP_ALL;
+	}
+
+	if (kind & CORPUS_TYPE_MAPQUOTE) {
 		map->ascii_map['"'] = '\'';
-	}
-
-	if (kind & CORPUS_TYPE_RMCC) {
-		for (ch = 0x00; ch <= 0x08; ch++) {
-			map->ascii_map[ch] = -1;
-		}
-		for (ch = 0x0E; ch <= 0x1F; ch++) {
-			map->ascii_map[ch] = -1;
-		}
-		map->ascii_map[0x7F] = -1;
-	}
-
-	if (kind & CORPUS_TYPE_RMWS) {
-		for (ch = 0x09; ch <= 0x0D; ch++) {
-			map->ascii_map[ch] = -1;
-		}
-		map->ascii_map[' '] = -1;
 	}
 
 	map->kind = kind;
@@ -313,15 +295,12 @@ out:
 int corpus_typemap_set_utf32(struct corpus_typemap *map, const uint32_t *ptr,
 			     const uint32_t *end)
 {
-	bool fold_dash = map->kind & CORPUS_TYPE_DASHFOLD;
-	bool fold_quot = map->kind & CORPUS_TYPE_QUOTFOLD;
-	bool rm_cc = map->kind & CORPUS_TYPE_RMCC;
-	bool rm_di = map->kind & CORPUS_TYPE_RMDI;
-	bool rm_ws = map->kind & CORPUS_TYPE_RMWS;
+	int map_quote = map->kind & CORPUS_TYPE_MAPQUOTE;
+	int rm_di = map->kind & CORPUS_TYPE_RMDI;
 	uint8_t *dst = map->type.ptr;
 	uint32_t code;
 	int8_t ch;
-	bool utf8 = false;
+	int is_utf8 = 0;
 
 	while (ptr != end) {
 		code = *ptr++;
@@ -332,52 +311,8 @@ int corpus_typemap_set_utf32(struct corpus_typemap *map, const uint32_t *ptr,
 				*dst++ = (uint8_t)ch;
 			}
 			continue;
-		} else if (code <= 0x9F) {
-			if (code == 0x85) {
-				if (rm_ws) {
-					continue;
-				}
-			} else {
-				// remove C1 control chars
-				if (rm_cc) {
-					continue;
-				}
-			}
 		} else if (code <= 0xDFFFF) {
 			switch (code) {
-			// Dash = Yes
-			case 0x058A:
-			case 0x05BE:
-			case 0x1400:
-			case 0x1806:
-			case 0x2010:
-			case 0x2011:
-			case 0x2012:
-			case 0x2013:
-			case 0x2014:
-			case 0x2015:
-			case 0x2053:
-			case 0x207B:
-			case 0x208B:
-			case 0x2212:
-			case 0x2E17:
-			case 0x2E1A:
-			case 0x2E3A:
-			case 0x2E3B:
-			case 0x2E40:
-			case 0x301C:
-			case 0x3030:
-			case 0x30A0:
-			case 0xFE31:
-			case 0xFE32:
-			case 0xFE58:
-			case 0xFE63:
-			case 0xFF0D:
-				if (fold_dash) {
-					code = 0x002D;
-				}
-				break;
-
 			// Quotation_Mark = Yes
 			case 0x00AB:
 			case 0x00BB:
@@ -407,33 +342,8 @@ int corpus_typemap_set_utf32(struct corpus_typemap *map, const uint32_t *ptr,
 			case 0xFF07:
 			case 0xFF62:
 			case 0xFF63:
-				if (fold_quot) {
+				if (map_quote) {
 					code = 0x0027;
-				}
-				break;
-
-			// White_Space = Yes
-			//case 0x0085: handled above
-			case 0x00A0:
-			case 0x1680:
-			case 0x2000:
-			case 0x2001:
-			case 0x2002:
-			case 0x2003:
-			case 0x2004:
-			case 0x2005:
-			case 0x2006:
-			case 0x2007:
-			case 0x2008:
-			case 0x2009:
-			case 0x200A:
-			case 0x2028:
-			case 0x2029:
-			case 0x202F:
-			case 0x205F:
-			case 0x3000:
-				if (rm_ws) {
-					continue;
 				}
 				break;
 
@@ -529,7 +439,7 @@ int corpus_typemap_set_utf32(struct corpus_typemap *map, const uint32_t *ptr,
 			}
 		}
 		if (code >= 0x80) {
-			utf8 = true;
+			is_utf8 = 1;
 		}
 		corpus_encode_utf8(code, &dst);
 	}
@@ -537,7 +447,7 @@ int corpus_typemap_set_utf32(struct corpus_typemap *map, const uint32_t *ptr,
 	*dst = '\0'; // not necessary, but helps with debugging
 	map->type.attr = (CORPUS_TEXT_SIZE_MASK
 			  & ((size_t)(dst - map->type.ptr)));
-	if (utf8) {
+	if (is_utf8) {
 		map->type.attr |= CORPUS_TEXT_UTF8_BIT;
 	}
 

@@ -33,10 +33,7 @@ struct sb_stemmer;
  * composed normal form (NFC). Optionally, apply compatibility maps for
  * NFKC normal and/or apply other transformations:
  *
- *  + #CORPUS_TYPE_COMPAT: apply all compatibility maps required for
- *  	[NFKC normal form](http://unicode.org/reports/tr15/#Norm_Forms)
- *
- *  + #CORPUS_TYPE_CASEFOLD: perform case folding, in most languages (including
+ *  + #CORPUS_TYPE_MAPCASE: perform case folding, in most languages (including
  *  	English) mapping uppercase characters to their lowercase equivalents,
  *  	but also performing other normalizations like mapping the
  *  	German Eszett (&szlig;) to "ss"; see
@@ -45,39 +42,26 @@ struct sb_stemmer;
  *  	[Case Mapping FAQ](http://unicode.org/faq/casemap_charprop.html)
  *  	for more information
  *
- *  + #CORPUS_TYPE_DASHFOLD: dash fold, replace em-dashes, negative signs, and
- *  	anything with the [Dash=Yes](http://unicode.org/reports/tr44/#Dash)
- *  	property with a dash (`-`)
+ *  + #CORPUS_TYPE_MAPCOMPAT: apply all compatibility maps required for
+ *  	[NFKC normal form](http://unicode.org/reports/tr15/#Norm_Forms)
  *
- *  + #CORPUS_TYPE_QUOTFOLD: quote fold, replace double quotes, apostrophes, and
- *      anything with the
+ *  + #CORPUS_TYPE_MAPQUOTE: quote fold, replace double quotes, apostrophes,
+ *      and anything with the
  *  	[Quotation Mark=Yes](http://unicode.org/reports/tr44/#Quotation_Mark)
  *  	property with a single quote (`'`)
- *
- *  + #CORPUS_TYPE_RMCC: remove non-white-space control codes (Cc) like
- *  	non-printable ASCII codes; these are defined in
- *  	_The Unicode Standard_ Sec. 23.1 "Control Codes"
  *
  *  + #CORPUS_TYPE_RMDI: remove default ignorables (DI) like soft hyphens and
  *  	zero-width spaces, anything with the
  *  	[Default_Ignorable_Code_Point=Yes]
  *  	(http://www.unicode.org/reports/tr44/#Default_Ignorable_Code_Point)
  *  	property
- *
- *  + #CORPUS_TYPE_RMWS: remove white space (WS), anything with the
- *  	[White_Space=Yes](http://www.unicode.org/reports/tr44/#White_Space)
- *  	property
  */
 enum corpus_type_kind {
-	CORPUS_TYPE_NORMAL   = 0, /**< transform to composed normal form */
-	CORPUS_TYPE_COMPAT   = (1 << 0), /**< apply compatibility mappings */
-	CORPUS_TYPE_CASEFOLD = (1 << 1), /**< perform case folding */
-	CORPUS_TYPE_DASHFOLD = (1 << 2), /**< replace dashes with `-` */
-	CORPUS_TYPE_QUOTFOLD = (1 << 3), /**< replace quotes with `'` */
-	CORPUS_TYPE_RMCC     = (1 << 4), /**< remove non-white-space control
-					   characters */
-	CORPUS_TYPE_RMDI     = (1 << 5), /**< remove default ignorables */
-	CORPUS_TYPE_RMWS     = (1 << 6)  /**< remove white space */
+	CORPUS_TYPE_NORMAL    = 0, /**< transform to composed normal form */
+	CORPUS_TYPE_MAPCASE   = (1 << 0), /**< perform case folding */
+	CORPUS_TYPE_MAPCOMPAT = (1 << 1), /**< apply compatibility mappings */
+	CORPUS_TYPE_MAPQUOTE  = (1 << 2), /**< replace quotes with `'` */
+	CORPUS_TYPE_RMDI      = (1 << 3)  /**< remove default ignorables */
 };
 
 /**

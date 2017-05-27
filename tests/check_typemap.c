@@ -25,13 +25,10 @@
 #include "testutil.h"
 
 
-#define TYPE_CASEFOLD	CORPUS_TYPE_CASEFOLD
-#define TYPE_COMPAT	CORPUS_TYPE_COMPAT
-#define TYPE_DASHFOLD	CORPUS_TYPE_DASHFOLD
-#define TYPE_QUOTFOLD	CORPUS_TYPE_QUOTFOLD
-#define TYPE_RMCC	CORPUS_TYPE_RMCC
+#define TYPE_MAPCASE	CORPUS_TYPE_MAPCASE
+#define TYPE_MAPCOMPAT	CORPUS_TYPE_MAPCOMPAT
+#define TYPE_MAPQUOTE	CORPUS_TYPE_MAPQUOTE
 #define TYPE_RMDI	CORPUS_TYPE_RMDI
-#define TYPE_RMWS	CORPUS_TYPE_RMWS
 
 
 struct corpus_text *get_type_stem(const struct corpus_text *tok, int flags,
@@ -66,7 +63,7 @@ struct corpus_text *get_type(const struct corpus_text *tok, int flags)
 
 struct corpus_text *casefold(const struct corpus_text *tok)
 {
-	return get_type(tok, TYPE_CASEFOLD);
+	return get_type(tok, TYPE_MAPCASE);
 }
 
 
@@ -118,79 +115,14 @@ START_TEST(test_typ_esc)
 	assert_text_eq(get_type(T("\\\\"), 0), S("\\"));
 	assert_text_eq(get_type(T("\\u005C"), 0), S("\\"));
 	assert_text_eq(get_type(S("\\\\"), 0), S("\\\\"));
-	assert_text_eq(get_type(S("\\u005C"), TYPE_CASEFOLD), S("\\u005c"));
+	assert_text_eq(get_type(S("\\u005C"), TYPE_MAPCASE), S("\\u005c"));
 
 	// quote (")
-	assert_text_eq(get_type(S("\""), TYPE_QUOTFOLD), S("\'"));
-	assert_text_eq(get_type(T("\\\""), TYPE_QUOTFOLD), S("\'"));
-	assert_text_eq(get_type(T("\\u0022"), TYPE_QUOTFOLD), S("\'"));
-	assert_text_eq(get_type(S("\\\'"), TYPE_QUOTFOLD), S("\\\'"));
-	assert_text_eq(get_type(S("\\u0022"), TYPE_QUOTFOLD), S("\\u0022"));
-}
-END_TEST
-
-
-/*
- * Control Characters (Cc)
- * -----------------------
- *
- *	U+0000..U+001F	(C0)
- *	U+007F		(delete)
- *	U+0080..U+009F	(C1)
- *
- * Source: UnicodeStandard-8.0, Sec. 23.1, p. 808.
- */
-
-START_TEST(test_rm_control_ascii)
-{
-	char str[256];
-	uint8_t i;
-
-	assert_text_eq(get_type(S("\a"), TYPE_RMCC), S(""));
-	assert_text_eq(get_type(S("\b"), TYPE_RMCC), S(""));
-	assert_text_eq(get_type(S("\t"), TYPE_RMCC), S("\t"));
-	assert_text_eq(get_type(S("\n"), TYPE_RMCC), S("\n"));
-	assert_text_eq(get_type(S("\v"), TYPE_RMCC), S("\v"));
-	assert_text_eq(get_type(S("\f"), TYPE_RMCC), S("\f"));
-	assert_text_eq(get_type(S("\r"), TYPE_RMCC), S("\r"));
-
-	// C0
-	for (i = 1; i < 0x20; i++) {
-		if (0x09 <= i && i <= 0x0D) {
-			continue;
-		}
-
-		str[0] = (char)i; str[1] = '\0';
-		assert_text_eq(get_type(S(str), TYPE_RMCC), S(""));
-
-		sprintf(str, "\\u%04X", i);
-		assert_text_eq(get_type(T(str), TYPE_RMCC), S(""));
-	}
-
-	// delete
-	assert_text_eq(get_type(S("\x7F"), TYPE_RMCC), S(""));
-	assert_text_eq(get_type(T("\\u007F"), TYPE_RMCC), S(""));
-}
-END_TEST
-
-
-START_TEST(test_rm_control_utf8)
-{
-	uint8_t str[256];
-	uint8_t i;
-
-	// C1: JSON
-	for (i = 0x80; i < 0xA0; i++) {
-		if (i == 0x85) {
-			continue;
-		}
-
-		str[0] = 0xC2; str[1] = i; str[2] = '\0';
-		assert_text_eq(get_type(S((char *)str), TYPE_RMCC), S(""));
-
-		sprintf((char *)str, "\\u%04X", i);
-		assert_text_eq(get_type(T((char *)str), TYPE_RMCC), S(""));
-	}
+	assert_text_eq(get_type(S("\""), TYPE_MAPQUOTE), S("\'"));
+	assert_text_eq(get_type(T("\\\""), TYPE_MAPQUOTE), S("\'"));
+	assert_text_eq(get_type(T("\\u0022"), TYPE_MAPQUOTE), S("\'"));
+	assert_text_eq(get_type(S("\\\'"), TYPE_MAPQUOTE), S("\\\'"));
+	assert_text_eq(get_type(S("\\u0022"), TYPE_MAPQUOTE), S("\\u0022"));
 }
 END_TEST
 
@@ -261,18 +193,6 @@ START_TEST(test_keep_ws_ascii)
 END_TEST
 
 
-START_TEST(test_rm_ws_ascii)
-{
-	assert_text_eq(get_type(S("\t"), TYPE_RMWS), S(""));
-	assert_text_eq(get_type(S("\n"), TYPE_RMWS), S(""));
-	assert_text_eq(get_type(S("\v"), TYPE_RMWS), S(""));
-	assert_text_eq(get_type(S("\f"), TYPE_RMWS), S(""));
-	assert_text_eq(get_type(S("\r"), TYPE_RMWS), S(""));
-	assert_text_eq(get_type(S(" "), TYPE_RMWS), S(""));
-}
-END_TEST
-
-
 START_TEST(test_keep_ws_utf8)
 {
 	const struct corpus_text *t, *js, *typ;
@@ -325,12 +245,92 @@ START_TEST(test_keep_ws_utf8)
 		corpus_encode_utf8(ws[i], &buf);
 		*buf = '\0';
 		t = S((char *)str);
-		assert_text_eq(get_type(t, TYPE_COMPAT), typ);
+		assert_text_eq(get_type(t, TYPE_MAPCOMPAT), typ);
 
 		sprintf((char *)str, "\\u%04x", ws[i]);
 		js = T((char *)str);
-		assert_text_eq(get_type(js, TYPE_COMPAT), typ);
+		assert_text_eq(get_type(js, TYPE_MAPCOMPAT), typ);
 	}
+}
+END_TEST
+
+
+// removed the following features from typemap, no need to test
+#if 0
+
+/*
+ * Control Characters (Cc)
+ * -----------------------
+ *
+ *	U+0000..U+001F	(C0)
+ *	U+007F		(delete)
+ *	U+0080..U+009F	(C1)
+ *
+ * Source: UnicodeStandard-8.0, Sec. 23.1, p. 808.
+ */
+
+START_TEST(test_rm_control_ascii)
+{
+	char str[256];
+	uint8_t i;
+
+	assert_text_eq(get_type(S("\a"), TYPE_RMCC), S(""));
+	assert_text_eq(get_type(S("\b"), TYPE_RMCC), S(""));
+	assert_text_eq(get_type(S("\t"), TYPE_RMCC), S("\t"));
+	assert_text_eq(get_type(S("\n"), TYPE_RMCC), S("\n"));
+	assert_text_eq(get_type(S("\v"), TYPE_RMCC), S("\v"));
+	assert_text_eq(get_type(S("\f"), TYPE_RMCC), S("\f"));
+	assert_text_eq(get_type(S("\r"), TYPE_RMCC), S("\r"));
+
+	// C0
+	for (i = 1; i < 0x20; i++) {
+		if (0x09 <= i && i <= 0x0D) {
+			continue;
+		}
+
+		str[0] = (char)i; str[1] = '\0';
+		assert_text_eq(get_type(S(str), TYPE_RMCC), S(""));
+
+		sprintf(str, "\\u%04X", i);
+		assert_text_eq(get_type(T(str), TYPE_RMCC), S(""));
+	}
+
+	// delete
+	assert_text_eq(get_type(S("\x7F"), TYPE_RMCC), S(""));
+	assert_text_eq(get_type(T("\\u007F"), TYPE_RMCC), S(""));
+}
+END_TEST
+
+
+START_TEST(test_rm_control_utf8)
+{
+	uint8_t str[256];
+	uint8_t i;
+
+	// C1: JSON
+	for (i = 0x80; i < 0xA0; i++) {
+		if (i == 0x85) {
+			continue;
+		}
+
+		str[0] = 0xC2; str[1] = i; str[2] = '\0';
+		assert_text_eq(get_type(S((char *)str), TYPE_RMCC), S(""));
+
+		sprintf((char *)str, "\\u%04X", i);
+		assert_text_eq(get_type(T((char *)str), TYPE_RMCC), S(""));
+	}
+}
+END_TEST
+
+
+START_TEST(test_rm_ws_ascii)
+{
+	assert_text_eq(get_type(S("\t"), TYPE_RMWS), S(""));
+	assert_text_eq(get_type(S("\n"), TYPE_RMWS), S(""));
+	assert_text_eq(get_type(S("\v"), TYPE_RMWS), S(""));
+	assert_text_eq(get_type(S("\f"), TYPE_RMWS), S(""));
+	assert_text_eq(get_type(S("\r"), TYPE_RMWS), S(""));
+	assert_text_eq(get_type(S(" "), TYPE_RMWS), S(""));
 }
 END_TEST
 
@@ -361,6 +361,7 @@ START_TEST(test_rm_ws_utf8)
 }
 END_TEST
 
+#endif
 
 START_TEST(test_casefold_ascii)
 {
@@ -404,6 +405,9 @@ START_TEST(test_casefold_ascii)
 END_TEST
 
 
+// removed this feature
+#if 0
+
 START_TEST(test_fold_dash)
 {
 	assert_text_eq(get_type(S("-"), TYPE_DASHFOLD), S("-"));
@@ -427,20 +431,22 @@ START_TEST(test_nofold_dash)
 }
 END_TEST
 
+#endif
 
-START_TEST(test_fold_quote)
+
+START_TEST(test_map_quote)
 {
-	assert_text_eq(get_type(S("'"), TYPE_QUOTFOLD), S("'"));
-	assert_text_eq(get_type(S("\""), TYPE_QUOTFOLD), S("'"));
-	assert_text_eq(get_type(T("\\u2018"), TYPE_QUOTFOLD), S("'"));
-	assert_text_eq(get_type(T("\\u2019"), TYPE_QUOTFOLD), S("'"));
-	assert_text_eq(get_type(T("\\u201A"), TYPE_QUOTFOLD), S("'"));
-	assert_text_eq(get_type(T("\\u201F"), TYPE_QUOTFOLD), S("'"));
+	assert_text_eq(get_type(S("'"), TYPE_MAPQUOTE), S("'"));
+	assert_text_eq(get_type(S("\""), TYPE_MAPQUOTE), S("'"));
+	assert_text_eq(get_type(T("\\u2018"), TYPE_MAPQUOTE), S("'"));
+	assert_text_eq(get_type(T("\\u2019"), TYPE_MAPQUOTE), S("'"));
+	assert_text_eq(get_type(T("\\u201A"), TYPE_MAPQUOTE), S("'"));
+	assert_text_eq(get_type(T("\\u201F"), TYPE_MAPQUOTE), S("'"));
 }
 END_TEST
 
 
-START_TEST(test_nofold_quote)
+START_TEST(test_nomap_quote)
 {
 	assert_text_eq(get_type(S("'"), 0), S("'"));
 	assert_text_eq(get_type(S("\""), 0), S("\""));
@@ -510,19 +516,19 @@ Suite *token_suite(void)
 	tcase_add_checked_fixture(tc, setup, teardown);
 	tcase_add_test(tc, test_typ_basic);
 	tcase_add_test(tc, test_typ_esc);
-	tcase_add_test(tc, test_rm_control_ascii);
+	// tcase_add_test(tc, test_rm_control_ascii);
 	tcase_add_test(tc, test_keep_control_ascii);
-	tcase_add_test(tc, test_rm_control_utf8);
+	// tcase_add_test(tc, test_rm_control_utf8);
 	tcase_add_test(tc, test_keep_control_utf8);
-	tcase_add_test(tc, test_rm_ws_ascii);
+	// tcase_add_test(tc, test_rm_ws_ascii);
 	tcase_add_test(tc, test_keep_ws_ascii);
-	tcase_add_test(tc, test_rm_ws_utf8);
+	// tcase_add_test(tc, test_rm_ws_utf8);
 	tcase_add_test(tc, test_keep_ws_utf8);
 	tcase_add_test(tc, test_casefold_ascii);
-	tcase_add_test(tc, test_fold_dash);
-	tcase_add_test(tc, test_nofold_dash);
-	tcase_add_test(tc, test_fold_quote);
-	tcase_add_test(tc, test_nofold_quote);
+	// tcase_add_test(tc, test_fold_dash);
+	// tcase_add_test(tc, test_nofold_dash);
+	tcase_add_test(tc, test_map_quote);
+	tcase_add_test(tc, test_nomap_quote);
 	suite_add_tcase(s, tc);
 
 	tc = tcase_create("stem");

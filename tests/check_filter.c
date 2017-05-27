@@ -69,10 +69,8 @@ static void teardown_filter(void)
 
 static void init(const char *stemmer, int flags)
 {
-	int type_kind = (CORPUS_TYPE_COMPAT | CORPUS_TYPE_CASEFOLD
-			 | CORPUS_TYPE_DASHFOLD | CORPUS_TYPE_QUOTFOLD
-			 | CORPUS_TYPE_RMCC | CORPUS_TYPE_RMDI
-			 | CORPUS_TYPE_RMWS);
+	int type_kind = (CORPUS_TYPE_MAPCASE | CORPUS_TYPE_MAPCOMPAT
+			 | CORPUS_TYPE_MAPQUOTE | CORPUS_TYPE_RMDI);
 
 	ck_assert(!has_filter);
 	ck_assert(!corpus_filter_init(&filter, type_kind, stemmer, flags));

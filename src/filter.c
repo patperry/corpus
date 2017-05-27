@@ -721,14 +721,6 @@ int corpus_filter_term_prop(const struct corpus_filter *f,
 			drop = f->flags & CORPUS_FILTER_DROP_LETTER;
 			break;
 
-		case CORPUS_WORD_KANA:
-			drop = f->flags & CORPUS_FILTER_DROP_KANA;
-			break;
-
-		case CORPUS_WORD_IDEO:
-			drop = f->flags & CORPUS_FILTER_DROP_IDEO;
-			break;
-
 		default:
 			drop = f->flags & CORPUS_FILTER_DROP_SYMBOL;
 			break;

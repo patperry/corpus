@@ -34,8 +34,6 @@
 #define DROP_SYMBOL CORPUS_FILTER_DROP_SYMBOL
 #define DROP_NUMBER CORPUS_FILTER_DROP_NUMBER
 #define DROP_LETTER CORPUS_FILTER_DROP_LETTER
-#define DROP_KANA CORPUS_FILTER_DROP_KANA
-#define DROP_IDEO CORPUS_FILTER_DROP_IDEO
 
 #define ID_EOT	(-1)
 #define ID_NONE (-2)
@@ -181,7 +179,7 @@ END_TEST
 
 START_TEST(test_drop_ideo)
 {
-	init(NULL, DROP_IDEO);
+	init(NULL, DROP_LETTER);
 	start(T("\\u53d1\\u5c55"));
 	assert_text_eq(next_term(), TERM_NONE);
 	assert_text_eq(next_term(), TERM_NONE);

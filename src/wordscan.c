@@ -190,7 +190,7 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 				break;
 
 			case WORD_BREAK_KATAKANA:
-				scan->type = CORPUS_WORD_KANA;
+				scan->type = CORPUS_WORD_LETTER;
 				break;
 
 			default:
@@ -204,7 +204,7 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 		goto Hebrew_Letter;
 
 	case WORD_BREAK_KATAKANA:
-		scan->type = CORPUS_WORD_KANA;
+		scan->type = CORPUS_WORD_LETTER;
 		NEXT();
 		goto Katakana;
 
@@ -216,6 +216,11 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 	case WORD_BREAK_REGIONAL_INDICATOR:
 		NEXT();
 		goto Regional_Indicator;
+
+	case WORD_BREAK_IDEO_KANA:
+		scan->type = CORPUS_WORD_LETTER;
+		NEXT();
+		goto Break;
 
 	default:
 		NEXT();

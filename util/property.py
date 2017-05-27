@@ -13,7 +13,7 @@ PATTERN = re.compile(r"""^([0-9A-Fa-f]+)        # (first code)
 UNICODE_MAX = 0x10FFFF
 
 
-def read(filename):
+def read(filename, sets=False):
     try:
         file = open(filename, "r")
     except FileNotFoundError:
@@ -21,7 +21,7 @@ def read(filename):
     
     code_props = [None] * (UNICODE_MAX + 1)
     prop_names = set()
-    properties = set({})
+    properties = {}
 
     with file:
         for line in file:
@@ -34,8 +34,16 @@ def read(filename):
                 else:
                     last = first
                 name = m.group(4)
+                if not name in properties:
+                    properties[name] = set()
+                prop = properties[name]
                 for u in range(first, last + 1):
+                    if not sets:
+                        assert code_props[u] is None
                     code_props[u] = name
+                    prop.add(u)
                 prop_names.add(name)
-
-    return code_props
+    if sets:
+        return properties
+    else:
+        return code_props

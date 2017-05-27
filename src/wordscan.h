@@ -34,12 +34,7 @@ enum corpus_word_type {
 				  the other categories; includes spaces
 				  and most punctuation */
 	CORPUS_WORD_NUMBER,	/**< words that appear to be numbers */
-	CORPUS_WORD_LETTER,	/**< words that contain letters, excluding
-				  hiragana, katakana, and ideographic
-				  characters */
-	CORPUS_WORD_KANA,	/**< words containing kana characters */
-	CORPUS_WORD_IDEO	/**< words containing ideographic
-				  characters */
+	CORPUS_WORD_LETTER	/**< words that contain letters */
 };
 
 /**

@@ -23,7 +23,21 @@ except ModuleNotFoundError:
 
 
 WORD_BREAK_PROPERTY = "data/ucd/auxiliary/WordBreakProperty.txt"
+PROP_LIST = "data/ucd/PropList.txt"
+SCRIPTS = "data/ucd/Scripts.txt"
+
 code_props = property.read(WORD_BREAK_PROPERTY)
+word_break_property = property.read(WORD_BREAK_PROPERTY, sets=True)
+katakana = word_break_property['Katakana']
+
+prop_list = property.read(PROP_LIST, sets=True)
+ideographic = prop_list['Ideographic']
+
+scripts = property.read(SCRIPTS, sets=True)
+han = scripts['Han']
+hiragana = scripts['Hiragana']
+kana_kanji = han.union(hiragana).union(katakana)
+
 
 for i in range(len(code_props)):
     if code_props[i] is None:
@@ -33,15 +47,16 @@ prop_names = set(code_props)
 prop_names.remove('Other')
 
 
-# add special property for Kana and Ideographic characters
-##assert 'Ideo_Kana' not in prop_names
-##prop_names.add('Ideo_Kana')
 
+# add special property for Kana and Ideographic characters
+assert 'Ideo_Kana' not in prop_names
+prop_names.add('Ideo_Kana')
+
+han_hiragana_ideo = han.union(hiragana).union(ideographic)
 for code in range(len(code_props)):
-    if False: # add test for ideo
+    if code in han_hiragana_ideo:
         if code_props[code] == 'Other':
             code_props[code] = 'Ideo_Kana'
-
 
 prop_vals = {}
 prop_vals['Other'] = 0;

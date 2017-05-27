@@ -79,11 +79,7 @@ static struct string_arg word_classes[] = {
 	{ "number", CORPUS_FILTER_DROP_NUMBER,
 		"Appears to be a number." },
 	{ "letter", CORPUS_FILTER_DROP_LETTER,
-		"Composed of letters (not kana or ideographic)." },
-	{ "kana", CORPUS_FILTER_DROP_KANA,
-		"Composed of kana characters." },
-	{ "ideo", CORPUS_FILTER_DROP_IDEO,
-		"Composed of ideographic characters."},
+		"Composed of letters." },
 	{ NULL, 0, NULL }
 };
 

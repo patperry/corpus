@@ -25,6 +25,7 @@
 
 #include "error.h"
 #include "filebuf.h"
+#include "render.h"
 #include "table.h"
 #include "text.h"
 #include "textset.h"
@@ -57,8 +58,6 @@ struct string_arg {
 static struct string_arg char_maps[] = {
 	{ "case", CORPUS_TYPE_CASEFOLD,
 		"Performs Unicode case-folding." },
-	{ "control", CORPUS_TYPE_RMCC,
-		"Remove non-white-space control characters."},
 	{ "compat", CORPUS_TYPE_COMPAT,
 		"Applies Unicode compatibility mappings."},
 	{ "dash", CORPUS_TYPE_DASHFOLD,
@@ -67,16 +66,14 @@ static struct string_arg char_maps[] = {
 		"Removes Unicode default ignorables." },
 	{ "quote", CORPUS_TYPE_QUOTFOLD,
 		"Replaces Unicode quotes with ASCII single quote (')." },
-	{ "space", CORPUS_TYPE_RMWS,
-		"Remove white-space characters."},
 	{ NULL, 0, NULL }
 };
 
 
 static struct string_arg word_classes[] = {
-	{ "mark", CORPUS_FILTER_DROP_MARK, "Marks." },
+	{ "mark",   CORPUS_FILTER_DROP_MARK,   "Marks." },
+	{ "punct",  CORPUS_FILTER_DROP_PUNCT,  "Punctuation." },
 	{ "symbol", CORPUS_FILTER_DROP_SYMBOL, "Symbols." },
-	{ "symbol", CORPUS_FILTER_DROP_PUNCT, "Punctuation." },
 	{ "number", CORPUS_FILTER_DROP_NUMBER, "Appears to be a number." },
 	{ "letter", CORPUS_FILTER_DROP_LETTER, "Composed of letters." },
 	{ NULL, 0, NULL }
@@ -116,7 +113,7 @@ Options:\n\
 \t-o <path>\tSaves output at the given path.\n\
 \t-s <stemmer>\tStems tokens with the given algorithm.\n\
 \t-t <stopwords>\tDrops words from the given stop word list.\n\
-\t-z\t\tKeeps separator, control, and mark tokens.\n\
+\t-z\t\tKeeps separator and other tokens.\n\
 ", PROGRAM_NAME);
 	printf("\nCharacter Maps:\n");
 	for (i = 0; char_maps[i].name != NULL; i++) {
@@ -176,6 +173,7 @@ int main_tokens(int argc, char * const argv[])
 	struct corpus_schema schema;
 	struct corpus_filebuf buf;
 	struct corpus_filebuf_iter it;
+	struct corpus_render render;
 	const char *output = NULL;
 	const char *stemmer = NULL;
 	const uint8_t **stopwords = NULL;
@@ -188,8 +186,7 @@ int main_tokens(int argc, char * const argv[])
 	filter_flags = CORPUS_FILTER_IGNORE_OTHER;
 	type_flags = (CORPUS_TYPE_COMPAT | CORPUS_TYPE_CASEFOLD
 			| CORPUS_TYPE_DASHFOLD | CORPUS_TYPE_QUOTFOLD
-			| CORPUS_TYPE_RMCC | CORPUS_TYPE_RMDI
-			| CORPUS_TYPE_RMWS);
+			| CORPUS_TYPE_RMDI);
 
 	field = "text";
 	ncomb = 0;
@@ -280,6 +277,11 @@ int main_tokens(int argc, char * const argv[])
 	if (corpus_text_assign(&name, (const uint8_t *)field, field_len, 0)) {
 		fprintf(stderr, "Invalid field name (%s)\n", field);
 		return EXIT_FAILURE;
+	}
+
+	if ((err = corpus_render_init(&render, (CORPUS_ESCAPE_CONTROL
+						| CORPUS_ESCAPE_UTF8)))) {
+		goto error_render;
 	}
 
 	if ((err = corpus_schema_init(&schema))) {
@@ -393,9 +395,14 @@ int main_tokens(int argc, char * const argv[])
 			} else {
 				term = corpus_filter_term(&filter, term_id);
 
+				corpus_render_clear(&render);
+				corpus_render_text(&render, term);
+				if ((err = render.error)) {
+					goto error;
+				}
+
 				fprintf(stream, "\"%.*s\"",
-					(int)CORPUS_TEXT_SIZE(term),
-					(char *)term->ptr);
+					render.length, render.string);
 			}
 		}
 		fprintf(stream, "]\n");
@@ -416,6 +423,8 @@ error_stopwords:
 error_filter:
 	corpus_schema_destroy(&schema);
 error_schema:
+	corpus_render_destroy(&render);
+error_render:
 	if (err) {
 		fprintf(stderr, "An error occurred.\n");
 		return EXIT_FAILURE;

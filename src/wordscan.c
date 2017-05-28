@@ -239,7 +239,7 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 	case WORD_BREAK_MIDLETTER:
 	case WORD_BREAK_MIDNUM:
 	case WORD_BREAK_MIDNUMLET:
-	case WORD_BREAK_PUNCT:
+	case WORD_BREAK_OTHER_PUNCT:
 	case WORD_BREAK_SINGLE_QUOTE:
 		scan->type = CORPUS_WORD_PUNCT;
 		NEXT();
@@ -247,13 +247,13 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 
 	case WORD_BREAK_E_MODIFIER:
 	case WORD_BREAK_GLUE_AFTER_ZWJ:
-	case WORD_BREAK_SYMBOL:
+	case WORD_BREAK_OTHER_SYMBOL:
 		scan->type = CORPUS_WORD_SYMBOL;
 		NEXT();
 		goto Break;
 
 	case WORD_BREAK_EXTEND:
-	case WORD_BREAK_MARK:
+	case WORD_BREAK_OTHER_MARK:
 		scan->type = CORPUS_WORD_MARK;
 		NEXT();
 		goto Break;

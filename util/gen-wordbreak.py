@@ -78,14 +78,14 @@ prop_names.remove('Other')
 
 assert 'Other_Letter' not in prop_names
 assert 'Other_Number' not in prop_names
-assert 'Mark' not in prop_names
-assert 'Punct' not in prop_names
-assert 'Symbol' not in prop_names
+assert 'Other_Mark' not in prop_names
+assert 'Other_Punct' not in prop_names
+assert 'Other_Symbol' not in prop_names
 prop_names.add('Other_Letter')
 prop_names.add('Other_Number')
-prop_names.add('Mark')
-prop_names.add('Punct')
-prop_names.add('Symbol')
+prop_names.add('Other_Mark')
+prop_names.add('Other_Punct')
+prop_names.add('Other_Symbol')
 
 for code in range(len(code_props)):
     if code_props[code] == 'Other':
@@ -94,11 +94,11 @@ for code in range(len(code_props)):
         elif code in number:
             code_props[code] = 'Other_Number'
         elif code in mark:
-            code_props[code] = 'Mark'
+            code_props[code] = 'Other_Mark'
         elif code in punct:
-            code_props[code] = 'Punct'
+            code_props[code] = 'Other_Punct'
         elif code in symbol:
-            code_props[code] = 'Symbol'
+            code_props[code] = 'Other_Symbol'
 
 
 # make sure we didn't miss any Kana or Ideographic characters

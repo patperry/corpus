@@ -20,7 +20,7 @@
 /**
  * \file filter.h
  *
- * Text filter, for converting a text into a sequence of terms.
+ * Token filter, for converting a text into a sequence of tokens.
  */
 
 /**

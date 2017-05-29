@@ -63,7 +63,7 @@ struct corpus_sentscan {
 	int iter_prop;		/**< iterator code's sentence break property */
 	const uint8_t *iter_ptr;/**< iterator code's start */
 
-	struct corpus_text current;	/**< the current word */
+	struct corpus_text current;	/**< the current sentence */
 	enum corpus_sent_type type;	/**< the type of the current sentence */
 	int at_end;		/**< whether the scanner is at the end of
 				  the text */

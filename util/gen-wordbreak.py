@@ -40,11 +40,11 @@ other = set()
 punctuation = set()
 symbol = set()
 letter_cats = set(('Ll', 'Lm', 'Lo', 'Lt', 'Lu', 'Nl')) # Note: Lm in mark
-mark_cats = set(('Lm', 'Mc', 'Me', 'Mn'))
+mark_cats = set(('Lm', 'Mc', 'Me', 'Mn', 'Sk'))
 number_cats = set(('Nd', 'No')) # Note: Nl in 'letter'
 other_cats = set(('Cc', 'Cf', 'Cs', 'Co', 'Cn'))
 punctuation_cats = set(('Pc', 'Pd', 'Pe', 'Pf', 'Pi', 'Po', 'Ps'))
-symbol_cats = set(('Sc', 'Sk', 'Sm', 'So'))
+symbol_cats = set(('Sc', 'Sm', 'So')) # Note: Sk in mark
 
 
 for code in range(len(unicode_data.uchars)):

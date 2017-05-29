@@ -28,12 +28,13 @@
  */
 enum corpus_filter_type {
 	CORPUS_FILTER_NONE = 0,		/**< do not filter any word types */
-	CORPUS_FILTER_IGNORE_OTHER = (1 << 0),	/**< ignore other words */
-	CORPUS_FILTER_DROP_MARK    = (1 << 1),	/**< drop mark words */
-	CORPUS_FILTER_DROP_PUNCT   = (1 << 2),	/**< drop punctuation words */
-	CORPUS_FILTER_DROP_SYMBOL  = (1 << 3),	/**< drop symbol words */
-	CORPUS_FILTER_DROP_NUMBER  = (1 << 4),	/**< drop number words */
-	CORPUS_FILTER_DROP_LETTER  = (1 << 5)	/**< drop letter words */
+	CORPUS_FILTER_IGNORE_SPACE = (1 << 0),	/**< ignore white space */
+	CORPUS_FILTER_DROP_LETTER  = (1 << 1),	/**< drop letter words */
+	CORPUS_FILTER_DROP_MARK    = (1 << 2),	/**< drop mark words */
+	CORPUS_FILTER_DROP_NUMBER  = (1 << 3),	/**< drop number words */
+	CORPUS_FILTER_DROP_PUNCT   = (1 << 4),	/**< drop punctuation words */
+	CORPUS_FILTER_DROP_SYMBOL  = (1 << 5),	/**< drop symbol words */
+	CORPUS_FILTER_DROP_OTHER   = (1 << 6)	/**< drop other words */
 };
 
 /**

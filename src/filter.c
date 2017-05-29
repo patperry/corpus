@@ -710,12 +710,20 @@ int corpus_filter_term_prop(const struct corpus_filter *f,
 	drop = 0;
 
 	switch (term_type) {
-	case CORPUS_WORD_NONE:
-		ignore = (f->flags & CORPUS_FILTER_IGNORE_OTHER);
+	case CORPUS_WORD_SPACE:
+		ignore = (f->flags & CORPUS_FILTER_IGNORE_SPACE);
+		break;
+
+	case CORPUS_WORD_LETTER:
+		drop = f->flags & CORPUS_FILTER_DROP_LETTER;
 		break;
 
 	case CORPUS_WORD_MARK:
 		drop = (f->flags & CORPUS_FILTER_DROP_MARK);
+		break;
+
+	case CORPUS_WORD_NUMBER:
+		drop = f->flags & CORPUS_FILTER_DROP_NUMBER;
 		break;
 
 	case CORPUS_WORD_PUNCT:
@@ -726,12 +734,8 @@ int corpus_filter_term_prop(const struct corpus_filter *f,
 		drop = f->flags & CORPUS_FILTER_DROP_SYMBOL;
 		break;
 
-	case CORPUS_WORD_NUMBER:
-		drop = f->flags & CORPUS_FILTER_DROP_NUMBER;
-		break;
-
-	case CORPUS_WORD_LETTER:
-		drop = f->flags & CORPUS_FILTER_DROP_LETTER;
+	case CORPUS_WORD_OTHER:
+		drop = f->flags & CORPUS_FILTER_DROP_OTHER;
 		break;
 
 	default:

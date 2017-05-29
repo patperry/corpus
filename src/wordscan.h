@@ -30,13 +30,14 @@
  * The word type as determined by the first character.
  */
 enum corpus_word_type {
-	CORPUS_WORD_NONE = 0,	/**< separator (Zl, Zp, Zs) or
-				  other (Cc, Cf, Cn, Co, Cs) */
+	CORPUS_WORD_NONE = 0,	/**< EOT */
+	CORPUS_WORD_SPACE,	/**< white space */
+	CORPUS_WORD_LETTER,	/**< word that contains letters */
 	CORPUS_WORD_MARK,	/**< mark */
+	CORPUS_WORD_NUMBER,	/**< word that appears to be a number */
 	CORPUS_WORD_PUNCT,	/**< punctuation */
 	CORPUS_WORD_SYMBOL,	/**< symbol */
-	CORPUS_WORD_NUMBER,	/**< word that appears to be a number */
-	CORPUS_WORD_LETTER	/**< word that contains letters */
+	CORPUS_WORD_OTHER	/**< other */
 };
 
 /**

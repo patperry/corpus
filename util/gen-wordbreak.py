@@ -26,122 +26,88 @@ except ModuleNotFoundError:
 
 WORD_BREAK_PROPERTY = "data/ucd/auxiliary/WordBreakProperty.txt"
 PROP_LIST = "data/ucd/PropList.txt"
-SCRIPTS = "data/ucd/Scripts.txt"
 
 code_props = property.read(WORD_BREAK_PROPERTY)
 word_break_property = property.read(WORD_BREAK_PROPERTY, sets=True)
-katakana = word_break_property['Katakana']
 
 prop_list = property.read(PROP_LIST, sets=True)
-ideographic = prop_list['Ideographic']
-
-scripts = property.read(SCRIPTS, sets=True)
-han = scripts['Han']
-hiragana = scripts['Hiragana']
-kana_kanji = han.union(hiragana).union(katakana)
+white_space = prop_list['White_Space']
 
 letter = set()
 mark = set()
 number = set()
-punct = set()
+other = set()
+punctuation = set()
 symbol = set()
 letter_cats = set(('Ll', 'Lm', 'Lo', 'Lt', 'Lu', 'Nl')) # Note: Lm in mark
 mark_cats = set(('Lm', 'Mc', 'Me', 'Mn'))
 number_cats = set(('Nd', 'No')) # Note: Nl in 'letter'
-punct_cats = set(('Pc', 'Pd', 'Pe', 'Pf', 'Pi', 'Po', 'Ps'))
+other_cats = set(('Cc', 'Cf', 'Cs', 'Co', 'Cn'))
+punctuation_cats = set(('Pc', 'Pd', 'Pe', 'Pf', 'Pi', 'Po', 'Ps'))
 symbol_cats = set(('Sc', 'Sk', 'Sm', 'So'))
 
 
 for code in range(len(unicode_data.uchars)):
     u = unicode_data.uchars[code]
-    if u is None or u.category is None:
-        continue
-    if u.category in letter_cats:
+    if u is None or u.category in other_cats:
+        other.add(code)
+    elif u.category in letter_cats:
         letter.add(code)
     elif u.category in mark_cats:
         mark.add(code)
     elif u.category in number_cats:
         number.add(code)
-    elif u.category in punct_cats:
-        punct.add(code)
+    elif u.category in punctuation_cats:
+        punctuation.add(code)
     elif u.category in symbol_cats:
         symbol.add(code)
 
 
-for i in range(len(code_props)):
-    if code_props[i] is None:
-        code_props[i] = 'Other'
-
 prop_names = set(code_props)
-prop_names.remove('Other')
+prop_names.remove(None)
 
-
-assert 'Other_Letter' not in prop_names
-assert 'Other_Number' not in prop_names
-assert 'Other_Mark' not in prop_names
-assert 'Other_Punct' not in prop_names
-assert 'Other_Symbol' not in prop_names
-prop_names.add('Other_Letter')
-prop_names.add('Other_Number')
-prop_names.add('Other_Mark')
-prop_names.add('Other_Punct')
-prop_names.add('Other_Symbol')
+assert 'Letter' not in prop_names
+assert 'Mark' not in prop_names
+assert 'Number' not in prop_names
+assert 'Other' not in prop_names
+assert 'Punctuation' not in prop_names
+assert 'Symbol' not in prop_names
+assert 'White_Space' not in prop_names
+prop_names.add('Letter')
+prop_names.add('Number')
+prop_names.add('Mark')
+prop_names.add('Other')
+prop_names.add('Punctuation')
+prop_names.add('Symbol')
+prop_names.add('White_Space')
 
 for code in range(len(code_props)):
-    if code_props[code] == 'Other':
-        if code in letter:
-            code_props[code] = 'Other_Letter'
-        elif code in number:
-            code_props[code] = 'Other_Number'
+    if code_props[code] is None:
+        if code in white_space:
+            code_props[code] = 'White_Space'
+        elif code in letter:
+            code_props[code] = 'Letter'
         elif code in mark:
-            code_props[code] = 'Other_Mark'
-        elif code in punct:
-            code_props[code] = 'Other_Punct'
+            code_props[code] = 'Mark'
+        elif code in number:
+            code_props[code] = 'Number'
+        elif code in other:
+            code_props[code] = 'Other'
+        elif code in punctuation:
+            code_props[code] = 'Punctuation'
         elif code in symbol:
-            code_props[code] = 'Other_Symbol'
-
-
-# make sure we didn't miss any Kana or Ideographic characters
-
-han_hiragana_ideo = han.union(hiragana).union(ideographic)
-for code in range(len(code_props)):
-    if code in han_hiragana_ideo:
-        if code_props[code] == 'Other':
-            u = unicode_data.uchars[code]
-            print('Uncagetorized Kana or Ideographic:')
-            print('U+{:04X}'.format(code), u.category, u.name)
-            assert False
-
+            code_props[code] = 'Symbol'
 
 # make sure we didn't miss anything
-
-# Other: (Cc | Cf | Cn | Co | Cs)
-# Cc: Control
-# Cf: Format
-# Cn: Unassigned
-# Co: Private Use
-# Cs: Surrogate
-#
-# Separator: Z = (Zl | Zp | Zs)
-# Zl: Line Separator
-# Zp: Paragraph Separator
-# Zs: Space Separator
-
-other_cats = set(('Cc', 'Cf', 'Cn', 'Co', 'Cs', 'Zs'))
 for code in range(len(code_props)):
-    if code_props[code] == 'Other':
+    if code_props[code] is None:
         u = unicode_data.uchars[code]
-        if u is not None and u.category not in other_cats:
-            print('Unrecognized category:')
-            print('U+{:04X}'.format(code), u.category, u.name)
-            assert False
-
-
+        print('Uncagetorized code point:')
+        print('U+{:04X}'.format(code), u.category, u.name)
+        assert False
 
 prop_vals = {}
-prop_vals['Other'] = 0;
-
-
+prop_vals['None'] = 0;
 for p in sorted(prop_names):
     prop_vals[p] = len(prop_vals)
 
@@ -239,7 +205,7 @@ print("")
 print("#include <stdint.h>")
 print("")
 print("enum word_break_prop {")
-print("\tWORD_BREAK_OTHER = 0", end="")
+print("\tWORD_BREAK_NONE = 0", end="")
 for prop in sorted(prop_names):
     print(",\n\tWORD_BREAK_" + prop.upper() + " = " + str(prop_vals[prop]),
           end="")

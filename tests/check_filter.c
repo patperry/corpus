@@ -30,11 +30,13 @@
 #include "../src/census.h"
 #include "testutil.h"
 
-#define IGNORE_OTHER CORPUS_FILTER_IGNORE_OTHER
-#define DROP_MARK CORPUS_FILTER_DROP_MARK
-#define DROP_SYMBOL CORPUS_FILTER_DROP_SYMBOL
-#define DROP_NUMBER CORPUS_FILTER_DROP_NUMBER
+#define IGNORE_SPACE CORPUS_FILTER_IGNORE_SPACE
 #define DROP_LETTER CORPUS_FILTER_DROP_LETTER
+#define DROP_MARK CORPUS_FILTER_DROP_MARK
+#define DROP_NUMBER CORPUS_FILTER_DROP_NUMBER
+#define DROP_PUNCT CORPUS_FILTER_DROP_PUNCT
+#define DROP_SYMBOL CORPUS_FILTER_DROP_SYMBOL
+#define DROP_OTHER CORPUS_FILTER_DROP_OTHER
 
 #define ID_EOT	(-1)
 #define ID_NONE (-2)
@@ -124,7 +126,7 @@ static const struct corpus_text *next_term(void)
 
 START_TEST(test_basic)
 {
-	init(NULL, IGNORE_OTHER);
+	init(NULL, IGNORE_SPACE);
 
 	start(T("A rose is a rose is a rose."));
 	assert_text_eq(next_term(), T("a"));
@@ -148,7 +150,7 @@ START_TEST(test_basic_census)
 
 	ck_assert(!corpus_census_init(&census));
 
-	init(NULL, IGNORE_OTHER);
+	init(NULL, IGNORE_SPACE);
 	start(T("A rose is a rose is a rose."));
 
 	while ((term_id = next_id()) != ID_EOT) {

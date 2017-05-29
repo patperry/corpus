@@ -187,8 +187,7 @@ src/unicode/sentbreakprop.h: util/gen-sentbreak.py util/property.py \
 	./util/gen-sentbreak.py > $@
 
 src/unicode/wordbreakprop.h: util/gen-wordbreak.py util/property.py \
-		data/ucd/PropList.txt \
-		data/ucd/Scripts.txt \
+		util/unicode_data.py data/ucd/PropList.txt \
 		data/ucd/auxiliary/WordBreakProperty.txt
 	$(MKDIR_P) src/unicode
 	./util/gen-wordbreak.py > $@
@@ -301,8 +300,8 @@ src/typemap.o: src/typemap.c src/error.h src/memory.h src/private/stopwords.h \
 src/unicode.o: src/unicode.c src/unicode/casefold.h src/unicode/combining.h \
 	src/unicode/compose.h src/unicode/decompose.h src/error.h \
 	src/unicode.h
-src/wordscan.o: src/wordscan.c src/text.h src/unicode/wordbreakprop.h \
-	src/wordscan.h
+src/wordscan.o: src/wordscan.c src/error.h src/text.h \
+	src/unicode/wordbreakprop.h src/wordscan.h
 
 tests/check_census.o: tests/check_census.c src/table.h src/census.h \
 	tests/testutil.h

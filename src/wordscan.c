@@ -122,10 +122,11 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 {
 	scan->current.ptr = (uint8_t *)scan->ptr;
 	scan->current.attr = 0;
-	scan->type = CORPUS_WORD_NONE;
 
 	switch ((enum word_break_prop)scan->prop) {
 	case WORD_BREAK_NONE:
+		scan->type = CORPUS_WORD_NONE;
+
 		// Break at the start and end of text unless the text is empty
 		// WB2: Any + eot
 		goto Break;

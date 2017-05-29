@@ -30,3 +30,7 @@ Basically, you have a list of of "suppressions" (Mr., Dr., Nov., ...) and
 you make sure never to break a sentence after one of these suppressions. The
 data seems a little incomplete (e.g., some months are there, but not "Apr.",
 "Jun.", "Jul.", "Oct."). Maybe take some abbreviations from the CoreNLP lexer.
+
+ICU implementation:
+
+   * icu4c/source/common/filteredbrk.cpp

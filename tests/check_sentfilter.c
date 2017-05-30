@@ -16,6 +16,7 @@
 
 #include <check.h>
 #include <inttypes.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "../src/text.h"
@@ -55,6 +56,14 @@ static void init(void)
 	ck_assert(!has_sentfilter);
 	ck_assert(!corpus_sentfilter_init(&sentfilter));
 	has_sentfilter = 1;
+}
+
+
+static void clear(void)
+{
+	ck_assert(has_sentfilter);
+	corpus_sentfilter_clear(&sentfilter);
+	ck_assert_int_eq(sentfilter.backsupp.nnode, 0);
 }
 
 
@@ -195,6 +204,72 @@ START_TEST(test_suppress_multi)
 END_TEST
 
 
+START_TEST(test_suppress_space)
+{
+	init();
+	suppress(T("U. U."));
+
+	//start(T("U. U. A"));
+	//assert_text_eq(next(), T("U. U. A"));
+	//assert_text_eq(next(), SENT_EOT);
+
+	suppress(T("D. h."));
+	start(T("D. h. A"));
+	assert_text_eq(next(), T("D. h. A"));
+	assert_text_eq(next(), SENT_EOT);
+}
+END_TEST
+
+
+START_TEST(test_suppress_cldr)
+{
+	const char *name, **names = corpus_sentsuppress_names();
+	const uint8_t *supp, **list;
+	struct corpus_text text;
+	size_t size;
+	uint8_t *ptr;
+	uint8_t buffer[128];
+	int nfail = 0;
+
+	init();
+
+	while ((name = *names++)) {
+		list = corpus_sentsuppress_list(name, NULL);
+		while ((supp = *list++)) {
+			clear();
+
+			// add the suppression rule
+			ptr = buffer;
+			size = strlen((const char *)supp);
+			memcpy(ptr, supp, size);
+			ck_assert(!corpus_text_assign(&text, buffer,
+						      size,
+						      CORPUS_TEXT_NOESCAPE));
+			suppress(&text);
+
+			// test the rule
+			ptr[size++] = ' ';
+			ptr[size++] = 'A';
+			ptr[size] = '\0';
+			ck_assert(!corpus_text_assign(&text, buffer,
+						      size,
+						      CORPUS_TEXT_NOESCAPE));
+			
+			start(&text);
+			if (!corpus_text_equals(next(), &text)) {
+				printf("failed (%s): %s\n", name, supp);
+				nfail++;
+			}
+			//assert_text_eq(next(), &text);
+			//assert_text_eq(next(), SENT_EOT);
+		}
+	}
+
+	ck_assert(nfail == 0);
+}
+END_TEST
+
+
 Suite *sentfilter_suite(void)
 {
 	Suite *s;
@@ -210,7 +285,13 @@ Suite *sentfilter_suite(void)
         tcase_add_test(tc, test_nonsuppress);
         tcase_add_test(tc, test_suppress_break);
         tcase_add_test(tc, test_suppress_multi);
+        tcase_add_test(tc, test_suppress_space);
 	suite_add_tcase(s, tc);
+
+	tc = tcase_create("cldr");
+        tcase_add_test(tc, test_suppress_cldr);
+	suite_add_tcase(s, tc);
+	
 
 	return s;
 }

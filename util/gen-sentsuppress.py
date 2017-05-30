@@ -32,10 +32,11 @@ for key in sorted(locales.keys()):
     sentbreak = segmentations['SentenceBreak']['standard']
 
     supps = []
-    for s in sentbreak:
-        if 'suppression' not in s:
+    for brk in sentbreak:
+        if 'suppression' not in brk:
             continue
-        supps.append(s['suppression'])
+        s = brk['suppression']
+        supps.append(s)
 
     if len(supps) > 0:
         suppressions[name] = tuple(supps)

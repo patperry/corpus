@@ -28,6 +28,7 @@ struct corpus_sentfilter {
 	int *suppress_rules;
 	struct corpus_sentscan scan;
 	struct corpus_text current;
+	int has_scan;
 	int error;
 };
 

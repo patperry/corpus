@@ -27,6 +27,17 @@
 #define SUPPRESS_NONE	0
 #define SUPPRESS_FULL	1
 
+#define CHECK_ERROR(value) \
+	do { \
+		if (f->error) { \
+			corpus_log(CORPUS_ERROR_INVAL, "an error occurred" \
+				   " during a prior sentence filter" \
+				   " operation"); \
+			return (value); \
+		} \
+	} while (0)
+
+
 static int corpus_sentfilter_has_suppress(const struct corpus_sentfilter *f,
 					  const struct corpus_text *text);
 
@@ -41,6 +52,7 @@ int corpus_sentfilter_init(struct corpus_sentfilter *f)
 	f->suppress_rules = NULL;
 	f->current.ptr = NULL;
 	f->current.attr = 0;
+	f->has_scan = 0;
 	f->error = 0;
 	return 0;
 
@@ -65,6 +77,8 @@ int corpus_sentfilter_suppress(struct corpus_sentfilter *f,
 	int size, size0, nnode, nnode0;
 	int code, id, prop, parent_id, err;
 
+	CHECK_ERROR(CORPUS_ERROR_INVAL);
+
 	// root the suppression tree
 	if (f->suppress.nnode == 0) {
 		if ((err = corpus_tree_root(&f->suppress))) {
@@ -88,6 +102,7 @@ int corpus_sentfilter_suppress(struct corpus_sentfilter *f,
 	// iterate over the characters in the pattern, in reverse
 	corpus_text_iter_make(&it, pattern);
 	corpus_text_iter_skip(&it);
+
 	while (corpus_text_iter_retreat(&it)) {
 		code = (int)it.current;
 		prop = sent_break(code);
@@ -95,9 +110,13 @@ int corpus_sentfilter_suppress(struct corpus_sentfilter *f,
 		switch (prop) {
 		case SENT_BREAK_EXTEND:
 		case SENT_BREAK_FORMAT:
-		case SENT_BREAK_SP:
-			// skip over spaces, exenders, and format characters
+			// skip over extenders and format characters
 			continue;
+
+		case SENT_BREAK_SP:
+			// replace space with ' '
+			code = ' ';
+			break;
 
 		case SENT_BREAK_ATERM:
 			// replace full stops with '.'
@@ -143,6 +162,7 @@ int corpus_sentfilter_suppress(struct corpus_sentfilter *f,
 
 out:
 	if (err) {
+		f->error = err;
 		corpus_log(err, "failed adding suppression to sentence filter");
 	}
 	return err;
@@ -152,9 +172,13 @@ out:
 int corpus_sentfilter_start(struct corpus_sentfilter *f,
 			    const struct corpus_text *text)
 {
+	CHECK_ERROR(CORPUS_ERROR_INVAL);
+
 	corpus_sentscan_make(&f->scan, text);
 	f->current.ptr = NULL;
 	f->current.attr = 0;
+	f->has_scan = 1;
+
 	return 0;
 }
 
@@ -165,14 +189,18 @@ int corpus_sentfilter_advance(struct corpus_sentfilter *f)
 	const uint8_t *ptr;
 	size_t size, attr;
 
-	if (!corpus_sentscan_advance(&f->scan)) {
+	CHECK_ERROR(CORPUS_ERROR_INVAL);
+
+	if (!f->has_scan || !corpus_sentscan_advance(&f->scan)) {
 		f->current.ptr = NULL;
 		f->current.attr = 0;
+		f->has_scan = 0;
 		return 0;
 	}
 
 	current = &f->scan.current;
-	if (!corpus_sentfilter_has_suppress(f, current)) {
+	if (f->scan.type != CORPUS_SENT_ATERM
+			|| !corpus_sentfilter_has_suppress(f, current)) {
 		f->current = *current;
 		return 1;
 	}
@@ -186,13 +214,16 @@ int corpus_sentfilter_advance(struct corpus_sentfilter *f)
 		size += CORPUS_TEXT_SIZE(current);
 		attr |= CORPUS_TEXT_BITS(current);
 
-		if (!corpus_sentfilter_has_suppress(f, current)) {
+		if (f->scan.type != CORPUS_SENT_ATERM) {
+			break;
+		} else if (!corpus_sentfilter_has_suppress(f, current)) {
 			break;
 		}
 	}
 
 	f->current.ptr = (uint8_t *)ptr;
 	f->current.attr = size | attr;
+
 	return 1;
 }
 
@@ -201,12 +232,13 @@ int corpus_sentfilter_has_suppress(const struct corpus_sentfilter *f,
 				   const struct corpus_text *text)
 {
 	struct corpus_text_iter it;
-	int code, id, has, parent_id, prop;
+	int code, id, has, parent_id, prop, skip_space;
 	
 	if (f->suppress.nnode == 0) {
 		return 0;
 	}
 
+	skip_space = 1;
 	has = 0;
 	id = 0;
 	corpus_text_iter_make(&it, text);
@@ -222,28 +254,31 @@ int corpus_sentfilter_has_suppress(const struct corpus_sentfilter *f,
 			continue;
 
 		case SENT_BREAK_SP:
-			if (has) {
-				return has;
-			} else {
+			if (skip_space) {
 				continue;
 			}
-
-		case SENT_BREAK_CLOSE:
-		case SENT_BREAK_SEP:
-		case SENT_BREAK_CR:
-		case SENT_BREAK_LF:
-			return has;
+			code = ' ';
+			break;
 
 		case SENT_BREAK_ATERM:
 			code = '.';
+			break;
+
+		default:
 			break;
 		}
 
 		parent_id = id;
 		if (!corpus_tree_has(&f->suppress, parent_id, code, &id)) {
-			if (prop == SENT_BREAK_ATERM) {
+			switch (prop) {
+			case SENT_BREAK_ATERM:
+			case SENT_BREAK_CLOSE:
+			case SENT_BREAK_CR:
+			case SENT_BREAK_LF:
+			case SENT_BREAK_SEP:
+			case SENT_BREAK_SP:
 				return has;
-			} else {
+			default:
 				return 0;
 			}
 		}
@@ -253,6 +288,9 @@ int corpus_sentfilter_has_suppress(const struct corpus_sentfilter *f,
 		} else {
 			has = 0;
 		}
+
+		// if we just saw a space, skip to the next non-space
+		skip_space = (code == ' ') ? 1 : 0;
 	}
 
 	return has;

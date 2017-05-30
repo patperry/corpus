@@ -133,6 +133,11 @@ START_TEST(test_nonsuppress)
 	assert_text_eq(next(), T("AMx. "));
 	assert_text_eq(next(), T("Split."));
 	assert_text_eq(next(), SENT_EOT);
+
+	start(T("M x. Split."));
+	assert_text_eq(next(), T("M x. "));
+	assert_text_eq(next(), T("Split."));
+	assert_text_eq(next(), SENT_EOT);
 }
 END_TEST
 
@@ -165,6 +170,27 @@ START_TEST(test_suppress_break)
 	start(T("end.Mx. Jones."));
 	assert_text_eq(next(), T("end.Mx. Jones."));
 	assert_text_eq(next(), SENT_EOT);
+
+	start(T("end)Mx. Jones."));
+	assert_text_eq(next(), T("end)Mx. Jones."));
+	assert_text_eq(next(), SENT_EOT);
+}
+END_TEST
+
+
+START_TEST(test_suppress_multi)
+{
+	init();
+	suppress(T("Ph.D."));
+	suppress(T("z.B."));
+
+	start(T("Ph.D. English"));
+	assert_text_eq(next(), T("Ph.D. English"));
+	assert_text_eq(next(), SENT_EOT);
+
+	start(T("z.B. Deutsch"));
+	assert_text_eq(next(), T("z.B. Deutsch"));
+	assert_text_eq(next(), SENT_EOT);
 }
 END_TEST
 
@@ -183,6 +209,7 @@ Suite *sentfilter_suite(void)
         tcase_add_test(tc, test_suppress);
         tcase_add_test(tc, test_nonsuppress);
         tcase_add_test(tc, test_suppress_break);
+        tcase_add_test(tc, test_suppress_multi);
 	suite_add_tcase(s, tc);
 
 	return s;

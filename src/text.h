@@ -64,6 +64,9 @@ struct corpus_text_iter {
 /** The encoded size of the text, in bytes */
 #define CORPUS_TEXT_SIZE(text)		((text)->attr & CORPUS_TEXT_SIZE_MASK)
 
+/** The text attribute bits */
+#define CORPUS_TEXT_BITS(text)		((text)->attr & ~CORPUS_TEXT_SIZE_MASK)
+
 /** Indicates whether the text definitely decodes to ASCII. For this to be true,
  *  the text must be encoded in ASCII and not have any escapes that decode to
  *  non-ASCII codepoints.

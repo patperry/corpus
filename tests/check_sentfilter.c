@@ -58,6 +58,19 @@ static void init(void)
 }
 
 
+static void suppress(const struct corpus_text *pattern)
+{
+	ck_assert(has_sentfilter);
+	ck_assert(!corpus_sentfilter_suppress(&sentfilter, pattern));
+}
+
+
+static void start(const struct corpus_text *text)
+{
+	ck_assert(!corpus_sentfilter_start(&sentfilter, text));
+}
+
+
 static const struct corpus_text *next(void)
 {
 	int has = corpus_sentfilter_advance(&sentfilter);
@@ -71,19 +84,86 @@ static const struct corpus_text *next(void)
 }
 
 
-static void start(const struct corpus_text *text)
-{
-	ck_assert(!corpus_sentfilter_start(&sentfilter, text));
-}
-
-
-
-START_TEST(test_default)
+START_TEST(test_space)
 {
 	init();
 	start(T("Mr. Jones."));
 	assert_text_eq(next(), T("Mr. "));
 	assert_text_eq(next(), T("Jones."));
+	assert_text_eq(next(), SENT_EOT);
+}
+END_TEST
+
+
+START_TEST(test_newline)
+{
+	init();
+	start(T("Mr.\nJones."));
+	assert_text_eq(next(), T("Mr.\n"));
+	assert_text_eq(next(), T("Jones."));
+	assert_text_eq(next(), SENT_EOT);
+}
+END_TEST
+
+
+START_TEST(test_suppress)
+{
+	init();
+	suppress(T("Mr."));
+	suppress(T("Mrs."));
+	suppress(T("Mx."));
+
+	start(T("Mr. and Mrs. Jones."));
+	assert_text_eq(next(), T("Mr. and Mrs. Jones."));
+	assert_text_eq(next(), SENT_EOT);
+
+	start(T("Mx. Jones."));
+	assert_text_eq(next(), T("Mx. Jones."));
+	assert_text_eq(next(), SENT_EOT);
+}
+END_TEST
+
+
+START_TEST(test_nonsuppress)
+{
+	init();
+	suppress(T("Mx."));
+
+	start(T("AMx. Split."));
+	assert_text_eq(next(), T("AMx. "));
+	assert_text_eq(next(), T("Split."));
+	assert_text_eq(next(), SENT_EOT);
+}
+END_TEST
+
+
+START_TEST(test_suppress_break)
+{
+	init();
+	suppress(T("Mx."));
+
+	start(T("end.\nMx. Jones."));
+	assert_text_eq(next(), T("end.\n"));
+	assert_text_eq(next(), T("Mx. Jones."));
+	assert_text_eq(next(), SENT_EOT);
+
+	start(T("end.\r\nMx. Jones."));
+	assert_text_eq(next(), T("end.\r\n"));
+	assert_text_eq(next(), T("Mx. Jones."));
+	assert_text_eq(next(), SENT_EOT);
+
+	start(T("end.\rMx. Jones."));
+	assert_text_eq(next(), T("end.\r"));
+	assert_text_eq(next(), T("Mx. Jones."));
+	assert_text_eq(next(), SENT_EOT);
+
+	start(T("end?Mx. Jones."));
+	assert_text_eq(next(), T("end?"));
+	assert_text_eq(next(), T("Mx. Jones."));
+	assert_text_eq(next(), SENT_EOT);
+
+	start(T("end.Mx. Jones."));
+	assert_text_eq(next(), T("end.Mx. Jones."));
 	assert_text_eq(next(), SENT_EOT);
 }
 END_TEST
@@ -98,7 +178,11 @@ Suite *sentfilter_suite(void)
 
 	tc = tcase_create("basic");
 	tcase_add_checked_fixture(tc, setup_sentfilter, teardown_sentfilter);
-        tcase_add_test(tc, test_default);
+        tcase_add_test(tc, test_space);
+        tcase_add_test(tc, test_newline);
+        tcase_add_test(tc, test_suppress);
+        tcase_add_test(tc, test_nonsuppress);
+        tcase_add_test(tc, test_suppress_break);
 	suite_add_tcase(s, tc);
 
 	return s;

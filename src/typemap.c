@@ -47,9 +47,9 @@ const char **corpus_stemmer_names(void)
 }
 
 
-const uint8_t **corpus_stopwords(const char *name, int *lenptr)
+const uint8_t **corpus_stopword_list(const char *name, int *lenptr)
 {
-	return stopwords(name, lenptr);
+	return stopword_list(name, lenptr);
 }
 
 

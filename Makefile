@@ -31,6 +31,7 @@ TEST_CFLAGS = $(shell pkg-config --cflags check) \
 
 TEST_LIBS = $(shell pkg-config --libs check)
 
+CLDR = https://raw.githubusercontent.com/unicode-cldr/cldr-segments-modern/master
 UNICODE = http://www.unicode.org/Public/9.0.0
 
 CORPUS_A = libcorpus.a
@@ -108,6 +109,34 @@ $(CORPUS_T): $(CORPUS_O) $(CORPUS_A)
 
 # Data
 
+data/cldr/segments/de/suppressions.json:
+	$(MKDIR_P) data/cldr/segments/de
+	$(CURL) -o $@ $(CLDR)/segments/de/suppressions.json
+
+data/cldr/segments/en/suppressions.json:
+	$(MKDIR_P) data/cldr/segments/en
+	$(CURL) -o $@ $(CLDR)/segments/en/suppressions.json
+
+data/cldr/segments/es/suppressions.json:
+	$(MKDIR_P) data/cldr/segments/es
+	$(CURL) -o $@ $(CLDR)/segments/es/suppressions.json
+
+data/cldr/segments/fr/suppressions.json:
+	$(MKDIR_P) data/cldr/segments/fr
+	$(CURL) -o $@ $(CLDR)/segments/fr/suppressions.json
+
+data/cldr/segments/it/suppressions.json:
+	$(MKDIR_P) data/cldr/segments/it
+	$(CURL) -o $@ $(CLDR)/segments/it/suppressions.json
+
+data/cldr/segments/pt/suppressions.json:
+	$(MKDIR_P) data/cldr/segments/pt
+	$(CURL) -o $@ $(CLDR)/segments/pt/suppressions.json
+
+data/cldr/segments/ru/suppressions.json:
+	$(MKDIR_P) data/cldr/segments/ru
+	$(CURL) -o $@ $(CLDR)/segments/ru/suppressions.json
+
 data/ucd/CaseFolding.txt:
 	$(MKDIR_P) data/ucd
 	$(CURL) -o $@ $(UNICODE)/ucd/CaseFolding.txt
@@ -150,6 +179,17 @@ data/ucd/auxiliary/WordBreakTest.txt:
 
 
 # Generated Sources
+
+src/private/sentsuppress.h: util/gen-sentsuppress.py \
+		data/cldr/segments/de/suppressions.json \
+		data/cldr/segments/en/suppressions.json \
+		data/cldr/segments/es/suppressions.json \
+		data/cldr/segments/fr/suppressions.json \
+		data/cldr/segments/it/suppressions.json \
+		data/cldr/segments/pt/suppressions.json \
+		data/cldr/segments/ru/suppressions.json
+	$(MKDIR_P) src/private
+	./util/gen-sentsuppress.py > $@
 
 src/private/stopwords.h: util/gen-stopwords.py \
 		data/snowball/danish.txt data/snowball/dutch.txt \
@@ -290,7 +330,9 @@ src/main_tokens.o: src/main_tokens.c src/error.h src/filebuf.h src/table.h \
 src/memory.o: src/memory.c src/memory.h
 src/render.o: src/render.c src/array.h src/error.h src/memory.h src/text.h \
 	src/unicode.h src/render.h
-src/sentfilter.o: src/sentfilter.c src/text.h src/sentscan.h src/sentfilter.h
+src/sentfilter.o: src/sentfilter.c src/private/sentsuppress.h \
+	src/unicode/sentbreakprop.h src/error.h src/memory.h src/text.h \
+	src/tree.h src/sentscan.h src/sentfilter.h
 src/sentscan.o: src/sentscan.c src/text.h src/unicode/sentbreakprop.h \
 	src/sentscan.h
 src/symtab.o: src/symtab.c src/array.h src/error.h src/memory.h src/table.h \

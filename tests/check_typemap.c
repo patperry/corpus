@@ -478,7 +478,7 @@ END_TEST
 START_TEST(test_stopwords_en)
 {
 	int len;
-	const uint8_t **words = corpus_stopwords("english", &len);
+	const uint8_t **words = corpus_stopword_list("english", &len);
 
 	ck_assert_int_eq(len, 174);
 	assert_text_eq(S((char *)words[0]), S("a"));
@@ -491,7 +491,7 @@ END_TEST
 START_TEST(test_stopwords_unknown)
 {
 	int len;
-	const uint8_t **words = corpus_stopwords("gibberish", &len);
+	const uint8_t **words = corpus_stopword_list("gibberish", &len);
 
 	ck_assert(words == NULL);
 	ck_assert_int_eq(len, 0);

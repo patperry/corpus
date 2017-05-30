@@ -103,7 +103,7 @@ const char **corpus_stemmer_names(void);
  * \returns a NULL-terminated list of stop words for the given language,
  * 	or NULL if no stop word list exists for the given language
  */
-const uint8_t **corpus_stopwords(const char *name, int *lenptr);
+const uint8_t **corpus_stopword_list(const char *name, int *lenptr);
 
 /**
  * Get a list of the stop word list names.

@@ -234,7 +234,7 @@ int main_tokens(int argc, char * const argv[])
 			stemmer = optarg;
 			break;
 		case 't':
-			if (!(stopwords = corpus_stopwords(optarg, NULL))) {
+			if (!(stopwords = corpus_stopword_list(optarg, NULL))) {
 				fprintf(stderr,
 					"Unrecognized stop word list: '%s'."
 					"\n\n", optarg);

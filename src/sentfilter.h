@@ -17,6 +17,8 @@
 #ifndef CORPUS_SENTFILTER_H
 #define CORPUS_SENTFILTER_H
 
+#include <stdint.h>
+
 /**
  * \file sentfilter.h
  *
@@ -31,6 +33,10 @@ struct corpus_sentfilter {
 	int has_scan;
 	int error;
 };
+
+
+const char **corpus_sentsuppress_names(void);
+const uint8_t **corpus_sentsuppress_list(const char *name, int *lenptr);
 
 int corpus_sentfilter_init(struct corpus_sentfilter *f);
 void corpus_sentfilter_destroy(struct corpus_sentfilter *f);

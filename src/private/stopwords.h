@@ -2531,7 +2531,7 @@ static const char **stopword_names(void)
 	return (const char **)stopword_list_names;
 }
 
-static const uint8_t **stopwords(const char *name, int *lenptr)
+static const uint8_t **stopword_list(const char *name, int *lenptr)
 {
 	const struct stopword_list *ptr = stopword_lists;
 

@@ -16,6 +16,7 @@
 
 #include <assert.h>
 #include <stddef.h>
+#include "private/sentsuppress.h"
 #include "unicode/sentbreakprop.h"
 #include "error.h"
 #include "memory.h"
@@ -40,6 +41,18 @@
 
 static int corpus_sentfilter_has_suppress(const struct corpus_sentfilter *f,
 					  const struct corpus_text *text);
+
+
+const char **corpus_sentsuppress_names(void)
+{
+	return sentsuppress_names();
+}
+
+
+const uint8_t **corpus_sentsuppress_list(const char *name, int *lenptr)
+{
+	return sentsuppress_list(name, lenptr);
+}
 
 
 int corpus_sentfilter_init(struct corpus_sentfilter *f)

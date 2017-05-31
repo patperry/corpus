@@ -2,12 +2,29 @@
 
 import json
 
+suppressions = {
+        'english': set([
+            # quanteda
+            'Mr.' ,'Mrs.', 'Ms.', 'Dr.', 'Jr.', 'Prof.', 'Ph.D.', 'M.',
+            'MM.', 'St.', 'etc.',
+
+            # time
+            'A.M.', 'P.M.', 'a.m.', 'p.m.',
+
+            # months
+            'Jan.', 'Feb.', 'Mar.', 'Apr.', 'Jun.', 'Jul.', 'Aug.', 'Sep.',
+            'Sept.', 'Oct.', 'Nov.', 'Dec.',
+
+            # other
+            'Mx.', 'e.g.', 'i.e.', 'cf.'
+            ])
+        }
+
 locales = {
         'de': 'german', 'en': 'english', 'es': 'spanish', 'fr': 'french',
         'it': 'italian', 'pt': 'portuguese', 'ru': 'russian'
         }
 
-suppressions = {}
 
 for key in sorted(locales.keys()):
     filename = 'data/cldr/segments/' + key + '/suppressions.json'
@@ -31,15 +48,19 @@ for key in sorted(locales.keys()):
         continue
     sentbreak = segmentations['SentenceBreak']['standard']
 
-    supps = []
+    if name not in suppressions:
+        suppressions[name] = set()
+    supps = suppressions[name]
+
     for brk in sentbreak:
         if 'suppression' not in brk:
             continue
         s = brk['suppression']
-        supps.append(s)
+        supps.add(s)
 
-    if len(supps) > 0:
-        suppressions[name] = tuple(sorted(supps))
+for nm in suppressions:
+    if len(suppressions[nm]) == 0:
+        del suppressions[nm]
 
 names = sorted(suppressions.keys())
 
@@ -85,7 +106,7 @@ print("static struct sentsuppress_list sentsuppress_lists[] = {")
 off = 0
 for i in range(len(names)):
     name = names[i]
-    words = suppressions[name]
+    words = sorted(suppressions[name])
     print("\t{\"", name, "\", ", off, ", ", len(words), "}", sep="", end="")
     if i + 1 != len(names):
         print(",")
@@ -98,7 +119,7 @@ print("")
 print("static const char * sentsuppress_strings[] = {")
 for i in range(len(names)):
     name = names[i]
-    words = suppressions[name]
+    words = sorted(suppressions[name])
     j = 0
     if i > 0:
         print("\n")

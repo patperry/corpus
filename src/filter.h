@@ -48,7 +48,7 @@ struct corpus_filter {
 	struct corpus_tree combine;	/**< word sequences to combine */
 	int *combine_rules;		/**< properties for nodes in the
 					  combine tree */
-	int *term_ids;			/**< term IDs for the types */
+	int *term_ids;			/**< term IDs for the symbols */
 	int *symbol_ids;		/**< symbol IDs for the terms */
 	int nterm;			/**< number of terms */
 	int nterm_max;			/**< maximum number of terms before
@@ -89,12 +89,12 @@ void corpus_filter_destroy(struct corpus_filter *f);
  * Add a stemming exception to the filter's symbol table.
  *
  * \param f the filter
- * \param type the unstemmed type
+ * \param symbol the unstemmed symbol type
  *
  * \returns 0 on success
  */
 int corpus_filter_stem_except(struct corpus_filter *f,
-			      const struct corpus_text *type);
+			      const struct corpus_text *symbol);
 
 /**
  * Add a combination rule to to filter.

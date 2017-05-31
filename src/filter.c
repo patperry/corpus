@@ -46,7 +46,7 @@ static int corpus_filter_advance_raw(struct corpus_filter *f, int *idptr);
 static int corpus_filter_try_combine(struct corpus_filter *f, int *idptr);
 
 static int corpus_filter_add_symbol(struct corpus_filter *f,
-				    const struct corpus_text *type,
+				    const struct corpus_text *symbol,
 				    int *idptr);
 static int corpus_filter_set_term(struct corpus_filter *f,
 				  const struct corpus_text *term,
@@ -177,7 +177,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 
 	node_id = 0;
 
-	// iterate over all non-ignored types in the rule
+	// iterate over all non-ignored symbols in the rule
 	if ((err = corpus_filter_start(f, term))) {
 		goto out;
 	}
@@ -505,8 +505,8 @@ out:
 
 int corpus_filter_advance_raw(struct corpus_filter *f, int *idptr)
 {
-	const struct corpus_text *token, *type;
-	int err, token_id, id, ntype0, ntype, size0, size, symbol_id = -1;
+	const struct corpus_text *token, *symbol;
+	int err, token_id, id, nsym0, nsym, size0, size, symbol_id = -1;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
@@ -523,12 +523,12 @@ ignored:
 
 	// add the token
 	token = &f->scan.current;
-	ntype0 = f->symtab.ntype;
+	nsym0 = f->symtab.ntype;
 	size0 = f->symtab.ntype_max;
 	if ((err = corpus_symtab_add_token(&f->symtab, token, &token_id))) {
 		goto out;
 	}
-	ntype = f->symtab.ntype;
+	nsym = f->symtab.ntype;
 	size = f->symtab.ntype_max;
 
 	// grow the term id array if necessary
@@ -542,9 +542,9 @@ ignored:
 	symbol_id = f->symtab.tokens[token_id].type_id;
 
 	// a new symbol got added
-	if (ntype0 != ntype) {
-		type = &f->symtab.types[symbol_id].text;
-		if ((err = corpus_filter_set_term(f, type, f->scan.type,
+	if (nsym0 != nsym) {
+		symbol = &f->symtab.types[symbol_id].text;
+		if ((err = corpus_filter_set_term(f, symbol, f->scan.type,
 						  symbol_id, &id))) {
 			goto out;
 		}
@@ -571,21 +571,21 @@ out:
 
 
 int corpus_filter_add_symbol(struct corpus_filter *f,
-			     const struct corpus_text *type, int *idptr)
+			     const struct corpus_text *symbol, int *idptr)
 {
-	int err, id, ntype0, ntype, size0, size;
+	int err, id, nsym0, nsym, size0, size;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
-	ntype0 = f->symtab.ntype;
+	nsym0 = f->symtab.ntype;
 	size0 = f->symtab.ntype_max;
-	if ((err = corpus_symtab_add_type(&f->symtab, type, &id))) {
+	if ((err = corpus_symtab_add_type(&f->symtab, symbol, &id))) {
 		goto out;
 	}
-	ntype = f->symtab.ntype;
+	nsym = f->symtab.ntype;
 
 	// a new symbol got added
-	if (ntype0 != ntype) {
+	if (nsym0 != nsym) {
 		size = f->symtab.ntype_max;
 		if (size0 < size) {
 			if ((err = corpus_filter_grow_symbols(f, size0,
@@ -594,7 +594,7 @@ int corpus_filter_add_symbol(struct corpus_filter *f,
 			}
 		}
 
-		corpus_filter_set_term(f, type, -1, id, NULL);
+		corpus_filter_set_term(f, symbol, -1, id, NULL);
 	}
 
 	err = 0;
@@ -643,7 +643,7 @@ int corpus_filter_set_term(struct corpus_filter *f,
 
 out:
 	if (err) {
-		corpus_log(err, "failed setting term ID for type");
+		corpus_log(err, "failed setting term ID for symbol");
 		id = -1;
 	}
 
@@ -688,7 +688,7 @@ int corpus_filter_grow_symbols(struct corpus_filter *f, int size0, int size)
 
 out:
 	if (err) {
-		corpus_log(err, "failed growing filter type id array");
+		corpus_log(err, "failed growing filter symbol id array");
 		f->error = err;
 	}
 

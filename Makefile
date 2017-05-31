@@ -70,6 +70,7 @@ CORPUS_O = src/main.o src/main_get.o src/main_scan.o src/main_sentences.o \
 
 DATA    = data/ucd/CaseFolding.txt \
 	  data/ucd/CompositionExclusions.txt \
+	  data/ucd/DerivedCoreProperties.txt \
 	  data/ucd/PropList.txt \
 	  data/ucd/Scripts.txt \
 	  data/ucd/UnicodeData.txt \
@@ -144,6 +145,10 @@ data/ucd/CaseFolding.txt:
 data/ucd/CompositionExclusions.txt:
 	$(MKDIR_P) data/ucd
 	$(CURL) -o $@ $(UNICODE)/ucd/CompositionExclusions.txt
+
+data/ucd/DerivedCoreProperties.txt:
+	$(MKDIR_P) data/ucd
+	$(CURL) -o $@ $(UNICODE)/ucd/DerivedCoreProperties.txt
 
 data/ucd/NormalizationTest.txt:
 	$(MKDIR_P) data/ucd
@@ -228,7 +233,9 @@ src/unicode/sentbreakprop.h: util/gen-sentbreak.py util/property.py \
 	./util/gen-sentbreak.py > $@
 
 src/unicode/wordbreakprop.h: util/gen-wordbreak.py util/property.py \
-		util/unicode_data.py data/ucd/PropList.txt \
+		util/unicode_data.py \
+		data/ucd/DerivedCoreProperties.txt \
+		data/ucd/PropList.txt \
 		data/ucd/auxiliary/WordBreakProperty.txt
 	$(MKDIR_P) src/unicode
 	./util/gen-wordbreak.py > $@

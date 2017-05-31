@@ -26,12 +26,19 @@ except ModuleNotFoundError:
 
 WORD_BREAK_PROPERTY = "data/ucd/auxiliary/WordBreakProperty.txt"
 PROP_LIST = "data/ucd/PropList.txt"
+DERIVED_CORE_PROPERTIES = "data/ucd/DerivedCoreProperties.txt"
 
 code_props = property.read(WORD_BREAK_PROPERTY)
 word_break_property = property.read(WORD_BREAK_PROPERTY, sets=True)
 
 prop_list = property.read(PROP_LIST, sets=True)
 white_space = prop_list['White_Space']
+
+derived_core_properties = property.read(DERIVED_CORE_PROPERTIES, sets=True)
+default_ignorable = derived_core_properties['Default_Ignorable_Code_Point']
+
+# add the default ignorables to the white space category
+white_space = white_space.union(default_ignorable)
 
 letter = set()
 mark = set()

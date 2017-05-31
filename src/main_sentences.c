@@ -69,7 +69,7 @@ int main_sentences(int argc, char * const argv[])
 	FILE *stream;
 	size_t field_len;
 	int ch, err, name_id, start;
-	int flags = CORPUS_SENTSCAN_MAPCRLF;
+	int flags = CORPUS_SENTSCAN_SPCRLF;
 
 	field = "text";
 
@@ -82,7 +82,7 @@ int main_sentences(int argc, char * const argv[])
 			output = optarg;
 			break;
 		case 'z':
-			flags &= ~CORPUS_SENTSCAN_MAPCRLF;
+			flags &= ~CORPUS_SENTSCAN_SPCRLF;
 			break;
 		default:
 			usage_sentences();

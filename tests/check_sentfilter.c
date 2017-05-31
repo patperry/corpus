@@ -26,7 +26,7 @@
 #include "testutil.h"
 
 #define STRICT CORPUS_SENTSCAN_STRICT
-#define MAPCRLF CORPUS_SENTSCAN_MAPCRLF
+#define SPCRLF CORPUS_SENTSCAN_SPCRLF
 
 #define SENT_EOT ((const struct corpus_text *)&sent_eot)
 
@@ -288,7 +288,7 @@ START_TEST(test_suppress_cldr_crlf)
 	uint8_t *ptr;
 	uint8_t buffer[128];
 
-	init(MAPCRLF);
+	init(SPCRLF);
 
 	while ((name = *names++)) {
 		list = corpus_sentsuppress_list(name, NULL);

@@ -71,7 +71,7 @@ void corpus_sentscan_make(struct corpus_sentscan *scan,
 		switch (scan->prop) { \
 		case SENT_BREAK_CR: \
 		case SENT_BREAK_LF: \
-			if (scan->flags & CORPUS_SENTSCAN_MAPCRLF) { \
+			if (scan->flags & CORPUS_SENTSCAN_SPCRLF) { \
 				EXTEND(); \
 			} \
 			break; \
@@ -146,7 +146,7 @@ static int has_future_lower(const struct corpus_sentscan *scan)
 
 		case SENT_BREAK_CR:
 		case SENT_BREAK_LF:
-			if (scan->flags & CORPUS_SENTSCAN_MAPCRLF) {
+			if (scan->flags & CORPUS_SENTSCAN_SPCRLF) {
 				break;
 			}
 			ret = 0;
@@ -190,14 +190,14 @@ NoBreak:
 	switch (scan->prop) {
 	case SENT_BREAK_CR:
 		NEXT();
-		if (scan->flags & CORPUS_SENTSCAN_MAPCRLF) {
+		if (scan->flags & CORPUS_SENTSCAN_SPCRLF) {
 			goto NoBreak;
 		}
 		goto CR;
 
 	case SENT_BREAK_LF:
 		NEXT();
-		if (scan->flags & CORPUS_SENTSCAN_MAPCRLF) {
+		if (scan->flags & CORPUS_SENTSCAN_SPCRLF) {
 			goto NoBreak;
 		}
 		goto ParaSep;
@@ -285,14 +285,14 @@ ATerm_Close_Sp:
 	case SENT_BREAK_CR:
 		// SB9: SATerm Close* * (Close | Sp | ParaSep)
 		NEXT();
-		if (scan->flags & CORPUS_SENTSCAN_MAPCRLF) {
+		if (scan->flags & CORPUS_SENTSCAN_SPCRLF) {
 			goto ATerm_Close_Sp;
 		}
 		goto CR;
 
 	case SENT_BREAK_LF:
 		NEXT();
-		if (scan->flags & CORPUS_SENTSCAN_MAPCRLF) {
+		if (scan->flags & CORPUS_SENTSCAN_SPCRLF) {
 			goto ATerm_Close_Sp;
 		}
 		goto ParaSep;
@@ -354,14 +354,14 @@ STerm_Close_Sp:
 	case SENT_BREAK_CR:
 		// SB9: SATerm Close* * (Close | Sp | ParaSep)
 		NEXT();
-		if (scan->flags & CORPUS_SENTSCAN_MAPCRLF) {
+		if (scan->flags & CORPUS_SENTSCAN_SPCRLF) {
 			goto STerm_Close_Sp;
 		}
 		goto CR;
 
 	case SENT_BREAK_LF:
 		NEXT();
-		if (scan->flags & CORPUS_SENTSCAN_MAPCRLF) {
+		if (scan->flags & CORPUS_SENTSCAN_SPCRLF) {
 			goto STerm_Close_Sp;
 		}
 		goto ParaSep;

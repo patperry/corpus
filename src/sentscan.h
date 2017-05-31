@@ -44,7 +44,7 @@ enum corpus_sent_type {
  */
 enum corpus_sentscan_type {
 	CORPUS_SENTSCAN_STRICT = 0, /**< strict UAX 29 conformance */
-	CORPUS_SENTSCAN_MAPCRLF = (1 << 0) /**< treat CR and LF like spaces */
+	CORPUS_SENTSCAN_SPCRLF = (1 << 0) /**< treat CR and LF like spaces */
 };
 
 /**

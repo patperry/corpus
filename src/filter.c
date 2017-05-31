@@ -49,23 +49,23 @@ static int corpus_filter_add_symbol(struct corpus_filter *f,
 				    const struct corpus_text *symbol,
 				    int *idptr);
 static int corpus_filter_set_term(struct corpus_filter *f,
-				  const struct corpus_text *term,
-				  int term_type, int symbol_id, int *idptr);
+				  const struct corpus_text *symbol,
+				  int kind, int symbol_id, int *idptr);
 static int corpus_filter_grow_terms(struct corpus_filter *f, int nadd);
 static int corpus_filter_grow_symbols(struct corpus_filter *f, int size0,
 				      int size);
-static int corpus_filter_term_prop(const struct corpus_filter *f,
-				   const struct corpus_text *term,
-				   int term_type);
-static int corpus_term_type(const struct corpus_text *term);
+static int corpus_filter_symbol_prop(const struct corpus_filter *f,
+				     const struct corpus_text *symbol,
+				     int kind);
+static int corpus_symbol_kind(const struct corpus_text *symbol);
 
 
-int corpus_filter_init(struct corpus_filter *f, int type_kind,
+int corpus_filter_init(struct corpus_filter *f, int symbol_kind,
 		       const char *stemmer, int flags)
 {
 	int err;
 
-	if ((err = corpus_symtab_init(&f->symtab, type_kind, stemmer))) {
+	if ((err = corpus_symtab_init(&f->symtab, symbol_kind, stemmer))) {
 		corpus_log(err, "failed initializing symbol table");
 		goto error_symtab;
 	}
@@ -614,13 +614,13 @@ out:
 
 
 int corpus_filter_set_term(struct corpus_filter *f,
-			   const struct corpus_text *term,
-			   int term_type, int symbol_id,
+			   const struct corpus_text *symbol,
+			   int kind, int symbol_id,
 			   int *idptr)
 {
 	int err, prop, id = -1;
 
-	prop = corpus_filter_term_prop(f, term, term_type);
+	prop = corpus_filter_symbol_prop(f, symbol, kind);
 
 	if (prop) {
 		id = prop;
@@ -697,19 +697,19 @@ out:
 }
 
 
-int corpus_filter_term_prop(const struct corpus_filter *f,
-			    const struct corpus_text *term, int term_type)
+int corpus_filter_symbol_prop(const struct corpus_filter *f,
+			      const struct corpus_text *symbol, int kind)
 {
 	int drop, ignore, prop;
 
-	if (term_type < 0) {
-		term_type = corpus_term_type(term);
+	if (kind < 0) {
+		kind = corpus_symbol_kind(symbol);
 	}
 
 	ignore = 0;
 	drop = 0;
 
-	switch (term_type) {
+	switch (kind) {
 	case CORPUS_WORD_SPACE:
 		ignore = (f->flags & CORPUS_FILTER_IGNORE_SPACE);
 		break;
@@ -754,18 +754,18 @@ int corpus_filter_term_prop(const struct corpus_filter *f,
 }
 
 
-int corpus_term_type(const struct corpus_text *term)
+int corpus_symbol_kind(const struct corpus_text *symbol)
 {
 	struct corpus_wordscan scan;
-	int type;
+	int kind;
 
-	corpus_wordscan_make(&scan, term);
+	corpus_wordscan_make(&scan, symbol);
 
 	if (corpus_wordscan_advance(&scan)) {
-		type = scan.type;
+		kind = scan.type;
 	} else {
-		type = CORPUS_WORD_NONE;
+		kind = CORPUS_WORD_NONE;
 	}
 
-	return type;
+	return kind;
 }

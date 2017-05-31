@@ -68,14 +68,14 @@ struct corpus_filter {
  * Initialize a text filter.
  *
  * \param f the filter
- * \param type_kind flags for the symbol table indicating the type kind
+ * \param symbol_kind flags for the symbol table indicating the symbol type kind
  * \param stemmer the stemming algorithm name
  * \param flags a big mask of #corpus_filter_type values indicating filter
  * 	options
  *
  * \returns 0 on success
  */
-int corpus_filter_init(struct corpus_filter *f, int type_kind,
+int corpus_filter_init(struct corpus_filter *f, int symbol_kind,
 		       const char *stemmer, int flags);
 
 /**

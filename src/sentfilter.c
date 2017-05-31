@@ -455,6 +455,7 @@ int corpus_sentfilter_advance(struct corpus_sentfilter *f)
 int has_suppress(const struct corpus_sentfilter *f,
 		 struct corpus_text_iter *it)
 {
+	struct corpus_text_iter it2;
 	int code, id, parent_id, prop, skip_space, rule;
 	
 	if (f->scan.type != CORPUS_SENT_ATERM) {
@@ -501,15 +502,20 @@ int has_suppress(const struct corpus_sentfilter *f,
 		}
 		skip_space = 0; // done skipping over initial spaces
 
+		if (code == ' ' || code == '.') { // possible boundary
+			if (rule == BACKSUPP_FULL) {
+				return 1;
+			} else if (rule == BACKSUPP_PARTIAL) {
+				it2 = *it;
+				if (has_forwards(f, &it2)) {
+					return 1;
+				}
+			}
+		}
+
 		parent_id = id;
 		if (!corpus_tree_has(&f->backsupp, parent_id, code, &id)) {
-			switch (code) {
-			case ' ':
-			case '.':
-				goto boundary;
-			default:
-				return 0;
-			}
+			return 0;
 		}
 
 		rule = f->backsupp_rules[id];
@@ -563,15 +569,15 @@ int has_forwards(const struct corpus_sentfilter *f, struct corpus_text_iter *it)
 			break;
 		}
 
+		if (code == ' ' || code == '.') { // possible boundary
+			if (rule == SUPPRESS_FULL) {
+				return 1;
+			}
+		}
+
 		parent_id = id;
 		if (!corpus_tree_has(&f->suppress, parent_id, code, &id)) {
-			switch (code) {
-			case ' ':
-			case '.':
-				goto boundary;
-			default:
-				return 0;
-			}
+			return 0;
 		}
 		rule = f->suppress_rules[id];
 	}

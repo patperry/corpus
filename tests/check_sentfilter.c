@@ -67,6 +67,7 @@ static void clear(void)
 	ck_assert(has_sentfilter);
 	corpus_sentfilter_clear(&sentfilter);
 	ck_assert_int_eq(sentfilter.backsupp.nnode, 0);
+	ck_assert_int_eq(sentfilter.fwdsupp.nnode, 0);
 }
 
 

@@ -24,12 +24,11 @@
  *
  * Sentence filter, for segmenting a text into a blocks of sentences.
  */
-
 struct corpus_sentfilter {
 	struct corpus_tree backsupp;
-	struct corpus_tree suppress;
+	struct corpus_tree fwdsupp;
 	int *backsupp_rules;
-	int *suppress_rules;
+	int *fwdsupp_rules;
 	struct corpus_sentscan scan;
 	struct corpus_text current;
 	int has_scan;

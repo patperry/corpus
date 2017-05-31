@@ -60,18 +60,11 @@ Corpus supports the following text normalization transformations:
  + performing Unicode case folding (using the default mappings, not
    the locale-specific ones);
 
- + performing dash folding, replacing dash characters like em dash
-   and en dash with ASCII dash (`-`);
-
  + performing quote folding, replacing quote characters like single
    quotes, double quotes, and apostrophes with ASCII single quote (`'`);
 
- + removing non-white-space control characters like the ASCII bell;
-
  + removing Unicode default ignorable characters like zero-width-space
    and soft hyphen;
-
- + removing white space characters;
 
  + stemming, using one of the algorithms supported by the [Snowball][snowball]
    stemming library.

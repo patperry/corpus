@@ -53,9 +53,6 @@ static int has_suppress(const struct corpus_sentfilter *f,
 static int has_forwards(const struct corpus_sentfilter *f,
 			struct corpus_text_iter *it);
 
-static int aterm_precedes(const struct corpus_text_iter *it);
-
-
 
 const char **corpus_sentsuppress_names(void)
 {
@@ -115,15 +112,20 @@ void corpus_sentfilter_clear(struct corpus_sentfilter *f)
 int corpus_sentfilter_suppress(struct corpus_sentfilter *f,
 			       const struct corpus_text *pattern)
 {
-	struct corpus_text prefix, suffix;
-	struct corpus_text_iter it, it2;
-	size_t attr, attr2, size, size2;
-	int err, rule, naterm;
+	struct corpus_text prefix;
+	struct corpus_text_iter it;
+	size_t attr, size;
+	int err, has_partial;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 	
-	naterm = 0;
-	err = 0;
+	// add a full suppression rule for the pattern
+	if ((err = add_backsupp(f, pattern, BACKSUPP_FULL))) {
+		goto out;
+	}
+
+	// add partial suppression rules for the internal ATerms
+	has_partial = 0;
 	attr = 0;
 	corpus_text_iter_make(&it, pattern);
 	while (corpus_text_iter_advance(&it)) {
@@ -134,36 +136,32 @@ int corpus_sentfilter_suppress(struct corpus_sentfilter *f,
 			continue;
 		}
 
-		// split the pattern around the ATerm
+		// set the prefix
 		size = (size_t)(it.ptr - pattern->ptr);
 		prefix.ptr = pattern->ptr;
 		prefix.attr = size | attr;
 
-		it2 = it;
-		attr2 = 0;
-		while (corpus_text_iter_advance(&it2)) {
-			attr2 |= it2.attr;
+		// peek at the next character
+		if (!corpus_text_iter_advance(&it)) {
+			break;
 		}
-		size2 = (size_t)(it2.ptr - it.ptr);
-		suffix.ptr = (uint8_t *)it.ptr;
-		suffix.attr = size2 | attr2;
+		attr |= it.attr;
 
-		if (size2 == 0) {
-			rule = BACKSUPP_FULL;
-		} else {
-			rule = BACKSUPP_PARTIAL;
+		// skip the prefix if not followed by a space
+		if (sent_break(it.current) != SENT_BREAK_SP) {
+			continue;
 		}
 
-		if ((err = add_backsupp(f, &prefix, rule))) {
+		if ((err = add_backsupp(f, &prefix, BACKSUPP_PARTIAL))) {
 			goto out;
 		}
-
-		naterm++;
+		has_partial = 1;
 	}
 
-	if (naterm > 1) {
+	if (has_partial > 0) {
 		err = add_forwards(f, pattern);
 	}
+
 out:
 	if (err) {
 		f->error = err;
@@ -218,10 +216,7 @@ int add_forwards(struct corpus_sentfilter *f,
 			continue;
 
 		case SENT_BREAK_SP:
-			if (aterm_precedes(&it)) {
-				// skip over spaces that follow '.'
-				continue;
-			}
+			// replace spaces with ' '
 			code = ' ';
 			break;
 
@@ -321,10 +316,7 @@ int add_backsupp(struct corpus_sentfilter *f, const struct corpus_text *prefix,
 			continue;
 
 		case SENT_BREAK_SP:
-			if (aterm_precedes(&it)) {
-				// skip over spaces that follow '.'
-				continue;
-			}
+			// replace spaces with ' '
 			code = ' ';
 			break;
 
@@ -336,7 +328,6 @@ int add_backsupp(struct corpus_sentfilter *f, const struct corpus_text *prefix,
 		default:
 			break;
 		}
-
 		parent_id = id;
 		nnode0 = f->backsupp.nnode;
 		size0 = f->backsupp.nnode_max;
@@ -461,7 +452,6 @@ int corpus_sentfilter_advance(struct corpus_sentfilter *f)
 }
 
 
-
 int has_suppress(const struct corpus_sentfilter *f,
 		 struct corpus_text_iter *it)
 {
@@ -511,13 +501,6 @@ int has_suppress(const struct corpus_sentfilter *f,
 		}
 		skip_space = 0; // done skipping over initial spaces
 
-		if (code == ' ') {
-			// skip over spaces that follow '.'
-			if (aterm_precedes(it)) {
-				continue;
-			}
-		}
-
 		parent_id = id;
 		if (!corpus_tree_has(&f->backsupp, parent_id, code, &id)) {
 			switch (code) {
@@ -545,7 +528,7 @@ boundary:
 
 int has_forwards(const struct corpus_sentfilter *f, struct corpus_text_iter *it)
 {
-	int code, prev, id, parent_id, prop, rule;
+	int code, id, parent_id, prop, rule;
 
 	if (f->suppress.nnode == 0) {
 		return 0;
@@ -556,7 +539,6 @@ int has_forwards(const struct corpus_sentfilter *f, struct corpus_text_iter *it)
 	code = -1;
 
 	while (corpus_text_iter_advance(it)) {
-		prev = code;
 		code = (int)it->current;
 		prop = sent_break(code);
 
@@ -581,20 +563,13 @@ int has_forwards(const struct corpus_sentfilter *f, struct corpus_text_iter *it)
 			break;
 		}
 
-		if (code == ' ') {
-			// skip over spaces that follow '.'
-			if (aterm_precedes(it)) {
-				continue;
-			}
-		}
-
 		parent_id = id;
 		if (!corpus_tree_has(&f->suppress, parent_id, code, &id)) {
-			if (code == ' ' || code == '.') {
+			switch (code) {
+			case ' ':
+			case '.':
 				goto boundary;
-			} else if (prev == ' ' || prev == '.') {
-				goto boundary;
-			} else {
+			default:
 				return 0;
 			}
 		}
@@ -603,29 +578,4 @@ int has_forwards(const struct corpus_sentfilter *f, struct corpus_text_iter *it)
 
 boundary:
 	return (rule == SUPPRESS_FULL) ? 1 : 0;
-}
-
-
-int aterm_precedes(const struct corpus_text_iter *it)
-{
-	struct corpus_text_iter it2 = *it;
-	int prop;
-
-	while (corpus_text_iter_retreat(&it2)) {
-		prop = sent_break(it2.current);
-
-		switch (prop) {
-		case SENT_BREAK_SP:
-		case SENT_BREAK_EXTEND:
-		case SENT_BREAK_FORMAT:
-			continue;
-
-		case SENT_BREAK_ATERM:
-			return 1;
-		default:
-			return 0;
-		}
-	}
-
-	return 0;
 }

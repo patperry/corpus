@@ -30,6 +30,9 @@
 #define BACKSUPP_PARTIAL	1
 #define BACKSUPP_FULL		2
 
+#define SUPPRESS_NONE		0
+#define SUPPRESS_FULL		1
+
 #define CHECK_ERROR(value) \
 	do { \
 		if (f->error) { \
@@ -41,11 +44,14 @@
 	} while (0)
 
 
-static int corpus_sentfilter_backsupp(struct corpus_sentfilter *f,
-				      const struct corpus_text *prefix,
-				      int rule);
-static int corpus_sentfilter_has_suppress(const struct corpus_sentfilter *f,
-					  const struct corpus_text *text);
+static int add_backsupp(struct corpus_sentfilter *f,
+			const struct corpus_text *prefix, int rule);
+static int add_forwards(struct corpus_sentfilter *f,
+		        const struct corpus_text *pattern);
+static int has_suppress(const struct corpus_sentfilter *f,
+			struct corpus_text_iter *it);
+static int has_forwards(const struct corpus_sentfilter *f,
+			struct corpus_text_iter *it);
 
 static int aterm_precedes(const struct corpus_text_iter *it);
 
@@ -70,13 +76,19 @@ int corpus_sentfilter_init(struct corpus_sentfilter *f)
 	if ((err = corpus_tree_init(&f->backsupp))) {
 		goto error_backsupp;
 	}
+	if ((err = corpus_tree_init(&f->suppress))) {
+		goto error_suppress;
+	}
 	f->backsupp_rules = NULL;
+	f->suppress_rules = NULL;
 	f->current.ptr = NULL;
 	f->current.attr = 0;
 	f->has_scan = 0;
 	f->error = 0;
 	return 0;
 
+error_suppress:
+	corpus_tree_destroy(&f->backsupp);
 error_backsupp:
 	corpus_log(err, "failed initializing sentence filter");
 	return err;
@@ -85,14 +97,17 @@ error_backsupp:
 
 void corpus_sentfilter_destroy(struct corpus_sentfilter *f)
 {
-	corpus_tree_destroy(&f->backsupp);
+	corpus_free(f->suppress_rules);
 	corpus_free(f->backsupp_rules);
+	corpus_tree_destroy(&f->suppress);
+	corpus_tree_destroy(&f->backsupp);
 }
 
 
 void corpus_sentfilter_clear(struct corpus_sentfilter *f)
 {
 	corpus_tree_clear(&f->backsupp);
+	corpus_tree_clear(&f->suppress);
 	f->has_scan = 0;
 }
 
@@ -103,10 +118,11 @@ int corpus_sentfilter_suppress(struct corpus_sentfilter *f,
 	struct corpus_text prefix, suffix;
 	struct corpus_text_iter it, it2;
 	size_t attr, attr2, size, size2;
-	int err, rule;
+	int err, rule, naterm;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 	
+	naterm = 0;
 	err = 0;
 	attr = 0;
 	corpus_text_iter_make(&it, pattern);
@@ -138,9 +154,15 @@ int corpus_sentfilter_suppress(struct corpus_sentfilter *f,
 			rule = BACKSUPP_PARTIAL;
 		}
 
-		if ((err = corpus_sentfilter_backsupp(f, &prefix, rule))) {
+		if ((err = add_backsupp(f, &prefix, rule))) {
 			goto out;
 		}
+
+		naterm++;
+	}
+
+	if (naterm > 1) {
+		err = add_forwards(f, pattern);
 	}
 out:
 	if (err) {
@@ -152,8 +174,110 @@ out:
 }
 
 
-int corpus_sentfilter_backsupp(struct corpus_sentfilter *f,
-			       const struct corpus_text *prefix, int rule)
+int add_forwards(struct corpus_sentfilter *f,
+				   const struct corpus_text *pattern)
+{
+	struct corpus_text_iter it;
+	int *rules;
+	int size, size0, nnode, nnode0;
+	int code, id, prop, parent_id, err;
+
+	CHECK_ERROR(CORPUS_ERROR_INVAL);
+
+	// root the suppression tree
+	if (f->suppress.nnode == 0) {
+		if ((err = corpus_tree_root(&f->suppress))) {
+			goto out;
+		}
+
+		size = f->suppress.nnode_max;
+		assert(size > 0);
+
+		rules = corpus_malloc(size * sizeof(*rules));
+		if (!rules) {
+			err = CORPUS_ERROR_NOMEM;
+			goto out;
+		}
+		rules[0] = SUPPRESS_NONE;
+		f->suppress_rules = rules;
+	}
+
+	id = 0;
+
+	// iterate over the characters in the pattern
+	corpus_text_iter_make(&it, pattern);
+
+	while (corpus_text_iter_advance(&it)) {
+		code = (int)it.current;
+		prop = sent_break(code);
+
+		switch (prop) {
+		case SENT_BREAK_EXTEND:
+		case SENT_BREAK_FORMAT:
+			// skip over extenders and format characters
+			continue;
+
+		case SENT_BREAK_SP:
+			if (aterm_precedes(&it)) {
+				// skip over spaces that follow '.'
+				continue;
+			}
+			code = ' ';
+			break;
+
+		case SENT_BREAK_ATERM:
+			// replace full stops with '.'
+			code = '.';
+			break;
+
+		default:
+			break;
+		}
+
+		parent_id = id;
+		nnode0 = f->suppress.nnode;
+		size0 = f->suppress.nnode_max;
+		if ((err = corpus_tree_add(&f->suppress, parent_id, code,
+					   &id))) {
+			goto out;
+		}
+		nnode = f->suppress.nnode;
+
+		// check whether a new node got added
+		if (nnode0 < nnode) {
+			// expand the rules array if necessary
+			size = f->suppress.nnode_max;
+			if (size0 < size) {
+				rules = f->suppress_rules;
+				rules = corpus_realloc(rules,
+						       size * sizeof(*rules));
+				if (!rules) {
+					err = CORPUS_ERROR_NOMEM;
+					goto out;
+				}
+				f->suppress_rules = rules;
+			}
+
+			// mark the new intermediate node as none
+			f->suppress_rules[id] = SUPPRESS_NONE;
+		}
+	}
+
+	// mark the terminal node with the rule
+	f->suppress_rules[id] = SUPPRESS_FULL;
+	err = 0;
+
+out:
+	if (err) {
+		f->error = err;
+		corpus_log(err, "failed adding suppression to sentence filter");
+	}
+	return err;
+}
+
+
+int add_backsupp(struct corpus_sentfilter *f, const struct corpus_text *prefix,
+		 int rule)
 {
 	struct corpus_text_iter it;
 	int *rules;
@@ -273,7 +397,9 @@ int corpus_sentfilter_start(struct corpus_sentfilter *f,
 
 int corpus_sentfilter_advance(struct corpus_sentfilter *f)
 {
+	const struct corpus_text *text;
 	const struct corpus_text *current;
+	struct corpus_text_iter it;
 	const uint8_t *ptr;
 	size_t size, attr;
 
@@ -287,8 +413,21 @@ int corpus_sentfilter_advance(struct corpus_sentfilter *f)
 	}
 
 	current = &f->scan.current;
-	if (f->scan.type != CORPUS_SENT_ATERM
-			|| !corpus_sentfilter_has_suppress(f, current)) {
+	text = &f->scan.text;
+
+	// set an iterator to the end of the sentence
+	corpus_text_iter_make(&it, current);
+	corpus_text_iter_skip(&it);
+
+	// the following is a bit of a hack. we need an iterator that
+	// can move across sentence boundaries. the call to 'iter_advance'
+	// is to ensure that the first call to 'iter_retreat' returns the
+	// last character in the sentence
+	it.end = text->ptr + CORPUS_TEXT_SIZE(text);
+	it.text_attr = text->attr;
+	corpus_text_iter_advance(&it);
+
+	if (!has_suppress(f, &it)) {
 		f->current = *current;
 		return 1;
 	}
@@ -302,9 +441,15 @@ int corpus_sentfilter_advance(struct corpus_sentfilter *f)
 		size += CORPUS_TEXT_SIZE(current);
 		attr |= CORPUS_TEXT_BITS(current);
 
-		if (f->scan.type != CORPUS_SENT_ATERM) {
-			break;
-		} else if (!corpus_sentfilter_has_suppress(f, current)) {
+		corpus_text_iter_make(&it, current);
+		corpus_text_iter_skip(&it);
+
+		// hack; see above
+		it.end = text->ptr + CORPUS_TEXT_SIZE(text);
+		it.text_attr = text->attr;
+		corpus_text_iter_advance(&it);
+
+		if (!has_suppress(f, &it)) {
 			break;
 		}
 	}
@@ -317,12 +462,15 @@ int corpus_sentfilter_advance(struct corpus_sentfilter *f)
 
 
 
-int corpus_sentfilter_has_suppress(const struct corpus_sentfilter *f,
-				   const struct corpus_text *text)
+int has_suppress(const struct corpus_sentfilter *f,
+		 struct corpus_text_iter *it)
 {
-	struct corpus_text_iter it;
 	int code, id, parent_id, prop, skip_space, rule;
 	
+	if (f->scan.type != CORPUS_SENT_ATERM) {
+		return 0;
+	}
+
 	if (f->backsupp.nnode == 0) {
 		return 0;
 	}
@@ -331,12 +479,8 @@ int corpus_sentfilter_has_suppress(const struct corpus_sentfilter *f,
 	rule = BACKSUPP_NONE;
 	id = 0;
 
-	// retreat until we reach a boundary or we run out of matches
-	corpus_text_iter_make(&it, text);
-	corpus_text_iter_skip(&it);
-
-	while (corpus_text_iter_retreat(&it)) {
-		code = (int)it.current;
+	while (corpus_text_iter_retreat(it)) {
+		code = (int)it->current;
 		prop = sent_break(code);
 
 		switch (prop) {
@@ -369,7 +513,7 @@ int corpus_sentfilter_has_suppress(const struct corpus_sentfilter *f,
 
 		if (code == ' ') {
 			// skip over spaces that follow '.'
-			if (aterm_precedes(&it)) {
+			if (aterm_precedes(it)) {
 				continue;
 			}
 		}
@@ -392,11 +536,73 @@ boundary:
 	if (rule == BACKSUPP_FULL) {
 		return 1;
 	} else if (rule == BACKSUPP_PARTIAL) {
-		printf("Partial!!\n");
-		return 0;
+		return has_forwards(f, it);
 	} else {
 		return 0;
 	}
+}
+
+
+int has_forwards(const struct corpus_sentfilter *f, struct corpus_text_iter *it)
+{
+	int code, prev, id, parent_id, prop, rule;
+
+	if (f->suppress.nnode == 0) {
+		return 0;
+	}
+
+	id = 0;
+	rule = SUPPRESS_NONE;
+	code = -1;
+
+	while (corpus_text_iter_advance(it)) {
+		prev = code;
+		code = (int)it->current;
+		prop = sent_break(code);
+
+		switch (prop) {
+		case SENT_BREAK_EXTEND:
+		case SENT_BREAK_FORMAT:
+			continue;
+
+		case SENT_BREAK_SEP:
+		case SENT_BREAK_CLOSE:
+		case SENT_BREAK_STERM:
+			goto boundary;
+
+		case SENT_BREAK_CR:
+		case SENT_BREAK_LF:
+		case SENT_BREAK_SP:
+			code = ' ';
+			break;
+
+		case SENT_BREAK_ATERM:
+			code = '.';
+			break;
+		}
+
+		if (code == ' ') {
+			// skip over spaces that follow '.'
+			if (aterm_precedes(it)) {
+				continue;
+			}
+		}
+
+		parent_id = id;
+		if (!corpus_tree_has(&f->suppress, parent_id, code, &id)) {
+			if (code == ' ' || code == '.') {
+				goto boundary;
+			} else if (prev == ' ' || prev == '.') {
+				goto boundary;
+			} else {
+				return 0;
+			}
+		}
+		rule = f->suppress_rules[id];
+	}
+
+boundary:
+	return (rule == SUPPRESS_FULL) ? 1 : 0;
 }
 
 
@@ -409,7 +615,7 @@ int aterm_precedes(const struct corpus_text_iter *it)
 		prop = sent_break(it2.current);
 
 		switch (prop) {
-		case SENT_BREAK_SEP:
+		case SENT_BREAK_SP:
 		case SENT_BREAK_EXTEND:
 		case SENT_BREAK_FORMAT:
 			continue;

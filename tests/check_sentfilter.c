@@ -217,6 +217,10 @@ START_TEST(test_suppress_space)
 	start(T("D. h. A"));
 	assert_text_eq(next(), T("D. h. A"));
 	assert_text_eq(next(), SENT_EOT);
+
+	start(T("U. U. D. h. A"));
+	assert_text_eq(next(), T("U. U. D. h. A"));
+	assert_text_eq(next(), SENT_EOT);
 }
 END_TEST
 

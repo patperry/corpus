@@ -39,7 +39,7 @@ for key in sorted(locales.keys()):
         supps.append(s)
 
     if len(supps) > 0:
-        suppressions[name] = tuple(supps)
+        suppressions[name] = tuple(sorted(supps))
 
 names = sorted(suppressions.keys())
 

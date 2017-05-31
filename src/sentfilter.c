@@ -487,6 +487,11 @@ int has_suppress(const struct corpus_sentfilter *f,
 
 		case SENT_BREAK_CR:
 		case SENT_BREAK_LF:
+			if (!(f->flags & CORPUS_SENTSCAN_MAPCRLF)) {
+				goto boundary;
+			}
+			// fall through
+
 		case SENT_BREAK_SP:
 			if (skip_space) {
 				continue;
@@ -561,6 +566,11 @@ int has_forwards(const struct corpus_sentfilter *f, struct corpus_text_iter *it)
 
 		case SENT_BREAK_CR:
 		case SENT_BREAK_LF:
+			if (!(f->flags & CORPUS_SENTSCAN_MAPCRLF)) {
+				goto boundary;
+			}
+			// fall through
+			
 		case SENT_BREAK_SP:
 			code = ' ';
 			break;

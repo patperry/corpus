@@ -25,28 +25,97 @@
 
 #include <stddef.h>
 
+/**
+ * N-ary tree node.
+ */
 struct corpus_tree_node {
-	int *keys;
-	int *ids;
-	int nitem;
+	int *keys;	/**< array of child keys */
+	int *ids;	/**< array of child ids */
+	int nitem;	/**< number of children */
 };
 
+/**
+ * N-ary tree.
+ */
 struct corpus_tree {
-	struct corpus_tree_node *nodes;
-	int nnode, nnode_max;
-	int is_unsorted;
+	struct corpus_tree_node *nodes;	/**< array of tree nodes */
+	int nnode;	/**< node array length */
+	int nnode_max;	/**< node array capacity */	
+	int is_unsorted;/**< whether the node are sorted in breadth-first
+			  order */
 };
 
+/**
+ * Initialize a new tree.
+ *
+ * \param t the tree
+ *
+ * \returns 0 on success
+ */
 int corpus_tree_init(struct corpus_tree *t);
+
+/**
+ * Release a tree's resources.
+ *
+ * \param t the tree
+ */
 void corpus_tree_destroy(struct corpus_tree *t);
+
+/**
+ * Remove all nodes from a tree.
+ *
+ * \param t the tree
+ */
 void corpus_tree_clear(struct corpus_tree *t);
 
+/**
+ * Add a root node to a tree if none exists already.
+ *
+ * \param t the tree
+ *
+ * \returns 0 on success
+ */
 int corpus_tree_root(struct corpus_tree *t);
+
+/**
+ * Add a child node to a tree node if it does not have one for the given key.
+ *
+ * \param t the tree
+ * \param parent_id the parent node ID
+ * \param key the key
+ * \param idptr if non-NULL, a location to store the child node ID
+ *
+ * \returns 0 on success.
+ */
 int corpus_tree_add(struct corpus_tree *t, int parent_id, int key, int *idptr);
+
+/**
+ * Test whether a tree node has a child for the given key.
+ *
+ * \param t the tree
+ * \param parent_id the parent node ID
+ * \param key the key
+ * \param idptr if non-NULL, a location to store the child node ID if it
+ * 	exists
+ *
+ * \returns 0 if no child exists for the given key, nonzero otherwise
+ */
 int corpus_tree_has(const struct corpus_tree *t, int parent_id, int key,
 		    int *idptr);
 
+/**
+ * Put the nodes of a tree into breadth-first order, re-assigning all node
+ * IDs. Optionally, apply the same sorting operation to an array.
+ *
+ * \param t the tree
+ * \param base if non-NULL, the base of the array to sort in parallel with
+ * 	the nodes; the array must have length equal to the number of nodes
+ * 	in the tree
+ * \param width if base is non-NULL, the size of each array element,
+ * 	in bytes; otherwise, ignored
+ *
+ * \returns 0 on success.
+ */
 int corpus_tree_sort(struct corpus_tree *t, void *base, size_t width);
-
 
 #endif /* CORPUS_TREE_H */

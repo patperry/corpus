@@ -20,10 +20,12 @@
 
 
 void corpus_sentscan_make(struct corpus_sentscan *scan,
-			  const struct corpus_text *text)
+			  const struct corpus_text *text,
+			  int flags)
 {
 	scan->text = *text;
 	scan->text_attr = text->attr & ~CORPUS_TEXT_SIZE_MASK;
+	scan->flags = flags;
 
 	corpus_text_iter_make(&scan->iter, text);
 	corpus_sentscan_reset(scan);
@@ -69,6 +71,10 @@ void corpus_sentscan_make(struct corpus_sentscan *scan,
 		switch (scan->prop) { \
 		case SENT_BREAK_CR: \
 		case SENT_BREAK_LF: \
+			if (scan->flags & CORPUS_SENTSCAN_MAPCRLF) { \
+				EXTEND(); \
+			} \
+			break; \
 		case SENT_BREAK_SEP: \
 			break; \
 		default: \
@@ -133,10 +139,16 @@ static int has_future_lower(const struct corpus_sentscan *scan)
 		case SENT_BREAK_OLETTER:
 		case SENT_BREAK_UPPER:
 		case SENT_BREAK_SEP:
-		case SENT_BREAK_CR:
-		case SENT_BREAK_LF:
 		case SENT_BREAK_STERM:
 		case SENT_BREAK_ATERM:
+			ret = 0;
+			goto out;
+
+		case SENT_BREAK_CR:
+		case SENT_BREAK_LF:
+			if (scan->flags & CORPUS_SENTSCAN_MAPCRLF) {
+				break;
+			}
 			ret = 0;
 			goto out;
 
@@ -178,9 +190,18 @@ NoBreak:
 	switch (scan->prop) {
 	case SENT_BREAK_CR:
 		NEXT();
+		if (scan->flags & CORPUS_SENTSCAN_MAPCRLF) {
+			goto NoBreak;
+		}
 		goto CR;
 
 	case SENT_BREAK_LF:
+		NEXT();
+		if (scan->flags & CORPUS_SENTSCAN_MAPCRLF) {
+			goto NoBreak;
+		}
+		goto ParaSep;
+
 	case SENT_BREAK_SEP:
 		NEXT();
 		goto ParaSep;
@@ -264,9 +285,18 @@ ATerm_Close_Sp:
 	case SENT_BREAK_CR:
 		// SB9: SATerm Close* * (Close | Sp | ParaSep)
 		NEXT();
+		if (scan->flags & CORPUS_SENTSCAN_MAPCRLF) {
+			goto ATerm_Close_Sp;
+		}
 		goto CR;
 
 	case SENT_BREAK_LF:
+		NEXT();
+		if (scan->flags & CORPUS_SENTSCAN_MAPCRLF) {
+			goto ATerm_Close_Sp;
+		}
+		goto ParaSep;
+
 	case SENT_BREAK_SEP:
 		// SB9: SATerm Close* * (Close | Sp | ParaSep)
 		NEXT();
@@ -324,9 +354,18 @@ STerm_Close_Sp:
 	case SENT_BREAK_CR:
 		// SB9: SATerm Close* * (Close | Sp | ParaSep)
 		NEXT();
+		if (scan->flags & CORPUS_SENTSCAN_MAPCRLF) {
+			goto STerm_Close_Sp;
+		}
 		goto CR;
 
 	case SENT_BREAK_LF:
+		NEXT();
+		if (scan->flags & CORPUS_SENTSCAN_MAPCRLF) {
+			goto STerm_Close_Sp;
+		}
+		goto ParaSep;
+
 	case SENT_BREAK_SEP:
 		NEXT();
 		goto ParaSep;

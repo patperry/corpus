@@ -51,6 +51,7 @@ Description:\n\
 Options:\n\
 \t-f <field>\tGets text from the given field (defaults to \"text\").\n\
 \t-o <path>\tSaves output at the given path.\n\
+\t-z\t\tTreats CR and LF like separators, not spaces.\n\
 ", PROGRAM_NAME);
 }
 
@@ -68,16 +69,20 @@ int main_sentences(int argc, char * const argv[])
 	FILE *stream;
 	size_t field_len;
 	int ch, err, name_id, start;
+	int flags = CORPUS_SENTSCAN_MAPCRLF;
 
 	field = "text";
 
-	while ((ch = getopt(argc, argv, "f:o:")) != -1) {
+	while ((ch = getopt(argc, argv, "f:o:z")) != -1) {
 		switch (ch) {
 		case 'f':
 			field = optarg;
 			break;
 		case 'o':
 			output = optarg;
+			break;
+		case 'z':
+			flags &= ~CORPUS_SENTSCAN_MAPCRLF;
 			break;
 		default:
 			usage_sentences();
@@ -152,7 +157,7 @@ int main_sentences(int argc, char * const argv[])
 		}
 
 		fprintf(stream, "[");
-		corpus_sentscan_make(&scan, &text);
+		corpus_sentscan_make(&scan, &text, flags);
 		start = 1;
 		while (corpus_sentscan_advance(&scan)) {
 			if (!start) {

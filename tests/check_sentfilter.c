@@ -25,6 +25,9 @@
 #include "../src/sentfilter.h"
 #include "testutil.h"
 
+#define STRICT CORPUS_SENTSCAN_STRICT
+#define MAPCRLF CORPUS_SENTSCAN_MAPCRLF
+
 #define SENT_EOT ((const struct corpus_text *)&sent_eot)
 
 static struct corpus_sentfilter sentfilter;
@@ -51,10 +54,10 @@ static void teardown_sentfilter(void)
 }
 
 
-static void init(void)
+static void init(int flags)
 {
 	ck_assert(!has_sentfilter);
-	ck_assert(!corpus_sentfilter_init(&sentfilter));
+	ck_assert(!corpus_sentfilter_init(&sentfilter, flags));
 	has_sentfilter = 1;
 }
 
@@ -95,7 +98,7 @@ static const struct corpus_text *next(void)
 
 START_TEST(test_space)
 {
-	init();
+	init(STRICT);
 	start(T("Mr. Jones."));
 	assert_text_eq(next(), T("Mr. "));
 	assert_text_eq(next(), T("Jones."));
@@ -106,7 +109,7 @@ END_TEST
 
 START_TEST(test_newline)
 {
-	init();
+	init(STRICT);
 	start(T("Mr.\nJones."));
 	assert_text_eq(next(), T("Mr.\n"));
 	assert_text_eq(next(), T("Jones."));
@@ -117,7 +120,7 @@ END_TEST
 
 START_TEST(test_suppress)
 {
-	init();
+	init(STRICT);
 	suppress(T("Mr."));
 	suppress(T("Mrs."));
 	suppress(T("Mx."));
@@ -135,7 +138,7 @@ END_TEST
 
 START_TEST(test_nonsuppress)
 {
-	init();
+	init(STRICT);
 	suppress(T("Mx."));
 
 	start(T("AMx. Split."));
@@ -153,7 +156,7 @@ END_TEST
 
 START_TEST(test_suppress_break)
 {
-	init();
+	init(STRICT);
 	suppress(T("Mx."));
 
 	start(T("end.\nMx. Jones."));
@@ -189,7 +192,7 @@ END_TEST
 
 START_TEST(test_suppress_multi)
 {
-	init();
+	init(STRICT);
 	suppress(T("Ph.D."));
 	suppress(T("z.B."));
 
@@ -206,7 +209,7 @@ END_TEST
 
 START_TEST(test_suppress_space)
 {
-	init();
+	init(STRICT);
 	suppress(T("U. U."));
 
 	//start(T("U. U. A"));
@@ -229,13 +232,14 @@ START_TEST(test_suppress_cldr)
 {
 	const char *name, **names = corpus_sentsuppress_names();
 	const uint8_t *supp, **list;
+	const struct corpus_text *sent;
 	struct corpus_text text;
 	size_t size;
 	uint8_t *ptr;
 	uint8_t buffer[128];
 	int nfail = 0;
 
-	init();
+	init(STRICT);
 
 	while ((name = *names++)) {
 		list = corpus_sentsuppress_list(name, NULL);
@@ -260,16 +264,60 @@ START_TEST(test_suppress_cldr)
 						      CORPUS_TEXT_NOESCAPE));
 			
 			start(&text);
-			if (!corpus_text_equals(next(), &text)) {
+			sent = next();
+			if (!corpus_text_equals(sent, &text)) {
 				printf("failed (%s): %s\n", name, supp);
 				nfail++;
+			} else {
+				assert_text_eq(next(), SENT_EOT);
 			}
-			//assert_text_eq(next(), &text);
-			//assert_text_eq(next(), SENT_EOT);
 		}
 	}
 
 	ck_assert(nfail == 0);
+}
+END_TEST
+
+
+START_TEST(test_suppress_cldr_crlf)
+{
+	const char *name, **names = corpus_sentsuppress_names();
+	const uint8_t *supp, **list;
+	struct corpus_text text;
+	size_t size;
+	uint8_t *ptr;
+	uint8_t buffer[128];
+
+	init(MAPCRLF);
+
+	while ((name = *names++)) {
+		list = corpus_sentsuppress_list(name, NULL);
+		while ((supp = *list++)) {
+			clear();
+
+			// add the suppression rule
+			ptr = buffer;
+			size = strlen((const char *)supp);
+			memcpy(ptr, supp, size);
+			ck_assert(!corpus_text_assign(&text, buffer,
+						      size,
+						      CORPUS_TEXT_NOESCAPE));
+			suppress(&text);
+
+			// test the rule
+			ptr[size++] = '\r';
+			ptr[size++] = '\n';
+			ptr[size++] = 'A';
+			ptr[size] = '\0';
+			ck_assert(!corpus_text_assign(&text, buffer,
+						      size,
+						      CORPUS_TEXT_NOESCAPE));
+
+			start(&text);
+			assert_text_eq(next(), &text);
+			assert_text_eq(next(), SENT_EOT);
+		}
+	}
 }
 END_TEST
 
@@ -293,9 +341,10 @@ Suite *sentfilter_suite(void)
 	suite_add_tcase(s, tc);
 
 	tc = tcase_create("cldr");
+	tcase_add_checked_fixture(tc, setup_sentfilter, teardown_sentfilter);
         tcase_add_test(tc, test_suppress_cldr);
+        tcase_add_test(tc, test_suppress_cldr_crlf);
 	suite_add_tcase(s, tc);
-	
 
 	return s;
 }

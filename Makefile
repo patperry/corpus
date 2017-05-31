@@ -361,7 +361,7 @@ tests/check_filter.o: tests/check_filter.c src/table.h src/text.h \
 tests/check_sentfilter.o: tests/check_sentfilter.c src/text.h src/tree.h \
     	src/sentscan.h src/sentfilter.h tests/testutil.h
 tests/check_sentscan.o: tests/check_sentscan.c src/text.h src/unicode.h \
-	src/wordscan.h tests/testutil.h
+	src/sentscan.h tests/testutil.h
 tests/check_symtab.o: tests/check_symtab.c src/table.h src/text.h \
 	src/textset.h src/typemap.h src/symtab.h tests/testutil.h
 tests/check_text.o: tests/check_text.c src/error.h src/text.h src/unicode.h \

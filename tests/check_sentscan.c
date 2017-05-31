@@ -40,7 +40,7 @@ void teardown_scan(void)
 
 void start(const struct corpus_text *text)
 {
-	corpus_sentscan_make(&scan, text);
+	corpus_sentscan_make(&scan, text, CORPUS_SENTSCAN_STRICT);
 }
 
 
@@ -265,7 +265,7 @@ START_TEST(test_unicode)
 
 		//fprintf(stderr, "[%u]: ", i);
 		//write_unitest(stderr, test);
-		corpus_sentscan_make(&scan, &test->text);
+		corpus_sentscan_make(&scan, &test->text, CORPUS_SENTSCAN_STRICT);
 
 		for (j = 0; j < test->nbreak; j++) {
 			//fprintf(stderr, "Break %u\n", j);

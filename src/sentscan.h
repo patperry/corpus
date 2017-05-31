@@ -40,6 +40,14 @@ enum corpus_sent_type {
 };
 
 /**
+ * Flags for controlling the sentence breaking.
+ */
+enum corpus_sentscan_type {
+	CORPUS_SENTSCAN_STRICT = 0, /**< strict UAX 29 conformance */
+	CORPUS_SENTSCAN_MAPCRLF = (1 << 0) /**< treat CR and LF like spaces */
+};
+
+/**
  * A sentence scanner, for iterating over the sentences in a text. Sentence
  * boundaries are determined according to
  * [UAX #29, Unicode Text Segmentation][uax29].
@@ -52,6 +60,7 @@ enum corpus_sent_type {
 struct corpus_sentscan {
 	struct corpus_text text;/**< the input text */
 	size_t text_attr;	/**< the input text attributes */
+	int flags;		/**< the scan flags */
 
 	uint32_t code;		/**< next code point */
 	size_t attr;		/**< next code's attributes */
@@ -74,9 +83,12 @@ struct corpus_sentscan {
  *
  * \param scan the scanner to initialize
  * \param text the text
+ * \param flags a bit mask of #corpus_sentscan_type flags controlling
+ * 	the scanning behavior
  */
 void corpus_sentscan_make(struct corpus_sentscan *scan,
-			  const struct corpus_text *text);
+			  const struct corpus_text *text,
+			  int flags);
 
 /**
  * Advance a scanner to the next sentence.

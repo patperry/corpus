@@ -66,7 +66,7 @@ const uint8_t **corpus_sentsuppress_list(const char *name, int *lenptr)
 }
 
 
-int corpus_sentfilter_init(struct corpus_sentfilter *f)
+int corpus_sentfilter_init(struct corpus_sentfilter *f, int flags)
 {
 	int err;
 
@@ -81,6 +81,7 @@ int corpus_sentfilter_init(struct corpus_sentfilter *f)
 	f->current.ptr = NULL;
 	f->current.attr = 0;
 	f->has_scan = 0;
+	f->flags = flags;
 	f->error = 0;
 	return 0;
 
@@ -377,7 +378,7 @@ int corpus_sentfilter_start(struct corpus_sentfilter *f,
 {
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
-	corpus_sentscan_make(&f->scan, text);
+	corpus_sentscan_make(&f->scan, text, f->flags);
 	f->current.ptr = NULL;
 	f->current.attr = 0;
 	f->has_scan = 1;

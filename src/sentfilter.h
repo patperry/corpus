@@ -33,6 +33,7 @@ struct corpus_sentfilter {
 	struct corpus_sentscan scan;
 	struct corpus_text current;
 	int has_scan;
+	int flags;
 	int error;
 };
 
@@ -40,7 +41,7 @@ struct corpus_sentfilter {
 const char **corpus_sentsuppress_names(void);
 const uint8_t **corpus_sentsuppress_list(const char *name, int *lenptr);
 
-int corpus_sentfilter_init(struct corpus_sentfilter *f);
+int corpus_sentfilter_init(struct corpus_sentfilter *f, int flags);
 void corpus_sentfilter_destroy(struct corpus_sentfilter *f);
 void corpus_sentfilter_clear(struct corpus_sentfilter *f);
 

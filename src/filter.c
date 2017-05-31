@@ -45,15 +45,15 @@
 static int corpus_filter_advance_raw(struct corpus_filter *f, int *idptr);
 static int corpus_filter_try_combine(struct corpus_filter *f, int *idptr);
 
-static int corpus_filter_add_type(struct corpus_filter *f,
-				  const struct corpus_text *type,
-				  int *idptr);
+static int corpus_filter_add_symbol(struct corpus_filter *f,
+				    const struct corpus_text *type,
+				    int *idptr);
 static int corpus_filter_set_term(struct corpus_filter *f,
 				  const struct corpus_text *term,
-				  int term_type, int type_id, int *idptr);
+				  int term_type, int symbol_id, int *idptr);
 static int corpus_filter_grow_terms(struct corpus_filter *f, int nadd);
-static int corpus_filter_grow_types(struct corpus_filter *f, int size0,
-				    int size);
+static int corpus_filter_grow_symbols(struct corpus_filter *f, int size0,
+				      int size);
 static int corpus_filter_term_prop(const struct corpus_filter *f,
 				   const struct corpus_text *term,
 				   int term_type);
@@ -76,7 +76,7 @@ int corpus_filter_init(struct corpus_filter *f, int type_kind,
 	}
 	f->combine_rules = NULL;
 	f->term_ids = NULL;
-	f->type_ids = NULL;
+	f->symbol_ids = NULL;
 	f->nterm = 0;
 	f->nterm_max = 0;
 	f->flags = flags;
@@ -96,7 +96,7 @@ error_symtab:
 
 void corpus_filter_destroy(struct corpus_filter *f)
 {
-	corpus_free(f->type_ids);
+	corpus_free(f->symbol_ids);
 	corpus_free(f->term_ids);
 	corpus_free(f->combine_rules);
 	corpus_tree_destroy(&f->combine);
@@ -123,13 +123,13 @@ int corpus_filter_stem_except(struct corpus_filter *f,
 const struct corpus_text *corpus_filter_term(const struct corpus_filter *f,
 					     int id)
 {
-	int type_id;
+	int symbol_id;
 
 	CHECK_ERROR(NULL);
 	assert(0 <= id && id < f->nterm);
 
-	type_id = f->type_ids[id];
-	return &f->symtab.types[type_id].text;
+	symbol_id = f->symbol_ids[id];
+	return &f->symtab.types[symbol_id].text;
 }
 
 
@@ -138,7 +138,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 {
 	struct corpus_wordscan scan;
 	int *rules;
-	int err, has_scan, type_id, node_id, nnode0, nnode, parent_id,
+	int err, has_scan, symbol_id, node_id, nnode0, nnode, parent_id,
 	    size0, size, id = -1;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
@@ -170,8 +170,8 @@ int corpus_filter_combine(struct corpus_filter *f,
 		f->combine_rules = rules;
 	}
 
-	// add a new type for the combined term
-	if ((err = corpus_filter_add_type(f, term, &id))) {
+	// add a new symbol for the combined term
+	if ((err = corpus_filter_add_symbol(f, term, &id))) {
 		goto out;
 	}
 
@@ -182,15 +182,15 @@ int corpus_filter_combine(struct corpus_filter *f,
 		goto out;
 	}
 
-	while (corpus_filter_advance_raw(f, &type_id)) {
-		if (f->term_ids[type_id] == CORPUS_FILTER_IGNORED) {
+	while (corpus_filter_advance_raw(f, &symbol_id)) {
+		if (f->term_ids[symbol_id] == CORPUS_FILTER_IGNORED) {
 			continue;
 		}
 
 		parent_id = node_id;
 		nnode0 = f->combine.nnode;
 		size0 = f->combine.nnode_max;
-		if ((err = corpus_tree_add(&f->combine, parent_id, type_id,
+		if ((err = corpus_tree_add(&f->combine, parent_id, symbol_id,
 					   &node_id))) {
 			goto out;
 		}
@@ -246,15 +246,15 @@ out:
 int corpus_filter_drop(struct corpus_filter *f,
 		       const struct corpus_text *term)
 {
-	int err, type_id, term_id, i, n;
+	int err, symbol_id, term_id, i, n;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
-	if ((err = corpus_filter_add_type(f, term, &type_id))) {
+	if ((err = corpus_filter_add_symbol(f, term, &symbol_id))) {
 		goto out;
 	}
 
-	term_id = f->term_ids[type_id];
+	term_id = f->term_ids[symbol_id];
 
 	switch (term_id) {
 	case CORPUS_FILTER_IGNORED:
@@ -262,17 +262,17 @@ int corpus_filter_drop(struct corpus_filter *f,
 		break;
 
 	case CORPUS_FILTER_EXCLUDED:
-		f->term_ids[type_id] = CORPUS_FILTER_DROPPED;
+		f->term_ids[symbol_id] = CORPUS_FILTER_DROPPED;
 		break;
 
 	default:
-		f->term_ids[type_id] = CORPUS_FILTER_DROPPED;
+		f->term_ids[symbol_id] = CORPUS_FILTER_DROPPED;
 
 		// remove the existing term; update old term IDs
 		n = f->nterm;
 		for (i = term_id; i + 1 < n; i++) {
-			f->type_ids[i] = f->type_ids[i + 1];
-			f->term_ids[f->type_ids[i]] = i;
+			f->symbol_ids[i] = f->symbol_ids[i + 1];
+			f->term_ids[f->symbol_ids[i]] = i;
 		}
 		f->nterm--;
 
@@ -293,15 +293,15 @@ out:
 int corpus_filter_drop_except(struct corpus_filter *f,
 			      const struct corpus_text *term)
 {
-	int err, term_id, type_id;
+	int err, term_id, symbol_id;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
-	if ((err = corpus_filter_add_type(f, term, &type_id))) {
+	if ((err = corpus_filter_add_symbol(f, term, &symbol_id))) {
 		goto out;
 	}
 
-	term_id = f->term_ids[type_id];
+	term_id = f->term_ids[symbol_id];
 
 	if (term_id == CORPUS_FILTER_DROPPED) {
 		if (f->has_select) {
@@ -315,11 +315,11 @@ int corpus_filter_drop_except(struct corpus_filter *f,
 			}
 
 			term_id = f->nterm;
-			f->type_ids[term_id] = type_id;
+			f->symbol_ids[term_id] = symbol_id;
 			f->nterm++;
 		}
 
-		f->term_ids[type_id] = term_id;
+		f->term_ids[symbol_id] = term_id;
 	}
 
 	err = 0;
@@ -337,11 +337,11 @@ out:
 int corpus_filter_select(struct corpus_filter *f,
 			 const struct corpus_text *term, int *idptr)
 {
-	int err, type_id, i, n, id = -1;
+	int err, symbol_id, i, n, id = -1;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
-	if ((err = corpus_filter_add_type(f, term, &type_id))) {
+	if ((err = corpus_filter_add_symbol(f, term, &symbol_id))) {
 		goto out;
 	}
 
@@ -364,7 +364,7 @@ int corpus_filter_select(struct corpus_filter *f,
 		f->nterm = 0;
 	}
 
-	id = f->term_ids[type_id];
+	id = f->term_ids[symbol_id];
 
 	// add the new term if it does not exist
 	if (id == CORPUS_FILTER_EXCLUDED) {
@@ -374,8 +374,8 @@ int corpus_filter_select(struct corpus_filter *f,
 				goto out;
 			}
 		}
-		f->type_ids[id] = type_id;
-		f->term_ids[type_id] = id;
+		f->symbol_ids[id] = symbol_id;
+		f->term_ids[symbol_id] = id;
 		f->nterm++;
 	}
 
@@ -408,21 +408,21 @@ int corpus_filter_start(struct corpus_filter *f,
 
 int corpus_filter_advance(struct corpus_filter *f, int *idptr)
 {
-	int type_id, id = -1;
+	int symbol_id, id = -1;
 	int err, ret;
 
-	ret = corpus_filter_advance_raw(f, &type_id);
+	ret = corpus_filter_advance_raw(f, &symbol_id);
 	err = f->error;
 
 	if (!ret || err) {
 		goto out;
 	}
 
-	if ((err = corpus_filter_try_combine(f, &type_id))) {
+	if ((err = corpus_filter_try_combine(f, &symbol_id))) {
 		goto out;
 	}
 
-	id = f->term_ids[type_id];
+	id = f->term_ids[symbol_id];
 	err = 0;
 
 out:
@@ -442,7 +442,7 @@ out:
 int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 {
 	struct corpus_wordscan scan;
-	int err, id, type_id, node_id, parent_id;
+	int err, id, symbol_id, node_id, parent_id;
 
 	if (!f->combine.nnode) {
 		return 0;
@@ -462,9 +462,9 @@ int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 		id = f->combine_rules[node_id];
 	}
 
-	while (corpus_filter_advance_raw(f, &type_id)) {
+	while (corpus_filter_advance_raw(f, &symbol_id)) {
 		parent_id = node_id;
-		if (!corpus_tree_has(&f->combine, parent_id, type_id,
+		if (!corpus_tree_has(&f->combine, parent_id, symbol_id,
 				     &node_id)) {
 			// no more potential matches
 			err = 0;
@@ -506,7 +506,7 @@ out:
 int corpus_filter_advance_raw(struct corpus_filter *f, int *idptr)
 {
 	const struct corpus_text *token, *type;
-	int err, token_id, id, ntype0, ntype, size0, size, type_id = -1;
+	int err, token_id, id, ntype0, ntype, size0, size, symbol_id = -1;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
@@ -533,23 +533,23 @@ ignored:
 
 	// grow the term id array if necessary
 	if (size0 < size) {
-		if ((err = corpus_filter_grow_types(f, size0, size))) {
+		if ((err = corpus_filter_grow_symbols(f, size0, size))) {
 			goto out;
 		}
 	}
 
-	// get the type id
-	type_id = f->symtab.tokens[token_id].type_id;
+	// get the symbol id
+	symbol_id = f->symtab.tokens[token_id].type_id;
 
-	// a new type got added
+	// a new symbol got added
 	if (ntype0 != ntype) {
-		type = &f->symtab.types[type_id].text;
+		type = &f->symtab.types[symbol_id].text;
 		if ((err = corpus_filter_set_term(f, type, f->scan.type,
-						  type_id, &id))) {
+						  symbol_id, &id))) {
 			goto out;
 		}
 	} else {
-		id = f->term_ids[type_id];
+		id = f->term_ids[symbol_id];
 	}
 
 	if (id == CORPUS_FILTER_IGNORED) {
@@ -564,14 +564,14 @@ out:
 		id = -1;
 	}
 	if (idptr) {
-		*idptr = type_id;
+		*idptr = symbol_id;
 	}
 	return err ? 0 : 1;
 }
 
 
-int corpus_filter_add_type(struct corpus_filter *f,
-			   const struct corpus_text *type, int *idptr)
+int corpus_filter_add_symbol(struct corpus_filter *f,
+			     const struct corpus_text *type, int *idptr)
 {
 	int err, id, ntype0, ntype, size0, size;
 
@@ -584,12 +584,12 @@ int corpus_filter_add_type(struct corpus_filter *f,
 	}
 	ntype = f->symtab.ntype;
 
-	// a new type got added
+	// a new symbol got added
 	if (ntype0 != ntype) {
 		size = f->symtab.ntype_max;
 		if (size0 < size) {
-			if ((err = corpus_filter_grow_types(f, size0,
-							    size))) {
+			if ((err = corpus_filter_grow_symbols(f, size0,
+							      size))) {
 				goto out;
 			}
 		}
@@ -600,7 +600,7 @@ int corpus_filter_add_type(struct corpus_filter *f,
 	err = 0;
 out:
 	if (err) {
-		corpus_log(err, "failed adding type to filter");
+		corpus_log(err, "failed adding symbol to filter");
 		f->error = err;
 		id = -1;
 	}
@@ -615,7 +615,7 @@ out:
 
 int corpus_filter_set_term(struct corpus_filter *f,
 			   const struct corpus_text *term,
-			   int term_type, int type_id,
+			   int term_type, int symbol_id,
 			   int *idptr)
 {
 	int err, prop, id = -1;
@@ -634,11 +634,11 @@ int corpus_filter_set_term(struct corpus_filter *f,
 			}
 		}
 		id = f->nterm;
-		f->type_ids[id] = type_id;
+		f->symbol_ids[id] = symbol_id;
 		f->nterm++;
 	}
 
-	f->term_ids[type_id] = id;
+	f->term_ids[symbol_id] = id;
 	err = 0;
 
 out:
@@ -657,24 +657,24 @@ out:
 
 int corpus_filter_grow_terms(struct corpus_filter *f, int nadd)
 {
-	void *base = f->type_ids;
+	void *base = f->symbol_ids;
 	int size = f->nterm_max;
 	int err;
 
-	if ((err = corpus_array_grow(&base, &size, sizeof(*f->type_ids),
+	if ((err = corpus_array_grow(&base, &size, sizeof(*f->symbol_ids),
 				     f->nterm, nadd))) {
 		corpus_log(err, "failed allocating term array");
 		f->error = err;
 		return err;
 	}
 
-	f->type_ids = base;
+	f->symbol_ids = base;
 	f->nterm_max = size;
 	return 0;
 }
 
 
-int corpus_filter_grow_types(struct corpus_filter *f, int size0, int size)
+int corpus_filter_grow_symbols(struct corpus_filter *f, int size0, int size)
 {
 	int *ids;
 	int err;

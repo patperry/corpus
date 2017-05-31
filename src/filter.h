@@ -41,12 +41,15 @@ enum corpus_filter_type {
  * Text filter.
  */
 struct corpus_filter {
-	struct corpus_symtab symtab;	/**< token/type symbol table */
+	struct corpus_symtab symtab;	/**< symbol table;
+					  we refer to symbol table types as
+					  "symbols" to distinguish them from
+					  filter types */
 	struct corpus_tree combine;	/**< word sequences to combine */
 	int *combine_rules;		/**< properties for nodes in the
 					  combine tree */
 	int *term_ids;			/**< term IDs for the types */
-	int *type_ids;			/**< type IDs for the terms */
+	int *symbol_ids;		/**< symbol IDs for the terms */
 	int nterm;			/**< number of terms */
 	int nterm_max;			/**< maximum number of terms before
 						requiring reallocation */
@@ -55,6 +58,9 @@ struct corpus_filter {
 	int has_select;			/**< whether the filter has a
 					  selection set */
 	int has_scan;			/**< whether a scan is in progress */
+
+	struct corpus_text current;	/**< current token */
+	int type_id;			/**< current type ID */
 	int error;			/**< last error code */
 };
 

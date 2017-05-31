@@ -87,7 +87,7 @@ static void start(const struct corpus_text *text)
 
 static int next_id(void)
 {
-	int term_id, type_id;
+	int term_id, symbol_id;
 	int has = corpus_filter_advance(&filter, &term_id);
 
 	ck_assert(!filter.error);
@@ -97,9 +97,9 @@ static int next_id(void)
 			return ID_NONE;
 		}
 		ck_assert(term_id < filter.nterm);
-		type_id = filter.type_ids[term_id];
-		ck_assert(0 <= type_id);
-		ck_assert(type_id < filter.symtab.ntype);
+		symbol_id = filter.symbol_ids[term_id];
+		ck_assert(0 <= symbol_id);
+		ck_assert(symbol_id < filter.symtab.ntype);
 		return term_id;
 	} else {
 		return ID_EOT;
@@ -110,7 +110,7 @@ static int next_id(void)
 static const struct corpus_text *next_term(void)
 {
 	int term_id = next_id();
-	int type_id;
+	int symbol_id;
 
 	switch (term_id) {
 	case ID_EOT:
@@ -118,8 +118,8 @@ static const struct corpus_text *next_term(void)
 	case ID_NONE:
 		return TERM_NONE;
 	default:
-		type_id = filter.type_ids[term_id];
-		return &filter.symtab.types[type_id].text;
+		symbol_id = filter.symbol_ids[term_id];
+		return &filter.symtab.types[symbol_id].text;
 	}
 }
 

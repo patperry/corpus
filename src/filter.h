@@ -156,10 +156,10 @@ int corpus_filter_start(struct corpus_filter *f,
 			const struct corpus_text *text);
 
 /**
- * Advance a text to the next term.
+ * Advance a text to the next type.
  *
  * \param f the filter
- * \param idptr if non-NULL, a location to store the next term id.
+ * \param idptr if non-NULL, a location to store the next type id.
  *
  * \returns 1 on success, 0 if at the end of the text or an error occurs,
  * 	in which case the `f->error` will be set to the error code

@@ -48,10 +48,10 @@ struct corpus_filter {
 	struct corpus_tree combine;	/**< word sequences to combine */
 	int *combine_rules;		/**< properties for nodes in the
 					  combine tree */
-	int *term_ids;			/**< term IDs for the symbols */
-	int *symbol_ids;		/**< symbol IDs for the terms */
-	int nterm;			/**< number of terms */
-	int nterm_max;			/**< maximum number of terms before
+	int *type_ids;			/**< type IDs for the symbols */
+	int *symbol_ids;		/**< symbol IDs for the types */
+	int ntype;			/**< number of types */
+	int ntype_max;			/**< maximum number of types before
 						requiring reallocation */
 	struct corpus_wordscan scan;	/**< current word scan */
 	int flags;			/**< filter flags */
@@ -100,24 +100,23 @@ int corpus_filter_stem_except(struct corpus_filter *f,
  * Add a combination rule to to filter.
  *
  * \param f the filter
- * \param term the term to build a combination rule from
+ * \param type the type to build a combination rule from
  *
  * \returns 0 on success
  */
 int corpus_filter_combine(struct corpus_filter *f,
-			  const struct corpus_text *term);
+			  const struct corpus_text *type);
 
 /**
- * Add a term to the filter's drop list. Terms on this list get negative
- * IDs when they are encountered in a text.
+ * Add a type to the filter's drop list.
  *
  * \param f the filter
- * \param term the term to drop
+ * \param type the type to drop
  *
  * \returns 0 on success
  */
 int corpus_filter_drop(struct corpus_filter *f,
-		       const struct corpus_text *term);
+		       const struct corpus_text *type);
 
 /**
  * Add a term to the filter's drop exception list. This overrides the
@@ -133,18 +132,17 @@ int corpus_filter_drop_except(struct corpus_filter *f,
 			      const struct corpus_text *term);
 
 /**
- * Add a term to the filter's selection set if it is not already a
- * member. If non-empty, terms outside the selection set get negative
- * IDs when they are encountered in a text.
+ * Add a type to the filter's selection set if it is not already a
+ * member.
  *
  * \param f the filter
- * \param term the term to add to the selection set
- * \param idptr if non-NULL, a location to store the term's id
+ * \param type the type to add to the selection set
+ * \param idptr if non-NULL, a location to store the type's id
  *
  * \returns 0 on success
  */
 int corpus_filter_select(struct corpus_filter *f,
-			 const struct corpus_text *term, int *idptr);
+			 const struct corpus_text *type, int *idptr);
 
 /**
  * Start scanning a text.
@@ -169,14 +167,14 @@ int corpus_filter_start(struct corpus_filter *f,
 int corpus_filter_advance(struct corpus_filter *f, int *idptr);
 
 /**
- * Get the text corresponding to a given term id.
+ * Get the text corresponding to a given type id.
  *
  * \param f the filter
- * \param id the term id
+ * \param id the type id
  *
- * \returns the text for that term
+ * \returns the text for that type
  */
-const struct corpus_text *corpus_filter_term(const struct corpus_filter *f,
+const struct corpus_text *corpus_filter_type(const struct corpus_filter *f,
 					     int id);
 
 #endif /* CORPUS_FILTER_H */

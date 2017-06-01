@@ -40,10 +40,10 @@
 
 #define ID_EOT	(-1)
 #define ID_NONE (-2)
-#define TERM_EOT ((const struct corpus_text *)&term_eot)
-#define TERM_NONE ((const struct corpus_text *)&term_none)
+#define TYPE_EOT ((const struct corpus_text *)&type_eot)
+#define TYPE_NONE ((const struct corpus_text *)&type_none)
 
-static struct corpus_text term_eot, term_none;
+static struct corpus_text type_eot, type_none;
 static struct corpus_filter filter;
 static int has_filter;
 
@@ -52,10 +52,10 @@ static void setup_filter(void)
 {
 	setup();
 	has_filter = 0;
-	term_eot.ptr = (uint8_t *)"<eot>";
-	term_eot.attr = strlen("<eot>");
-	term_none.ptr = (uint8_t *)"<none>";
-	term_none.attr = strlen("<none>");
+	type_eot.ptr = (uint8_t *)"<eot>";
+	type_eot.attr = strlen("<eot>");
+	type_none.ptr = (uint8_t *)"<none>";
+	type_none.attr = strlen("<none>");
 }
 
 
@@ -87,38 +87,38 @@ static void start(const struct corpus_text *text)
 
 static int next_id(void)
 {
-	int term_id, symbol_id;
-	int has = corpus_filter_advance(&filter, &term_id);
+	int type_id, symbol_id;
+	int has = corpus_filter_advance(&filter, &type_id);
 
 	ck_assert(!filter.error);
 
 	if (has) {
-		if (term_id < 0) {
+		if (type_id < 0) {
 			return ID_NONE;
 		}
-		ck_assert(term_id < filter.nterm);
-		symbol_id = filter.symbol_ids[term_id];
+		ck_assert(type_id < filter.ntype);
+		symbol_id = filter.symbol_ids[type_id];
 		ck_assert(0 <= symbol_id);
 		ck_assert(symbol_id < filter.symtab.ntype);
-		return term_id;
+		return type_id;
 	} else {
 		return ID_EOT;
 	}
 }
 
 
-static const struct corpus_text *next_term(void)
+static const struct corpus_text *next_type(void)
 {
-	int term_id = next_id();
+	int type_id = next_id();
 	int symbol_id;
 
-	switch (term_id) {
+	switch (type_id) {
 	case ID_EOT:
-		return TERM_EOT;
+		return TYPE_EOT;
 	case ID_NONE:
-		return TERM_NONE;
+		return TYPE_NONE;
 	default:
-		symbol_id = filter.symbol_ids[term_id];
+		symbol_id = filter.symbol_ids[type_id];
 		return &filter.symtab.types[symbol_id].text;
 	}
 }
@@ -129,16 +129,16 @@ START_TEST(test_basic)
 	init(NULL, IGNORE_SPACE);
 
 	start(T("A rose is a rose is a rose."));
-	assert_text_eq(next_term(), T("a"));
-	assert_text_eq(next_term(), T("rose"));
-	assert_text_eq(next_term(), T("is"));
-	assert_text_eq(next_term(), T("a"));
-	assert_text_eq(next_term(), T("rose"));
-	assert_text_eq(next_term(), T("is"));
-	assert_text_eq(next_term(), T("a"));
-	assert_text_eq(next_term(), T("rose"));
-	assert_text_eq(next_term(), T("."));
-	assert_text_eq(next_term(), TERM_EOT);
+	assert_text_eq(next_type(), T("a"));
+	assert_text_eq(next_type(), T("rose"));
+	assert_text_eq(next_type(), T("is"));
+	assert_text_eq(next_type(), T("a"));
+	assert_text_eq(next_type(), T("rose"));
+	assert_text_eq(next_type(), T("is"));
+	assert_text_eq(next_type(), T("a"));
+	assert_text_eq(next_type(), T("rose"));
+	assert_text_eq(next_type(), T("."));
+	assert_text_eq(next_type(), TYPE_EOT);
 }
 END_TEST
 
@@ -146,19 +146,19 @@ END_TEST
 START_TEST(test_basic_census)
 {
 	struct corpus_census census;
-	int term_id;
+	int type_id;
 
 	ck_assert(!corpus_census_init(&census));
 
 	init(NULL, IGNORE_SPACE);
 	start(T("A rose is a rose is a rose."));
 
-	while ((term_id = next_id()) != ID_EOT) {
-		if (term_id == ID_NONE) {
+	while ((type_id = next_id()) != ID_EOT) {
+		if (type_id == ID_NONE) {
 			continue;
 		}
 
-		ck_assert(!corpus_census_add(&census, term_id, 1));
+		ck_assert(!corpus_census_add(&census, type_id, 1));
 	}
 
 	ck_assert(!corpus_census_sort(&census));
@@ -182,9 +182,9 @@ START_TEST(test_drop_ideo)
 {
 	init(NULL, DROP_LETTER);
 	start(T("\\u53d1\\u5c55"));
-	assert_text_eq(next_term(), TERM_NONE);
-	assert_text_eq(next_term(), TERM_NONE);
-	assert_text_eq(next_term(), TERM_EOT);
+	assert_text_eq(next_type(), TYPE_NONE);
+	assert_text_eq(next_type(), TYPE_NONE);
+	assert_text_eq(next_type(), TYPE_EOT);
 }
 END_TEST
 

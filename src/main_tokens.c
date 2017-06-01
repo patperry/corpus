@@ -168,7 +168,7 @@ int main_tokens(int argc, char * const argv[])
 	struct corpus_filter filter;
 	struct corpus_data data, val;
 	struct corpus_text name, text, word;
-	const struct corpus_text *term;
+	const struct corpus_text *type;
 	struct corpus_schema schema;
 	struct corpus_filebuf buf;
 	struct corpus_filebuf_iter it;
@@ -180,7 +180,7 @@ int main_tokens(int argc, char * const argv[])
 	FILE *stream;
 	size_t field_len;
 	int filter_flags, type_flags;
-	int ch, err, i, name_id, start, term_id, ncomb;
+	int ch, err, i, name_id, start, type_id, ncomb;
 
 	filter_flags = CORPUS_FILTER_IGNORE_SPACE;
 	type_flags = (CORPUS_TYPE_MAPCASE | CORPUS_TYPE_MAPCOMPAT
@@ -377,7 +377,7 @@ int main_tokens(int argc, char * const argv[])
 			goto error;
 		}
 
-		while (corpus_filter_advance(&filter, &term_id)) {
+		while (corpus_filter_advance(&filter, &type_id)) {
 			if (filter.error) {
 				goto error;
 			}
@@ -388,13 +388,13 @@ int main_tokens(int argc, char * const argv[])
 				start = 0;
 			}
 
-			if (term_id < 0) {
+			if (type_id < 0) {
 				fprintf(stream, "null");
 			} else {
-				term = corpus_filter_term(&filter, term_id);
+				type = corpus_filter_type(&filter, type_id);
 
 				corpus_render_clear(&render);
-				corpus_render_text(&render, term);
+				corpus_render_text(&render, type);
 				if ((err = render.error)) {
 					goto error;
 				}

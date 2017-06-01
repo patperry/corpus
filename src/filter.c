@@ -79,6 +79,8 @@ int corpus_filter_init(struct corpus_filter *f, int symbol_kind,
 	f->flags = flags;
 	f->has_select = 0;
 	f->has_scan = 0;
+	f->current.ptr = NULL;
+	f->current.attr = 0;
 	f->type_id = CORPUS_FILTER_NONE;
 	f->error = 0;
 	return 0;
@@ -135,9 +137,10 @@ int corpus_filter_combine(struct corpus_filter *f,
 			  const struct corpus_text *type)
 {
 	struct corpus_wordscan scan;
+	struct corpus_text scan_current;
 	int *rules;
 	int err, has_scan, symbol_id, node_id, nnode0, nnode, parent_id,
-	    size0, size, id = -1;
+	    scan_type_id, size0, size, id = -1;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
@@ -146,8 +149,12 @@ int corpus_filter_combine(struct corpus_filter *f,
 	if (has_scan) {
 		f->has_scan = 0;
 		scan = f->scan;
+		scan_current = f->current;
+		scan_type_id = f->type_id;
 	} else {
 		memset(&scan, 0, sizeof(scan)); // not used; silence warning
+		memset(&scan_current, 0, sizeof(scan_current)); // ditto
+		scan_type_id = CORPUS_FILTER_NONE;
 	}
 
 	// root the combination tree
@@ -229,6 +236,8 @@ out:
 	// restore the old scan if one existed
 	if (has_scan) {
 		f->scan = scan;
+		f->current = scan_current;
+		f->type_id = scan_type_id;
 	}
 	f->has_scan = has_scan;
 
@@ -400,6 +409,8 @@ int corpus_filter_start(struct corpus_filter *f,
 
 	corpus_wordscan_make(&f->scan, text);
 	f->has_scan = 1;
+	f->current.ptr = text->ptr;
+	f->current.attr = 0;
 	f->type_id = CORPUS_FILTER_NONE;
 	return 0;
 }
@@ -411,6 +422,7 @@ int corpus_filter_advance(struct corpus_filter *f)
 	int err, ret;
 
 	ret = corpus_filter_advance_raw(f, &symbol_id);
+	f->current = f->scan.current;
 	err = f->error;
 
 	if (!ret || err) {
@@ -439,6 +451,8 @@ out:
 int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 {
 	struct corpus_wordscan scan;
+	struct corpus_text current;
+	size_t attr, size;
 	int err, id, symbol_id, type_id, node_id, parent_id;
 
 	if (!f->combine.nnode) {
@@ -458,13 +472,20 @@ int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 
 	// save the state of the current scan
 	scan = f->scan;
+	current = f->current;
 
 	// check for a length-1 combine rule
 	if (f->combine_rules[node_id] >= 0) {
 		id = f->combine_rules[node_id];
 	}
 
+	size = CORPUS_TEXT_SIZE(&current);
+	attr = CORPUS_TEXT_BITS(&current);
+
 	while (corpus_filter_advance_raw(f, &symbol_id)) {
+		size += CORPUS_TEXT_SIZE(&f->scan.current);
+		attr |= CORPUS_TEXT_BITS(&f->scan.current);
+
 		type_id = f->type_ids[symbol_id];
 		if (type_id == CORPUS_FILTER_IGNORED) {
 			continue;
@@ -481,6 +502,7 @@ int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 		// found a longer match
 		if (f->combine_rules[node_id] >= 0) {
 			scan = f->scan;
+			current.attr = size | attr;
 			id = f->combine_rules[node_id];
 		}
 	}
@@ -495,6 +517,7 @@ int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 out:
 	// restore the state of the scan after the longest match
 	f->scan = scan;
+	f->current = current;
 
 	if (err) {
 		corpus_log(err, "failed trying filter combination rule");

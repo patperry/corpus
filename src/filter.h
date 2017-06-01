@@ -63,7 +63,6 @@ struct corpus_filter {
 	int has_select;			/**< whether the filter has a
 					  selection set */
 	int has_scan;			/**< whether a scan is in progress */
-
 	struct corpus_text current;	/**< current token */
 	int type_id;			/**< current type ID */
 	int error;			/**< last error code */

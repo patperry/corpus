@@ -139,27 +139,66 @@ static const struct corpus_text *next_type(void)
 }
 
 
+static const struct corpus_text *token(void)
+{
+	return &filter.current;
+}
+
+
 START_TEST(test_basic)
 {
 	init(NULL, IGNORE_SPACE);
 
-	start(T("A rose is a rose is a rose."));
+	start(T("A rose is a Rose is a ROSE."));
+
 	assert_text_eq(next_type(), T("a"));
+	assert_text_eq(token(), T("A"));
+
 	assert_text_eq(next_type(), TYPE_IGNORE);
+	assert_text_eq(token(), T(" "));
+
 	assert_text_eq(next_type(), T("rose"));
+	assert_text_eq(token(), T("rose"));
+
 	assert_text_eq(next_type(), TYPE_IGNORE);
+	assert_text_eq(token(), T(" "));
+
 	assert_text_eq(next_type(), T("is"));
+	assert_text_eq(token(), T("is"));
+
 	assert_text_eq(next_type(), TYPE_IGNORE);
+	assert_text_eq(token(), T(" "));
+
 	assert_text_eq(next_type(), T("a"));
+	assert_text_eq(token(), T("a"));
+
 	assert_text_eq(next_type(), TYPE_IGNORE);
+	assert_text_eq(token(), T(" "));
+
 	assert_text_eq(next_type(), T("rose"));
+	assert_text_eq(token(), T("Rose"));
+
 	assert_text_eq(next_type(), TYPE_IGNORE);
+	assert_text_eq(token(), T(" "));
+
 	assert_text_eq(next_type(), T("is"));
+	assert_text_eq(token(), T("is"));
+
 	assert_text_eq(next_type(), TYPE_IGNORE);
+	assert_text_eq(token(), T(" "));
+
 	assert_text_eq(next_type(), T("a"));
+	assert_text_eq(token(), T("a"));
+
 	assert_text_eq(next_type(), TYPE_IGNORE);
+	assert_text_eq(token(), T(" "));
+
 	assert_text_eq(next_type(), T("rose"));
+	assert_text_eq(token(), T("ROSE"));
+
 	assert_text_eq(next_type(), T("."));
+	assert_text_eq(token(), T("."));
+
 	assert_text_eq(next_type(), TYPE_EOT);
 }
 END_TEST
@@ -172,11 +211,22 @@ START_TEST(test_combine)
 	combine(T("new york city"));
 
 	start(T("New York City, New York."));
+
 	assert_text_eq(next_type(), T("new york city"));
+	assert_text_eq(token(), T("New York City"));
+
 	assert_text_eq(next_type(), TYPE_DROP);
+	assert_text_eq(token(), T(","));
+
 	assert_text_eq(next_type(), TYPE_IGNORE);
+	assert_text_eq(token(), T(" "));
+
 	assert_text_eq(next_type(), T("new york"));
+	assert_text_eq(token(), T("New York"));
+
 	assert_text_eq(next_type(), TYPE_DROP);
+	assert_text_eq(token(), T("."));
+
 	assert_text_eq(next_type(), TYPE_EOT);
 }
 END_TEST

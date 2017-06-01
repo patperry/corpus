@@ -35,8 +35,10 @@ struct corpus_ngram_terms {
 
 struct corpus_ngram_iter {
 	const struct corpus_ngram_terms *terms;
-	const int *type_ids;
+	int nterm;
 	int width;
+
+	const int *type_ids;
 	double weight;
 	int index;
 };

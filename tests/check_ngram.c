@@ -23,13 +23,17 @@
 #include "testutil.h"
 
 struct corpus_ngram ngram;
+struct corpus_ngram_iter iter;
 int has_ngram;
+int has_iter;
 
+char buffer[128];
 
 void setup_ngram(void)
 {
 	setup();
 	has_ngram = 0;
+	has_iter = 0;
 }
 
 
@@ -38,6 +42,7 @@ void teardown_ngram(void)
 	if (has_ngram) {
 		corpus_ngram_destroy(&ngram);
 		has_ngram = 0;
+		has_iter = 0;
 	}
 	teardown();
 }
@@ -71,6 +76,8 @@ double ngram_weight(int width, ...)
 	double weight;
 	int k;
 
+	ck_assert(has_ngram);
+
 	va_start(ap, width);
 	for (k = 0; k < width; k++) {
 		buffer[k] = va_arg(ap, int);
@@ -81,6 +88,32 @@ double ngram_weight(int width, ...)
 		return weight;
 	} else {
 		return 0;
+	}
+}
+
+
+void start(int width)
+{
+	ck_assert(has_ngram);
+	corpus_ngram_iter_make(&iter, &ngram, width);
+	has_iter = 1;
+}
+
+
+const char *next(void)
+{
+	int k;
+
+	ck_assert(has_iter);
+
+	if (corpus_ngram_iter_advance(&iter)) {
+		for (k = 0; k < iter.width; k++) {
+			buffer[k] = (char)iter.type_ids[k];
+		}
+		buffer[k] = '\0';
+		return buffer;
+	} else {
+		return NULL;
 	}
 }
 
@@ -109,7 +142,7 @@ START_TEST(test_unigram_init)
 	init(1);
 	ck_assert_int_eq(count(1), 0);
 	ck_assert_int_eq(count(2), 0);
-	ck_assert(unigram_weight(31337) == 0);
+	ck_assert(unigram_weight(31) == 0);
 	ck_assert(bigram_weight(1, 2) == 0);
 }
 END_TEST
@@ -118,8 +151,8 @@ END_TEST
 START_TEST(test_unigram_add1)
 {
 	init(1);
-	add(31337);
-	ck_assert(unigram_weight(31337) == 1);
+	add(31);
+	ck_assert(unigram_weight(31) == 1);
 	ck_assert_int_eq(count(1), 1);
 }
 END_TEST
@@ -143,17 +176,46 @@ START_TEST(test_unigram_add2)
 END_TEST
 
 
+START_TEST(test_unigram_iter)
+{
+	init(1);
+	add('a');
+	add('b');
+	add('c');
+	add('b');
+	add('c');
+
+	start(0);
+	ck_assert(next() == NULL);
+
+	start(1);
+	ck_assert_str_eq(next(), "a");
+	ck_assert(iter.weight == 1);
+	ck_assert_str_eq(next(), "b");
+	ck_assert(iter.weight == 2);
+	ck_assert_str_eq(next(), "c");
+	ck_assert(iter.weight == 2);
+	ck_assert(next() == NULL);
+
+	start(2);
+	ck_assert(next() == NULL);
+}
+END_TEST
+
+
 Suite *ngram_suite(void)
 {
         Suite *s;
         TCase *tc;
 
         s = suite_create("ngram");
+
 	tc = tcase_create("unigram");
         tcase_add_checked_fixture(tc, setup_ngram, teardown_ngram);
         tcase_add_test(tc, test_unigram_init);
         tcase_add_test(tc, test_unigram_add1);
         tcase_add_test(tc, test_unigram_add2);
+        tcase_add_test(tc, test_unigram_iter);
         suite_add_tcase(s, tc);
 
 	return s;

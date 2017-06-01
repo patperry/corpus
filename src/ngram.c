@@ -151,17 +151,39 @@ out:
 int corpus_ngram_iter_make(struct corpus_ngram_iter *it,
 			   const struct corpus_ngram *ng, int width)
 {
-	(void)it;
-	(void)ng;
-	(void)width;
+	if (width < 1 || width > ng->width) {
+		it->terms = NULL;
+		it->nterm = 0;
+	} else {
+		it->terms = &ng->terms[width - 1];
+		it->nterm = it->terms->census.nitem;
+	}
+
+	it->width = width;
+	it->type_ids = NULL;
+	it->weight = 0;
+	it->index = -1;
 	return 0;
 }
 
 
 int corpus_ngram_iter_advance(struct corpus_ngram_iter *it)
 {
-	(void)it;
-	return 0;
+	// already finished
+	if (it->index == it->nterm) {
+		return 0;
+	}
+
+	it->index++;
+	if (it->index == it->nterm) {
+		it->type_ids = NULL;
+		it->weight = 0;
+		return 0;
+	}
+
+	it->type_ids = &it->terms->census.items[it->index];
+	it->weight = it->terms->census.weights[it->index];
+	return 1;
 }
 
 

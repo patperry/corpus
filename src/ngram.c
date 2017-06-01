@@ -87,10 +87,19 @@ void corpus_ngram_clear(struct corpus_ngram *ng)
 
 int corpus_ngram_add(struct corpus_ngram *ng, int type_id, double weight)
 {
-	(void)ng;
-	(void)type_id;
-	(void)weight;
-	return 0;
+	struct corpus_ngram_terms *terms;
+	int err;
+
+	terms = &ng->terms[0];
+	if ((err = corpus_census_add(&terms->census, type_id, weight))) {
+		goto out;
+	}
+
+out:
+	if (err) {
+		corpus_log(err, "failed adding to n-gram counts");
+	}
+	return err;
 }
 
 
@@ -100,6 +109,33 @@ int corpus_ngram_break(struct corpus_ngram *ng)
 	return 0;
 }
 
+
+int corpus_ngram_has(const struct corpus_ngram *ng, const int *type_ids,
+		     int width, double *weightptr)
+{
+	const struct corpus_ngram_terms *terms;
+	double weight;
+	int has;
+
+	if (width < 1 || width > ng->width) {
+		has = 0;
+		goto out;
+	}
+
+	terms = &ng->terms[0];
+	has = corpus_census_has(&terms->census, type_ids[0], &weight);
+
+out:
+	if (!has) {
+		weight = 0;
+	}
+
+	if (weightptr) {
+		*weightptr = weight;
+	}
+
+	return has;
+}
 
 
 int terms_init(struct corpus_ngram_terms *terms, int width)

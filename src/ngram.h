@@ -44,4 +44,7 @@ void corpus_ngram_clear(struct corpus_ngram *ng);
 int corpus_ngram_add(struct corpus_ngram *ng, int type_id, double weight);
 int corpus_ngram_break(struct corpus_ngram *ng);
 
+int corpus_ngram_has(const struct corpus_ngram *ng, const int *type_ids,
+		     int width, double *weightptr);
+
 #endif /* CORPUS_NGRAM_H */

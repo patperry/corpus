@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <check.h>
 #include "../src/table.h"
@@ -50,20 +51,85 @@ void init(int width)
 }
 
 
+void add_weight(int id, double weight)
+{
+	ck_assert(has_ngram);
+	ck_assert(!corpus_ngram_add(&ngram, id, weight));
+}
+
+
+void add(int id)
+{
+	add_weight(id, 1);
+}
+
+
+double ngram_weight(int width, ...)
+{
+	va_list ap;
+	int buffer[16];
+	double weight;
+	int k;
+
+	va_start(ap, width);
+	for (k = 0; k < width; k++) {
+		buffer[k] = va_arg(ap, int);
+	}
+	va_end(ap);
+
+	if (corpus_ngram_has(&ngram, buffer, width, &weight)) {
+		return weight;
+	} else {
+		return 0;
+	}
+}
+
+
+double unigram_weight(int type_id)
+{
+	return ngram_weight(1, type_id);
+}
+
+
+double bigram_weight(int type_id1, int type_id2)
+{
+	return ngram_weight(2, type_id1, type_id2);
+}
+
+
 START_TEST(test_unigram_init)
 {
 	init(1);
 	ck_assert_int_eq(ngram.width, 1);
 	ck_assert_int_eq(ngram.terms[0].nterm, 0);
 	ck_assert_int_eq(ngram.terms[0].census.nitem, 0);
+	ck_assert(unigram_weight(31337) == 0);
+	ck_assert(bigram_weight(1, 2) == 0);
 }
 END_TEST
-
 
 
 START_TEST(test_unigram_add1)
 {
 	init(1);
+	add(31337);
+	ck_assert(unigram_weight(31337) == 1);
+}
+END_TEST
+
+
+START_TEST(test_unigram_add2)
+{
+	init(1);
+
+	add(43);
+	add(2);
+	ck_assert(unigram_weight(43) == 1);
+	ck_assert(unigram_weight(2) == 1);
+
+	add_weight(2, 3.0);
+	ck_assert(unigram_weight(2) == 4);
+	ck_assert(unigram_weight(43) == 1);
 }
 END_TEST
 
@@ -78,6 +144,7 @@ Suite *ngram_suite(void)
         tcase_add_checked_fixture(tc, setup_ngram, teardown_ngram);
         tcase_add_test(tc, test_unigram_init);
         tcase_add_test(tc, test_unigram_add1);
+        tcase_add_test(tc, test_unigram_add2);
         suite_add_tcase(s, tc);
 
 	return s;

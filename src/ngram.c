@@ -45,7 +45,7 @@ int corpus_ngram_init(struct corpus_ngram *ng, int width)
 	}
 
 	for (k = 0; k < width; k++) {
-		if ((err = terms_init(&ng->terms[k], k))) {
+		if ((err = terms_init(&ng->terms[k], k + 1))) {
 			goto error_terms_item;
 		}
 	}

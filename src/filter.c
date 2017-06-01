@@ -439,14 +439,19 @@ out:
 int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 {
 	struct corpus_wordscan scan;
-	int err, id, symbol_id, node_id, parent_id;
+	int err, id, symbol_id, type_id, node_id, parent_id;
 
 	if (!f->combine.nnode) {
 		return 0;
 	}
 
-	parent_id = 0;
 	id = *idptr;
+	type_id = f->type_ids[id];
+	if (type_id == CORPUS_FILTER_IGNORED) {
+		return 0;
+	}
+
+	parent_id = 0;
 	if (!corpus_tree_has(&f->combine, parent_id, id, &node_id)) {
 		return 0;
 	}
@@ -460,6 +465,11 @@ int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 	}
 
 	while (corpus_filter_advance_raw(f, &symbol_id)) {
+		type_id = f->type_ids[symbol_id];
+		if (type_id == CORPUS_FILTER_IGNORED) {
+			continue;
+		}
+
 		parent_id = node_id;
 		if (!corpus_tree_has(&f->combine, parent_id, symbol_id,
 				     &node_id)) {
@@ -503,19 +513,21 @@ out:
 int corpus_filter_advance_raw(struct corpus_filter *f, int *idptr)
 {
 	const struct corpus_text *token, *symbol;
-	int err, token_id, id, nsym0, nsym, size0, size, symbol_id = -1;
+	int err, token_id, id, nsym0, nsym, size0, size, symbol_id, ret;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
-	if (!f->has_scan) {
-		return 0;
-	}
+	symbol_id = CORPUS_FILTER_NONE;
+	ret = 0;
+	err = 0;
 
-ignored:
+	if (!f->has_scan) {
+		goto out;
+	}
 
 	if (!corpus_wordscan_advance(&f->scan)) {
 		f->has_scan = 0;
-		return 0;
+		goto out;
 	}
 
 	// add the token
@@ -545,25 +557,23 @@ ignored:
 						  symbol_id, &id))) {
 			goto out;
 		}
-	} else {
-		id = f->type_ids[symbol_id];
 	}
 
-	if (id == CORPUS_FILTER_IGNORED) {
-		goto ignored;
-	}
-
+	ret = 1;
 	err = 0;
 out:
 	if (err) {
 		corpus_log(err, "failed advancing text filter");
 		f->error = err;
-		id = -1;
+		symbol_id = CORPUS_FILTER_NONE;
+		ret = 0;
 	}
+
 	if (idptr) {
 		*idptr = symbol_id;
 	}
-	return err ? 0 : 1;
+
+	return ret;
 }
 
 

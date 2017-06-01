@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		88341E9D1EE03C700054BCCE /* check_filter.c in Sources */ = {isa = PBXBuildFile; fileRef = 881512741ED31D1A00E974F1 /* check_filter.c */; };
 		88351CE71E8DB64F001DA3A8 /* array.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CD41E8DB64F001DA3A8 /* array.c */; };
 		88351CE91E8DB64F001DA3A8 /* filebuf.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CD91E8DB64F001DA3A8 /* filebuf.c */; };
 		88351CEA1E8DB64F001DA3A8 /* symtab.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CDB1E8DB64F001DA3A8 /* symtab.c */; };
@@ -35,7 +36,6 @@
 		88B565C01E96D4CE00FC9AEF /* sentscan.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565BB1E96D4CE00FC9AEF /* sentscan.c */; };
 		88CB30DE1EDDA5BB000007DE /* sentfilter.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CB30DC1EDDA5BB000007DE /* sentfilter.c */; };
 		88CB30DF1EDDA5CE000007DE /* sentfilter.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CB30DC1EDDA5BB000007DE /* sentfilter.c */; };
-		88CB30E21EDDA5EB000007DE /* check_sentfilter.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CB30E01EDDA5E0000007DE /* check_sentfilter.c */; };
 		88CD84251EBB7F4A00DF50CB /* libstemmer_utf8.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CD84241EBB7F4A00DF50CB /* libstemmer_utf8.c */; };
 		88CD842A1EBB7F6000DF50CB /* api.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CD84261EBB7F6000DF50CB /* api.c */; };
 		88CD842B1EBB7F6000DF50CB /* utilities.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CD84291EBB7F6000DF50CB /* utilities.c */; };
@@ -605,9 +605,9 @@
 				88CD846D1EBB7FCA00DF50CB /* stem_UTF_8_italian.c in Sources */,
 				88CD84711EBB7FCA00DF50CB /* stem_UTF_8_romanian.c in Sources */,
 				88548A721ECF5BBE0063254E /* tree.c in Sources */,
-				88CB30E21EDDA5EB000007DE /* check_sentfilter.c in Sources */,
 				88EA69E51EAF94DE00D57BEB /* unicode.c in Sources */,
 				88EA69E61EAF94DE00D57BEB /* wordscan.c in Sources */,
+				88341E9D1EE03C700054BCCE /* check_filter.c in Sources */,
 				88548A6E1ECE63060063254E /* typemap.c in Sources */,
 				88CD846C1EBB7FCA00DF50CB /* stem_UTF_8_hungarian.c in Sources */,
 				886D7CCE1ED32C5E00566B7B /* census.c in Sources */,

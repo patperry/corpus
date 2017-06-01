@@ -88,11 +88,12 @@ static void start(const struct corpus_text *text)
 static int next_id(void)
 {
 	int type_id, symbol_id;
-	int has = corpus_filter_advance(&filter, &type_id);
+	int has = corpus_filter_advance(&filter);
 
 	ck_assert(!filter.error);
 
 	if (has) {
+		type_id = filter.type_id;
 		if (type_id < 0) {
 			return ID_NONE;
 		}

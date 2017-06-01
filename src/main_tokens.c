@@ -377,10 +377,8 @@ int main_tokens(int argc, char * const argv[])
 			goto error;
 		}
 
-		while (corpus_filter_advance(&filter, &type_id)) {
-			if (filter.error) {
-				goto error;
-			}
+		while (corpus_filter_advance(&filter)) {
+			type_id = filter.type_id;
 
 			if (!start) {
 				fprintf(stream, ", ");
@@ -402,6 +400,9 @@ int main_tokens(int argc, char * const argv[])
 				fprintf(stream, "\"%.*s\"",
 					render.length, render.string);
 			}
+		}
+		if (filter.error) {
+			goto error;
 		}
 		fprintf(stream, "]\n");
 	}

@@ -23,11 +23,16 @@
  * Token filter, for converting a text into a sequence of tokens.
  */
 
+#define CORPUS_FILTER_NONE     (-1)
+#define CORPUS_FILTER_IGNORED  (-2)
+#define CORPUS_FILTER_DROPPED  (-3)
+#define CORPUS_FILTER_EXCLUDED (-4)
+
 /**
  * Filter type, for specifying which word classes to drop.
  */
 enum corpus_filter_type {
-	CORPUS_FILTER_NONE = 0,		/**< do not filter any word types */
+	CORPUS_FILTER_KEEP_ALL = 0,		/**< keep all word types */
 	CORPUS_FILTER_IGNORE_SPACE = (1 << 0),	/**< ignore white space */
 	CORPUS_FILTER_DROP_LETTER  = (1 << 1),	/**< drop letter words */
 	CORPUS_FILTER_DROP_MARK    = (1 << 2),	/**< drop mark words */
@@ -159,12 +164,11 @@ int corpus_filter_start(struct corpus_filter *f,
  * Advance a text to the next type.
  *
  * \param f the filter
- * \param idptr if non-NULL, a location to store the next type id.
  *
  * \returns 1 on success, 0 if at the end of the text or an error occurs,
  * 	in which case the `f->error` will be set to the error code
  */
-int corpus_filter_advance(struct corpus_filter *f, int *idptr);
+int corpus_filter_advance(struct corpus_filter *f);
 
 /**
  * Get the text corresponding to a given type id.

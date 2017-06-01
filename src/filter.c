@@ -29,9 +29,6 @@
 #include "wordscan.h"
 #include "filter.h"
 
-#define CORPUS_FILTER_IGNORED	-1
-#define CORPUS_FILTER_DROPPED	-2
-#define CORPUS_FILTER_EXCLUDED	-3
 
 #define CHECK_ERROR(value) \
 	do { \
@@ -82,6 +79,7 @@ int corpus_filter_init(struct corpus_filter *f, int symbol_kind,
 	f->flags = flags;
 	f->has_select = 0;
 	f->has_scan = 0;
+	f->type_id = CORPUS_FILTER_NONE;
 	f->error = 0;
 	return 0;
 
@@ -402,13 +400,14 @@ int corpus_filter_start(struct corpus_filter *f,
 
 	corpus_wordscan_make(&f->scan, text);
 	f->has_scan = 1;
+	f->type_id = CORPUS_FILTER_NONE;
 	return 0;
 }
 
 
-int corpus_filter_advance(struct corpus_filter *f, int *idptr)
+int corpus_filter_advance(struct corpus_filter *f)
 {
-	int symbol_id, id = -1;
+	int symbol_id, id = CORPUS_FILTER_NONE;
 	int err, ret;
 
 	ret = corpus_filter_advance_raw(f, &symbol_id);
@@ -428,12 +427,10 @@ int corpus_filter_advance(struct corpus_filter *f, int *idptr)
 out:
 	if (err) {
 		f->error = err;
-		id = -1;
+		id = CORPUS_FILTER_NONE;
 	}
 
-	if (idptr) {
-		*idptr = id;
-	}
+	f->type_id = id;
 
 	return ret;
 }

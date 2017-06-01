@@ -18,7 +18,6 @@
 #include <string.h>
 #include <check.h>
 #include "../src/table.h"
-#include "../src/census.h"
 #include "../src/ngram.h"
 #include "testutil.h"
 

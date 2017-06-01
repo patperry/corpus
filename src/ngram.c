@@ -22,7 +22,6 @@
 #include "error.h"
 #include "memory.h"
 #include "table.h"
-#include "census.h"
 #include "ngram.h"
 
 #define CORPUS_NGRAM_BUFFER_INIT (2 * (CORPUS_NGRAM_MAX + 1))
@@ -123,7 +122,7 @@ int corpus_ngram_count(struct corpus_ngram *ng, int width)
 		return 0;
 	}
 
-	return ng->terms[width - 1].census.nitem;
+	return ng->terms[width - 1].nitem;
 }
 
 
@@ -153,9 +152,7 @@ int corpus_ngram_add(struct corpus_ngram *ng, int type_id, double weight)
 			goto out;
 		}
 
-		if ((err = corpus_census_add(&terms->census, id, weight))) {
-			goto out;
-		}
+		terms->weights[id] += weight;
 	}
 
 out:
@@ -186,10 +183,8 @@ int corpus_ngram_has(const struct corpus_ngram *ng, const int *type_ids,
 	}
 
 	terms = &ng->terms[width - 1];
-	if (terms_has(terms, type_ids, &id)) {
-		has = corpus_census_has(&terms->census, id, &weight);
-	} else {
-		has = 0;
+	if ((has = terms_has(terms, type_ids, &id))) {
+		weight = terms->weights[id];
 	}
 
 out:
@@ -210,10 +205,10 @@ int corpus_ngram_iter_make(struct corpus_ngram_iter *it,
 {
 	if (width < 1 || width > ng->width) {
 		it->terms = NULL;
-		it->nterm = 0;
+		it->nitem = 0;
 	} else {
 		it->terms = &ng->terms[width - 1];
-		it->nterm = it->terms->census.nitem;
+		it->nitem = it->terms->nitem;
 	}
 
 	it->width = width;
@@ -226,20 +221,25 @@ int corpus_ngram_iter_make(struct corpus_ngram_iter *it,
 
 int corpus_ngram_iter_advance(struct corpus_ngram_iter *it)
 {
+	const int *base;
+	int width;
+
 	// already finished
-	if (it->index == it->nterm) {
+	if (it->index == it->nitem) {
 		return 0;
 	}
 
 	it->index++;
-	if (it->index == it->nterm) {
+	if (it->index == it->nitem) {
 		it->type_ids = NULL;
 		it->weight = 0;
 		return 0;
 	}
 
-	it->type_ids = &it->terms->census.items[it->index];
-	it->weight = it->terms->census.weights[it->index];
+	base = it->terms->term_base;
+	width = it->terms->term_width;
+	it->type_ids = base + it->index * width;
+	it->weight = it->terms->weights[it->index];
 	return 1;
 }
 
@@ -253,18 +253,13 @@ int terms_init(struct corpus_ngram_terms *terms, int width)
 		goto error_table;
 	}
 
-	if ((err = corpus_census_init(&terms->census))) {
-		goto error_census;
-	}
-
+	terms->weights = NULL;
 	terms->term_base = NULL;
 	terms->term_width = width;
-	terms->nterm = 0;
-	terms->nterm_max = 0;
+	terms->nitem = 0;
+	terms->nitem_max = 0;
 	return 0;
 
-error_census:
-	corpus_table_destroy(&terms->table);
 error_table:
 	corpus_log(err, "failed initializing n-gram terms");
 	return err;
@@ -274,7 +269,7 @@ error_table:
 static void terms_destroy(struct corpus_ngram_terms *terms)
 {
 	corpus_free(terms->term_base);
-	corpus_census_destroy(&terms->census);
+	corpus_free(terms->weights);
 	corpus_table_destroy(&terms->table);
 }
 
@@ -282,8 +277,7 @@ static void terms_destroy(struct corpus_ngram_terms *terms)
 void terms_clear(struct corpus_ngram_terms *terms)
 {
 	corpus_table_clear(&terms->table);
-	corpus_census_clear(&terms->census);
-	terms->nterm = 0;
+	terms->nitem = 0;
 }
 
 
@@ -298,18 +292,18 @@ int terms_add(struct corpus_ngram_terms *terms, const int *type_ids,
 	}
 
 	pos = id;
-	id = terms->nterm;
+	id = terms->nitem;
 	rehash = 0;
 
-	if (terms->nterm == terms->nterm_max) {
+	if (terms->nitem == terms->nitem_max) {
 		if ((err = terms_grow(terms, 1))) {
 			goto out;
 		}
 	}
 
-	if (terms->nterm == terms->table.capacity) {
+	if (terms->nitem == terms->table.capacity) {
 		if ((err = corpus_table_reinit(&terms->table,
-					       terms->nterm + 1))) {
+					       terms->nitem + 1))) {
 			goto out;
 		}
 		rehash = 1;
@@ -318,7 +312,8 @@ int terms_add(struct corpus_ngram_terms *terms, const int *type_ids,
 	width = terms->term_width;
 	memcpy(terms->term_base + id * width, type_ids,
 	       width * sizeof(*type_ids));
-	terms->nterm++;
+	terms->weights[id] = 0;
+	terms->nitem++;
 
 	if (rehash) {
 		terms_rehash(terms);
@@ -350,15 +345,6 @@ int terms_has(const struct corpus_ngram_terms *terms, const int *type_ids,
 	unsigned hash;
 
 	width = terms->term_width;
-
-	if (width == 1) {
-		// no need to create a new ID for unigrams; just use the
-		// type ID
-		found = 1;
-		id = type_ids[0];
-		goto out;
-	}
-
 	base = terms->term_base;
 	hash = term_hash(type_ids, width);
 	id = -1;
@@ -383,8 +369,9 @@ out:
 int terms_grow(struct corpus_ngram_terms *terms, int nadd)
 {
 	void *base = terms->term_base;
-	int size = terms->nterm_max;
-	int n = terms->nterm;
+	double *weights;
+	int size = terms->nitem_max;
+	int n = terms->nitem;
 	int width = terms->term_width * sizeof(*terms->term_base);
 	int err;
 
@@ -392,9 +379,15 @@ int terms_grow(struct corpus_ngram_terms *terms, int nadd)
 		corpus_log(err, "failed allocating terms array");
 		return err;
 	}
-
 	terms->term_base = base;
-	terms->nterm_max = size;
+
+	if (!(weights = corpus_realloc(terms->weights,
+				       n * sizeof(*weights)))) {
+		corpus_log(err, "failed allocating term weights array");
+		return err;
+	}
+	terms->weights = weights;
+	terms->nitem_max = size;
 	return 0;
 }
 
@@ -404,7 +397,7 @@ void terms_rehash(struct corpus_ngram_terms *terms)
 	const int *base = terms->term_base;
 	const int *type_ids;
 	int width = terms->term_width;
-	int i, n = terms->nterm;
+	int i, n = terms->nitem;
 	unsigned hash;
 
 	corpus_table_clear(&terms->table);

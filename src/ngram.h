@@ -27,16 +27,16 @@
 
 struct corpus_ngram_terms {
 	struct corpus_table table;
-	struct corpus_census census;
+	double *weights;
 	int *term_base;
 	int term_width;
-	int nterm;
-	int nterm_max;
+	int nitem;
+	int nitem_max;
 };
 
 struct corpus_ngram_iter {
 	const struct corpus_ngram_terms *terms;
-	int nterm;
+	int nitem;
 	int width;
 
 	const int *type_ids;

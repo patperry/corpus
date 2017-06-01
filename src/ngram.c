@@ -85,6 +85,16 @@ void corpus_ngram_clear(struct corpus_ngram *ng)
 }
 
 
+int corpus_ngram_count(struct corpus_ngram *ng, int width)
+{
+	if (width < 1 || width > ng->width) {
+		return 0;
+	}
+
+	return ng->terms[width - 1].census.nitem;
+}
+
+
 int corpus_ngram_add(struct corpus_ngram *ng, int type_id, double weight)
 {
 	struct corpus_ngram_terms *terms;
@@ -135,6 +145,23 @@ out:
 	}
 
 	return has;
+}
+
+
+int corpus_ngram_iter_make(struct corpus_ngram_iter *it,
+			   const struct corpus_ngram *ng, int width)
+{
+	(void)it;
+	(void)ng;
+	(void)width;
+	return 0;
+}
+
+
+int corpus_ngram_iter_advance(struct corpus_ngram_iter *it)
+{
+	(void)it;
+	return 0;
 }
 
 

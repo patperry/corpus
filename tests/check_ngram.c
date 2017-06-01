@@ -97,12 +97,18 @@ double bigram_weight(int type_id1, int type_id2)
 }
 
 
+int count(int width)
+{
+	ck_assert(has_ngram);
+	return corpus_ngram_count(&ngram, width);
+}
+
+
 START_TEST(test_unigram_init)
 {
 	init(1);
-	ck_assert_int_eq(ngram.width, 1);
-	ck_assert_int_eq(ngram.terms[0].nterm, 0);
-	ck_assert_int_eq(ngram.terms[0].census.nitem, 0);
+	ck_assert_int_eq(count(1), 0);
+	ck_assert_int_eq(count(2), 0);
 	ck_assert(unigram_weight(31337) == 0);
 	ck_assert(bigram_weight(1, 2) == 0);
 }
@@ -114,6 +120,7 @@ START_TEST(test_unigram_add1)
 	init(1);
 	add(31337);
 	ck_assert(unigram_weight(31337) == 1);
+	ck_assert_int_eq(count(1), 1);
 }
 END_TEST
 
@@ -126,10 +133,12 @@ START_TEST(test_unigram_add2)
 	add(2);
 	ck_assert(unigram_weight(43) == 1);
 	ck_assert(unigram_weight(2) == 1);
+	ck_assert_int_eq(count(1), 2);
 
 	add_weight(2, 3.0);
 	ck_assert(unigram_weight(2) == 4);
 	ck_assert(unigram_weight(43) == 1);
+	ck_assert_int_eq(count(1), 2);
 }
 END_TEST
 

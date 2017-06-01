@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include <stdarg.h>
 #include <stdlib.h>
+#include <string.h>
 #include <check.h>
 #include "../src/table.h"
 #include "../src/census.h"
@@ -56,36 +56,33 @@ void init(int width)
 }
 
 
-void add_weight(int id, double weight)
+void add_weight(char c, double weight)
 {
 	ck_assert(has_ngram);
-	ck_assert(!corpus_ngram_add(&ngram, id, weight));
+	ck_assert(!corpus_ngram_add(&ngram, (int)c, weight));
 }
 
 
-void add(int id)
+void add(char c)
 {
-	add_weight(id, 1);
+	add_weight(c, 1);
 }
 
 
-double ngram_weight(int width, ...)
+double weight(const char *term)
 {
-	va_list ap;
 	int buffer[16];
-	double weight;
+	int width = (int)strlen(term);
+	double w;
 	int k;
 
 	ck_assert(has_ngram);
 
-	va_start(ap, width);
 	for (k = 0; k < width; k++) {
-		buffer[k] = va_arg(ap, int);
+		buffer[k] = (int)term[k];
 	}
-	va_end(ap);
-
-	if (corpus_ngram_has(&ngram, buffer, width, &weight)) {
-		return weight;
+	if (corpus_ngram_has(&ngram, buffer, width, &w)) {
+		return w;
 	} else {
 		return 0;
 	}
@@ -118,18 +115,6 @@ const char *next(void)
 }
 
 
-double unigram_weight(int type_id)
-{
-	return ngram_weight(1, type_id);
-}
-
-
-double bigram_weight(int type_id1, int type_id2)
-{
-	return ngram_weight(2, type_id1, type_id2);
-}
-
-
 int count(int width)
 {
 	ck_assert(has_ngram);
@@ -142,8 +127,8 @@ START_TEST(test_unigram_init)
 	init(1);
 	ck_assert_int_eq(count(1), 0);
 	ck_assert_int_eq(count(2), 0);
-	ck_assert(unigram_weight(31) == 0);
-	ck_assert(bigram_weight(1, 2) == 0);
+	ck_assert(weight("a") == 0);
+	ck_assert(weight("ab") == 0);
 }
 END_TEST
 
@@ -151,8 +136,8 @@ END_TEST
 START_TEST(test_unigram_add1)
 {
 	init(1);
-	add(31);
-	ck_assert(unigram_weight(31) == 1);
+	add('z');
+	ck_assert(weight("z") == 1);
 	ck_assert_int_eq(count(1), 1);
 }
 END_TEST
@@ -162,15 +147,15 @@ START_TEST(test_unigram_add2)
 {
 	init(1);
 
-	add(43);
-	add(2);
-	ck_assert(unigram_weight(43) == 1);
-	ck_assert(unigram_weight(2) == 1);
+	add('a');
+	add('b');
+	ck_assert(weight("a") == 1);
+	ck_assert(weight("b") == 1);
 	ck_assert_int_eq(count(1), 2);
 
-	add_weight(2, 3.0);
-	ck_assert(unigram_weight(2) == 4);
-	ck_assert(unigram_weight(43) == 1);
+	add_weight('b', 3.0);
+	ck_assert(weight("b") == 4);
+	ck_assert(weight("a") == 1);
 	ck_assert_int_eq(count(1), 2);
 }
 END_TEST
@@ -203,6 +188,60 @@ START_TEST(test_unigram_iter)
 END_TEST
 
 
+
+START_TEST(test_bigram_add2)
+{
+	init(2);
+	add('x');
+	add('y');
+
+	ck_assert(weight("x") == 1);
+	ck_assert(weight("y") == 1);
+	ck_assert(weight("xy") == 1);
+	ck_assert_int_eq(count(1), 2);
+	ck_assert_int_eq(count(2), 1);
+}
+END_TEST
+
+
+START_TEST(test_bigram_add3)
+{
+	init(2);
+	add('x');
+	add('y');
+	add('y');
+
+	ck_assert(weight("x") == 1);
+	ck_assert(weight("y") == 2);
+	ck_assert(weight("xy") == 1);
+	ck_assert(weight("yy") == 1);
+	ck_assert_int_eq(count(1), 2);
+	ck_assert_int_eq(count(2), 2);
+}
+END_TEST
+
+
+START_TEST(test_bigram_add5)
+{
+	init(2);
+	add('x');
+	add('y');
+	add('y');
+	add('y');
+	add('x');
+
+	ck_assert(weight("x") == 2);
+	ck_assert(weight("y") == 3);
+	ck_assert(weight("xy") == 1);
+	ck_assert(weight("yy") == 2);
+	ck_assert(weight("yx") == 1);
+	ck_assert_int_eq(count(1), 2);
+	ck_assert_int_eq(count(2), 3);
+}
+END_TEST
+
+
+
 Suite *ngram_suite(void)
 {
         Suite *s;
@@ -216,6 +255,13 @@ Suite *ngram_suite(void)
         tcase_add_test(tc, test_unigram_add1);
         tcase_add_test(tc, test_unigram_add2);
         tcase_add_test(tc, test_unigram_iter);
+        suite_add_tcase(s, tc);
+
+	tc = tcase_create("bigram");
+        tcase_add_checked_fixture(tc, setup_ngram, teardown_ngram);
+        tcase_add_test(tc, test_bigram_add2);
+        tcase_add_test(tc, test_bigram_add3);
+        tcase_add_test(tc, test_bigram_add5);
         suite_add_tcase(s, tc);
 
 	return s;

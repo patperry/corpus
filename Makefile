@@ -338,8 +338,8 @@ src/main_tokens.o: src/main_tokens.c src/error.h src/filebuf.h src/table.h \
 	src/text.h src/textset.h src/tree.h src/typemap.h src/symtab.h \
 	src/wordscan.h src/data.h src/datatype.h src/filter.h
 src/memory.o: src/memory.c src/memory.h
-src/ngram.o: src/ngram.c src/error.h src/memory.h src/table.h src/census.h \
-	src/ngram.h
+src/ngram.o: src/ngram.c src/array.h src/error.h src/memory.h src/table.h \
+	src/census.h src/ngram.h
 src/render.o: src/render.c src/array.h src/error.h src/memory.h src/text.h \
 	src/unicode.h src/render.h
 src/sentfilter.o: src/sentfilter.c src/private/sentsuppress.h \

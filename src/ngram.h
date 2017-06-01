@@ -23,6 +23,7 @@
  * N-gram frequency counter.
  */
 
+#define CORPUS_NGRAM_MAX	127
 
 struct corpus_ngram_terms {
 	struct corpus_table table;
@@ -45,6 +46,9 @@ struct corpus_ngram_iter {
 
 struct corpus_ngram {
 	struct corpus_ngram_terms *terms;
+	int *buffer;
+	int nbuffer;
+	int nbuffer_max;
 	int width;
 };
 

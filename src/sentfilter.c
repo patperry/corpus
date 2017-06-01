@@ -548,7 +548,6 @@ int has_fwdsupp(const struct corpus_sentfilter *f, struct corpus_text_iter *it)
 
 	id = 0;
 	rule = FWDSUPP_NONE;
-	code = -1;
 
 	while (corpus_text_iter_advance(it)) {
 		code = (int)it->current;

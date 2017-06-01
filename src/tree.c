@@ -400,12 +400,14 @@ int node_grow(struct corpus_tree_node *node, int nadd)
 	keys = corpus_realloc(node->keys, n * sizeof(*keys));
 	if (!keys) {
 		err = CORPUS_ERROR_NOMEM;
+		goto out;
 	}
 	node->keys = keys;
 
 	ids = corpus_realloc(node->ids, n * sizeof(*ids));
 	if (!ids) {
 		err = CORPUS_ERROR_NOMEM;
+		goto out;
 	}
 	node->ids = ids;
 

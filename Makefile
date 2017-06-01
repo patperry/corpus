@@ -37,9 +37,9 @@ UNICODE = http://www.unicode.org/Public/9.0.0
 CORPUS_A = libcorpus.a
 LIB_O	= lib/strntod.o lib/strntoimax.o src/array.o src/census.o \
 	  src/data.o src/datatype.o src/error.o src/filebuf.o src/filter.o \
-	  src/memory.o src/render.o src/sentfilter.o src/sentscan.o \
-	  src/symtab.o src/table.o src/text.o src/textset.o src/tree.o \
-	  src/typemap.o src/unicode.o src/wordscan.o
+	  src/memory.o src/ngram.o src/render.o src/sentfilter.o \
+	  src/sentscan.o src/symtab.o src/table.o src/text.o src/textset.o \
+	  src/tree.o src/typemap.o src/unicode.o src/wordscan.o
 
 STEMMER = lib/libstemmer_c
 STEMMER_O = $(STEMMER)/src_c/stem_UTF_8_arabic.o \
@@ -335,6 +335,8 @@ src/main_tokens.o: src/main_tokens.c src/error.h src/filebuf.h src/table.h \
 	src/text.h src/textset.h src/tree.h src/typemap.h src/symtab.h \
 	src/wordscan.h src/data.h src/datatype.h src/filter.h
 src/memory.o: src/memory.c src/memory.h
+src/ngram.o: src/ngram.c src/error.h src/memory.h src/table.h src/census.h \
+	src/ngram.h
 src/render.o: src/render.c src/array.h src/error.h src/memory.h src/text.h \
 	src/unicode.h src/render.h
 src/sentfilter.o: src/sentfilter.c src/private/sentsuppress.h \

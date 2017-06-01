@@ -14,31 +14,74 @@
  * limitations under the License.
  */
 
-
+#include <assert.h>
+#include <stddef.h>
 #include "error.h"
 #include "memory.h"
 #include "table.h"
 #include "census.h"
 #include "ngram.h"
 
+static int terms_init(struct corpus_ngram_terms *terms, int width);
+static void terms_destroy(struct corpus_ngram_terms *terms);
+static void terms_clear(struct corpus_ngram_terms *terms);
+
 
 int corpus_ngram_init(struct corpus_ngram *ng, int width)
 {
-	(void)ng;
-	(void)width;
+	int err, k;
+
+	if (width < 1) {
+		err = CORPUS_ERROR_INVAL;
+		corpus_log(err, "n-gram width is non-positive (%d)",
+			   width);
+		goto error_width;
+	}
+	ng->width = width;
+
+	if (!(ng->terms = corpus_malloc(width * sizeof(*ng->terms)))) {
+		err = CORPUS_ERROR_NOMEM;
+		goto error_terms;
+	}
+
+	for (k = 0; k < width; k++) {
+		if ((err = terms_init(&ng->terms[k], k))) {
+			goto error_terms_item;
+		}
+	}
+
 	return 0;
+
+error_terms_item:
+	while (k-- > 0) {
+		terms_destroy(&ng->terms[k]);
+	}
+	corpus_free(ng->terms);
+error_terms:
+error_width:
+	corpus_log(err, "failed initializing n-gram counter");
+	return err;
 }
 
 
 void corpus_ngram_destroy(struct corpus_ngram *ng)
 {
-	(void)ng;
+	int k = ng->width;
+
+	while (k-- > 0) {
+		terms_destroy(&ng->terms[k]);
+	}
+	corpus_free(ng->terms);
 }
 
 
 void corpus_ngram_clear(struct corpus_ngram *ng)
 {
-	(void)ng;
+	int k = ng->width;
+
+	while (k-- > 0) {
+		terms_clear(&ng->terms[k]);
+	}
 }
 
 
@@ -55,4 +98,48 @@ int corpus_ngram_break(struct corpus_ngram *ng)
 {
 	(void)ng;
 	return 0;
+}
+
+
+
+int terms_init(struct corpus_ngram_terms *terms, int width)
+{
+	int err;
+	assert(width > 0);
+
+	if ((err = corpus_table_init(&terms->table))) {
+		goto error_table;
+	}
+
+	if ((err = corpus_census_init(&terms->census))) {
+		goto error_census;
+	}
+
+	terms->term_base = NULL;
+	terms->term_width = width;
+	terms->nterm = 0;
+	terms->nterm_max = 0;
+	return 0;
+
+error_census:
+	corpus_table_destroy(&terms->table);
+error_table:
+	corpus_log(err, "failed initializing n-gram terms");
+	return err;
+}
+
+
+static void terms_destroy(struct corpus_ngram_terms *terms)
+{
+	corpus_free(terms->term_base);
+	corpus_census_destroy(&terms->census);
+	corpus_table_destroy(&terms->table);
+}
+
+
+void terms_clear(struct corpus_ngram_terms *terms)
+{
+	corpus_table_clear(&terms->table);
+	corpus_census_clear(&terms->census);
+	terms->nterm = 0;
 }

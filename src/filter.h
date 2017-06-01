@@ -119,17 +119,17 @@ int corpus_filter_drop(struct corpus_filter *f,
 		       const struct corpus_text *type);
 
 /**
- * Add a term to the filter's drop exception list. This overrides the
+ * Add a type to the filter's drop exception list. This overrides the
  * drop settings in the flag used to initialize the filter and any
- * previous calls to corpus_filter_drop() for that term
+ * previous calls to corpus_filter_drop() for that type.
  *
  * \param f the filter
- * \param term the term to add to the drop exception list
+ * \param type the type to add to the drop exception list
  *
  * \returns 0 on success
  */
 int corpus_filter_drop_except(struct corpus_filter *f,
-			      const struct corpus_text *term);
+			      const struct corpus_text *type);
 
 /**
  * Add a type to the filter's selection set if it is not already a

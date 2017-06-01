@@ -291,13 +291,13 @@ out:
 
 
 int corpus_filter_drop_except(struct corpus_filter *f,
-			      const struct corpus_text *term)
+			      const struct corpus_text *type)
 {
 	int err, type_id, symbol_id;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
-	if ((err = corpus_filter_add_symbol(f, term, &symbol_id))) {
+	if ((err = corpus_filter_add_symbol(f, type, &symbol_id))) {
 		goto out;
 	}
 
@@ -325,7 +325,7 @@ int corpus_filter_drop_except(struct corpus_filter *f,
 	err = 0;
 out:
 	if (err) {
-		corpus_log(err, "failed adding term to drop exception list");
+		corpus_log(err, "failed adding type to drop exception list");
 		f->error = err;
 	}
 

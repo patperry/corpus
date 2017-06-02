@@ -65,8 +65,8 @@ STEMMER_O = $(STEMMER)/src_c/stem_UTF_8_arabic.o \
 	    $(STEMMER)/libstemmer/libstemmer_utf8.o
 
 CORPUS_T = corpus
-CORPUS_O = src/main.o src/main_get.o src/main_scan.o src/main_sentences.o \
-	   src/main_tokens.o
+CORPUS_O = src/main.o src/main_get.o src/main_ngrams.o src/main_scan.o \
+		   src/main_sentences.o src/main_tokens.o
 
 DATA    = data/ucd/CaseFolding.txt \
 	  data/ucd/CompositionExclusions.txt \
@@ -329,6 +329,9 @@ src/main.o: src/main.c src/error.h src/filebuf.h src/table.h src/text.h \
 src/main_get.o: src/main_get.c src/error.h src/filebuf.h src/table.h \
 	src/text.h src/textset.h src/typemap.h src/symtab.h src/datatype.h \
 	src/data.h
+src/main_ngrams.o: src/main_ngrams.c src/error.h src/filebuf.h src/table.h \
+	src/text.h src/textset.h src/tree.h src/typemap.h src/symtab.h \
+	src/wordscan.h src/data.h src/datatype.h src/filter.h src/ngram.h
 src/main_scan.o: src/main_scan.c src/error.h src/filebuf.h src/table.h \
 	src/text.h src/textset.h src/typemap.h src/symtab.h src/datatype.h
 src/main_sentences.o: src/main_sentences.c src/error.h src/filebuf.h \

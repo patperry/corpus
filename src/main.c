@@ -38,6 +38,7 @@
 
 void usage(void);
 void usage_get(void);
+void usage_ngrams(void);
 void usage_scan(void);
 void usage_sentences(void);
 void usage_tokens(void);
@@ -45,6 +46,7 @@ void usage_tokens(void);
 void version(void);
 
 int main_get(int argc, char * const argv[]);
+int main_ngrams(int argc, char * const argv[]);
 int main_scan(int argc, char * const argv[]);
 int main_sentences(int argc, char * const argv[]);
 int main_tokens(int argc, char * const argv[]);
@@ -60,6 +62,7 @@ Options:\n\
 \n\
 Commands:\n\
 \tget\tExtract a field from a data file.\n\
+\tngrams\tCompute token n-gram frequencies.\n\
 \tscan\tDetermine the schema of a data file.\n\
 \tsentences\tSegment text into sentences.\n\
 \ttokens\tSegment text into tokens.\n\
@@ -119,6 +122,12 @@ int main(int argc, char * const argv[])
 			return EXIT_SUCCESS;
 		}
 		err = main_get(argc, argv);
+	} else if (!strcmp(argv[0], "ngrams")) {
+		if (help) {
+			usage_ngrams();
+			return EXIT_SUCCESS;
+		}
+		err = main_ngrams(argc, argv);
 	} else if (!strcmp(argv[0], "tokens")) {
 		if (help) {
 			usage_tokens();

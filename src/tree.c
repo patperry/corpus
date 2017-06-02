@@ -306,18 +306,24 @@ void node_destroy(struct corpus_tree_node *node)
 
 int node_has(const struct corpus_tree_node *node, int key, int *indexptr)
 {
+	const int *ptr, *base = node->keys;
 	int i, n = node->nitem;
 
-	for (i = 0; i < n; i++) {
-		if (node->keys[i] == key) {
-			*indexptr = i;
+	while (n != 0) {
+		i = n >> 1;
+		ptr = base + i;
+		if (*ptr == key) {
+			*indexptr = (int)(ptr - node->keys);
 			return 1;
-		} else if (node->keys[i] > key) {
-			break;
+		} else if (*ptr < key) {
+			base = ptr + 1;
+			n = n - i - 1;
+		} else {
+			n = i;
 		}
 	}
-	*indexptr = i;
 
+	*indexptr = (int)(base - node->keys);
 	return 0;
 }
 

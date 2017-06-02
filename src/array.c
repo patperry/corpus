@@ -148,9 +148,6 @@ int corpus_bigarray_grow(void **baseptr, size_t *sizeptr, size_t width,
 	size_t max = size;
 	int err;
 
-	assert(count >= 0);
-	assert(size >= 0);
-
 	if (nadd <= 0) {
 		return 0;
 	}

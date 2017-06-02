@@ -54,6 +54,44 @@ struct corpus_text;
 } while (0)
 
 
+/**
+ * Broken on check (0.9.8)
+ */
+#ifdef ck_assert_str_eq
+#  undef ck_assert_str_eq
+#endif
+#define ck_assert_str_eq(X, Y) do { \
+	const char* _ck_x = (X); \
+	const char* _ck_y = (Y); \
+	const char* _ck_x_s; \
+	const char* _ck_y_s; \
+	const char* _ck_x_q; \
+	const char* _ck_y_q; \
+	if (_ck_x != NULL) { \
+		_ck_x_q = "\""; \
+		_ck_x_s = _ck_x; \
+	} else { \
+		_ck_x_q = ""; \
+		_ck_x_s = "(null)"; \
+	} \
+	if (_ck_y != NULL) { \
+		_ck_y_q = "\""; \
+		_ck_y_s = _ck_y; \
+	} else { \
+		_ck_y_q = ""; \
+		_ck_y_s = "(null)"; \
+	} \
+	ck_assert_msg( \
+		((_ck_x != NULL) && (_ck_y != NULL) \
+		 && (0 == strcmp(_ck_y, _ck_x))), \
+		 "Assertion '%s' failed: %s == %s%s%s, %s == %s%s%s", \
+		#X" == "#Y, \
+		#X, _ck_x_q, _ck_x_s, _ck_x_q, \
+		#Y, _ck_y_q, _ck_y_s, _ck_y_q); \
+} while (0)
+
+
+
 #define assert_text_eq(X, Y) do { \
 	const struct corpus_text * _ck_x = (X); \
 	const struct corpus_text * _ck_y = (Y); \

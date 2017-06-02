@@ -65,7 +65,7 @@ static int corpus_array_grow_size(int count, int size)
 }
 
 
-static int corpus_bigarray_grow_size(size_t count, size_t size)
+static size_t corpus_bigarray_grow_size(size_t count, size_t size)
 {
 	double n1;
 

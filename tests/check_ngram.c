@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <check.h>
@@ -52,6 +53,13 @@ void init(int width)
 	ck_assert(!has_ngram);
 	ck_assert(!corpus_ngram_init(&ngram, width));
 	has_ngram = 1;
+}
+
+
+void clear(void)
+{
+	ck_assert(has_ngram);
+	corpus_ngram_clear(&ngram);
 }
 
 
@@ -268,6 +276,158 @@ START_TEST(test_bigram_break)
 END_TEST
 
 
+START_TEST(test_bigram_iter)
+{
+	init(2);
+	add('a');
+	add('a');
+	add('a');
+	add('b');
+	add('a');
+	add('b');
+
+	start(0);
+	ck_assert(next() == NULL);
+
+	start(1);
+	ck_assert_str_eq(next(), "a");
+	ck_assert(iter.weight == 4);
+	ck_assert_str_eq(next(), "b");
+	ck_assert(iter.weight == 2);
+	ck_assert(next() == NULL);
+
+	start(2);
+	ck_assert_str_eq(next(), "aa");
+	ck_assert(iter.weight == 2);
+	ck_assert_str_eq(next(), "ab");
+	ck_assert(iter.weight == 2);
+	ck_assert_str_eq(next(), "ba");
+	ck_assert(iter.weight == 1);
+	ck_assert(next() == NULL);
+
+	start(3);
+	ck_assert(next() == NULL);
+}
+END_TEST
+
+
+START_TEST(test_bigram_clear)
+{
+	init(2);
+	add('a');
+	add('a');
+	add('a');
+	add('a');
+	clear();
+	add('a');
+	add('a');
+
+	ck_assert_int_eq(count(1), 1);
+	ck_assert(weight("a") == 2);
+
+	ck_assert_int_eq(count(2), 1);
+	ck_assert(weight("aa") == 1);
+}
+END_TEST
+
+
+START_TEST(test_trigram_random)
+{
+	double count3[10][10][10];
+	double count2[10][10];
+	double count1[10];
+	double w;
+	int buf[3];
+	int a, nadd = 2000;
+	int key, b, nbuf, n;
+	int i, j, k;
+
+	srand(0);
+	init(3);
+	n = 10;
+
+	for (i = 0; i < n; i++) {
+		count1[i] = 0;
+	}
+
+	for (j = 0; j < n; j++) {
+		for (i = 0; i < n; i++) {
+			count2[i][j] = 0;
+		}
+	}
+
+	for (k = 0; k < n; k++) {
+		for (j = 0; j < n; j++) {
+			for (i = 0; i < n; i++) {
+				count3[i][j][k] = 0;
+			}
+		}
+	}
+
+	nbuf = 0;
+	for (a = 0; a < nadd; a++) {
+		key = rand() % n;
+		w = (double)(rand() % 3);
+
+		ck_assert(!corpus_ngram_add(&ngram, key, w));
+
+		if (nbuf == 3) {
+			for (b = 1; b < nbuf; b++) {
+				buf[b - 1] = buf[b];
+			}
+			nbuf--;
+		}
+		buf[nbuf] = key;
+		nbuf++;
+
+		count1[buf[nbuf-1]] += w;
+		if (nbuf > 1) {
+			count2[buf[nbuf-2]][buf[nbuf-1]] += w;
+		}
+		if (nbuf > 2) {
+			count3[buf[nbuf-3]][buf[nbuf-2]][buf[nbuf-1]] += w;
+		}
+	}
+
+	for (i = 0; i < n; i++) {
+		buf[0] = i;
+		if (corpus_ngram_has(&ngram, buf, 1, &w)) {
+			ck_assert(count1[i] == w);
+		} else {
+			ck_assert(count1[i] == 0);
+		}
+	}
+
+	for (j = 0; j < n; j++) {
+		for (i = 0; i < n; i++) {
+			buf[0] = i;
+			buf[1] = j;
+			if (corpus_ngram_has(&ngram, buf, 2, &w)) {
+				ck_assert(count2[i][j] == w);
+			} else {
+				ck_assert(count2[i][j] == 0);
+			}
+		}
+	}
+
+	for (k = 0; k < n; k++) {
+		for (j = 0; j < n; j++) {
+			for (i = 0; i < n; i++) {
+				buf[0] = i;
+				buf[1] = j;
+				buf[2] = k;
+				if (corpus_ngram_has(&ngram, buf, 3, &w)) {
+					ck_assert(count3[i][j][k] == w);
+				} else {
+					ck_assert(count3[i][j][k] == 0);
+				}
+			}
+		}
+	}
+}
+END_TEST
+
+
 Suite *ngram_suite(void)
 {
         Suite *s;
@@ -289,6 +449,13 @@ Suite *ngram_suite(void)
         tcase_add_test(tc, test_bigram_add3);
         tcase_add_test(tc, test_bigram_add5);
         tcase_add_test(tc, test_bigram_break);
+        tcase_add_test(tc, test_bigram_iter);
+        tcase_add_test(tc, test_bigram_clear);
+        suite_add_tcase(s, tc);
+
+	tc = tcase_create("trigram");
+        tcase_add_checked_fixture(tc, setup_ngram, teardown_ngram);
+        tcase_add_test(tc, test_trigram_random);
         suite_add_tcase(s, tc);
 
 	return s;

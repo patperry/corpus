@@ -26,6 +26,7 @@ struct corpus_ngram ngram;
 struct corpus_ngram_iter iter;
 int has_ngram;
 int has_iter;
+int iter_width;
 
 char buffer[128];
 
@@ -108,6 +109,7 @@ void start(int width)
 	ck_assert(has_ngram);
 	corpus_ngram_iter_make(&iter, &ngram, width);
 	has_iter = 1;
+	iter_width = width;
 }
 
 
@@ -118,7 +120,7 @@ const char *next(void)
 	ck_assert(has_iter);
 
 	if (corpus_ngram_iter_advance(&iter)) {
-		for (k = 0; k < iter.width; k++) {
+		for (k = 0; k < iter_width; k++) {
 			buffer[k] = (char)iter.type_ids[k];
 		}
 		buffer[k] = '\0';

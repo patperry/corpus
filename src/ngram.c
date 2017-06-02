@@ -24,7 +24,7 @@
 #include "table.h"
 #include "ngram.h"
 
-#define CORPUS_NGRAM_BUFFER_INIT (2 * (CORPUS_NGRAM_MAX + 1))
+#define CORPUS_NGRAM_BUFFER_INIT (2 * (CORPUS_NGRAM_WIDTH_MAX + 1))
 
 static int terms_init(struct corpus_ngram_terms *terms, int width);
 static void terms_destroy(struct corpus_ngram_terms *terms);
@@ -50,10 +50,10 @@ int corpus_ngram_init(struct corpus_ngram *ng, int width)
 		corpus_log(err, "n-gram width is non-positive (%d)",
 			   width);
 		goto error_width;
-	} else if (width > CORPUS_NGRAM_MAX) {
+	} else if (width > CORPUS_NGRAM_WIDTH_MAX) {
 		err = CORPUS_ERROR_INVAL;
 		corpus_log(err, "n-gram width exceeds maximum (%d)",
-			   CORPUS_NGRAM_MAX);
+			   CORPUS_NGRAM_WIDTH_MAX);
 		goto error_width;
 	}
 	ng->width = width;
@@ -116,7 +116,7 @@ void corpus_ngram_clear(struct corpus_ngram *ng)
 }
 
 
-int corpus_ngram_count(struct corpus_ngram *ng, int width)
+int corpus_ngram_count(const struct corpus_ngram *ng, int width)
 {
 	if (width < 1 || width > ng->width) {
 		return 0;
@@ -201,22 +201,18 @@ out:
 }
 
 
-int corpus_ngram_iter_make(struct corpus_ngram_iter *it,
-			   const struct corpus_ngram *ng, int width)
+void corpus_ngram_iter_make(struct corpus_ngram_iter *it,
+			    const struct corpus_ngram *ng, int width)
 {
 	if (width < 1 || width > ng->width) {
 		it->terms = NULL;
-		it->nitem = 0;
 	} else {
 		it->terms = &ng->terms[width - 1];
-		it->nitem = it->terms->nitem;
 	}
 
-	it->width = width;
 	it->type_ids = NULL;
 	it->weight = 0;
 	it->index = -1;
-	return 0;
 }
 
 
@@ -226,19 +222,19 @@ int corpus_ngram_iter_advance(struct corpus_ngram_iter *it)
 	int width;
 
 	// already finished
-	if (it->index == it->nitem) {
+	if (it->terms == NULL || it->index == it->terms->nitem) {
 		return 0;
 	}
 
 	it->index++;
-	if (it->index == it->nitem) {
+	if (it->index == it->terms->nitem) {
 		it->type_ids = NULL;
 		it->weight = 0;
 		return 0;
 	}
 
-	base = it->terms->term_base;
-	width = it->terms->term_width;
+	base = it->terms->type_ids;
+	width = it->terms->width;
 	it->type_ids = base + it->index * width;
 	it->weight = it->terms->weights[it->index];
 	return 1;
@@ -255,8 +251,8 @@ int terms_init(struct corpus_ngram_terms *terms, int width)
 	}
 
 	terms->weights = NULL;
-	terms->term_base = NULL;
-	terms->term_width = width;
+	terms->type_ids = NULL;
+	terms->width = width;
 	terms->nitem = 0;
 	terms->nitem_max = 0;
 	return 0;
@@ -269,7 +265,7 @@ error_table:
 
 static void terms_destroy(struct corpus_ngram_terms *terms)
 {
-	corpus_free(terms->term_base);
+	corpus_free(terms->type_ids);
 	corpus_free(terms->weights);
 	corpus_table_destroy(&terms->table);
 }
@@ -310,8 +306,8 @@ int terms_add(struct corpus_ngram_terms *terms, const int *type_ids,
 		rehash = 1;
 	}
 
-	width = terms->term_width;
-	memcpy(terms->term_base + id * width, type_ids,
+	width = terms->width;
+	memcpy(terms->type_ids + id * width, type_ids,
 	       width * sizeof(*type_ids));
 	terms->weights[id] = 0;
 	terms->nitem++;
@@ -345,8 +341,8 @@ int terms_has(const struct corpus_ngram_terms *terms, const int *type_ids,
 	int found, id, width;
 	unsigned hash;
 
-	width = terms->term_width;
-	base = terms->term_base;
+	width = terms->width;
+	base = terms->type_ids;
 	hash = term_hash(type_ids, width);
 	id = -1;
 	found = 0;
@@ -369,18 +365,18 @@ out:
 
 int terms_grow(struct corpus_ngram_terms *terms, int nadd)
 {
-	void *base = terms->term_base;
+	void *base = terms->type_ids;
 	double *weights;
 	int size = terms->nitem_max;
 	int n = terms->nitem;
-	int width = terms->term_width * sizeof(*terms->term_base);
+	int width = terms->width * sizeof(*terms->type_ids);
 	int err;
 
 	if ((err = corpus_array_grow(&base, &size, width, n, nadd))) {
 		corpus_log(err, "failed allocating terms array");
 		return err;
 	}
-	terms->term_base = base;
+	terms->type_ids = base;
 
 	if (!(weights = corpus_realloc(terms->weights,
 				       size * sizeof(*weights)))) {
@@ -395,9 +391,9 @@ int terms_grow(struct corpus_ngram_terms *terms, int nadd)
 
 void terms_rehash(struct corpus_ngram_terms *terms)
 {
-	const int *base = terms->term_base;
+	const int *base = terms->type_ids;
 	const int *type_ids;
-	int width = terms->term_width;
+	int width = terms->width;
 	int i, n = terms->nitem;
 	unsigned hash;
 

@@ -68,6 +68,13 @@ void add(char c)
 }
 
 
+void break_(void)
+{
+	ck_assert(has_ngram);
+	ck_assert(!corpus_ngram_break(&ngram));
+}
+
+
 double weight(const char *term)
 {
 	int buffer[16];
@@ -240,6 +247,26 @@ START_TEST(test_bigram_add5)
 END_TEST
 
 
+START_TEST(test_bigram_break)
+{
+	init(2);
+
+	add('x');
+	add('y');
+	break_();
+	add('z');
+
+	ck_assert_int_eq(count(1), 3);
+	ck_assert(weight("x") == 1);
+	ck_assert(weight("y") == 1);
+	ck_assert(weight("z") == 1);
+
+	ck_assert_int_eq(count(2), 1);
+	ck_assert(weight("xy") == 1);
+	ck_assert(weight("yz") == 0);
+}
+END_TEST
+
 
 Suite *ngram_suite(void)
 {
@@ -261,6 +288,7 @@ Suite *ngram_suite(void)
         tcase_add_test(tc, test_bigram_add2);
         tcase_add_test(tc, test_bigram_add3);
         tcase_add_test(tc, test_bigram_add5);
+        tcase_add_test(tc, test_bigram_break);
         suite_add_tcase(s, tc);
 
 	return s;

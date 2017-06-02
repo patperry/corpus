@@ -154,6 +154,7 @@ int corpus_ngram_add(struct corpus_ngram *ng, int type_id, double weight)
 
 		terms->weights[id] += weight;
 	}
+	err = 0;
 
 out:
 	if (err) {
@@ -165,7 +166,7 @@ out:
 
 int corpus_ngram_break(struct corpus_ngram *ng)
 {
-	(void)ng;
+	ng->nbuffer = 0;
 	return 0;
 }
 
@@ -174,7 +175,7 @@ int corpus_ngram_has(const struct corpus_ngram *ng, const int *type_ids,
 		     int width, double *weightptr)
 {
 	const struct corpus_ngram_terms *terms;
-	double weight;
+	double weight = 0;
 	int id, has;
 
 	if (width < 1 || width > ng->width) {
@@ -382,7 +383,7 @@ int terms_grow(struct corpus_ngram_terms *terms, int nadd)
 	terms->term_base = base;
 
 	if (!(weights = corpus_realloc(terms->weights,
-				       n * sizeof(*weights)))) {
+				       size * sizeof(*weights)))) {
 		corpus_log(err, "failed allocating term weights array");
 		return err;
 	}

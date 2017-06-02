@@ -405,6 +405,14 @@ START_TEST(test_casefold_ascii)
 END_TEST
 
 
+START_TEST(test_casefold_utf8)
+{
+	assert_text_eq(casefold(T("\u1e9e")), T("ss")); // capital eszett
+	assert_text_eq(casefold(T("\u00df")), T("ss")); // lowercase eszett
+}
+END_TEST
+
+
 // removed this feature
 #if 0
 
@@ -525,6 +533,7 @@ Suite *token_suite(void)
 	// tcase_add_test(tc, test_rm_ws_utf8);
 	tcase_add_test(tc, test_keep_ws_utf8);
 	tcase_add_test(tc, test_casefold_ascii);
+	tcase_add_test(tc, test_casefold_utf8);
 	// tcase_add_test(tc, test_fold_dash);
 	// tcase_add_test(tc, test_nofold_dash);
 	tcase_add_test(tc, test_map_quote);

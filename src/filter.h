@@ -23,9 +23,16 @@
  * Token filter, for converting a text into a sequence of tokens.
  */
 
+/** ID code for a missing type. */
 #define CORPUS_FILTER_NONE     (-1)
+
+/** ID code for a type that has been ignored. */
 #define CORPUS_FILTER_IGNORED  (-2)
+
+/** ID code for a type that has been dropped. */
 #define CORPUS_FILTER_DROPPED  (-3)
+
+/** ID code for a type that has been excluded. */
 #define CORPUS_FILTER_EXCLUDED (-4)
 
 /**

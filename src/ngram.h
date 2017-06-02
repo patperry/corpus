@@ -109,7 +109,7 @@ int corpus_ngram_add(struct corpus_ngram *ng, int type_id, double weight);
 /**
  * Clear the n-gram input buffer.
  *
- * \params ng the counter
+ * \param ng the counter
  *
  * \returns 0 on success
  */

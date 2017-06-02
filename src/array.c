@@ -65,6 +65,30 @@ static int corpus_array_grow_size(int count, int size)
 }
 
 
+static int corpus_bigarray_grow_size(size_t count, size_t size)
+{
+	double n1;
+
+	assert(CORPUS_ARRAY_SIZE_INIT > 0);
+	assert(CORPUS_ARRAY_GROW > 1);
+
+	if (size < CORPUS_ARRAY_SIZE_INIT && count > 0) {
+		size = CORPUS_ARRAY_SIZE_INIT;
+	}
+
+	while (size < count) {
+		n1 = CORPUS_ARRAY_GROW * size;
+		if (n1 > SIZE_MAX) {
+			size = SIZE_MAX;
+		} else {
+			size = (size_t)n1;
+		}
+	}
+
+	return size;
+}
+
+
 int corpus_array_grow(void **baseptr, int *sizeptr, size_t width, int count,
 		      int nadd)
 {
@@ -105,6 +129,59 @@ int corpus_array_grow(void **baseptr, int *sizeptr, size_t width, int count,
 	}
 
 	if (!(base = corpus_realloc(base, ((size_t)size) * width))) {
+		err = CORPUS_ERROR_NOMEM;
+		corpus_log(err, "failed allocating array");
+		return err;
+	}
+
+	*baseptr = base;
+	*sizeptr = size;
+	return 0;
+}
+
+
+int corpus_bigarray_grow(void **baseptr, size_t *sizeptr, size_t width,
+			 size_t count, size_t nadd)
+{
+	void *base = *baseptr;
+	size_t size = *sizeptr;
+	size_t max = size;
+	int err;
+
+	assert(count >= 0);
+	assert(size >= 0);
+
+	if (nadd <= 0) {
+		return 0;
+	}
+
+	if (count > SIZE_MAX - nadd) {
+		err = CORPUS_ERROR_OVERFLOW;
+		corpus_log(err, "array count exceeds maximum (%"PRIu64")",
+			   (uint64_t)SIZE_MAX);
+		return err;
+	}
+	count = count + nadd;
+
+	if (count <= max) {
+		return 0;
+	}
+
+	if (count > SIZE_MAX / width) {
+		err = CORPUS_ERROR_OVERFLOW;
+		corpus_log(err, "array size (%"PRIu64")"
+			   " exceeds maximum (%"PRIu64")",
+			   (uint64_t)count, (uint64_t)SIZE_MAX / width);
+		return err;
+	}
+
+	size = corpus_bigarray_grow_size(count, size);
+	if (size > SIZE_MAX / width) {
+		size = count;
+		assert(size <= SIZE_MAX / width);
+	}
+
+	if (!(base = corpus_realloc(base, size * width))) {
 		err = CORPUS_ERROR_NOMEM;
 		corpus_log(err, "failed allocating array");
 		return err;

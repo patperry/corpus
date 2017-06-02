@@ -38,8 +38,8 @@ CORPUS_A = libcorpus.a
 LIB_O	= lib/strntod.o lib/strntoimax.o src/array.o src/census.o \
 	  src/data.o src/datatype.o src/error.o src/filebuf.o src/filter.o \
 	  src/memory.o src/ngram.o src/render.o src/sentfilter.o \
-	  src/sentscan.o src/symtab.o src/table.o src/text.o src/textset.o \
-	  src/tree.o src/typemap.o src/unicode.o src/wordscan.o
+	  src/sentscan.o src/symtab.o src/table.o src/termset.o src/text.o \
+	  src/textset.o src/tree.o src/typemap.o src/unicode.o src/wordscan.o
 
 STEMMER = lib/libstemmer_c
 STEMMER_O = $(STEMMER)/src_c/stem_UTF_8_arabic.o \
@@ -350,6 +350,8 @@ src/sentscan.o: src/sentscan.c src/text.h src/unicode/sentbreakprop.h \
 src/symtab.o: src/symtab.c src/array.h src/error.h src/memory.h src/table.h \
 	src/text.h src/textset.h src/typemap.h src/symtab.h
 src/table.o: src/table.c src/error.h src/memory.h src/table.h
+src/termset.o: src/termset.c src/array.h src/error.h src/memory.h src/table.h \
+	src/termset.h
 src/text.o: src/text.c src/error.h src/memory.h src/unicode.h src/text.h
 src/textset.o: src/textset.c src/array.h src/error.h src/memory.h src/table.h \
 	src/text.h src/textset.h

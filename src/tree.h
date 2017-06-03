@@ -41,8 +41,6 @@ struct corpus_tree {
 	struct corpus_tree_node *nodes;	/**< array of tree nodes */
 	int nnode;	/**< node array length */
 	int nnode_max;	/**< node array capacity */	
-	int is_unsorted;/**< whether the node are sorted in breadth-first
-			  order */
 };
 
 /**

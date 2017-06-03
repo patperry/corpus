@@ -181,7 +181,6 @@ int has(const char *keys)
 
 void add(const char *keys)
 {
-	const char *k1, *k2;
 	int i, nkey = (int)strlen(keys);
 	int j, m, n;
 	int id, parent_id;
@@ -222,15 +221,6 @@ void add(const char *keys)
 			ck_assert_int_eq(tree.nodes[id].nitem, 0);
 		}
 	}
-
-	if (!tree.is_unsorted) {
-		// all adjacent keys should be in order
-		for (i = 1; i < tree.nnode; i++) {
-			k1 = get_keys(i-1);
-			k2 = get_keys(i);
-			ck_assert(compare_keys(k1, k2) < 0);
-		}
-	}
 }
 
 
@@ -238,7 +228,6 @@ void tree_clear(void)
 {
 	corpus_tree_clear(&tree);
 	ck_assert_int_eq(tree.nnode, 0);
-	ck_assert(!tree.is_unsorted);
 }
 
 
@@ -256,7 +245,6 @@ void sort(void)
 	ck_assert(!corpus_tree_sort(&tree, NULL, 0));
 
 	// check that the items are in sorted order
-	ck_assert(!tree.is_unsorted);
 	for (i = 1; i < tree.nnode; i++) {
 		k1 = get_keys(i-1);
 		k2 = get_keys(i);
@@ -281,7 +269,6 @@ void sort(void)
 START_TEST(test_init)
 {
 	ck_assert_int_eq(tree.nnode, 0);
-	ck_assert(!tree.is_unsorted);
 	ck_assert(!has(""));
 	ck_assert(!has("hello"));
 }

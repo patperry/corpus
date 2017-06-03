@@ -43,7 +43,6 @@ int corpus_tree_init(struct corpus_tree *t)
 	t->nodes = NULL;
 	t->nnode = 0;
 	t->nnode_max = 0;
-	t->is_unsorted = 0;
 	return 0;
 }
 
@@ -64,7 +63,6 @@ void corpus_tree_clear(struct corpus_tree *t)
 	}
 
 	t->nnode = 0;
-	t->is_unsorted = 0;
 }
 
 
@@ -123,9 +121,6 @@ int corpus_tree_add(struct corpus_tree *t, int parent_id, int key, int *idptr)
 		goto out;
 	}
 
-	// update the is_unsorted flag
-	t->is_unsorted = 1;
-
 out:
 	if (err) {
 		corpus_log(err, "failed adding node to tree");
@@ -171,7 +166,7 @@ int corpus_tree_sort(struct corpus_tree *t, void *base, size_t width)
 	char *buf = NULL;
 	int err;
 
-	if (n == 0 || !t->is_unsorted) {
+	if (n == 0) {
 		return 0;
 	}
 
@@ -251,7 +246,6 @@ int corpus_tree_sort(struct corpus_tree *t, void *base, size_t width)
 		memcpy(base, buf, n * width);
 	}
 
-	t->is_unsorted = 0;
 	err = 0;
 
 	corpus_free(buf);

@@ -28,22 +28,34 @@
 
 static int corpus_tree_grow(struct corpus_tree *t, int nadd);
 
-static int node_init(struct corpus_tree_node *node, int parent_id);
+static int node_init(struct corpus_tree_node *node, int parent_id, int key);
 static void node_destroy(struct corpus_tree_node *node);
+static void node_clear(struct corpus_tree_node *node);
 static int node_has(const struct corpus_tree_node *node, int key,
-		    int *indexptr);
-static int node_insert(struct corpus_tree_node *node, int index, int key,
-		       int id);
+		    int *indexptr, const struct corpus_tree *tree);
+
+static int node_insert(struct corpus_tree_node *node, int index, int id);
 static int node_sort(struct corpus_tree_node *node);
 static int node_grow(struct corpus_tree_node *node, int nadd);
 
 
 int corpus_tree_init(struct corpus_tree *t)
 {
+	int err;
+
 	t->nodes = NULL;
 	t->nnode = 0;
 	t->nnode_max = 0;
+
+	if ((err = node_init(&t->root, CORPUS_TREE_NONE, 0))) {
+		goto error_root;
+	}
+
 	return 0;
+
+error_root:
+	corpus_log(err, "failed initializing tree");
+	return err;
 }
 
 
@@ -63,43 +75,19 @@ void corpus_tree_clear(struct corpus_tree *t)
 	}
 
 	t->nnode = 0;
-}
-
-
-int corpus_tree_root(struct corpus_tree *t)
-{
-	int err;
-
-	if (t->nnode > 0) {
-		return 0;
-	}
-
-	if ((err = corpus_tree_grow(t, 1))) {
-		goto out;
-	}
-
-	if ((err = node_init(&t->nodes[0], -1))) {
-		goto out;
-	}
-
-	t->nnode = 1;
-	err = 0;
-
-out:
-	if (err) {
-		corpus_log(err, "failed adding root to tree");
-	}
-	return err;
+	node_clear(&t->root);
 }
 
 
 int corpus_tree_add(struct corpus_tree *t, int parent_id, int key, int *idptr)
 {
+	struct corpus_tree_node *parent;
 	int err, i, id;
 
 	// check whether the key exists already
-	if (node_has(&t->nodes[parent_id], key, &i)) {
-		id = t->nodes[parent_id].ids[i];
+	parent = parent_id < 0 ? &t->root : &t->nodes[parent_id];
+	if (node_has(parent, key, &i, t)) {
+		id = parent->child_ids[i];
 		err = 0;
 		goto out;
 	}
@@ -110,21 +98,25 @@ int corpus_tree_add(struct corpus_tree *t, int parent_id, int key, int *idptr)
 		if ((err = corpus_tree_grow(t, 1))) {
 			goto out;
 		}
+		
+		// re-set parent; tree_grow may have moved the nodes array
+		parent = parent_id < 0 ? &t->root : &t->nodes[parent_id];
 	}
-	if ((err = node_init(&t->nodes[id], parent_id))) {
+	if ((err = node_init(&t->nodes[id], parent_id, key))) {
 		goto out;
 	}
 	t->nnode++;
 
 	// add the node to its parent
-	if ((err = node_insert(&t->nodes[parent_id], i, key, id))) {
+	
+	if ((err = node_insert(parent, i, id))) {
 		goto out;
 	}
 
 out:
 	if (err) {
 		corpus_log(err, "failed adding node to tree");
-		id = -1;
+		id = CORPUS_TREE_NONE;
 	}
 
 	if (idptr) {
@@ -138,13 +130,20 @@ out:
 int corpus_tree_has(const struct corpus_tree *t, int parent_id, int key,
 		    int *idptr)
 {
+	const struct corpus_tree_node *parent;
 	int i, id, ret;
 
-	if (node_has(&t->nodes[parent_id], key, &i)) {
-		id = t->nodes[parent_id].ids[i];
+	if (parent_id < 0) {
+		parent = &t->root;
+	} else {
+		parent = &t->nodes[parent_id];
+	}
+
+	if (node_has(parent, key, &i, t)) {
+		id = parent->child_ids[i];
 		ret = 1;
 	} else {
-		id = -1;
+		id = CORPUS_TREE_NONE;
 		ret = 0;
 	}
 
@@ -171,6 +170,9 @@ int corpus_tree_sort(struct corpus_tree *t, void *base, size_t width)
 	}
 
 	/* sort all of the node key sets */
+	if ((err = node_sort(&t->root))) {
+		goto error_node_sort;
+	}
 	for (i = 0; i < n; i++) {
 		if ((err = node_sort(&t->nodes[i]))) {
 			goto error_node_sort;
@@ -195,9 +197,9 @@ int corpus_tree_sort(struct corpus_tree *t, void *base, size_t width)
 	qbegin = 0;
 	qend = 0;
 
-	/* add the root to the queue */
-	if (n > 0) {
-		ids[qend++] = 0;
+	/* add the root's children to the queue */
+	for (i = 0; i < t->root.nchild; i++) {
+		ids[qend++] = t->root.child_ids[i];
 	}
 
 	/* while the queue is not empty */
@@ -206,9 +208,9 @@ int corpus_tree_sort(struct corpus_tree *t, void *base, size_t width)
 		visit = ids[qbegin++];
 
 		/* add all children to the queue */
-		m = t->nodes[visit].nitem;
+		m = t->nodes[visit].nchild;
 		for (j = 0; j < m; j++) {
-			ids[qend++] = t->nodes[visit].ids[j];
+			ids[qend++] = t->nodes[visit].child_ids[j];
 		}
 	}
 	assert(qend == n);
@@ -232,11 +234,11 @@ int corpus_tree_sort(struct corpus_tree *t, void *base, size_t width)
 		}
 
 		/* fix the child ids */
-		m = nodebuf[i].nitem;
+		m = nodebuf[i].nchild;
 		for (j = 0; j < m; j++) {
-			child_id = nodebuf[i].ids[j];
+			child_id = nodebuf[i].child_ids[j];
 			child_id = map[child_id];
-			nodebuf[i].ids[j] = child_id;
+			nodebuf[i].child_ids[j] = child_id;
 		}
 	}
 	memcpy(t->nodes, nodebuf, n * sizeof(*t->nodes));
@@ -280,35 +282,46 @@ int corpus_tree_grow(struct corpus_tree *t, int nadd)
 }
 
 
-int node_init(struct corpus_tree_node *node, int parent_id)
+int node_init(struct corpus_tree_node *node, int parent_id, int key)
 {
-	node->keys = NULL;
-	node->ids = NULL;
-	node->nitem = 0;
 	node->parent_id = parent_id;
+	node->key = key;
+	node->child_ids = NULL;
+	node->nchild = 0;
 	return 0;
 }
 
 
 void node_destroy(struct corpus_tree_node *node)
 {
-	corpus_free(node->ids);
-	corpus_free(node->keys);
+	corpus_free(node->child_ids);
 }
 
 
-int node_has(const struct corpus_tree_node *node, int key, int *indexptr)
+void node_clear(struct corpus_tree_node *node)
 {
-	const int *ptr, *base = node->keys;
-	int i, n = node->nitem;
+	corpus_free(node->child_ids);
+	node->child_ids = NULL;
+	node->nchild = 0;
+}
+
+
+int node_has(const struct corpus_tree_node *node, int key, int *indexptr,
+	     const struct corpus_tree *tree)
+{
+	const int *ptr, *base = node->child_ids;
+	int child_id, child_key;
+	int i, n = node->nchild;
 
 	while (n != 0) {
 		i = n >> 1;
 		ptr = base + i;
-		if (*ptr == key) {
-			*indexptr = (int)(ptr - node->keys);
+		child_id = *ptr;
+		child_key = tree->nodes[child_id].key;
+		if (child_key == key) {
+			*indexptr = (int)(ptr - node->child_ids);
 			return 1;
-		} else if (*ptr < key) {
+		} else if (child_key < key) {
 			base = ptr + 1;
 			n = n - i - 1;
 		} else {
@@ -316,12 +329,12 @@ int node_has(const struct corpus_tree_node *node, int key, int *indexptr)
 		}
 	}
 
-	*indexptr = (int)(base - node->keys);
+	*indexptr = (int)(base - node->child_ids);
 	return 0;
 }
 
 
-int node_insert(struct corpus_tree_node *node, int index, int key, int id)
+int node_insert(struct corpus_tree_node *node, int index, int id)
 {
 	int err, ntail;
 
@@ -329,15 +342,12 @@ int node_insert(struct corpus_tree_node *node, int index, int key, int id)
 		goto out;
 	}
 
-	ntail = node->nitem - index;
-	memmove(node->keys + index + 1, node->keys + index,
-		ntail * sizeof(*node->keys));
-	memmove(node->ids + index + 1, node->ids + index,
-		ntail * sizeof(*node->ids));
+	ntail = node->nchild - index;
+	memmove(node->child_ids + index + 1, node->child_ids + index,
+		ntail * sizeof(*node->child_ids));
 
-	node->keys[index] = key;
-	node->ids[index] = id;
-	node->nitem++;
+	node->child_ids[index] = id;
+	node->nchild++;
 
 	err = 0;
 out:
@@ -360,55 +370,38 @@ int node_sort(struct corpus_tree_node *node)
 int node_grow(struct corpus_tree_node *node, int nadd)
 {
 	int err, n;
-	int *keys, *ids;
+	int *child_ids;
 
 	if (nadd <= 0) {
 		return 0;
 	}
 
-	if (node->nitem > INT_MAX - nadd) {
+	if (node->nchild > INT_MAX - nadd) {
 		err = CORPUS_ERROR_OVERFLOW;
 		corpus_log(err, "number of tree node children (%d + %d)"
-			   " exceeds maximum (%d)", node->nitem, nadd,
+			   " exceeds maximum (%d)", node->nchild, nadd,
 			   INT_MAX);
 			   
 		goto out;
 	}
 
-	n = node->nitem + nadd;
-	if ((size_t)n > SIZE_MAX / sizeof(*node->keys)) {
+	n = node->nchild + nadd;
+	if ((size_t)n > SIZE_MAX / sizeof(*node->child_ids)) {
 		err = CORPUS_ERROR_OVERFLOW;
 		corpus_log(err, "number of tree node children (%d)"
 			   " exceeds maximum (%"PRIu64")", n,
-			   (uint64_t)(SIZE_MAX / sizeof(*node->keys)));
+			   (uint64_t)(SIZE_MAX / sizeof(*node->child_ids)));
 
 		err = CORPUS_ERROR_OVERFLOW;
 		goto out;
 	}
 
-	if ((size_t)n > SIZE_MAX / sizeof(*node->ids)) {
-		err = CORPUS_ERROR_OVERFLOW;
-		corpus_log(err, "number of tree node children (%d)"
-			   " exceeds maximum (%"PRIu64")", n,
-			   (uint64_t)(SIZE_MAX / sizeof(*node->ids)));
-
-		err = CORPUS_ERROR_OVERFLOW;
-		goto out;
-	}
-
-	keys = corpus_realloc(node->keys, n * sizeof(*keys));
-	if (!keys) {
+	child_ids = corpus_realloc(node->child_ids, n * sizeof(*child_ids));
+	if (!child_ids) {
 		err = CORPUS_ERROR_NOMEM;
 		goto out;
 	}
-	node->keys = keys;
-
-	ids = corpus_realloc(node->ids, n * sizeof(*ids));
-	if (!ids) {
-		err = CORPUS_ERROR_NOMEM;
-		goto out;
-	}
-	node->ids = ids;
+	node->child_ids = child_ids;
 
 	err = 0;
 

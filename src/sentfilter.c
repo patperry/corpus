@@ -173,8 +173,7 @@ out:
 }
 
 
-int add_fwdsupp(struct corpus_sentfilter *f,
-				   const struct corpus_text *pattern)
+int add_fwdsupp(struct corpus_sentfilter *f, const struct corpus_text *pattern)
 {
 	struct corpus_text_iter it;
 	int *rules;
@@ -183,28 +182,9 @@ int add_fwdsupp(struct corpus_sentfilter *f,
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
-	// root the suppression tree
-	if (f->fwdsupp.nnode == 0) {
-		if ((err = corpus_tree_root(&f->fwdsupp))) {
-			goto out;
-		}
-
-		size = f->fwdsupp.nnode_max;
-		assert(size > 0);
-
-		rules = corpus_malloc(size * sizeof(*rules));
-		if (!rules) {
-			err = CORPUS_ERROR_NOMEM;
-			goto out;
-		}
-		rules[0] = FWDSUPP_NONE;
-		f->fwdsupp_rules = rules;
-	}
-
-	id = 0;
-
 	// iterate over the characters in the pattern
 	corpus_text_iter_make(&it, pattern);
+	id = CORPUS_TREE_NONE;
 
 	while (corpus_text_iter_advance(&it)) {
 		code = (int)it.current;
@@ -260,7 +240,9 @@ int add_fwdsupp(struct corpus_sentfilter *f,
 	}
 
 	// mark the terminal node with the rule
-	f->fwdsupp_rules[id] = FWDSUPP_FULL;
+	if (id >= 0) {
+		f->fwdsupp_rules[id] = FWDSUPP_FULL;
+	}
 	err = 0;
 
 out:
@@ -282,29 +264,10 @@ int add_backsupp(struct corpus_sentfilter *f, const struct corpus_text *prefix,
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
-	// root the suppression tree
-	if (f->backsupp.nnode == 0) {
-		if ((err = corpus_tree_root(&f->backsupp))) {
-			goto out;
-		}
-
-		size = f->backsupp.nnode_max;
-		assert(size > 0);
-
-		rules = corpus_malloc(size * sizeof(*rules));
-		if (!rules) {
-			err = CORPUS_ERROR_NOMEM;
-			goto out;
-		}
-		rules[0] = BACKSUPP_NONE;
-		f->backsupp_rules = rules;
-	}
-
-	id = 0;
-
 	// iterate over the characters in the prefix, in reverse
 	corpus_text_iter_make(&it, prefix);
 	corpus_text_iter_skip(&it);
+	id = CORPUS_TREE_NONE;
 
 	while (corpus_text_iter_retreat(&it)) {
 		code = (int)it.current;
@@ -359,7 +322,7 @@ int add_backsupp(struct corpus_sentfilter *f, const struct corpus_text *prefix,
 	}
 
 	// if new, mark the terminal node with the rule
-	if (f->backsupp_rules[id] != BACKSUPP_FULL) {
+	if (id >= 0 && f->backsupp_rules[id] != BACKSUPP_FULL) {
 		f->backsupp_rules[id] = rule;
 	}
 	err = 0;
@@ -469,7 +432,7 @@ int has_suppress(const struct corpus_sentfilter *f,
 
 	skip_space = 1;
 	rule = BACKSUPP_NONE;
-	id = 0;
+	id = CORPUS_TREE_NONE;
 
 	while (corpus_text_iter_retreat(it)) {
 		code = (int)it->current;
@@ -546,7 +509,7 @@ int has_fwdsupp(const struct corpus_sentfilter *f, struct corpus_text_iter *it)
 		return 0;
 	}
 
-	id = 0;
+	id = CORPUS_TREE_NONE;
 	rule = FWDSUPP_NONE;
 
 	while (corpus_text_iter_advance(it)) {

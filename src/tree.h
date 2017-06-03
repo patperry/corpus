@@ -20,26 +20,32 @@
 /**
  * \file tree.h
  *
- * N-ary tree, with integer keys.
+ * Rooted N-ary tree, with integer keys.
  */
 
 #include <stddef.h>
 
 /**
+ * Code for missing ID, or the root.
+ */
+#define CORPUS_TREE_NONE	(-1)
+
+/**
  * N-ary tree node.
  */
 struct corpus_tree_node {
-	int *keys;	/**< array of child keys */
-	int *ids;	/**< array of child ids */
-	int nitem;	/**< number of children */
-	int parent_id;	/**< parent ID (-1 if none) */
+	int parent_id;	/**< parent ID (-1 for root) */
+	int key;	/**< node key */
+	int *child_ids;	/**< array of child ids */
+	int nchild;	/**< number of children */
 };
 
 /**
- * N-ary tree.
+ * Rooted N-ary tree.
  */
 struct corpus_tree {
 	struct corpus_tree_node *nodes;	/**< array of tree nodes */
+	struct corpus_tree_node root;	/**< root */
 	int nnode;	/**< node array length */
 	int nnode_max;	/**< node array capacity */	
 };
@@ -66,15 +72,6 @@ void corpus_tree_destroy(struct corpus_tree *t);
  * \param t the tree
  */
 void corpus_tree_clear(struct corpus_tree *t);
-
-/**
- * Add a root node to a tree if none exists already.
- *
- * \param t the tree
- *
- * \returns 0 on success
- */
-int corpus_tree_root(struct corpus_tree *t);
 
 /**
  * Add a child node to a tree node if it does not have one for the given key.

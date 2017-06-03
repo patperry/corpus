@@ -157,35 +157,17 @@ int corpus_filter_combine(struct corpus_filter *f,
 		scan_type_id = CORPUS_FILTER_NONE;
 	}
 
-	// root the combination tree
-	if (f->combine.nnode == 0) {
-		if ((err = corpus_tree_root(&f->combine))) {
-			goto out;
-		}
-
-		size = f->combine.nnode_max;
-		assert(size > 0);
-
-		rules = corpus_malloc(size * sizeof(*rules));
-		if (!rules) {
-			err = CORPUS_ERROR_NOMEM;
-			goto out;
-		}
-		rules[0] = -1;
-		f->combine_rules = rules;
-	}
-
 	// add a new symbol for the combined type
 	if ((err = corpus_filter_add_symbol(f, type, &id))) {
 		goto out;
 	}
 
-	node_id = 0;
-
 	// iterate over all non-ignored symbols in the type
 	if ((err = corpus_filter_start(f, type))) {
 		goto out;
 	}
+
+	node_id = CORPUS_TREE_NONE;
 
 	while (corpus_filter_advance_raw(f, &symbol_id)) {
 		if (f->type_ids[symbol_id] == CORPUS_FILTER_IGNORED) {
@@ -226,7 +208,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 		goto out;
 	}
 
-	if (node_id > 0) {
+	if (node_id >= 0) {
 		f->combine_rules[node_id] = id;
 	}
 
@@ -465,7 +447,7 @@ int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 		return 0;
 	}
 
-	parent_id = 0;
+	parent_id = CORPUS_TREE_NONE;
 	if (!corpus_tree_has(&f->combine, parent_id, id, &node_id)) {
 		return 0;
 	}

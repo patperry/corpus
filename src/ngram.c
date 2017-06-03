@@ -38,7 +38,6 @@ static int corpus_ngram_grow(struct corpus_ngram *ng, int nadd);
 static int tree_init(struct corpus_ngram_tree *tree, int type_id);
 static void tree_destroy(struct corpus_ngram_tree *tree);
 static int tree_count(const struct corpus_ngram_tree *tree);
-static int tree_root(struct corpus_ngram_tree *tree);
 static int tree_add(struct corpus_ngram_tree *tree, const int *type_ids,
 		    int length, double weight);
 static int tree_has(const struct corpus_ngram_tree *tree,
@@ -354,17 +353,11 @@ void corpus_ngram_rehash(struct corpus_ngram *ng)
 	}
 }
 
-#if 0
 
 void corpus_ngram_iter_make(struct corpus_ngram_iter *it,
-			    const struct corpus_ngram *ng, int length)
+			    const struct corpus_ngram *ng)
 {
-	if (length < 1 || length > ng->length) {
-		it->tree = NULL;
-	} else {
-		it->tree = &ng->tree[length - 1];
-	}
-
+	it->ngram = ng;
 	it->type_ids = NULL;
 	it->weight = 0;
 	it->index = -1;
@@ -373,29 +366,15 @@ void corpus_ngram_iter_make(struct corpus_ngram_iter *it,
 
 int corpus_ngram_iter_advance(struct corpus_ngram_iter *it)
 {
-	const int *base;
-	int length;
+	const struct corpus_ngram_tree *tree;
+	int tree_id, type_id;
 
-	// already finished
-	if (it->tree == NULL || it->index == it->tree->nitem) {
-		return 0;
-	}
 
-	it->index++;
-	if (it->index == it->tree->nitem) {
-		it->type_ids = NULL;
-		it->weight = 0;
-		return 0;
-	}
-
-	base = it->tree->type_ids;
-	length = it->tree->length;
-	it->type_ids = base + it->index * length;
-	it->weight = it->tree->weights[it->index];
-	return 1;
+	tree_id = 0;
+	tree = &it->ngram->trees[tree_id];
+	type_id = tree->type_id;
+	return 0;
 }
-
-#endif
 
 
 int tree_init(struct corpus_ngram_tree *tree, int type_id)
@@ -426,11 +405,7 @@ static void tree_destroy(struct corpus_ngram_tree *tree)
 
 int tree_count(const struct corpus_ngram_tree *tree)
 {
-	if (tree->prefix.nnode > 0) {
-		return tree->prefix.nnode - 1; // don't count the root
-	} else {
-		return 0;
-	}
+	return tree->prefix.nnode;
 }
 
 
@@ -445,11 +420,7 @@ int tree_add(struct corpus_ngram_tree *tree, const int *type_ids,
 		return 0;
 	}
 
-	if ((err = tree_root(tree))) {
-		goto out;
-	}
-
-	id = 0;
+	id = CORPUS_TREE_NONE;
 	while (length-- > 0) {
 		parent_id = id;
 		nnode0 = tree->prefix.nnode;
@@ -491,37 +462,6 @@ out:
 }
 
 
-int tree_root(struct corpus_ngram_tree *tree)
-{
-	double *weights;
-	int err, size;
-
-	if (tree->prefix.nnode > 0) {
-		return 0;
-	}
-
-	if ((err = corpus_tree_root(&tree->prefix))) {
-		goto out;
-	}
-
-	size = tree->prefix.nnode_max;
-	assert(size > 0);
-
-	if (!(weights = corpus_malloc(size * sizeof(*weights)))) {
-		err = CORPUS_ERROR_NOMEM;
-		goto out;
-	}
-	weights[0] = 0;
-	tree->weights = weights;
-out:
-	if (err) {
-		corpus_log(err, "failed adding root to n-gram tree");
-	}
-
-	return 0;
-}
-
-
 int tree_has(const struct corpus_ngram_tree *tree, const int *type_ids,
 	     int length, int *idptr)
 {
@@ -530,11 +470,11 @@ int tree_has(const struct corpus_ngram_tree *tree, const int *type_ids,
 	assert(length > 0);
 
 	has = 0;
+	id = CORPUS_TREE_NONE;
+
 	if (tree->prefix.nnode == 0) {
 		goto out;
 	}
-
-	id = 0;
 
 	while (length-- > 0) {
 		parent_id = id;

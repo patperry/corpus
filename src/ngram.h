@@ -53,6 +53,19 @@ struct corpus_ngram {
 };
 
 /**
+ * N-gram count iterator.
+ */
+struct corpus_ngram_iter {
+	const struct corpus_ngram *ngram;
+	int buffer[CORPUS_NGRAM_WIDTH_MAX];
+	int tree_id;
+	const int *type_ids;
+	int length;
+	double weight;
+	int index;
+};
+
+/**
  * Initialize an n-gram frequency counter.
  *
  * \param ng the counter
@@ -121,16 +134,14 @@ int corpus_ngram_break(struct corpus_ngram *ng);
 int corpus_ngram_has(const struct corpus_ngram *ng, const int *type_ids,
 		     int length, double *weightptr);
 
-#if 0
 /**
- * Construct an iterator over the set of seen n-grams of a given length.
+ * Construct an iterator over the set of seen n-grams.
  *
  * \param it the iterator
  * \param ng the n-gram counter
- * \param length the n-gram length to iterate over.
  */
 void corpus_ngram_iter_make(struct corpus_ngram_iter *it,
-			    const struct corpus_ngram *ng, int length);
+			    const struct corpus_ngram *ng);
 
 /**
  * Advance an n-gram iterator to the next term.
@@ -140,6 +151,5 @@ void corpus_ngram_iter_make(struct corpus_ngram_iter *it,
  * \returns non-zero if a next term exists, zero otherwise
  */
 int corpus_ngram_iter_advance(struct corpus_ngram_iter *it);
-#endif
 
 #endif /* CORPUS_NGRAM_H */

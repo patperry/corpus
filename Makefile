@@ -342,7 +342,7 @@ src/main_tokens.o: src/main_tokens.c src/error.h src/filebuf.h src/table.h \
 	src/wordscan.h src/data.h src/datatype.h src/filter.h
 src/memory.o: src/memory.c src/memory.h
 src/ngram.o: src/ngram.c src/array.h src/error.h src/memory.h src/table.h \
-	src/ngram.h
+	src/tree.h src/ngram.h
 src/render.o: src/render.c src/array.h src/error.h src/memory.h src/text.h \
 	src/unicode.h src/render.h
 src/sentfilter.o: src/sentfilter.c src/private/sentsuppress.h \
@@ -375,7 +375,7 @@ tests/check_data.o: tests/check_data.c src/error.h src/table.h src/text.h \
 tests/check_filter.o: tests/check_filter.c src/table.h src/text.h \
 	src/textset.h src/tree.h src/typemap.h src/symtab.h \
 	src/wordscan.h src/filter.h src/census.h tests/testutil.h
-tests/check_ngram.o: tests/check_ngram.c src/table.h src/ngram.h \
+tests/check_ngram.o: tests/check_ngram.c src/table.h src/tree.h src/ngram.h \
 	tests/testutil.h
 tests/check_sentfilter.o: tests/check_sentfilter.c src/text.h src/tree.h \
     	src/sentscan.h src/sentfilter.h tests/testutil.h
@@ -385,7 +385,7 @@ tests/check_symtab.o: tests/check_symtab.c src/table.h src/text.h \
 	src/textset.h src/typemap.h src/symtab.h tests/testutil.h
 tests/check_text.o: tests/check_text.c src/error.h src/text.h src/unicode.h \
 	tests/testutil.h
-tests/check_tree.o: tests/check_tree.c tests/testutil.h
+tests/check_tree.o: tests/check_tree.c src/tree.h tests/testutil.h
 tests/check_typemap.o: tests/check_typemap.c src/table.h src/text.h \
 	src/textset.h src/typemap.h src/unicode.h tests/testutil.h
 tests/check_unicode.o: tests/check_unicode.c src/unicode.h tests/testutil.h

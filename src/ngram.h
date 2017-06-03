@@ -24,52 +24,43 @@
  */
 
 /**
- * Maximum n-gram width.
+ * Maximum n-gram length.
  */
 #define CORPUS_NGRAM_WIDTH_MAX	127
 
 /**
- * N-gram term set, all with the same width, and their weights.
+ * N-gram term set, all ending with the same unigram.
  */
-struct corpus_ngram_terms {
-	struct corpus_table table;	/**< terms hash table */
-	double *weights;		/**< term weights */
-	int *type_ids;			/**< terms type ID data */
-	int width;			/**< term width */
-	int nitem;			/**< number of terms */
-	int nitem_max;			/**< term array capacity */
-};
-
-/**
- * Iterator over a set of n-gram terms.
- */
-struct corpus_ngram_iter {
-	const struct corpus_ngram_terms *terms;	/**< the terms */
-	const int *type_ids;	/**< the current term */
-	double weight;		/**< the current term's weight */
-	int index;		/**< the index in the iteration */
+struct corpus_ngram_tree {
+	struct corpus_tree prefix;	/**< prefix tree */
+	double *weights;		/**< prefix weights */
+	double weight;			/**< unigram weight */
+	int type_id;			/**< unigram base */
 };
 
 /**
  * N-gram frequency counter.
  */
 struct corpus_ngram {
-	struct corpus_ngram_terms *terms;	/**< the term sets */
+	struct corpus_table table; /**< unigram table */
+	struct corpus_ngram_tree *trees;	/**< the n-gram trees */
+	int ntree;		/**< number of n-gram trees */ 
+	int ntree_max;		/**< trees array capacity */
 	int *buffer;		/**< input buffer */
 	int nbuffer;		/**< number of occupied spots in the buffer */
 	int nbuffer_max;	/**< buffer capacity */
-	int width;		/**< maximum term width */
+	int length;		/**< maximum term length */
 };
 
 /**
  * Initialize an n-gram frequency counter.
  *
  * \param ng the counter
- * \param width the maximum n-gram width to count
+ * \param length the maximum n-gram length to count
  *
  * \returns 0 on success
  */
-int corpus_ngram_init(struct corpus_ngram *ng, int width);
+int corpus_ngram_init(struct corpus_ngram *ng, int length);
 
 /**
  * Release an n-gram counter's resources.
@@ -84,14 +75,14 @@ void corpus_ngram_destroy(struct corpus_ngram *ng);
 void corpus_ngram_clear(struct corpus_ngram *ng);
 
 /**
- * Get the number of n-grams seen of a given width.
+ * Get the number of n-grams seen.
  *
  * \param ng the counter
- * \param width the width
+ * \param countptr if non-NULL, a location to store the count
  *
- * \returns the count
+ * \returns 0 on success
  */
-int corpus_ngram_count(const struct corpus_ngram *ng, int width);
+int corpus_ngram_count(const struct corpus_ngram *ng, int *countptr);
 
 
 /**
@@ -121,24 +112,25 @@ int corpus_ngram_break(struct corpus_ngram *ng);
  *
  * \param ng the counter
  * \param type_ids the array of type IDs for the n-gram
- * \param width the width of the n-gram
+ * \param length the length of the n-gram
  * \param weightptr if non-NULL, a location to store the n-gram's weight if
  * 	it exists
  *
  * \returns non-zero if the n-gram exists, zero otherwise
  */
 int corpus_ngram_has(const struct corpus_ngram *ng, const int *type_ids,
-		     int width, double *weightptr);
+		     int length, double *weightptr);
 
+#if 0
 /**
- * Construct an iterator over the set of seen n-grams of a given width.
+ * Construct an iterator over the set of seen n-grams of a given length.
  *
  * \param it the iterator
  * \param ng the n-gram counter
- * \param width the n-gram width to iterate over.
+ * \param length the n-gram length to iterate over.
  */
 void corpus_ngram_iter_make(struct corpus_ngram_iter *it,
-			    const struct corpus_ngram *ng, int width);
+			    const struct corpus_ngram *ng, int length);
 
 /**
  * Advance an n-gram iterator to the next term.
@@ -148,5 +140,6 @@ void corpus_ngram_iter_make(struct corpus_ngram_iter *it,
  * \returns non-zero if a next term exists, zero otherwise
  */
 int corpus_ngram_iter_advance(struct corpus_ngram_iter *it);
+#endif
 
 #endif /* CORPUS_NGRAM_H */

@@ -181,15 +181,16 @@ int main_ngrams(int argc, char * const argv[])
 	const char *field, *input;
 	FILE *stream;
 	size_t field_len;
-	int filter_flags, type_flags, width;
+	int filter_flags, type_flags, length;
 	int ch, err, i, name_id, type_id, ncomb;
+	int count;
 
 	filter_flags = CORPUS_FILTER_IGNORE_SPACE;
 	type_flags = (CORPUS_TYPE_MAPCASE | CORPUS_TYPE_MAPCOMPAT
 			| CORPUS_TYPE_MAPQUOTE | CORPUS_TYPE_RMDI);
 
 	field = "text";
-	width = 1;
+	length = 1;
 	ncomb = 0;
 
 	while ((ch = getopt(argc, argv, "c:d:f:k:n:o:s:t:z")) != -1) {
@@ -231,7 +232,7 @@ int main_ngrams(int argc, char * const argv[])
 			type_flags &= ~(char_maps[i].value);
 			break;
 		case 'n':
-			width = atoi(optarg);
+			length = atoi(optarg);
 			break;
 		case 'o':
 			output = optarg;
@@ -283,7 +284,7 @@ int main_ngrams(int argc, char * const argv[])
 		return EXIT_FAILURE;
 	}
 
-	if ((err = corpus_ngram_init(&ngram, width))) {
+	if ((err = corpus_ngram_init(&ngram, length))) {
 		goto error_ngram;
 	}
 
@@ -406,8 +407,11 @@ int main_ngrams(int argc, char * const argv[])
 		}
 	}
 
-	fprintf(stream, "Found %d %d-grams.\n",
-		corpus_ngram_count(&ngram, width), width);
+	if ((err = corpus_ngram_count(&ngram, &count))) {
+		goto error;
+	}
+
+	fprintf(stream, "Found %d %d-grams.\n", count, length);
 
 	err = 0;
 error:

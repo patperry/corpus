@@ -28,7 +28,7 @@
 
 static int corpus_tree_grow(struct corpus_tree *t, int nadd);
 
-static int node_init(struct corpus_tree_node *node);
+static int node_init(struct corpus_tree_node *node, int parent_id);
 static void node_destroy(struct corpus_tree_node *node);
 static int node_has(const struct corpus_tree_node *node, int key,
 		    int *indexptr);
@@ -78,7 +78,7 @@ int corpus_tree_root(struct corpus_tree *t)
 		goto out;
 	}
 
-	if ((err = node_init(&t->nodes[0]))) {
+	if ((err = node_init(&t->nodes[0], -1))) {
 		goto out;
 	}
 
@@ -111,7 +111,7 @@ int corpus_tree_add(struct corpus_tree *t, int parent_id, int key, int *idptr)
 			goto out;
 		}
 	}
-	if ((err = node_init(&t->nodes[id]))) {
+	if ((err = node_init(&t->nodes[id], parent_id))) {
 		goto out;
 	}
 	t->nnode++;
@@ -226,12 +226,10 @@ int corpus_tree_sort(struct corpus_tree *t, void *base, size_t width)
 			       width);
 		}
 
-		// Not needed any more since we no longer store parent_id:
-		//
-		// /* fix the parent id */
-		// if (nodebuf[i].parent_id >= 0) {
-		//	nodebuf[i].parent_id = map[nodebuf[i].parent_id];
-		// }
+		/* fix the parent id */
+		if (nodebuf[i].parent_id >= 0) {
+			nodebuf[i].parent_id = map[nodebuf[i].parent_id];
+		}
 
 		/* fix the child ids */
 		m = nodebuf[i].nitem;
@@ -282,11 +280,12 @@ int corpus_tree_grow(struct corpus_tree *t, int nadd)
 }
 
 
-int node_init(struct corpus_tree_node *node)
+int node_init(struct corpus_tree_node *node, int parent_id)
 {
 	node->keys = NULL;
 	node->ids = NULL;
 	node->nitem = 0;
+	node->parent_id = parent_id;
 	return 0;
 }
 

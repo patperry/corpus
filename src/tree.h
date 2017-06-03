@@ -32,6 +32,7 @@ struct corpus_tree_node {
 	int *keys;	/**< array of child keys */
 	int *ids;	/**< array of child ids */
 	int nitem;	/**< number of children */
+	int parent_id;	/**< parent ID (-1 if none) */
 };
 
 /**

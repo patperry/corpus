@@ -132,20 +132,22 @@ const char *next(void)
 	}
 }
 
-
-int count(int width)
-{
-	ck_assert(has_ngram);
-	return corpus_ngram_count(&ngram, width);
-}
 */
+
+
+int count(void)
+{
+	int count;
+	ck_assert(has_ngram);
+	ck_assert(!corpus_ngram_count(&ngram, &count));
+	return count;
+}
 
 
 START_TEST(test_unigram_init)
 {
 	init(1);
-	//ck_assert_int_eq(count(1), 0);
-	//ck_assert_int_eq(count(2), 0);
+	ck_assert_int_eq(count(), 0);
 	ck_assert(weight("a") == 0);
 	ck_assert(weight("ab") == 0);
 }
@@ -157,7 +159,7 @@ START_TEST(test_unigram_add1)
 	init(1);
 	add('z');
 	ck_assert(weight("z") == 1);
-	//ck_assert_int_eq(count(1), 1);
+	ck_assert_int_eq(count(), 1);
 }
 END_TEST
 
@@ -170,12 +172,12 @@ START_TEST(test_unigram_add2)
 	add('b');
 	ck_assert(weight("a") == 1);
 	ck_assert(weight("b") == 1);
-	//ck_assert_int_eq(count(1), 2);
+	ck_assert_int_eq(count(), 2);
 
 	add_weight('b', 3.0);
 	ck_assert(weight("b") == 4);
 	ck_assert(weight("a") == 1);
-	//ck_assert_int_eq(count(1), 2);
+	ck_assert_int_eq(count(), 2);
 }
 END_TEST
 
@@ -219,8 +221,7 @@ START_TEST(test_bigram_add2)
 	ck_assert(weight("x") == 1);
 	ck_assert(weight("y") == 1);
 	ck_assert(weight("xy") == 1);
-	//ck_assert_int_eq(count(1), 2);
-	//ck_assert_int_eq(count(2), 1);
+	ck_assert_int_eq(count(), 3);
 }
 END_TEST
 
@@ -236,8 +237,7 @@ START_TEST(test_bigram_add3)
 	ck_assert(weight("y") == 2);
 	ck_assert(weight("xy") == 1);
 	ck_assert(weight("yy") == 1);
-	//ck_assert_int_eq(count(1), 2);
-	//ck_assert_int_eq(count(2), 2);
+	ck_assert_int_eq(count(), 4);
 }
 END_TEST
 
@@ -256,8 +256,7 @@ START_TEST(test_bigram_add5)
 	ck_assert(weight("xy") == 1);
 	ck_assert(weight("yy") == 2);
 	ck_assert(weight("yx") == 1);
-	//ck_assert_int_eq(count(1), 2);
-	//ck_assert_int_eq(count(2), 3);
+	ck_assert_int_eq(count(), 5);
 }
 END_TEST
 
@@ -271,14 +270,12 @@ START_TEST(test_bigram_break)
 	break_();
 	add('z');
 
-	//ck_assert_int_eq(count(1), 3);
 	ck_assert(weight("x") == 1);
 	ck_assert(weight("y") == 1);
 	ck_assert(weight("z") == 1);
-
-	//ck_assert_int_eq(count(2), 1);
 	ck_assert(weight("xy") == 1);
 	ck_assert(weight("yz") == 0);
+	ck_assert_int_eq(count(), 4);
 }
 END_TEST
 
@@ -331,11 +328,9 @@ START_TEST(test_bigram_clear)
 	add('a');
 	add('a');
 
-	//ck_assert_int_eq(count(1), 1);
 	ck_assert(weight("a") == 2);
-
-	//ck_assert_int_eq(count(2), 1);
 	ck_assert(weight("aa") == 1);
+	ck_assert_int_eq(count(), 2);
 }
 END_TEST
 

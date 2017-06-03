@@ -37,7 +37,6 @@ static int corpus_ngram_grow(struct corpus_ngram *ng, int nadd);
 
 static int tree_init(struct corpus_ngram_tree *tree, int type_id);
 static void tree_destroy(struct corpus_ngram_tree *tree);
-static void tree_clear(struct corpus_ngram_tree *tree);
 static int tree_count(const struct corpus_ngram_tree *tree);
 static int tree_root(struct corpus_ngram_tree *tree);
 static int tree_add(struct corpus_ngram_tree *tree, const int *type_ids,
@@ -104,10 +103,11 @@ void corpus_ngram_destroy(struct corpus_ngram *ng)
 
 void corpus_ngram_clear(struct corpus_ngram *ng)
 {
-	int n = ng->ntree;
+	int k = ng->ntree;
 
-	while (n-- > 0) {
-		tree_clear(&ng->trees[n]);
+	corpus_table_clear(&ng->table);
+	while (k-- > 0) {
+		tree_destroy(&ng->trees[k]);
 	}
 	ng->ntree = 0;
 	ng->nbuffer = 0;
@@ -421,13 +421,6 @@ static void tree_destroy(struct corpus_ngram_tree *tree)
 {
 	corpus_free(tree->weights);
 	corpus_tree_destroy(&tree->prefix);
-}
-
-
-void tree_clear(struct corpus_ngram_tree *tree)
-{
-	corpus_tree_clear(&tree->prefix);
-	tree->weight = 0;
 }
 
 

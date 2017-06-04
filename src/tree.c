@@ -272,6 +272,16 @@ int corpus_tree_sort(struct corpus_tree *t, void *base, size_t width)
 			nodebuf[i].child_ids[j] = child_id;
 		}
 	}
+
+	/* fix the root's child ids */
+	m = t->root.nchild;
+	for (j = 0; j < m; j++) {
+		child_id = t->root.child_ids[j];
+		child_id = map[child_id];
+		t->root.child_ids[j] = child_id;
+	}
+
+	/* copy the buffer data */
 	memcpy(t->nodes, nodebuf, n * sizeof(*t->nodes));
 	if (base) {
 		memcpy(base, buf, n * width);

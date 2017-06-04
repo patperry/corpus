@@ -54,10 +54,10 @@ void teardown_ngram(void)
 }
 
 
-void init(int width)
+void init(int length)
 {
 	ck_assert(!has_ngram);
-	ck_assert(!corpus_ngram_init(&ngram, width));
+	ck_assert(!corpus_ngram_init(&ngram, length));
 	has_ngram = 1;
 }
 
@@ -92,16 +92,16 @@ void break_(void)
 double weight(const char *term)
 {
 	int buffer[16];
-	int width = (int)strlen(term);
+	int length = (int)strlen(term);
 	double w;
 	int k;
 
 	ck_assert(has_ngram);
 
-	for (k = 0; k < width; k++) {
+	for (k = 0; k < length; k++) {
 		buffer[k] = (int)term[k];
 	}
-	if (corpus_ngram_has(&ngram, buffer, width, &w)) {
+	if (corpus_ngram_has(&ngram, buffer, length, &w)) {
 		return w;
 	} else {
 		return 0;

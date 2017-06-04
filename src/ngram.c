@@ -198,3 +198,66 @@ out:
 
 	return has;
 }
+
+
+int corpus_ngram_sort(struct corpus_ngram *ng)
+{
+	int err;
+
+	if ((err = corpus_tree_sort(&ng->terms, ng->weights,
+				    sizeof(*ng->weights)))) {
+		corpus_log(err, "failed sorting n-grams");
+	}
+
+	return err;
+}
+
+
+void corpus_ngram_iter_make(struct corpus_ngram_iter *it,
+			    const struct corpus_ngram *ng,
+			    int *buffer)
+{
+	it->ngram = ng;
+	it->buffer = buffer;
+	it->type_ids = NULL;
+	it->length = 0;
+	it->weight = 0;
+	it->index = -1;
+}
+
+
+int corpus_ngram_iter_advance(struct corpus_ngram_iter *it)
+{
+	const struct corpus_ngram *ngram = it->ngram;
+	int *suffix;
+	int id, length;
+
+	// already finished
+	if (it->index == ngram->terms.nnode) {
+		return 0;
+	}
+
+	// just got to end
+	it->index++;
+	if (it->index == ngram->terms.nnode) {
+		it->type_ids = NULL;
+		it->length = 0;
+		it->weight = 0;
+		return 0;
+	}
+
+	id = it->index;
+	it->weight = ngram->weights[id];
+	it->type_ids = it->buffer;
+
+	suffix = it->buffer;
+	length = 0;
+	while (id >= 0) {
+		*suffix++ = ngram->terms.nodes[id].key;
+		length++;
+		id = ngram->terms.nodes[id].parent_id;
+	}
+
+	it->length = length;
+	return 1;
+}

@@ -24,10 +24,10 @@
 #include "testutil.h"
 
 struct corpus_ngram ngram;
-//struct corpus_ngram_iter iter;
+struct corpus_ngram_iter iter;
+int *iter_buffer;
 int has_ngram;
 int has_iter;
-int iter_width;
 
 char buffer[128];
 
@@ -36,15 +36,19 @@ void setup_ngram(void)
 	setup();
 	has_ngram = 0;
 	has_iter = 0;
+	iter_buffer = NULL;
 }
 
 
 void teardown_ngram(void)
 {
+	if (has_iter) {
+		free(iter_buffer);
+		has_iter = 0;
+	}
 	if (has_ngram) {
 		corpus_ngram_destroy(&ngram);
 		has_ngram = 0;
-		has_iter = 0;
 	}
 	teardown();
 }
@@ -105,13 +109,18 @@ double weight(const char *term)
 }
 
 
-/*
-void start(int width)
+void start(void)
 {
 	ck_assert(has_ngram);
-	//corpus_ngram_iter_make(&iter, &ngram, width);
+
+	if (has_iter) {
+		free(iter_buffer);
+	}
+	iter_buffer = malloc(ngram.length);
+	ck_assert(iter_buffer != NULL || ngram.length == 0);
+
+	corpus_ngram_iter_make(&iter, &ngram, iter_buffer);
 	has_iter = 1;
-	iter_width = width;
 }
 
 
@@ -122,7 +131,7 @@ const char *next(void)
 	ck_assert(has_iter);
 
 	if (corpus_ngram_iter_advance(&iter)) {
-		for (k = 0; k < iter_width; k++) {
+		for (k = 0; k < iter.length; k++) {
 			buffer[k] = (char)iter.type_ids[k];
 		}
 		buffer[k] = '\0';
@@ -131,8 +140,6 @@ const char *next(void)
 		return NULL;
 	}
 }
-
-*/
 
 
 int count(void)
@@ -189,11 +196,7 @@ START_TEST(test_unigram_iter)
 	add('b');
 	add('c');
 
-	/*
-	start(0);
-	ck_assert(next() == NULL);
-
-	start(1);
+	start();
 	ck_assert_str_eq(next(), "a");
 	ck_assert(iter.weight == 1);
 	ck_assert_str_eq(next(), "b");
@@ -201,13 +204,9 @@ START_TEST(test_unigram_iter)
 	ck_assert_str_eq(next(), "c");
 	ck_assert(iter.weight == 2);
 	ck_assert(next() == NULL);
-
-	start(2);
 	ck_assert(next() == NULL);
-	*/
 }
 END_TEST
-
 
 
 START_TEST(test_bigram_add2)
@@ -288,29 +287,24 @@ START_TEST(test_bigram_iter)
 	add('a');
 	add('b');
 
-	/*
-	start(0);
-	ck_assert(next() == NULL);
-
-	start(1);
+	start();
 	ck_assert_str_eq(next(), "a");
 	ck_assert(iter.weight == 4);
-	ck_assert_str_eq(next(), "b");
-	ck_assert(iter.weight == 2);
-	ck_assert(next() == NULL);
 
-	start(2);
 	ck_assert_str_eq(next(), "aa");
 	ck_assert(iter.weight == 2);
+
+	ck_assert_str_eq(next(), "b");
+	ck_assert(iter.weight == 2);
+
 	ck_assert_str_eq(next(), "ab");
 	ck_assert(iter.weight == 2);
+
 	ck_assert_str_eq(next(), "ba");
 	ck_assert(iter.weight == 1);
-	ck_assert(next() == NULL);
 
-	start(3);
 	ck_assert(next() == NULL);
-	*/
+	ck_assert(next() == NULL);
 }
 END_TEST
 
@@ -341,12 +335,14 @@ START_TEST(test_trigram_random)
 	double w;
 	int buf[3];
 	int a, nadd = 2000;
-	int key, b, nbuf, n;
+	int key, b, nbuf, n, nadv;
 	int i, j, k;
+	int is_sorted;
 
 	srand(0);
 	init(3);
 	n = 10;
+	is_sorted = 0;
 
 	for (i = 0; i < n; i++) {
 		count1[i] = 0;
@@ -391,6 +387,8 @@ START_TEST(test_trigram_random)
 		}
 	}
 
+check_counts:
+
 	for (i = 0; i < n; i++) {
 		buf[0] = i;
 		if (corpus_ngram_has(&ngram, buf, 1, &w)) {
@@ -425,6 +423,34 @@ START_TEST(test_trigram_random)
 				}
 			}
 		}
+	}
+
+	start();
+	nadv = 0;
+	while (corpus_ngram_iter_advance(&iter)) {
+		w = iter.weight;
+		if (iter.length == 1) {
+			i = iter.type_ids[0];
+			ck_assert(count1[i] == w);
+		} else if (iter.length == 2) {
+			i = iter.type_ids[0];
+			j = iter.type_ids[1];
+			ck_assert(count2[i][j] == w);
+		} else {
+			ck_assert_int_eq(iter.length, 3);
+			i = iter.type_ids[0];
+			j = iter.type_ids[1];
+			k = iter.type_ids[2];
+			ck_assert(count3[i][j][k] == w);
+		}
+		nadv++;
+	}
+	ck_assert_int_eq(nadv, ngram.terms.nnode);
+
+	if (!is_sorted) {
+		ck_assert(!corpus_ngram_sort(&ngram));
+		is_sorted = 1;
+		goto check_counts;
 	}
 }
 END_TEST

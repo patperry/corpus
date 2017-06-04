@@ -41,10 +41,15 @@ struct corpus_ngram {
 };
 
 /**
- * N-gram count iterator.
+ * An iterator over n-gram frequencies.
  */
 struct corpus_ngram_iter {
-	int index;
+	const struct corpus_ngram *ngram;	/**< parent collection */
+	int *buffer;		/**< client-supplied buffer for storing IDs */
+	const int *type_ids;	/**< current n-gram type IDS */
+	int length;		/**< current n-gram length */
+	double weight;		/**< current n-gram weight */
+	int index;		/**< index in the iteration */
 };
 
 /**
@@ -105,13 +110,25 @@ int corpus_ngram_has(const struct corpus_ngram *ng, const int *type_ids,
 		     int length, double *weightptr);
 
 /**
+ * Sort the n-gram terms into breadth-first order.
+ *
+ * \param ng the counter
+ *
+ * \returns 0 on success
+ */
+int corpus_ngram_sort(struct corpus_ngram *ng);
+
+/**
  * Construct an iterator over the set of seen n-grams.
  *
  * \param it the iterator
  * \param ng the n-gram counter
+ * \param buffer a buffer to store the type IDs, an array with
+ * 	length at least equal to ngram length
  */
 void corpus_ngram_iter_make(struct corpus_ngram_iter *it,
-			    const struct corpus_ngram *ng);
+			    const struct corpus_ngram *ng,
+			    int *buffer);
 
 /**
  * Advance an n-gram iterator to the next term.

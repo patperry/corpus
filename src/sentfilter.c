@@ -21,6 +21,7 @@
 #include "unicode/sentbreakprop.h"
 #include "error.h"
 #include "memory.h"
+#include "table.h"
 #include "text.h"
 #include "tree.h"
 #include "sentscan.h"

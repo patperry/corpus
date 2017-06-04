@@ -44,6 +44,7 @@ struct corpus_tree_node {
  * N-ary tree root.
  */
 struct corpus_tree_root {
+	struct corpus_table table; /**< child ID hash table */
 	int *child_ids;		/**< array of child IDs */
 	int nchild;		/**< number of children */
 	int nchild_max;		/**< child array capacity */

@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../src/table.h"
 #include "../src/text.h"
 #include "../src/tree.h"
 #include "../src/sentscan.h"

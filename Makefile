@@ -346,8 +346,8 @@ src/ngram.o: src/ngram.c src/array.h src/error.h src/memory.h src/table.h \
 src/render.o: src/render.c src/array.h src/error.h src/memory.h src/text.h \
 	src/unicode.h src/render.h
 src/sentfilter.o: src/sentfilter.c src/private/sentsuppress.h \
-	src/unicode/sentbreakprop.h src/error.h src/memory.h src/text.h \
-	src/tree.h src/sentscan.h src/sentfilter.h
+	src/unicode/sentbreakprop.h src/error.h src/memory.h src/table.h \
+	src/text.h src/tree.h src/sentscan.h src/sentfilter.h
 src/sentscan.o: src/sentscan.c src/text.h src/unicode/sentbreakprop.h \
 	src/sentscan.h
 src/symtab.o: src/symtab.c src/array.h src/error.h src/memory.h src/table.h \
@@ -358,7 +358,8 @@ src/termset.o: src/termset.c src/array.h src/error.h src/memory.h src/table.h \
 src/text.o: src/text.c src/error.h src/memory.h src/unicode.h src/text.h
 src/textset.o: src/textset.c src/array.h src/error.h src/memory.h src/table.h \
 	src/text.h src/textset.h
-src/tree.o: src/tree.c src/array.h src/error.h src/memory.h src/tree.h
+src/tree.o: src/tree.c src/array.h src/error.h src/memory.h src/table.h \
+	src/tree.h
 src/typemap.o: src/typemap.c src/error.h src/memory.h src/private/stopwords.h \
 	src/table.h src/text.h src/unicode.h src/typemap.h
 src/unicode.o: src/unicode.c src/unicode/casefold.h src/unicode/combining.h \
@@ -377,15 +378,15 @@ tests/check_filter.o: tests/check_filter.c src/table.h src/text.h \
 	src/wordscan.h src/filter.h src/census.h tests/testutil.h
 tests/check_ngram.o: tests/check_ngram.c src/table.h src/tree.h src/ngram.h \
 	tests/testutil.h
-tests/check_sentfilter.o: tests/check_sentfilter.c src/text.h src/tree.h \
-    	src/sentscan.h src/sentfilter.h tests/testutil.h
+tests/check_sentfilter.o: tests/check_sentfilter.c src/table.h src/text.h \
+	src/tree.h src/sentscan.h src/sentfilter.h tests/testutil.h
 tests/check_sentscan.o: tests/check_sentscan.c src/text.h src/unicode.h \
 	src/sentscan.h tests/testutil.h
 tests/check_symtab.o: tests/check_symtab.c src/table.h src/text.h \
 	src/textset.h src/typemap.h src/symtab.h tests/testutil.h
 tests/check_text.o: tests/check_text.c src/error.h src/text.h src/unicode.h \
 	tests/testutil.h
-tests/check_tree.o: tests/check_tree.c src/tree.h tests/testutil.h
+tests/check_tree.o: tests/check_tree.c src/table.h src/tree.h tests/testutil.h
 tests/check_typemap.o: tests/check_typemap.c src/table.h src/text.h \
 	src/textset.h src/typemap.h src/unicode.h tests/testutil.h
 tests/check_unicode.o: tests/check_unicode.c src/unicode.h tests/testutil.h

@@ -19,10 +19,12 @@
 #include <limits.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include "array.h"
 #include "error.h"
 #include "memory.h"
+#include "table.h"
 #include "tree.h"
 
 
@@ -34,17 +36,22 @@ static int node_has(const struct corpus_tree_node *node, int key,
 		    int *indexptr, const struct corpus_tree *tree);
 
 static int node_insert(struct corpus_tree_node *node, int index, int id);
-static int node_sort(struct corpus_tree_node *node);
+static int node_sort(struct corpus_tree_node *node,
+		     const struct corpus_tree *tree);
 static int node_grow(struct corpus_tree_node *node, int nadd);
 
 static int root_init(struct corpus_tree_root *root);
 static void root_destroy(struct corpus_tree_root *root);
 static void root_clear(struct corpus_tree_root *root);
 static int root_has(const struct corpus_tree_root *root, int key,
-		    int *indexptr, const struct corpus_tree *tree);
-static int root_insert(struct corpus_tree_root *root, int index, int id);
-static int root_sort(struct corpus_tree_root *root);
+		    int *idptr, const struct corpus_tree *tree);
+static int root_insert(struct corpus_tree_root *root, int index, int id,
+		       const struct corpus_tree *tree);
+static int root_sort(struct corpus_tree_root *root,
+		     const struct corpus_tree *tree);
 static int root_grow(struct corpus_tree_root *root, int nadd);
+static void root_rehash(struct corpus_tree_root *root,
+			const struct corpus_tree *tree);
 
 
 int corpus_tree_init(struct corpus_tree *t)
@@ -129,7 +136,7 @@ int corpus_tree_add(struct corpus_tree *t, int parent_id, int key, int *idptr)
 
 	// add the node to its parent
 	if (parent_id < 0) {
-		if ((err = root_insert(&t->root, i, id))) {
+		if ((err = root_insert(&t->root, i, id, t))) {
 			goto out;
 		}
 	} else {
@@ -194,11 +201,11 @@ int corpus_tree_sort(struct corpus_tree *t, void *base, size_t width)
 	}
 
 	/* sort all of the node key sets */
-	if ((err = root_sort(&t->root))) {
+	if ((err = root_sort(&t->root, t))) {
 		goto error_root_sort;
 	}
 	for (i = 0; i < n; i++) {
-		if ((err = node_sort(&t->nodes[i]))) {
+		if ((err = node_sort(&t->nodes[i], t))) {
 			goto error_node_sort;
 		}
 	}
@@ -376,10 +383,11 @@ out:
 }
 
 
-int node_sort(struct corpus_tree_node *node)
+int node_sort(struct corpus_tree_node *node, const struct corpus_tree *tree)
 {
 	// no-op; nodes are already sorted
 	(void)node;
+	(void)tree;
 	return 0;
 }
 
@@ -433,6 +441,13 @@ out:
 
 int root_init(struct corpus_tree_root *root)
 {
+	int err;
+
+	if ((err = corpus_table_init(&root->table))) {
+		corpus_log(err, "failed initializing tree root");
+		return err;
+	}
+
 	root->child_ids = NULL;
 	root->nchild = 0;
 	root->nchild_max = 0;
@@ -443,28 +458,53 @@ int root_init(struct corpus_tree_root *root)
 void root_destroy(struct corpus_tree_root *root)
 {
 	corpus_free(root->child_ids);
+	corpus_table_destroy(&root->table);
 }
 
 
 void root_clear(struct corpus_tree_root *root)
 {
+	corpus_table_clear(&root->table);
 	root->nchild = 0;
 }
 
 
 int root_has(const struct corpus_tree_root *root, int key,
-	     int *indexptr, const struct corpus_tree *tree)
+	     int *idptr, const struct corpus_tree *tree)
 {
-	struct corpus_tree_node node;
-	node.child_ids = root->child_ids;
-	node.nchild = root->nchild;
-	return node_has(&node, key, indexptr, tree);
+	struct corpus_table_probe probe;
+	int found, id, child_id;
+	unsigned hash;
+
+	hash = (unsigned)key;
+	id = -1;
+	found = 0;
+
+	corpus_table_probe_make(&probe, &root->table, hash);
+	while (corpus_table_probe_advance(&probe)) {
+		id = probe.current;
+		child_id = root->child_ids[id];
+		if (tree->nodes[child_id].key == key) {
+			found = 1;
+			goto out;
+		}
+	}
+out:
+	if (idptr) {
+		*idptr = found ? id : probe.index;
+	}
+	return found;
 }
 
 
-int root_insert(struct corpus_tree_root *root, int index, int id)
+int root_insert(struct corpus_tree_root *root, int index, int id,
+		const struct corpus_tree *tree)
 {
-	int err, ntail;
+	int err, pos, rehash;
+
+	pos = index;
+	index = root->nchild;
+	rehash = 0;
 
 	if (root->nchild == root->nchild_max) {
 		if ((err = root_grow(root, 1))) {
@@ -472,12 +512,22 @@ int root_insert(struct corpus_tree_root *root, int index, int id)
 		}
 	}
 
-	ntail = root->nchild - index;
-	memmove(root->child_ids + index + 1, root->child_ids + index,
-		ntail * sizeof(*root->child_ids));
+	if (root->nchild == root->table.capacity) {
+		if ((err = corpus_table_reinit(&root->table,
+					       root->nchild + 1))) {
+			goto out;
+		}
+		rehash = 1;
+	}
 
 	root->child_ids[index] = id;
 	root->nchild++;
+
+	if (rehash) {
+		root_rehash(root, tree);
+	} else {
+		root->table.items[pos] = index;
+	}
 
 	err = 0;
 out:
@@ -490,12 +540,56 @@ out:
 }
 
 
-int root_sort(struct corpus_tree_root *root)
+static int key_cmp(const void *x1, const void *x2)
 {
-	struct corpus_tree_node node;
-	node.child_ids = root->child_ids;
-	node.nchild = root->nchild;
-	return node_sort(&node);
+	int key1 = *(const int *)x1;
+	int key2 = *(const int *)x2;
+
+	if (key1 < key2) {
+		return -1;
+	} else if (key1 > key2) {
+		return +1;
+	} else {
+		return 0;
+	}
+}
+
+
+int root_sort(struct corpus_tree_root *root, const struct corpus_tree *tree)
+{
+	struct { int key; int id; } *buffer = NULL;
+	int err, child_id, i, n = root->nchild;
+
+	if (n == 0) {
+		return 0;
+	}
+
+	if (!(buffer = corpus_malloc(n * sizeof(*buffer)))) {
+		err = CORPUS_ERROR_NOMEM;
+		goto out;
+	}
+
+	for (i = 0; i < n; i++) {
+		child_id = root->child_ids[i];
+		buffer[i].key = tree->nodes[child_id].key;
+		buffer[i].id = child_id;
+	}
+
+	qsort(buffer, n, sizeof(*buffer), key_cmp);
+
+	for (i = 0; i < n; i++) {
+		root->child_ids[i] = buffer[i].id;
+	}
+
+	root_rehash(root, tree);
+	err = 0;
+
+out:
+	if (err) {
+		corpus_log(err, "failed sorting tree root children");
+	}
+	corpus_free(buffer);
+	return err;
 }
 
 
@@ -515,4 +609,20 @@ int root_grow(struct corpus_tree_root *root, int nadd)
 	root->nchild_max = size;
 	return 0;
 
+}
+
+
+void root_rehash(struct corpus_tree_root *root,
+		 const struct corpus_tree *tree)
+{
+	int i, n = root->nchild, child_id;
+	unsigned hash;
+
+	corpus_table_clear(&root->table);
+
+	for (i = 0; i < n; i++) {
+		child_id = root->child_ids[i];
+		hash = (unsigned)tree->nodes[child_id].key;
+		corpus_table_add(&root->table, hash, i);
+	}
 }

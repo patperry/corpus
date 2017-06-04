@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <check.h>
+#include "../src/table.h"
 #include "../src/tree.h"
 #include "testutil.h"
 

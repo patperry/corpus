@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		88341EA01EE09E2D0054BCCE /* ngram.c in Sources */ = {isa = PBXBuildFile; fileRef = 88341E9E1EE09E2D0054BCCE /* ngram.c */; };
-		88341EA11EE09E350054BCCE /* ngram.c in Sources */ = {isa = PBXBuildFile; fileRef = 88341E9E1EE09E2D0054BCCE /* ngram.c */; };
 		88351CE71E8DB64F001DA3A8 /* array.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CD41E8DB64F001DA3A8 /* array.c */; };
 		88351CE91E8DB64F001DA3A8 /* filebuf.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CD91E8DB64F001DA3A8 /* filebuf.c */; };
 		88351CEA1E8DB64F001DA3A8 /* symtab.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CDB1E8DB64F001DA3A8 /* symtab.c */; };
@@ -35,7 +34,8 @@
 		88B565BE1E96D4CE00FC9AEF /* main_scan.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565B91E96D4CE00FC9AEF /* main_scan.c */; };
 		88B565BF1E96D4CE00FC9AEF /* main_tokens.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565BA1E96D4CE00FC9AEF /* main_tokens.c */; };
 		88B565C01E96D4CE00FC9AEF /* sentscan.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565BB1E96D4CE00FC9AEF /* sentscan.c */; };
-		88C640781EE43B0B00081C2A /* check_ngram.c in Sources */ = {isa = PBXBuildFile; fileRef = 88341EA21EE09E440054BCCE /* check_ngram.c */; };
+		88C640791EE451C100081C2A /* ngram.c in Sources */ = {isa = PBXBuildFile; fileRef = 88341E9E1EE09E2D0054BCCE /* ngram.c */; };
+		88C6407A1EE451CC00081C2A /* check_tree.c in Sources */ = {isa = PBXBuildFile; fileRef = 88548A731ECF5BD90063254E /* check_tree.c */; };
 		88CB30DE1EDDA5BB000007DE /* sentfilter.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CB30DC1EDDA5BB000007DE /* sentfilter.c */; };
 		88CB30DF1EDDA5CE000007DE /* sentfilter.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CB30DC1EDDA5BB000007DE /* sentfilter.c */; };
 		88CD84251EBB7F4A00DF50CB /* libstemmer_utf8.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CD84241EBB7F4A00DF50CB /* libstemmer_utf8.c */; };
@@ -619,7 +619,6 @@
 				88CD84741EBB7FCA00DF50CB /* stem_UTF_8_swedish.c in Sources */,
 				88D5CC701EE219C700F9C36A /* termset.c in Sources */,
 				88CD84681EBB7FCA00DF50CB /* stem_UTF_8_english.c in Sources */,
-				88C640781EE43B0B00081C2A /* check_ngram.c in Sources */,
 				88CD84621EBB7FAD00DF50CB /* libstemmer_utf8.c in Sources */,
 				88CD846F1EBB7FCA00DF50CB /* stem_UTF_8_porter.c in Sources */,
 				88548A6C1ECE62FC0063254E /* filter.c in Sources */,
@@ -637,7 +636,6 @@
 				887D44831EC87CC2001C0E83 /* strntod.c in Sources */,
 				88CD84641EBB7FB400DF50CB /* utilities.c in Sources */,
 				88CD846B1EBB7FCA00DF50CB /* stem_UTF_8_german.c in Sources */,
-				88341EA11EE09E350054BCCE /* ngram.c in Sources */,
 				88EA69E81EAF94E400D57BEB /* testutil.c in Sources */,
 				88EA69E11EAF94DE00D57BEB /* symtab.c in Sources */,
 				88EA69DB1EAF94C500D57BEB /* data.c in Sources */,
@@ -648,9 +646,11 @@
 				88EA69EA1EAF94F500D57BEB /* strntoimax.c in Sources */,
 				88EA69DC1EAF94C900D57BEB /* datatype.c in Sources */,
 				88CD84731EBB7FCA00DF50CB /* stem_UTF_8_spanish.c in Sources */,
+				88C6407A1EE451CC00081C2A /* check_tree.c in Sources */,
 				88CB30DF1EDDA5CE000007DE /* sentfilter.c in Sources */,
 				88EA69DD1EAF94CC00D57BEB /* error.c in Sources */,
 				88CD84721EBB7FCA00DF50CB /* stem_UTF_8_russian.c in Sources */,
+				88C640791EE451C100081C2A /* ngram.c in Sources */,
 				88CD84631EBB7FB000DF50CB /* api.c in Sources */,
 				88CD84751EBB7FCA00DF50CB /* stem_UTF_8_tamil.c in Sources */,
 				88CD846A1EBB7FCA00DF50CB /* stem_UTF_8_french.c in Sources */,

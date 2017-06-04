@@ -30,13 +30,21 @@ static int corpus_tree_grow(struct corpus_tree *t, int nadd);
 
 static int node_init(struct corpus_tree_node *node, int parent_id, int key);
 static void node_destroy(struct corpus_tree_node *node);
-static void node_clear(struct corpus_tree_node *node);
 static int node_has(const struct corpus_tree_node *node, int key,
 		    int *indexptr, const struct corpus_tree *tree);
 
 static int node_insert(struct corpus_tree_node *node, int index, int id);
 static int node_sort(struct corpus_tree_node *node);
 static int node_grow(struct corpus_tree_node *node, int nadd);
+
+static int root_init(struct corpus_tree_root *root);
+static void root_destroy(struct corpus_tree_root *root);
+static void root_clear(struct corpus_tree_root *root);
+static int root_has(const struct corpus_tree_root *root, int key,
+		    int *indexptr, const struct corpus_tree *tree);
+static int root_insert(struct corpus_tree_root *root, int index, int id);
+static int root_sort(struct corpus_tree_root *root);
+static int root_grow(struct corpus_tree_root *root, int nadd);
 
 
 int corpus_tree_init(struct corpus_tree *t)
@@ -47,7 +55,7 @@ int corpus_tree_init(struct corpus_tree *t)
 	t->nnode = 0;
 	t->nnode_max = 0;
 
-	if ((err = node_init(&t->root, CORPUS_TREE_NONE, 0))) {
+	if ((err = root_init(&t->root))) {
 		goto error_root;
 	}
 
@@ -63,6 +71,7 @@ void corpus_tree_destroy(struct corpus_tree *t)
 {
 	corpus_tree_clear(t);
 	corpus_free(t->nodes);
+	root_destroy(&t->root);
 }
 
 
@@ -75,7 +84,7 @@ void corpus_tree_clear(struct corpus_tree *t)
 	}
 
 	t->nnode = 0;
-	node_clear(&t->root);
+	root_clear(&t->root);
 }
 
 
@@ -84,12 +93,21 @@ int corpus_tree_add(struct corpus_tree *t, int parent_id, int key, int *idptr)
 	struct corpus_tree_node *parent;
 	int err, i, id;
 
+	err = 0;
+
 	// check whether the key exists already
-	parent = parent_id < 0 ? &t->root : &t->nodes[parent_id];
-	if (node_has(parent, key, &i, t)) {
-		id = parent->child_ids[i];
-		err = 0;
-		goto out;
+	if (parent_id < 0) {
+		parent = NULL;
+		if (root_has(&t->root, key, &i, t)) {
+			id = t->root.child_ids[i];
+			goto out;
+		}
+	} else {
+		parent = &t->nodes[parent_id];
+		if (node_has(&t->nodes[parent_id], key, &i, t)) {
+			id = parent->child_ids[i];
+			goto out;
+		}
 	}
 
 	// add a new node
@@ -100,7 +118,9 @@ int corpus_tree_add(struct corpus_tree *t, int parent_id, int key, int *idptr)
 		}
 		
 		// re-set parent; tree_grow may have moved the nodes array
-		parent = parent_id < 0 ? &t->root : &t->nodes[parent_id];
+		if (parent_id >= 0) {
+			parent = &t->nodes[parent_id];
+		}
 	}
 	if ((err = node_init(&t->nodes[id], parent_id, key))) {
 		goto out;
@@ -108,9 +128,14 @@ int corpus_tree_add(struct corpus_tree *t, int parent_id, int key, int *idptr)
 	t->nnode++;
 
 	// add the node to its parent
-	
-	if ((err = node_insert(parent, i, id))) {
-		goto out;
+	if (parent_id < 0) {
+		if ((err = root_insert(&t->root, i, id))) {
+			goto out;
+		}
+	} else {
+		if ((err = node_insert(parent, i, id))) {
+			goto out;
+		}
 	}
 
 out:
@@ -131,27 +156,26 @@ int corpus_tree_has(const struct corpus_tree *t, int parent_id, int key,
 		    int *idptr)
 {
 	const struct corpus_tree_node *parent;
-	int i, id, ret;
+	int i, id, has;
+
+	id = CORPUS_TREE_NONE;
 
 	if (parent_id < 0) {
-		parent = &t->root;
+		if ((has = root_has(&t->root, key, &i, t))) {
+			id = t->root.child_ids[i];
+		}
 	} else {
 		parent = &t->nodes[parent_id];
-	}
-
-	if (node_has(parent, key, &i, t)) {
-		id = parent->child_ids[i];
-		ret = 1;
-	} else {
-		id = CORPUS_TREE_NONE;
-		ret = 0;
+		if ((has = node_has(parent, key, &i, t))) {
+			id = parent->child_ids[i];
+		}
 	}
 
 	if (idptr) {
 		*idptr = id;
 	}
 
-	return ret;
+	return has;
 }
 
 
@@ -170,8 +194,8 @@ int corpus_tree_sort(struct corpus_tree *t, void *base, size_t width)
 	}
 
 	/* sort all of the node key sets */
-	if ((err = node_sort(&t->root))) {
-		goto error_node_sort;
+	if ((err = root_sort(&t->root))) {
+		goto error_root_sort;
 	}
 	for (i = 0; i < n; i++) {
 		if ((err = node_sort(&t->nodes[i]))) {
@@ -257,6 +281,7 @@ error_map:
 	corpus_free(ids);
 error_ids:
 error_node_sort:
+error_root_sort:
 	if (err) {
 		corpus_log(err, "failed sorting tree");
 	}
@@ -295,14 +320,6 @@ int node_init(struct corpus_tree_node *node, int parent_id, int key)
 void node_destroy(struct corpus_tree_node *node)
 {
 	corpus_free(node->child_ids);
-}
-
-
-void node_clear(struct corpus_tree_node *node)
-{
-	corpus_free(node->child_ids);
-	node->child_ids = NULL;
-	node->nchild = 0;
 }
 
 
@@ -411,4 +428,91 @@ out:
 	}
 
 	return err;
+}
+
+
+int root_init(struct corpus_tree_root *root)
+{
+	root->child_ids = NULL;
+	root->nchild = 0;
+	root->nchild_max = 0;
+	return 0;
+}
+
+
+void root_destroy(struct corpus_tree_root *root)
+{
+	corpus_free(root->child_ids);
+}
+
+
+void root_clear(struct corpus_tree_root *root)
+{
+	root->nchild = 0;
+}
+
+
+int root_has(const struct corpus_tree_root *root, int key,
+	     int *indexptr, const struct corpus_tree *tree)
+{
+	struct corpus_tree_node node;
+	node.child_ids = root->child_ids;
+	node.nchild = root->nchild;
+	return node_has(&node, key, indexptr, tree);
+}
+
+
+int root_insert(struct corpus_tree_root *root, int index, int id)
+{
+	int err, ntail;
+
+	if (root->nchild == root->nchild_max) {
+		if ((err = root_grow(root, 1))) {
+			goto out;
+		}
+	}
+
+	ntail = root->nchild - index;
+	memmove(root->child_ids + index + 1, root->child_ids + index,
+		ntail * sizeof(*root->child_ids));
+
+	root->child_ids[index] = id;
+	root->nchild++;
+
+	err = 0;
+out:
+	if (err) {
+		corpus_log(err, "failed adding child to tree root");
+	}
+
+	return err;
+
+}
+
+
+int root_sort(struct corpus_tree_root *root)
+{
+	struct corpus_tree_node node;
+	node.child_ids = root->child_ids;
+	node.nchild = root->nchild;
+	return node_sort(&node);
+}
+
+
+int root_grow(struct corpus_tree_root *root, int nadd)
+{
+	void *base = root->child_ids;
+	int size = root->nchild_max;
+	int n = root->nchild;
+	size_t width = sizeof(*root->child_ids);
+	int err;
+
+	if ((err = corpus_array_grow(&base, &size, width, n, nadd))) {
+		corpus_log(err, "failed allocating tree root child array");
+		return err;
+	}
+	root->child_ids = base;
+	root->nchild_max = size;
+	return 0;
+
 }

@@ -36,8 +36,17 @@
 struct corpus_tree_node {
 	int parent_id;	/**< parent ID (-1 for root) */
 	int key;	/**< node key */
-	int *child_ids;	/**< array of child ids */
+	int *child_ids;	/**< array of child IDs */
 	int nchild;	/**< number of children */
+};
+
+/**
+ * N-ary tree root.
+ */
+struct corpus_tree_root {
+	int *child_ids;		/**< array of child IDs */
+	int nchild;		/**< number of children */
+	int nchild_max;		/**< child array capacity */
 };
 
 /**
@@ -45,7 +54,7 @@ struct corpus_tree_node {
  */
 struct corpus_tree {
 	struct corpus_tree_node *nodes;	/**< array of tree nodes */
-	struct corpus_tree_node root;	/**< root */
+	struct corpus_tree_root root;	/**< root */
 	int nnode;	/**< node array length */
 	int nnode_max;	/**< node array capacity */	
 };

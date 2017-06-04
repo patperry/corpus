@@ -61,7 +61,7 @@ START_TEST(test_random_trigram)
 	int id0, id;
 	int buf[3];
 	int a, nadd = 2000;
-	int nbuf, n;
+	int n;
 	int i, j, k, len;
 
 	srand(0);
@@ -86,7 +86,6 @@ START_TEST(test_random_trigram)
 		}
 	}
 
-	nbuf = 0;
 	for (a = 0; a < nadd; a++) {
 		len = 1 + (rand() % 3);
 		for (k = 0; k < len; k++) {

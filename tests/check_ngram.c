@@ -137,10 +137,8 @@ const char *next(void)
 
 int count(void)
 {
-	int count;
 	ck_assert(has_ngram);
-	ck_assert(!corpus_ngram_count(&ngram, &count));
-	return count;
+	return ngram.terms.nnode;
 }
 
 

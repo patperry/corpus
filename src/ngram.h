@@ -29,23 +29,11 @@
 #define CORPUS_NGRAM_WIDTH_MAX	127
 
 /**
- * N-gram term set, all ending with the same unigram.
- */
-struct corpus_ngram_tree {
-	struct corpus_tree prefix;	/**< prefix tree */
-	double *weights;		/**< prefix weights */
-	double weight;			/**< unigram weight */
-	int type_id;			/**< unigram base */
-};
-
-/**
  * N-gram frequency counter.
  */
 struct corpus_ngram {
-	struct corpus_table table; /**< unigram table */
-	struct corpus_ngram_tree *trees;	/**< the n-gram trees */
-	int ntree;		/**< number of n-gram trees */ 
-	int ntree_max;		/**< trees array capacity */
+	struct corpus_tree terms; /**< the seen n-gram terms */
+	double *weights;	/**< term weights */
 	int *buffer;		/**< input buffer */
 	int nbuffer;		/**< number of occupied spots in the buffer */
 	int nbuffer_max;	/**< buffer capacity */
@@ -56,12 +44,6 @@ struct corpus_ngram {
  * N-gram count iterator.
  */
 struct corpus_ngram_iter {
-	const struct corpus_ngram *ngram;
-	int buffer[CORPUS_NGRAM_WIDTH_MAX];
-	int tree_id;
-	const int *type_ids;
-	int length;
-	double weight;
 	int index;
 };
 
@@ -88,17 +70,6 @@ void corpus_ngram_destroy(struct corpus_ngram *ng);
 void corpus_ngram_clear(struct corpus_ngram *ng);
 
 /**
- * Get the number of n-grams seen.
- *
- * \param ng the counter
- * \param countptr if non-NULL, a location to store the count
- *
- * \returns 0 on success
- */
-int corpus_ngram_count(const struct corpus_ngram *ng, int *countptr);
-
-
-/**
  * Add a type to the input buffer and update the counts for the new
  * n-grams.
  *
@@ -118,7 +89,6 @@ int corpus_ngram_add(struct corpus_ngram *ng, int type_id, double weight);
  * \returns 0 on success
  */
 int corpus_ngram_break(struct corpus_ngram *ng);
-
 
 /**
  * Check whether an n-gram exists in the counter, and get its weight.

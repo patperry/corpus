@@ -407,10 +407,7 @@ int main_ngrams(int argc, char * const argv[])
 		}
 	}
 
-	if ((err = corpus_ngram_count(&ngram, &count))) {
-		goto error;
-	}
-
+	count = ngram.terms.nnode;
 	fprintf(stream, "Found %d %d-grams.\n", count, length);
 
 	err = 0;

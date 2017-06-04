@@ -31,11 +31,11 @@
 		886D7CCE1ED32C5E00566B7B /* census.c in Sources */ = {isa = PBXBuildFile; fileRef = 884F5CAB1EBA67ED00DA1C24 /* census.c */; };
 		887D44821EC87CB8001C0E83 /* strntod.c in Sources */ = {isa = PBXBuildFile; fileRef = 887D44811EC87CB8001C0E83 /* strntod.c */; };
 		887D44831EC87CC2001C0E83 /* strntod.c in Sources */ = {isa = PBXBuildFile; fileRef = 887D44811EC87CB8001C0E83 /* strntod.c */; };
-		88A7DBBE1EE3620E00817A6E /* check_tree.c in Sources */ = {isa = PBXBuildFile; fileRef = 88548A731ECF5BD90063254E /* check_tree.c */; };
 		88B565BD1E96D4CE00FC9AEF /* main_get.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565B81E96D4CE00FC9AEF /* main_get.c */; };
 		88B565BE1E96D4CE00FC9AEF /* main_scan.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565B91E96D4CE00FC9AEF /* main_scan.c */; };
 		88B565BF1E96D4CE00FC9AEF /* main_tokens.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565BA1E96D4CE00FC9AEF /* main_tokens.c */; };
 		88B565C01E96D4CE00FC9AEF /* sentscan.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565BB1E96D4CE00FC9AEF /* sentscan.c */; };
+		88C640781EE43B0B00081C2A /* check_ngram.c in Sources */ = {isa = PBXBuildFile; fileRef = 88341EA21EE09E440054BCCE /* check_ngram.c */; };
 		88CB30DE1EDDA5BB000007DE /* sentfilter.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CB30DC1EDDA5BB000007DE /* sentfilter.c */; };
 		88CB30DF1EDDA5CE000007DE /* sentfilter.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CB30DC1EDDA5BB000007DE /* sentfilter.c */; };
 		88CD84251EBB7F4A00DF50CB /* libstemmer_utf8.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CD84241EBB7F4A00DF50CB /* libstemmer_utf8.c */; };
@@ -619,6 +619,7 @@
 				88CD84741EBB7FCA00DF50CB /* stem_UTF_8_swedish.c in Sources */,
 				88D5CC701EE219C700F9C36A /* termset.c in Sources */,
 				88CD84681EBB7FCA00DF50CB /* stem_UTF_8_english.c in Sources */,
+				88C640781EE43B0B00081C2A /* check_ngram.c in Sources */,
 				88CD84621EBB7FAD00DF50CB /* libstemmer_utf8.c in Sources */,
 				88CD846F1EBB7FCA00DF50CB /* stem_UTF_8_porter.c in Sources */,
 				88548A6C1ECE62FC0063254E /* filter.c in Sources */,
@@ -646,7 +647,6 @@
 				88CD84701EBB7FCA00DF50CB /* stem_UTF_8_portuguese.c in Sources */,
 				88EA69EA1EAF94F500D57BEB /* strntoimax.c in Sources */,
 				88EA69DC1EAF94C900D57BEB /* datatype.c in Sources */,
-				88A7DBBE1EE3620E00817A6E /* check_tree.c in Sources */,
 				88CD84731EBB7FCA00DF50CB /* stem_UTF_8_spanish.c in Sources */,
 				88CB30DF1EDDA5CE000007DE /* sentfilter.c in Sources */,
 				88EA69DD1EAF94CC00D57BEB /* error.c in Sources */,

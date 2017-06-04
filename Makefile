@@ -79,12 +79,12 @@ DATA    = data/ucd/CaseFolding.txt \
 
 TESTS_T = tests/check_census tests/check_data tests/check_filter \
 	  tests/check_ngram tests/check_sentfilter tests/check_sentscan \
-	  tests/check_symtab tests/check_text tests/check_tree \
+	  tests/check_symtab tests/check_termset tests/check_text tests/check_tree \
 	  tests/check_typemap tests/check_unicode tests/check_wordscan
 TESTS_O = tests/check_census.o tests/check_data.o tests/check_filter.o \
 	  tests/check_ngram.o tests/check_sentfilter.o tests/check_sentscan.o \
-	  tests/check_symtab.o tests/check_text.o tests/check_tree.o \
-	  tests/check_typemap.o tests/check_unicode.o \
+	  tests/check_symtab.o tests/check_termset.o tests/check_text.o \
+	  tests/check_tree.o tests/check_typemap.o tests/check_unicode.o \
 	  tests/check_wordscan.o tests/testutil.o
 
 TESTS_DATA = data/ucd/NormalizationTest.txt \
@@ -266,6 +266,9 @@ tests/check_sentscan: tests/check_sentscan.o tests/testutil.o $(CORPUS_A) \
 tests/check_symtab: tests/check_symtab.o tests/testutil.o $(CORPUS_A)
 	$(CC) -o $@ $^ $(LIBS) $(TEST_LIBS) $(LDFLAGS)
 
+tests/check_termset: tests/check_termset.o tests/testutil.o $(CORPUS_A)
+	$(CC) -o $@ $^ $(LIBS) $(TEST_LIBS) $(LDFLAGS)
+
 tests/check_text: tests/check_text.o tests/testutil.o $(CORPUS_A)
 	$(CC) -o $@ $^ $(LIBS) $(TEST_LIBS) $(LDFLAGS)
 
@@ -384,6 +387,8 @@ tests/check_sentscan.o: tests/check_sentscan.c src/text.h src/unicode.h \
 	src/sentscan.h tests/testutil.h
 tests/check_symtab.o: tests/check_symtab.c src/table.h src/text.h \
 	src/textset.h src/typemap.h src/symtab.h tests/testutil.h
+tests/check_termset.o: tests/check_termset.c src/table.h src/termset.h \
+	tests/testutil.h
 tests/check_text.o: tests/check_text.c src/error.h src/text.h src/unicode.h \
 	tests/testutil.h
 tests/check_tree.o: tests/check_tree.c src/table.h src/tree.h tests/testutil.h

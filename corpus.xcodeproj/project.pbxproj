@@ -35,7 +35,6 @@
 		88B565BF1E96D4CE00FC9AEF /* main_tokens.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565BA1E96D4CE00FC9AEF /* main_tokens.c */; };
 		88B565C01E96D4CE00FC9AEF /* sentscan.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565BB1E96D4CE00FC9AEF /* sentscan.c */; };
 		88C640791EE451C100081C2A /* ngram.c in Sources */ = {isa = PBXBuildFile; fileRef = 88341E9E1EE09E2D0054BCCE /* ngram.c */; };
-		88C6407B1EE4627700081C2A /* check_ngram.c in Sources */ = {isa = PBXBuildFile; fileRef = 88341EA21EE09E440054BCCE /* check_ngram.c */; };
 		88CB30DE1EDDA5BB000007DE /* sentfilter.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CB30DC1EDDA5BB000007DE /* sentfilter.c */; };
 		88CB30DF1EDDA5CE000007DE /* sentfilter.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CB30DC1EDDA5BB000007DE /* sentfilter.c */; };
 		88CD84251EBB7F4A00DF50CB /* libstemmer_utf8.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CD84241EBB7F4A00DF50CB /* libstemmer_utf8.c */; };
@@ -103,6 +102,7 @@
 		88EA69EA1EAF94F500D57BEB /* strntoimax.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EE9C811E9000BB00B1FEBA /* strntoimax.c */; };
 		88EE9C801E9000A400B1FEBA /* datatype.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EE9C7E1E9000A400B1FEBA /* datatype.c */; };
 		88EE9C821E9000BB00B1FEBA /* strntoimax.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EE9C811E9000BB00B1FEBA /* strntoimax.c */; };
+		88F8659C1EE4823900C5BCA6 /* check_termset.c in Sources */ = {isa = PBXBuildFile; fileRef = 88F8659A1EE4823400C5BCA6 /* check_termset.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -243,6 +243,7 @@
 		88EE9C7E1E9000A400B1FEBA /* datatype.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = datatype.c; path = src/datatype.c; sourceTree = "<group>"; };
 		88EE9C7F1E9000A400B1FEBA /* datatype.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = datatype.h; path = src/datatype.h; sourceTree = "<group>"; };
 		88EE9C811E9000BB00B1FEBA /* strntoimax.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = strntoimax.c; path = lib/strntoimax.c; sourceTree = "<group>"; };
+		88F8659A1EE4823400C5BCA6 /* check_termset.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = check_termset.c; path = tests/check_termset.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -362,6 +363,7 @@
 				88CB30E01EDDA5E0000007DE /* check_sentfilter.c */,
 				88EA69EB1EAF952D00D57BEB /* check_sentscan.c */,
 				88EA69EC1EAF952D00D57BEB /* check_symtab.c */,
+				88F8659A1EE4823400C5BCA6 /* check_termset.c */,
 				88EA69ED1EAF952D00D57BEB /* check_text.c */,
 				88548A731ECF5BD90063254E /* check_tree.c */,
 				88548A741ECF5BD90063254E /* check_typemap.c */,
@@ -619,7 +621,6 @@
 				88CD84741EBB7FCA00DF50CB /* stem_UTF_8_swedish.c in Sources */,
 				88D5CC701EE219C700F9C36A /* termset.c in Sources */,
 				88CD84681EBB7FCA00DF50CB /* stem_UTF_8_english.c in Sources */,
-				88C6407B1EE4627700081C2A /* check_ngram.c in Sources */,
 				88CD84621EBB7FAD00DF50CB /* libstemmer_utf8.c in Sources */,
 				88CD846F1EBB7FCA00DF50CB /* stem_UTF_8_porter.c in Sources */,
 				88548A6C1ECE62FC0063254E /* filter.c in Sources */,
@@ -629,6 +630,7 @@
 				88548A721ECF5BBE0063254E /* tree.c in Sources */,
 				88EA69E51EAF94DE00D57BEB /* unicode.c in Sources */,
 				88EA69E61EAF94DE00D57BEB /* wordscan.c in Sources */,
+				88F8659C1EE4823900C5BCA6 /* check_termset.c in Sources */,
 				88548A6E1ECE63060063254E /* typemap.c in Sources */,
 				88CD846C1EBB7FCA00DF50CB /* stem_UTF_8_hungarian.c in Sources */,
 				886D7CCE1ED32C5E00566B7B /* census.c in Sources */,

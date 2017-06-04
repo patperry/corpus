@@ -12,6 +12,7 @@ xcuserdata
 /tests/check_sentfilter
 /tests/check_sentscan
 /tests/check_symtab
+/tests/check_termset
 /tests/check_text
 /tests/check_tree
 /tests/check_typemap

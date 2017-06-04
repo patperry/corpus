@@ -24,11 +24,6 @@
  */
 
 /**
- * Maximum n-gram length.
- */
-#define CORPUS_NGRAM_WIDTH_MAX	127
-
-/**
  * N-gram frequency counter.
  */
 struct corpus_ngram {

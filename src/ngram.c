@@ -25,7 +25,15 @@
 #include "tree.h"
 #include "ngram.h"
 
-#define CORPUS_NGRAM_BUFFER_INIT (2 * (CORPUS_NGRAM_WIDTH_MAX + 1))
+
+static int ngram_nbuffer(int length)
+{
+	if (length <= 0) {
+		return 0;
+	} else {
+		return length;
+	}
+}
 
 
 int corpus_ngram_init(struct corpus_ngram *ng, int length)
@@ -37,11 +45,6 @@ int corpus_ngram_init(struct corpus_ngram *ng, int length)
 		corpus_log(err, "n-gram length is non-positive (%d)",
 			   length);
 		goto error_length;
-	} else if (length > CORPUS_NGRAM_WIDTH_MAX) {
-		err = CORPUS_ERROR_INVAL;
-		corpus_log(err, "n-gram length exceeds maximum (%d)",
-			   CORPUS_NGRAM_WIDTH_MAX);
-		goto error_length;
 	}
 	ng->length = length;
 
@@ -50,7 +53,7 @@ int corpus_ngram_init(struct corpus_ngram *ng, int length)
 	}
 	ng->weights = NULL;
 
-	n = CORPUS_NGRAM_BUFFER_INIT;
+	n = ngram_nbuffer(length);
 	if (!(ng->buffer = corpus_malloc(n * sizeof(*ng->buffer)))) {
 		err = CORPUS_ERROR_NOMEM;
 		goto error_buffer;

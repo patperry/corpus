@@ -32,9 +32,6 @@
 /** ID code for a type that has been dropped. */
 #define CORPUS_FILTER_DROPPED  (-3)
 
-/** ID code for a type that has been excluded. */
-#define CORPUS_FILTER_EXCLUDED (-4)
-
 /**
  * Filter type, for specifying which word classes to drop.
  */
@@ -67,8 +64,6 @@ struct corpus_filter {
 						requiring reallocation */
 	struct corpus_wordscan scan;	/**< current word scan */
 	int flags;			/**< filter flags */
-	int has_select;			/**< whether the filter has a
-					  selection set */
 	int has_scan;			/**< whether a scan is in progress */
 	struct corpus_text current;	/**< current token */
 	int type_id;			/**< current type ID */
@@ -141,19 +136,6 @@ int corpus_filter_drop(struct corpus_filter *f,
  */
 int corpus_filter_drop_except(struct corpus_filter *f,
 			      const struct corpus_text *type);
-
-/**
- * Add a type to the filter's selection set if it is not already a
- * member.
- *
- * \param f the filter
- * \param type the type to add to the selection set
- * \param idptr if non-NULL, a location to store the type's id
- *
- * \returns 0 on success
- */
-int corpus_filter_select(struct corpus_filter *f,
-			 const struct corpus_text *type, int *idptr);
 
 /**
  * Start scanning a text.

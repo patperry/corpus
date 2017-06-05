@@ -77,7 +77,6 @@ int corpus_filter_init(struct corpus_filter *f, int symbol_kind,
 	f->ntype = 0;
 	f->ntype_max = 0;
 	f->flags = flags;
-	f->has_select = 0;
 	f->has_scan = 0;
 	f->current.ptr = NULL;
 	f->current.attr = 0;
@@ -250,10 +249,6 @@ int corpus_filter_drop(struct corpus_filter *f,
 	case CORPUS_FILTER_DROPPED:
 		break;
 
-	case CORPUS_FILTER_EXCLUDED:
-		f->type_ids[symbol_id] = CORPUS_FILTER_DROPPED;
-		break;
-
 	default:
 		f->type_ids[symbol_id] = CORPUS_FILTER_DROPPED;
 
@@ -293,20 +288,16 @@ int corpus_filter_drop_except(struct corpus_filter *f,
 	type_id = f->type_ids[symbol_id];
 
 	if (type_id == CORPUS_FILTER_DROPPED) {
-		if (f->has_select) {
-			type_id = CORPUS_FILTER_EXCLUDED;
-		} else {
-			// add a new type
-			if (f->ntype == f->ntype_max) {
-				if ((err = corpus_filter_grow_types(f, 1))) {
-					goto out;
-				}
+		// add a new type
+		if (f->ntype == f->ntype_max) {
+			if ((err = corpus_filter_grow_types(f, 1))) {
+				goto out;
 			}
-
-			type_id = f->ntype;
-			f->symbol_ids[type_id] = symbol_id;
-			f->ntype++;
 		}
+
+		type_id = f->ntype;
+		f->symbol_ids[type_id] = symbol_id;
+		f->ntype++;
 
 		f->type_ids[symbol_id] = type_id;
 	}
@@ -316,68 +307,6 @@ out:
 	if (err) {
 		corpus_log(err, "failed adding type to drop exception list");
 		f->error = err;
-	}
-
-	return err;
-}
-
-
-
-int corpus_filter_select(struct corpus_filter *f,
-			 const struct corpus_text *type, int *idptr)
-{
-	int err, symbol_id, i, n, id = -1;
-
-	CHECK_ERROR(CORPUS_ERROR_INVAL);
-
-	if ((err = corpus_filter_add_symbol(f, type, &symbol_id))) {
-		goto out;
-	}
-
-	if (!f->has_select) {
-		n = f->symtab.ntype;
-
-		for (i = 0; i < n; i++) {
-			switch (f->type_ids[i]) {
-			case CORPUS_FILTER_IGNORED:
-			case CORPUS_FILTER_DROPPED:
-				break;
-
-			default:
-				f->type_ids[i] = CORPUS_FILTER_EXCLUDED;
-				break;
-			}
-		}
-
-		f->has_select = 1;
-		f->ntype = 0;
-	}
-
-	id = f->type_ids[symbol_id];
-
-	// add the new type if it does not exist
-	if (id == CORPUS_FILTER_EXCLUDED) {
-		id = f->ntype;
-		if (f->ntype == f->ntype_max) {
-			if ((err = corpus_filter_grow_types(f, 1))) {
-				goto out;
-			}
-		}
-		f->symbol_ids[id] = symbol_id;
-		f->type_ids[symbol_id] = id;
-		f->ntype++;
-	}
-
-	err = 0;
-out:
-	if (err) {
-		corpus_log(err, "failed adding type to select list");
-		f->error = err;
-		id = -1;
-	}
-
-	if (idptr) {
-		*idptr = id;
 	}
 
 	return err;
@@ -636,8 +565,6 @@ int corpus_filter_set_type(struct corpus_filter *f,
 
 	if (prop) {
 		id = prop;
-	} else if (f->has_select) {
-		id = CORPUS_FILTER_EXCLUDED;
 	} else {
 		// a new type got added
 		if (f->ntype == f->ntype_max) {

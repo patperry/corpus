@@ -86,7 +86,8 @@ static void init(const char *stemmer, int flags)
 
 static void start(const struct corpus_text *text)
 {
-	ck_assert(!corpus_filter_start(&filter, text));
+	ck_assert(!corpus_filter_start(&filter, text,
+				       CORPUS_FILTER_SCAN_TOKENS));
 }
 
 

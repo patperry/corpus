@@ -47,6 +47,14 @@ enum corpus_filter_type {
 };
 
 /**
+ * Filter scanning options.
+ */
+enum corpus_filter_scan {
+	CORPUS_FILTER_SCAN_TOKENS = 0,	/**< scan a token sequence */
+	CORPUS_FILTER_SCAN_TYPES = 1	/**< scan a type sequence */
+};
+
+/**
  * Text filter.
  */
 struct corpus_filter {
@@ -65,6 +73,8 @@ struct corpus_filter {
 	struct corpus_wordscan scan;	/**< current word scan */
 	int flags;			/**< filter flags */
 	int has_scan;			/**< whether a scan is in progress */
+	int scan_type;			/**< #corpus_filter_scan value
+					  indicating scan type */
 	struct corpus_text current;	/**< current token */
 	int type_id;			/**< current type ID */
 	int error;			/**< last error code */
@@ -142,11 +152,13 @@ int corpus_filter_drop_except(struct corpus_filter *f,
  *
  * \param f the filter
  * \param text the text
+ * \param type a #corpus_filter_scan value indicating the scan type
+
  *
  * \returns 0 on success
  */
 int corpus_filter_start(struct corpus_filter *f,
-			const struct corpus_text *text);
+			const struct corpus_text *text, int type);
 
 /**
  * Advance a text to the next type.

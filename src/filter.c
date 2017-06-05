@@ -78,6 +78,7 @@ int corpus_filter_init(struct corpus_filter *f, int symbol_kind,
 	f->ntype_max = 0;
 	f->flags = flags;
 	f->has_scan = 0;
+	f->scan_type = 0;
 	f->current.ptr = NULL;
 	f->current.attr = 0;
 	f->type_id = CORPUS_FILTER_NONE;
@@ -162,7 +163,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 	}
 
 	// iterate over all non-ignored symbols in the type
-	if ((err = corpus_filter_start(f, type))) {
+	if ((err = corpus_filter_start(f, type, CORPUS_FILTER_SCAN_TYPES))) {
 		goto out;
 	}
 
@@ -314,12 +315,13 @@ out:
 
 
 int corpus_filter_start(struct corpus_filter *f,
-			const struct corpus_text *text)
+			const struct corpus_text *text, int type)
 {
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
 	corpus_wordscan_make(&f->scan, text);
 	f->has_scan = 1;
+	f->scan_type = type;
 	f->current.ptr = text->ptr;
 	f->current.attr = 0;
 	f->type_id = CORPUS_FILTER_NONE;
@@ -464,12 +466,22 @@ int corpus_filter_advance_raw(struct corpus_filter *f, int *idptr)
 		goto out;
 	}
 
-	// add the token
 	token = &f->scan.current;
 	nsym0 = f->symtab.ntype;
 	size0 = f->symtab.ntype_max;
-	if ((err = corpus_symtab_add_token(&f->symtab, token, &token_id))) {
-		goto out;
+	if (f->scan_type == CORPUS_FILTER_SCAN_TOKENS) {
+		// add the token
+		if ((err = corpus_symtab_add_token(&f->symtab, token,
+						   &token_id))) {
+			goto out;
+		}
+		symbol_id = f->symtab.tokens[token_id].type_id;
+	} else {
+		// add the type
+		if ((err = corpus_symtab_add_type(&f->symtab, token,
+						  &symbol_id))) {
+			goto out;
+		}
 	}
 	nsym = f->symtab.ntype;
 	size = f->symtab.ntype_max;
@@ -480,9 +492,6 @@ int corpus_filter_advance_raw(struct corpus_filter *f, int *idptr)
 			goto out;
 		}
 	}
-
-	// get the symbol id
-	symbol_id = f->symtab.tokens[token_id].type_id;
 
 	// a new symbol got added
 	if (nsym0 != nsym) {

@@ -26,6 +26,7 @@
 #include "text.h"
 #include "textset.h"
 #include "unicode.h"
+#include "wordscan.h"
 #include "typemap.h"
 
 
@@ -243,12 +244,26 @@ int corpus_typemap_stem_except(struct corpus_typemap *map,
 	return err;
 }
 
+static int count_words(const struct corpus_text *text)
+{
+	struct corpus_wordscan scan;
+	int nword;
+
+	nword = 0;
+	corpus_wordscan_make(&scan, text);
+	while (corpus_wordscan_advance(&scan)) {
+		nword++;
+	}
+	return nword;
+}
+
 
 int corpus_typemap_stem(struct corpus_typemap *map)
 {
+	struct corpus_text stem;
 	size_t size;
 	const uint8_t *buf;
-	int err;
+	int err, nword0, nword;
 
 	if (!map->stemmer) {
 		return 0;
@@ -268,6 +283,7 @@ int corpus_typemap_stem(struct corpus_typemap *map)
 		goto out;
 	}
 
+	nword0 = count_words(&map->type);
 	buf = (const uint8_t *)sb_stemmer_stem(map->stemmer, map->type.ptr,
 					       (int)size);
 	if (buf == NULL) {
@@ -277,14 +293,20 @@ int corpus_typemap_stem(struct corpus_typemap *map)
 		goto out;
 	}
 
-	size = (size_t)sb_stemmer_length(map->stemmer);
-
-	memcpy(map->type.ptr, buf, size);
-	map->type.ptr[size] = '\0';
-
 	// keep old utf8 bit, but update to new size
-	map->type.attr &= ~CORPUS_TEXT_SIZE_MASK;
-	map->type.attr |= CORPUS_TEXT_SIZE_MASK & size;
+	size = (size_t)sb_stemmer_length(map->stemmer);
+	stem.ptr = (uint8_t *)buf;
+	stem.attr = (map->type.attr & ~CORPUS_TEXT_SIZE_MASK) | size;
+	nword = count_words(&stem);
+
+	// only stem types if the number of words doesn't change; this
+	// protects against turning inner punctuation like 'u.s' to
+	// outer punctuation like 'u.'
+	if (nword == nword0) {
+		memcpy(map->type.ptr, buf, size);
+		map->type.ptr[size] = '\0';
+		map->type.attr = stem.attr;
+	}
 	err = 0;
 
 out:

@@ -168,6 +168,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 	}
 
 	node_id = CORPUS_TREE_NONE;
+	symbol_id = -1;
 
 	while (corpus_filter_advance_raw(f, &symbol_id)) {
 		if (f->type_ids[symbol_id] == CORPUS_FILTER_IGNORED) {
@@ -331,7 +332,7 @@ int corpus_filter_start(struct corpus_filter *f,
 
 int corpus_filter_advance(struct corpus_filter *f)
 {
-	int symbol_id, id = CORPUS_FILTER_NONE;
+	int symbol_id = -1, id = CORPUS_FILTER_NONE;
 	int err, ret;
 
 	ret = corpus_filter_advance_raw(f, &symbol_id);
@@ -394,6 +395,7 @@ int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 
 	size = CORPUS_TEXT_SIZE(&current);
 	attr = CORPUS_TEXT_BITS(&current);
+	symbol_id = -1;
 
 	while (corpus_filter_advance_raw(f, &symbol_id)) {
 		size += CORPUS_TEXT_SIZE(&f->scan.current);

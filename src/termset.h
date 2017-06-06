@@ -37,13 +37,15 @@ struct corpus_termset_term {
  * Term set.
  */
 struct corpus_termset {
-	struct corpus_table table;	/**< item hash table */
+	struct corpus_tree prefix;	/**< prefix tree */
+	int *term_ids;			/**< term IDs for tree nodes */
 	struct corpus_termset_term *items;/**< items */
 	int nitem;			/**< number of items in the set */
 	int nitem_max;			/**< current set capacity */
 	int *buffer;			/**< term type ID data buffer */
 	size_t nbuf;			/**< buffer size */
 	size_t nbuf_max;		/**< buffer capacity */
+	int error;			/**< code for last failing operation */
 };
 
 /**

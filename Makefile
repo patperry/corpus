@@ -357,7 +357,7 @@ src/symtab.o: src/symtab.c src/array.h src/error.h src/memory.h src/table.h \
 	src/text.h src/textset.h src/typemap.h src/symtab.h
 src/table.o: src/table.c src/error.h src/memory.h src/table.h
 src/termset.o: src/termset.c src/array.h src/error.h src/memory.h src/table.h \
-	src/termset.h
+	src/tree.h src/termset.h
 src/text.o: src/text.c src/error.h src/memory.h src/unicode.h src/text.h
 src/textset.o: src/textset.c src/array.h src/error.h src/memory.h src/table.h \
 	src/text.h src/textset.h
@@ -387,8 +387,8 @@ tests/check_sentscan.o: tests/check_sentscan.c src/text.h src/unicode.h \
 	src/sentscan.h tests/testutil.h
 tests/check_symtab.o: tests/check_symtab.c src/table.h src/text.h \
 	src/textset.h src/typemap.h src/symtab.h tests/testutil.h
-tests/check_termset.o: tests/check_termset.c src/table.h src/termset.h \
-	tests/testutil.h
+tests/check_termset.o: tests/check_termset.c src/table.h src/tree.h \
+	src/termset.h tests/testutil.h
 tests/check_text.o: tests/check_text.c src/error.h src/text.h src/unicode.h \
 	tests/testutil.h
 tests/check_tree.o: tests/check_tree.c src/table.h src/tree.h tests/testutil.h

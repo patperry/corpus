@@ -19,6 +19,7 @@
 #include <string.h>
 #include <check.h>
 #include "../src/table.h"
+#include "../src/tree.h"
 #include "../src/termset.h"
 #include "testutil.h"
 

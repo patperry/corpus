@@ -53,6 +53,60 @@ void init(void)
 }
 
 
+int add(const char *str)
+{
+	int buf[32];
+	int i, n = strlen(str);
+	int id;
+
+	for (i = 0; i < n; i++) {
+		buf[i] = (int)str[i];
+	}
+	ck_assert(!corpus_termset_add(&set, buf, n, &id));
+	ck_assert_int_eq(set.items[id].length, n);
+	for (i = 0; i < n; i++) {
+		ck_assert_int_eq(set.items[id].type_ids[i], buf[i]);
+	}
+	return id;
+}
+
+
+int has(const char *str)
+{
+	int buf[32];
+	int i, n = strlen(str);
+	int id, has;
+
+	for (i = 0; i < n; i++) {
+		buf[i] = (int)str[i];
+	}
+
+	has = corpus_termset_has(&set, buf, n, &id);
+
+	if (has) {
+		ck_assert_int_eq(set.items[id].length, n);
+		for (i = 0; i < n; i++) {
+			ck_assert_int_eq(set.items[id].type_ids[i], buf[i]);
+		}
+	}
+
+	return has;
+}
+
+
+START_TEST(test_basic)
+{
+	init();
+	add("a");
+	add("b");
+	add("ba");
+	ck_assert(has("a"));
+	ck_assert(has("b"));
+	ck_assert(has("ba"));
+}
+END_TEST
+
+
 START_TEST(test_random_trigram)
 {
 	int id3[10][10][10];
@@ -190,6 +244,9 @@ Suite *termset_suite(void)
         TCase *tc;
 
         s = suite_create("termset");
+
+	tc = tcase_create("basic");
+	tcase_add_test(tc, test_basic);
 
 	tc = tcase_create("random");
         tcase_add_checked_fixture(tc, setup_termset, teardown_termset);

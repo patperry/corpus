@@ -2,6 +2,12 @@
 
 * Added the ability to iterate backwards over the characters in a text.
 
+* Added n-gram frequency counter.
+
+* Added `termset` for storing a set of terms.
+
+* Added `sentfitler` for suppressing sentence breaks.
+
 
 # corpus 0.5.0
 

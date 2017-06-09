@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		882C09171EEB4AF200B90AA2 /* intset.c in Sources */ = {isa = PBXBuildFile; fileRef = 882C09151EEB4AF200B90AA2 /* intset.c */; };
+		882C09181EEB4AFD00B90AA2 /* intset.c in Sources */ = {isa = PBXBuildFile; fileRef = 882C09151EEB4AF200B90AA2 /* intset.c */; };
+		882C091B1EEB4B1500B90AA2 /* check_intset.c in Sources */ = {isa = PBXBuildFile; fileRef = 882C09191EEB4B0E00B90AA2 /* check_intset.c */; };
 		88341EA01EE09E2D0054BCCE /* ngram.c in Sources */ = {isa = PBXBuildFile; fileRef = 88341E9E1EE09E2D0054BCCE /* ngram.c */; };
 		88351CE71E8DB64F001DA3A8 /* array.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CD41E8DB64F001DA3A8 /* array.c */; };
 		88351CE91E8DB64F001DA3A8 /* filebuf.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CD91E8DB64F001DA3A8 /* filebuf.c */; };
@@ -102,7 +105,6 @@
 		88EA69EA1EAF94F500D57BEB /* strntoimax.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EE9C811E9000BB00B1FEBA /* strntoimax.c */; };
 		88EE9C801E9000A400B1FEBA /* datatype.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EE9C7E1E9000A400B1FEBA /* datatype.c */; };
 		88EE9C821E9000BB00B1FEBA /* strntoimax.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EE9C811E9000BB00B1FEBA /* strntoimax.c */; };
-		88F8659C1EE4823900C5BCA6 /* check_termset.c in Sources */ = {isa = PBXBuildFile; fileRef = 88F8659A1EE4823400C5BCA6 /* check_termset.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -128,6 +130,9 @@
 
 /* Begin PBXFileReference section */
 		881512741ED31D1A00E974F1 /* check_filter.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = check_filter.c; path = tests/check_filter.c; sourceTree = "<group>"; };
+		882C09151EEB4AF200B90AA2 /* intset.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = intset.c; path = src/intset.c; sourceTree = "<group>"; };
+		882C09161EEB4AF200B90AA2 /* intset.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = intset.h; path = src/intset.h; sourceTree = "<group>"; };
+		882C09191EEB4B0E00B90AA2 /* check_intset.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = check_intset.c; path = tests/check_intset.c; sourceTree = "<group>"; };
 		88341E9E1EE09E2D0054BCCE /* ngram.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ngram.c; path = src/ngram.c; sourceTree = "<group>"; };
 		88341E9F1EE09E2D0054BCCE /* ngram.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ngram.h; path = src/ngram.h; sourceTree = "<group>"; };
 		88341EA21EE09E440054BCCE /* check_ngram.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = check_ngram.c; path = tests/check_ngram.c; sourceTree = "<group>"; };
@@ -302,6 +307,8 @@
 				88351CDA1E8DB64F001DA3A8 /* filebuf.h */,
 				88548A631ECE62F80063254E /* filter.c */,
 				88548A641ECE62F80063254E /* filter.h */,
+				882C09151EEB4AF200B90AA2 /* intset.c */,
+				882C09161EEB4AF200B90AA2 /* intset.h */,
 				884A36991E8EE3DF00465CE7 /* main.c */,
 				88B565B81E96D4CE00FC9AEF /* main_get.c */,
 				88D5CC6B1EE2199800F9C36A /* main_ngrams.c */,
@@ -359,6 +366,7 @@
 				884F5CAE1EBA680D00DA1C24 /* check_census.c */,
 				88EA69D71EAF945300D57BEB /* check_data.c */,
 				881512741ED31D1A00E974F1 /* check_filter.c */,
+				882C09191EEB4B0E00B90AA2 /* check_intset.c */,
 				88341EA21EE09E440054BCCE /* check_ngram.c */,
 				88CB30E01EDDA5E0000007DE /* check_sentfilter.c */,
 				88EA69EB1EAF952D00D57BEB /* check_sentscan.c */,
@@ -604,6 +612,7 @@
 				88341EA01EE09E2D0054BCCE /* ngram.c in Sources */,
 				88EE9C801E9000A400B1FEBA /* datatype.c in Sources */,
 				887D44821EC87CB8001C0E83 /* strntod.c in Sources */,
+				882C09171EEB4AF200B90AA2 /* intset.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -630,7 +639,6 @@
 				88548A721ECF5BBE0063254E /* tree.c in Sources */,
 				88EA69E51EAF94DE00D57BEB /* unicode.c in Sources */,
 				88EA69E61EAF94DE00D57BEB /* wordscan.c in Sources */,
-				88F8659C1EE4823900C5BCA6 /* check_termset.c in Sources */,
 				88548A6E1ECE63060063254E /* typemap.c in Sources */,
 				88CD846C1EBB7FCA00DF50CB /* stem_UTF_8_hungarian.c in Sources */,
 				886D7CCE1ED32C5E00566B7B /* census.c in Sources */,
@@ -638,6 +646,7 @@
 				88EA69DA1EAF94C200D57BEB /* array.c in Sources */,
 				887D44831EC87CC2001C0E83 /* strntod.c in Sources */,
 				88CD84641EBB7FB400DF50CB /* utilities.c in Sources */,
+				882C09181EEB4AFD00B90AA2 /* intset.c in Sources */,
 				88CD846B1EBB7FCA00DF50CB /* stem_UTF_8_german.c in Sources */,
 				88EA69E81EAF94E400D57BEB /* testutil.c in Sources */,
 				88EA69E11EAF94DE00D57BEB /* symtab.c in Sources */,
@@ -645,6 +654,7 @@
 				88548A781ECF5CDF0063254E /* memory.c in Sources */,
 				88EA69DE1EAF94D300D57BEB /* filebuf.c in Sources */,
 				88CD84651EBB7FCA00DF50CB /* stem_UTF_8_arabic.c in Sources */,
+				882C091B1EEB4B1500B90AA2 /* check_intset.c in Sources */,
 				88CD84701EBB7FCA00DF50CB /* stem_UTF_8_portuguese.c in Sources */,
 				88EA69EA1EAF94F500D57BEB /* strntoimax.c in Sources */,
 				88EA69DC1EAF94C900D57BEB /* datatype.c in Sources */,

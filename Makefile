@@ -37,7 +37,7 @@ UNICODE = http://www.unicode.org/Public/9.0.0
 CORPUS_A = libcorpus.a
 LIB_O	= lib/strntod.o lib/strntoimax.o src/array.o src/census.o \
 	  src/data.o src/datatype.o src/error.o src/filebuf.o src/filter.o \
-	  src/memory.o src/ngram.o src/render.o src/sentfilter.o \
+	  src/intset.o src/memory.o src/ngram.o src/render.o src/sentfilter.o \
 	  src/sentscan.o src/symtab.o src/table.o src/termset.o src/text.o \
 	  src/textset.o src/tree.o src/typemap.o src/unicode.o src/wordscan.o
 
@@ -78,14 +78,15 @@ DATA    = data/ucd/CaseFolding.txt \
 	  data/ucd/auxiliary/WordBreakProperty.txt
 
 TESTS_T = tests/check_census tests/check_data tests/check_filter \
-	  tests/check_ngram tests/check_sentfilter tests/check_sentscan \
-	  tests/check_symtab tests/check_termset tests/check_text tests/check_tree \
-	  tests/check_typemap tests/check_unicode tests/check_wordscan
+	  tests/check_intset tests/check_ngram tests/check_sentfilter \
+	  tests/check_sentscan tests/check_symtab tests/check_termset \
+	  tests/check_text tests/check_tree tests/check_typemap \
+	  tests/check_unicode tests/check_wordscan
 TESTS_O = tests/check_census.o tests/check_data.o tests/check_filter.o \
-	  tests/check_ngram.o tests/check_sentfilter.o tests/check_sentscan.o \
-	  tests/check_symtab.o tests/check_termset.o tests/check_text.o \
-	  tests/check_tree.o tests/check_typemap.o tests/check_unicode.o \
-	  tests/check_wordscan.o tests/testutil.o
+	  tests/check_intset.o tests/check_ngram.o tests/check_sentfilter.o \
+	  tests/check_sentscan.o tests/check_symtab.o tests/check_termset.o \
+	  tests/check_text.o tests/check_tree.o tests/check_typemap.o \
+	  tests/check_unicode.o tests/check_wordscan.o tests/testutil.o
 
 TESTS_DATA = data/ucd/NormalizationTest.txt \
 	     data/ucd/auxiliary/SentenceBreakTest.txt \
@@ -252,6 +253,9 @@ tests/check_data: tests/check_data.o tests/testutil.o $(CORPUS_A)
 tests/check_filter: tests/check_filter.o tests/testutil.o $(CORPUS_A)
 	$(CC) -o $@ $^ $(LIBS) $(TEST_LIBS) $(LDFLAGS)
 
+tests/check_intset: tests/check_intset.o tests/testutil.o $(CORPUS_A)
+	$(CC) -o $@ $^ $(LIBS) $(TEST_LIBS) $(LDFLAGS)
+
 tests/check_ngram: tests/check_ngram.o tests/testutil.o $(CORPUS_A)
 	$(CC) -o $@ $^ $(LIBS) $(TEST_LIBS) $(LDFLAGS)
 
@@ -327,6 +331,8 @@ src/filebuf.o: src/filebuf.c src/error.h src/memory.h src/filebuf.h
 src/filter.o: src/filter.c src/array.h src/error.h src/memory.h src/table.h \
 	src/text.h src/textset.h src/tree.h src/typemap.h src/symtab.h \
 	src/wordscan.h src/filter.h
+src/intset.o: src/intset.c src/array.h src/error.h src/memory.h src/table.h \
+	src/intset.h
 src/main.o: src/main.c src/error.h src/filebuf.h src/table.h src/text.h \
 	src/textset.h src/typemap.h src/symtab.h src/datatype.h
 src/main_get.o: src/main_get.c src/error.h src/filebuf.h src/table.h \
@@ -379,6 +385,8 @@ tests/check_data.o: tests/check_data.c src/error.h src/table.h src/text.h \
 tests/check_filter.o: tests/check_filter.c src/table.h src/text.h \
 	src/textset.h src/tree.h src/typemap.h src/symtab.h \
 	src/wordscan.h src/filter.h src/census.h tests/testutil.h
+tests/check_intset.o: tests/check_intset.c src/table.h src/intset.h \
+	tests/testutil.h
 tests/check_ngram.o: tests/check_ngram.c src/table.h src/tree.h src/ngram.h \
 	tests/testutil.h
 tests/check_sentfilter.o: tests/check_sentfilter.c src/table.h src/text.h \

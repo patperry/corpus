@@ -91,6 +91,8 @@ int corpus_termset_add(struct corpus_termset *set, const int *type_ids,
 	assert(length >= 1);
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
+	err = 0;
+	term_id = -1;
 
 	// add the term prefixes
 	n0 = set->prefix.nnode;

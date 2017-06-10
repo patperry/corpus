@@ -248,6 +248,7 @@ Suite *termset_suite(void)
 
 	tc = tcase_create("basic");
 	tcase_add_test(tc, test_basic);
+        suite_add_tcase(s, tc);
 
 	tc = tcase_create("random");
         tcase_add_checked_fixture(tc, setup_termset, teardown_termset);

@@ -200,7 +200,7 @@ int corpus_intset_sort(struct corpus_intset *set, void *base, size_t width)
 
 	// put the items in order
 	for (i = 0; i < n; i++) {
-		j = ptrs[i] - set->items;
+		j = (int)(ptrs[i] - set->items);
 		set->items[i] = items[j];
 		memcpy((char *)base + i * width, buf + j * width, width);
 	}

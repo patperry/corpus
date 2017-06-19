@@ -10,6 +10,7 @@ xcuserdata
 /tests/check_filter
 /tests/check_intset
 /tests/check_ngram
+/tests/check_search
 /tests/check_sentfilter
 /tests/check_sentscan
 /tests/check_symtab

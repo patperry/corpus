@@ -67,7 +67,7 @@ void corpus_search_destroy(struct corpus_search *search)
 int corpus_search_add(struct corpus_search *search,
 		      int *type_ids, int length, int *idptr)
 {
-	int err, id;
+	int err, id = -1;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 

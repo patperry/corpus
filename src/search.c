@@ -80,7 +80,7 @@ void corpus_search_destroy(struct corpus_search *search)
 
 
 int corpus_search_add(struct corpus_search *search,
-		      int *type_ids, int length, int *idptr)
+		      const int *type_ids, int length, int *idptr)
 {
 	int err, id = -1;
 
@@ -116,7 +116,7 @@ out:
 
 
 int corpus_search_has(const struct corpus_search *search,
-		      int *type_ids, int length, int *idptr)
+		      const int *type_ids, int length, int *idptr)
 {
 	return corpus_termset_has(&search->terms, type_ids, length, idptr);
 }

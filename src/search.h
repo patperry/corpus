@@ -75,7 +75,7 @@ void corpus_search_destroy(struct corpus_search *search);
  * \returns 0 on success.
  */
 int corpus_search_add(struct corpus_search *search,
-		      int *type_ids, int length, int *idptr);
+		      const int *type_ids, int length, int *idptr);
 
 /**
  * Query whether a term exists in the search query set.
@@ -89,7 +89,7 @@ int corpus_search_add(struct corpus_search *search,
  * \returns non-zero if the term exists in the query set, zero otherwise.
  */
 int corpus_search_has(const struct corpus_search *search,
-		      int *type_ids, int length, int *idptr);
+		      const int *type_ids, int length, int *idptr);
 
 /**
  * Start a search for the query set terms.

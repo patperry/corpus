@@ -398,7 +398,8 @@ tests/check_intset.o: tests/check_intset.c src/table.h src/intset.h \
 tests/check_ngram.o: tests/check_ngram.c src/table.h src/tree.h src/ngram.h \
 	tests/testutil.h
 tests/check_search.o: tests/check_search.c src/table.h src/tree.h \
-	src/termset.h src/text.h src/search.h tests/testutil.h
+	src/termset.h src/text.h src/textset.h src/typemap.h src/symtab.h \
+	src/wordscan.h src/filter.h src/search.h tests/testutil.h
 tests/check_sentfilter.o: tests/check_sentfilter.c src/table.h src/text.h \
 	src/tree.h src/sentscan.h src/sentfilter.h tests/testutil.h
 tests/check_sentscan.o: tests/check_sentscan.c src/text.h src/unicode.h \

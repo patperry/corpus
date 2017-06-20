@@ -17,13 +17,22 @@
 #ifndef CORPUS_SEARCH_H
 #define CORPUS_SEARCH_H
 
+struct corpus_search_buffer {
+	struct corpus_text *tokens;
+	int *type_ids;
+	int size;
+	int size_max;
+};
+
 struct corpus_search {
 	struct corpus_termset terms;
 	struct corpus_filter *filter;
+	struct corpus_search_buffer buffer;
 	int length_max;
 
 	struct corpus_text current;
 	int term_id;
+	int length;
 	int error;
 };
 

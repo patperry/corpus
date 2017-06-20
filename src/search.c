@@ -15,6 +15,7 @@
  */
 
 #include <stddef.h>
+#include <string.h>
 #include "error.h"
 #include "memory.h"
 #include "table.h"
@@ -38,6 +39,18 @@
 	} while (0)
 
 
+static void buffer_init(struct corpus_search_buffer *buffer);
+static void buffer_destroy(struct corpus_search_buffer *buffer);
+static void buffer_clear(struct corpus_search_buffer *buffer);
+static int buffer_reserve(struct corpus_search_buffer *buffer, int size);
+static void buffer_ignore(struct corpus_search_buffer *buffer,
+		          const struct corpus_text *text);
+static void buffer_push(struct corpus_search_buffer *buffer, int type_id,
+		        const struct corpus_text *token);
+static int buffer_advance(struct corpus_search_buffer *buffer,
+			  struct corpus_filter *filter);
+
+
 int corpus_search_init(struct corpus_search *search)
 {
 	int err;
@@ -47,6 +60,7 @@ int corpus_search_init(struct corpus_search *search)
 		search->error = err;
 		return err;
 	}
+	buffer_init(&search->buffer);
 	search->filter = NULL;
 	search->length_max = 0;
 	search->current.ptr = NULL;
@@ -60,6 +74,7 @@ int corpus_search_init(struct corpus_search *search)
 
 void corpus_search_destroy(struct corpus_search *search)
 {
+	buffer_destroy(&search->buffer);
 	corpus_termset_destroy(&search->terms);
 }
 
@@ -115,6 +130,11 @@ int corpus_search_start(struct corpus_search *search,
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
+	buffer_clear(&search->buffer);
+	if ((err = buffer_reserve(&search->buffer, search->length_max))) {
+		goto out;
+	}
+
 	if ((err = corpus_filter_start(filter, text,
 				       CORPUS_FILTER_SCAN_TOKENS))) {
 		goto out;
@@ -124,6 +144,7 @@ int corpus_search_start(struct corpus_search *search,
 	search->current.ptr = NULL;
 	search->current.attr = 0;
 	search->term_id = -1;
+	search->length = 0;
 
 out:
 	if (err) {
@@ -137,31 +158,175 @@ out:
 
 int corpus_search_advance(struct corpus_search *search)
 {
-	int err, length, term_id, type_id;
+	const struct corpus_text *tokens;
+	struct corpus_text token;
+	const int *type_ids;
+	int err, length, i, off, nbuf, term_id;
 
 	CHECK_ERROR(0);
 
-	while (corpus_filter_advance(search->filter)) {
-		type_id = search->filter->type_id;
-		if (type_id < 0) {
-			continue;
+	do {
+		nbuf = search->buffer.size;
+		length = search->length;
+		if (length == 0) {
+			length = nbuf;
+		} else {
+			length--;
 		}
 
-		length = 1;
-		if (!corpus_termset_has(&search->terms, &type_id, length,
-				       &term_id)) {
-			continue;
-		}
+		while (length > 0) {
+			off = nbuf - length;
+			type_ids = search->buffer.type_ids + off;
 
-		search->current = search->filter->current;
-		search->term_id = term_id;
-		return 1;
-	}
-	err = search->filter->error;
-	
-	if (err) {
+			if (corpus_termset_has(&search->terms, type_ids, length,
+					       &term_id)) {
+				search->length = length;
+				search->term_id = term_id;
+
+				tokens = search->buffer.tokens + off;
+				token = tokens[0];
+				for (i = 1; i < length; i++) {
+					token.attr +=
+						CORPUS_TEXT_SIZE(&tokens[i]);
+					token.attr |=
+						CORPUS_TEXT_BITS(&tokens[i]);
+				}
+				search->current = token;
+
+				return 1;
+			}
+			length--;
+		}
+		search->length = 0;
+	} while (buffer_advance(&search->buffer, search->filter));
+
+	if ((err = search->filter->error)) {
 		corpus_log(err, "failed advancing search");
 		search->error = err;
 	}
+
+	search->current.ptr = NULL;
+	search->current.attr = 0;
+	search->term_id = -1;
+	search->length = 0;
+
 	return 0;
+}
+
+
+void buffer_init(struct corpus_search_buffer *buffer)
+{
+	buffer->tokens = NULL;
+	buffer->type_ids = NULL;
+	buffer->size = 0;
+	buffer->size_max = 0;
+}
+
+
+void buffer_destroy(struct corpus_search_buffer *buffer)
+{
+	corpus_free(buffer->type_ids);
+	corpus_free(buffer->tokens);
+}
+
+
+void buffer_clear(struct corpus_search_buffer *buffer)
+{
+	buffer->size = 0;
+}
+
+
+int buffer_reserve(struct corpus_search_buffer *buffer, int size)
+{
+	struct corpus_text *tokens;
+	int *type_ids;
+	int err;
+
+	if (size <= buffer->size_max) {
+		buffer->size_max = size;
+		return 0;
+	}
+
+	tokens = corpus_realloc(buffer->tokens, size * sizeof(*tokens));
+	if (!tokens) {
+		err = CORPUS_ERROR_NOMEM;
+		goto out;
+	}
+	buffer->tokens = tokens;
+
+	type_ids = corpus_realloc(buffer->type_ids, size * sizeof(*type_ids));
+	if (!type_ids) {
+		err = CORPUS_ERROR_NOMEM;
+		goto out;
+	}
+	buffer->type_ids = type_ids;
+
+	buffer->size_max = size;
+	err = 0;
+out:
+	if (err) {
+		corpus_log(err, "failed allocating search buffer");
+	}
+	return err;
+}
+
+
+int buffer_advance(struct corpus_search_buffer *buffer,
+		   struct corpus_filter *filter)
+{
+	const struct corpus_text *current;
+	int type_id;
+
+	while (corpus_filter_advance(filter)) {
+		type_id = filter->type_id;
+		current = &filter->current;
+		if (type_id == CORPUS_FILTER_IGNORED) {
+			buffer_ignore(buffer, current);
+			continue;
+		} else if (type_id < 0) {
+			buffer_clear(buffer);
+			continue;
+		}
+		buffer_push(buffer, type_id, current);
+		return 1;
+	}
+
+	return 0;
+}
+
+
+void buffer_ignore(struct corpus_search_buffer *buffer,
+		   const struct corpus_text *text)
+{
+	if (buffer->size == 0) {
+		return;
+	}
+
+	buffer->tokens[buffer->size - 1].attr |= CORPUS_TEXT_BITS(text);
+	buffer->tokens[buffer->size - 1].attr += CORPUS_TEXT_SIZE(text);
+}
+
+
+void buffer_push(struct corpus_search_buffer *buffer, int type_id,
+		 const struct corpus_text *token)
+{
+	int n = buffer->size;
+
+	if (buffer->size_max == 0) {
+		return;
+	}
+
+	if (n == buffer->size_max) {
+		n--;
+		if (n > 0) {
+			memmove(buffer->type_ids, buffer->type_ids + 1,
+				n * sizeof(*buffer->type_ids));
+			memmove(buffer->tokens, buffer->tokens + 1,
+				n * sizeof(*buffer->tokens));
+		}
+	}
+
+	buffer->type_ids[n] = type_id;
+	buffer->tokens[n] = *token;
+	buffer->size = n + 1;
 }

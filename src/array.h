@@ -40,6 +40,18 @@
 int corpus_array_grow(void **baseptr, int *sizeptr, size_t width, int count,
 		      int nadd);
 
+/**
+ * Determine the capacity for an array that needs to grow.
+ *
+ * \param sizeptr pointer to the capacity (in elements) of the array
+ * \param width size of each element
+ * \param count number of occupied elements
+ * \param nadd number of elements to append after the `count` occupied
+ *        elements
+ *
+ * \returns 0 on success, `CORPUS_ERROR_OVERFLOW` on overflow
+ */
+int corpus_array_size_add(int *sizeptr, size_t width, int count, int nadd);
 
 /**
  * Grow an big array to accommodate more elements, possibly re-allocating.
@@ -55,5 +67,19 @@ int corpus_array_grow(void **baseptr, int *sizeptr, size_t width, int count,
  */
 int corpus_bigarray_grow(void **baseptr, size_t *sizeptr, size_t width,
 			 size_t count, size_t nadd);
+
+/**
+ * Determine the capacity for an array that needs to grow.
+ *
+ * \param sizeptr pointer to the capacity (in elements) of the array
+ * \param width size of each element
+ * \param count number of occupied elements
+ * \param nadd number of elements to append after the `count` occupied
+ *        elements
+ *
+ * \returns 0 on success, `CORPUS_ERROR_OVERFLOW` on overflow
+ */
+int corpus_bigarray_size_add(size_t *sizeptr, size_t width, size_t count,
+		             size_t nadd);
 
 #endif /* CORPUS_ARRAY_H */

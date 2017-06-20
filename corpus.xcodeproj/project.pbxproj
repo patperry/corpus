@@ -9,9 +9,6 @@
 /* Begin PBXBuildFile section */
 		88004F8C1EF863D500E48E12 /* search.c in Sources */ = {isa = PBXBuildFile; fileRef = 88004F8A1EF863D500E48E12 /* search.c */; };
 		88004F8D1EF863DA00E48E12 /* search.c in Sources */ = {isa = PBXBuildFile; fileRef = 88004F8A1EF863D500E48E12 /* search.c */; };
-		88004F901EF8641F00E48E12 /* check_search.c in Sources */ = {isa = PBXBuildFile; fileRef = 88004F8E1EF8641B00E48E12 /* check_search.c */; };
-		882C09171EEB4AF200B90AA2 /* intset.c in Sources */ = {isa = PBXBuildFile; fileRef = 882C09151EEB4AF200B90AA2 /* intset.c */; };
-		882C09181EEB4AFD00B90AA2 /* intset.c in Sources */ = {isa = PBXBuildFile; fileRef = 882C09151EEB4AF200B90AA2 /* intset.c */; };
 		88341EA01EE09E2D0054BCCE /* ngram.c in Sources */ = {isa = PBXBuildFile; fileRef = 88341E9E1EE09E2D0054BCCE /* ngram.c */; };
 		88351CE71E8DB64F001DA3A8 /* array.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CD41E8DB64F001DA3A8 /* array.c */; };
 		88351CE91E8DB64F001DA3A8 /* filebuf.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CD91E8DB64F001DA3A8 /* filebuf.c */; };
@@ -35,6 +32,7 @@
 		886D7CCE1ED32C5E00566B7B /* census.c in Sources */ = {isa = PBXBuildFile; fileRef = 884F5CAB1EBA67ED00DA1C24 /* census.c */; };
 		887D44821EC87CB8001C0E83 /* strntod.c in Sources */ = {isa = PBXBuildFile; fileRef = 887D44811EC87CB8001C0E83 /* strntod.c */; };
 		887D44831EC87CC2001C0E83 /* strntod.c in Sources */ = {isa = PBXBuildFile; fileRef = 887D44811EC87CB8001C0E83 /* strntod.c */; };
+		889DD88E1EF9AC5E00C91F69 /* check_census.c in Sources */ = {isa = PBXBuildFile; fileRef = 884F5CAE1EBA680D00DA1C24 /* check_census.c */; };
 		88B565BD1E96D4CE00FC9AEF /* main_get.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565B81E96D4CE00FC9AEF /* main_get.c */; };
 		88B565BE1E96D4CE00FC9AEF /* main_scan.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565B91E96D4CE00FC9AEF /* main_scan.c */; };
 		88B565BF1E96D4CE00FC9AEF /* main_tokens.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565BA1E96D4CE00FC9AEF /* main_tokens.c */; };
@@ -621,7 +619,6 @@
 				88341EA01EE09E2D0054BCCE /* ngram.c in Sources */,
 				88EE9C801E9000A400B1FEBA /* datatype.c in Sources */,
 				887D44821EC87CB8001C0E83 /* strntod.c in Sources */,
-				882C09171EEB4AF200B90AA2 /* intset.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -642,6 +639,7 @@
 				88CD84621EBB7FAD00DF50CB /* libstemmer_utf8.c in Sources */,
 				88CD846F1EBB7FCA00DF50CB /* stem_UTF_8_porter.c in Sources */,
 				88548A6C1ECE62FC0063254E /* filter.c in Sources */,
+				889DD88E1EF9AC5E00C91F69 /* check_census.c in Sources */,
 				88EA69DF1EAF94D300D57BEB /* render.c in Sources */,
 				88CD846D1EBB7FCA00DF50CB /* stem_UTF_8_italian.c in Sources */,
 				88004F8D1EF863DA00E48E12 /* search.c in Sources */,
@@ -649,7 +647,6 @@
 				88548A721ECF5BBE0063254E /* tree.c in Sources */,
 				88EA69E51EAF94DE00D57BEB /* unicode.c in Sources */,
 				88EA69E61EAF94DE00D57BEB /* wordscan.c in Sources */,
-				88004F901EF8641F00E48E12 /* check_search.c in Sources */,
 				88548A6E1ECE63060063254E /* typemap.c in Sources */,
 				88CD846C1EBB7FCA00DF50CB /* stem_UTF_8_hungarian.c in Sources */,
 				886D7CCE1ED32C5E00566B7B /* census.c in Sources */,
@@ -657,7 +654,6 @@
 				88EA69DA1EAF94C200D57BEB /* array.c in Sources */,
 				887D44831EC87CC2001C0E83 /* strntod.c in Sources */,
 				88CD84641EBB7FB400DF50CB /* utilities.c in Sources */,
-				882C09181EEB4AFD00B90AA2 /* intset.c in Sources */,
 				88CD846B1EBB7FCA00DF50CB /* stem_UTF_8_german.c in Sources */,
 				88EA69E81EAF94E400D57BEB /* testutil.c in Sources */,
 				88EA69E11EAF94DE00D57BEB /* symtab.c in Sources */,

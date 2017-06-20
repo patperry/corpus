@@ -33,59 +33,89 @@
 #define CORPUS_ARRAY_GROW 1.618 /* Golden Ratio, (1 + sqrt(5)) / 2 */
 
 
-/**
- * Determine the capacity for an array that needs to grow.
- *
- * \param count the minimum capacity
- * \param size the current capacity
- *
- * \returns the new capacity
- */
-static int corpus_array_grow_size(int count, int size)
+int corpus_bigarray_size_add(size_t *sizeptr, size_t width, size_t count,
+			     size_t nadd)
 {
+	size_t size = *sizeptr;
+	size_t size_min;
+	int err;
 	double n1;
+
+	if (width == 0) {
+		return 0;
+	}
+
+	if (count > (SIZE_MAX - nadd) / width) {
+		err = CORPUS_ERROR_OVERFLOW;
+		corpus_log(err, "array size (%"PRIu64" + %"PRIu64
+			   " elements of %"PRIu64" bytes each)"
+			   " exceeds maximum (%"PRIu64" elements)",
+			   (uint64_t)count, (uint64_t)nadd,
+			   (uint64_t)width, (uint64_t)SIZE_MAX);
+		return err;
+	}
+
+	size_min = count + nadd;
+	if (size >= size_min) {
+		return 0;
+	}
 
 	assert(CORPUS_ARRAY_SIZE_INIT > 0);
 	assert(CORPUS_ARRAY_GROW > 1);
 
-	if (size < CORPUS_ARRAY_SIZE_INIT && count > 0) {
+	if (size < CORPUS_ARRAY_SIZE_INIT && size_min > 0) {
 		size = CORPUS_ARRAY_SIZE_INIT;
 	}
 
-	while (size < count) {
+	while (size < size_min) {
 		n1 = CORPUS_ARRAY_GROW * size;
-		if (n1 > INT_MAX) {
-			size = INT_MAX;
-		} else {
-			size = (int)n1;
-		}
-	}
-
-	return size;
-}
-
-
-static size_t corpus_bigarray_grow_size(size_t count, size_t size)
-{
-	double n1;
-
-	assert(CORPUS_ARRAY_SIZE_INIT > 0);
-	assert(CORPUS_ARRAY_GROW > 1);
-
-	if (size < CORPUS_ARRAY_SIZE_INIT && count > 0) {
-		size = CORPUS_ARRAY_SIZE_INIT;
-	}
-
-	while (size < count) {
-		n1 = CORPUS_ARRAY_GROW * size;
-		if (n1 > SIZE_MAX) {
-			size = SIZE_MAX;
+		if (n1 > SIZE_MAX / width) {
+			size = SIZE_MAX / width;
 		} else {
 			size = (size_t)n1;
 		}
 	}
 
-	return size;
+	*sizeptr = size;
+	return 0;
+}
+
+
+int corpus_array_size_add(int *sizeptr, size_t width, int count, int nadd)
+{
+	size_t size, size_min, size_max;
+	int err;
+
+	assert(*sizeptr >= 0);
+	assert(count >= 0);
+	assert(nadd >= 0);
+
+	if (width == 0) {
+		return 0;
+	}
+
+	size = (size_t)*sizeptr;
+	if ((err = corpus_bigarray_size_add(&size, width, (size_t)count,
+					    (size_t)nadd))) {
+		return err;
+	}
+	size_max = (size_t)INT_MAX / width;
+	if (size > size_max) {
+		size = size_max;
+		size_min = (size_t)count + (size_t)nadd;
+		if (size < size_min) {
+			err = CORPUS_ERROR_OVERFLOW;
+			corpus_log(err, "array size (%"PRIu64
+				   " elements of %"PRIu64" bytes each)"
+				   " exceeds maximum (%"PRIu64" elements)",
+				   (uint64_t)size_min, (uint64_t)width,
+				   (uint64_t)size_max);
+			return err;
+		}
+	}
+
+	*sizeptr = (int)size;
+	return 0;
 }
 
 
@@ -94,38 +124,17 @@ int corpus_array_grow(void **baseptr, int *sizeptr, size_t width, int count,
 {
 	void *base = *baseptr;
 	int size = *sizeptr;
-	int max = size;
 	int err;
 
-	assert(count >= 0);
-	assert(size >= 0);
+	assert(0 <= count);
+	assert(count <= size);
 
-	if (nadd <= 0) {
+	if (nadd <= size - count) {
 		return 0;
 	}
 
-	if (count > INT_MAX - nadd) {
-		err = CORPUS_ERROR_OVERFLOW;
-		corpus_log(err, "array count exceeds maximum (%d)", INT_MAX);
+	if ((err = corpus_array_size_add(&size, width, count, nadd))) {
 		return err;
-	}
-	count = count + nadd;
-
-	if (count <= max) {
-		return 0;
-	}
-
-	if ((size_t)count > SIZE_MAX / width) {
-		err = CORPUS_ERROR_OVERFLOW;
-		corpus_log(err, "array size (%d) exceeds maximum (%"PRIu64")",
-			   count, (uint64_t)SIZE_MAX / width);
-		return err;
-	}
-
-	size = corpus_array_grow_size(count, size);
-	if ((size_t)size > SIZE_MAX / width) {
-		size = count;
-		assert((size_t)size <= SIZE_MAX / width);
 	}
 
 	if (!(base = corpus_realloc(base, ((size_t)size) * width))) {
@@ -145,37 +154,17 @@ int corpus_bigarray_grow(void **baseptr, size_t *sizeptr, size_t width,
 {
 	void *base = *baseptr;
 	size_t size = *sizeptr;
-	size_t max = size;
 	int err;
 
-	if (nadd <= 0) {
+	assert(0 <= count);
+	assert(count <= size);
+
+	if (nadd <= size - count) {
 		return 0;
 	}
 
-	if (count > SIZE_MAX - nadd) {
-		err = CORPUS_ERROR_OVERFLOW;
-		corpus_log(err, "array count exceeds maximum (%"PRIu64")",
-			   (uint64_t)SIZE_MAX);
+	if ((err = corpus_bigarray_size_add(&size, width, count, nadd))) {
 		return err;
-	}
-	count = count + nadd;
-
-	if (count <= max) {
-		return 0;
-	}
-
-	if (count > SIZE_MAX / width) {
-		err = CORPUS_ERROR_OVERFLOW;
-		corpus_log(err, "array size (%"PRIu64")"
-			   " exceeds maximum (%"PRIu64")",
-			   (uint64_t)count, (uint64_t)SIZE_MAX / width);
-		return err;
-	}
-
-	size = corpus_bigarray_grow_size(count, size);
-	if (size > SIZE_MAX / width) {
-		size = count;
-		assert(size <= SIZE_MAX / width);
 	}
 
 	if (!(base = corpus_realloc(base, size * width))) {

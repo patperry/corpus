@@ -32,7 +32,7 @@ TEST_CFLAGS = $(shell pkg-config --cflags check) \
 TEST_LIBS = $(shell pkg-config --libs check)
 
 CLDR = https://raw.githubusercontent.com/unicode-cldr/cldr-segments-modern/master
-UNICODE = http://www.unicode.org/Public/9.0.0
+UNICODE = http://www.unicode.org/Public/10.0.0
 
 CORPUS_A = libcorpus.a
 LIB_O	= lib/strntod.o lib/strntoimax.o src/array.o src/census.o \

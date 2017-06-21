@@ -6,6 +6,7 @@ xcuserdata
 /corpus
 /doc/html
 /tests/check_census
+/tests/check_charwidth
 /tests/check_data
 /tests/check_filter
 /tests/check_intset

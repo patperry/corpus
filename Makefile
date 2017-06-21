@@ -32,6 +32,7 @@ TEST_CFLAGS = $(shell pkg-config --cflags check) \
 TEST_LIBS = $(shell pkg-config --libs check)
 
 CLDR = https://raw.githubusercontent.com/unicode-cldr/cldr-segments-modern/master
+EMOJI = http://www.unicode.org/Public/emoji/5.0
 UNICODE = http://www.unicode.org/Public/10.0.0
 
 CORPUS_A = libcorpus.a
@@ -69,26 +70,29 @@ CORPUS_T = corpus
 CORPUS_O = src/main.o src/main_get.o src/main_ngrams.o src/main_scan.o \
 		   src/main_sentences.o src/main_tokens.o
 
-DATA    = data/ucd/CaseFolding.txt \
+DATA    = data/emoji/emoji-data.txt \
+	  data/ucd/CaseFolding.txt \
 	  data/ucd/CompositionExclusions.txt \
 	  data/ucd/DerivedCoreProperties.txt \
+	  data/ucd/EastAsianWidth.txt \
 	  data/ucd/PropList.txt \
 	  data/ucd/Scripts.txt \
 	  data/ucd/UnicodeData.txt \
 	  data/ucd/auxiliary/SentenceBreakProperty.txt \
 	  data/ucd/auxiliary/WordBreakProperty.txt
 
-TESTS_T = tests/check_census tests/check_data tests/check_filter \
-	  tests/check_intset tests/check_ngram tests/check_search \
-	  tests/check_sentfilter tests/check_sentscan tests/check_symtab \
-	  tests/check_termset tests/check_text tests/check_tree \
-	  tests/check_typemap tests/check_unicode tests/check_wordscan
-TESTS_O = tests/check_census.o tests/check_data.o tests/check_filter.o \
-	  tests/check_intset.o tests/check_ngram.o tests/check_search.o \
-	  tests/check_sentfilter.o tests/check_sentscan.o \
-	  tests/check_symtab.o tests/check_termset.o \
-	  tests/check_text.o tests/check_tree.o tests/check_typemap.o \
-	  tests/check_unicode.o tests/check_wordscan.o tests/testutil.o
+TESTS_T = tests/check_census tests/check_charwidth tests/check_data \
+	  tests/check_filter tests/check_intset tests/check_ngram \
+	  tests/check_search tests/check_sentfilter tests/check_sentscan \
+	  tests/check_symtab tests/check_termset tests/check_text \
+	  tests/check_tree tests/check_typemap tests/check_unicode \
+	  tests/check_wordscan
+TESTS_O = tests/check_census.o tests/check_charwidth.o tests/check_data.o \
+	  tests/check_filter.o tests/check_intset.o tests/check_ngram.o \
+	  tests/check_search.o tests/check_sentfilter.o tests/check_sentscan.o \
+	  tests/check_symtab.o tests/check_termset.o tests/check_text.o \
+	  tests/check_tree.o tests/check_typemap.o tests/check_unicode.o \
+	  tests/check_wordscan.o tests/testutil.o
 
 TESTS_DATA = data/ucd/NormalizationTest.txt \
 	     data/ucd/auxiliary/SentenceBreakTest.txt \
@@ -141,6 +145,10 @@ data/cldr/segments/ru/suppressions.json:
 	$(MKDIR_P) data/cldr/segments/ru
 	$(CURL) -o $@ $(CLDR)/segments/ru/suppressions.json
 
+data/emoji/emoji-data.txt:
+	$(MKDIR_P) data/emoji
+	$(CURL) -o $@ $(EMOJI)/emoji-data.txt
+
 data/ucd/CaseFolding.txt:
 	$(MKDIR_P) data/ucd
 	$(CURL) -o $@ $(UNICODE)/ucd/CaseFolding.txt
@@ -152,6 +160,10 @@ data/ucd/CompositionExclusions.txt:
 data/ucd/DerivedCoreProperties.txt:
 	$(MKDIR_P) data/ucd
 	$(CURL) -o $@ $(UNICODE)/ucd/DerivedCoreProperties.txt
+
+data/ucd/EastAsianWidth.txt:
+	$(MKDIR_P) data/ucd
+	$(CURL) -o $@ $(UNICODE)/ucd/EastAsianWidth.txt
 
 data/ucd/NormalizationTest.txt:
 	$(MKDIR_P) data/ucd
@@ -215,6 +227,12 @@ src/unicode/casefold.h: util/gen-casefold.py \
 	$(MKDIR_P) src/unicode
 	./util/gen-casefold.py > $@
 
+src/unicode/charwidth.h: util/gen-charwidth.py util/property.py util/unicode_data.py \
+		data/emoji/emoji-data.txt data/ucd/DerivedCoreProperties.txt \
+		data/ucd/EastAsianWidth.txt data/ucd/UnicodeData.txt
+	$(MKDIR_P) src/unicode
+	./util/gen-charwidth.py > $@
+
 src/unicode/combining.h: util/gen-combining.py util/unicode_data.py \
 		data/ucd/UnicodeData.txt
 	$(MKDIR_P) src/unicode
@@ -247,6 +265,9 @@ src/unicode/wordbreakprop.h: util/gen-wordbreak.py util/property.py \
 # Tests
 
 tests/check_census: tests/check_census.o tests/testutil.o $(CORPUS_A)
+	$(CC) -o $@ $^ $(LIBS) $(TEST_LIBS) $(LDFLAGS)
+
+tests/check_charwidth: tests/check_charwidth.o tests/testutil.o $(CORPUS_A)
 	$(CC) -o $@ $^ $(LIBS) $(TEST_LIBS) $(LDFLAGS)
 
 tests/check_data: tests/check_data.o tests/testutil.o $(CORPUS_A)
@@ -386,6 +407,8 @@ src/wordscan.o: src/wordscan.c src/error.h src/text.h \
 	src/unicode/wordbreakprop.h src/wordscan.h
 
 tests/check_census.o: tests/check_census.c src/table.h src/census.h \
+	tests/testutil.h
+tests/check_charwidth.o: tests/check_charwidth.c src/unicode/charwidth.h \
 	tests/testutil.h
 tests/check_data.o: tests/check_data.c src/error.h src/table.h src/text.h \
 	src/textset.h src/typemap.h src/symtab.h src/data.h src/datatype.h \

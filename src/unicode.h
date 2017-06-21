@@ -207,13 +207,13 @@ void corpus_unicode_compose(uint32_t *ptr, size_t *lenptr);
 
 
 /**
- * A Unicode character width type
+ * Unicode character width type.
  */
 enum corpus_charwidth_type {
 	CORPUS_CHARWIDTH_OTHER = -2,	/**< Control and others: Cc, Cn, Co, Cs, Zl, Zp */
 	CORPUS_CHARWIDTH_AMBIGUOUS = -1,/**< can be narrow or wide depending
 					  on the context */
-	CORPUS_CHARWIDTH_NONE = 0,	/**< Combining marks: Mc, Me, Mn */
+	CORPUS_CHARWIDTH_NONE = 0,	/**< Default ignorables and combining marks (Mc, Me, Mn) */
 	CORPUS_CHARWIDTH_NARROW = 1,	/**< Most western alphabets */
 	CORPUS_CHARWIDTH_WIDE = 2	/**< Most emoji and ideographs */
 };

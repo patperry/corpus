@@ -254,6 +254,31 @@ void corpus_encode_utf8(uint32_t code, uint8_t **bufptr)
 }
 
 
+void corpus_rencode_utf8(uint32_t code, uint8_t **bufptr)
+{
+	uint8_t *ptr = *bufptr;
+	uint32_t x = code;
+
+	if (x <= 0x7F) {
+		*--ptr = (uint8_t)x;
+	} else if (x <= 0x07FF) {
+		*--ptr = (uint8_t)(0x80 | (x & 0x3F));
+		*--ptr = (uint8_t)(0xC0 | (x >> 6));
+	} else if (x <= 0xFFFF) {
+		*--ptr = (uint8_t)(0x80 | (x & 0x3F));
+		*--ptr = (uint8_t)(0x80 | ((x >> 6) & 0x3F));
+		*--ptr = (uint8_t)(0xE0 | (x >> 12));
+	} else {
+		*--ptr = (uint8_t)(0x80 | (x & 0x3F));
+		*--ptr = (uint8_t)(0x80 | ((x >> 6) & 0x3F));
+		*--ptr = (uint8_t)(0x80 | ((x >> 12) & 0x3F));
+		*--ptr = (uint8_t)(0xF0 | (x >> 18));
+	}
+
+	*bufptr = ptr;
+}
+
+
 /* From Unicode-8.0 Section 3.12 Conjoining Jamo Behavior */
 #define HANGUL_SBASE 0xAC00
 #define HANGUL_LBASE 0x1100

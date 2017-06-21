@@ -437,6 +437,59 @@ START_TEST(test_encode_decode_utf8)
 END_TEST
 
 
+static void reverse_roundtrip(uint32_t code)
+{
+	uint8_t buf[6];
+	uint8_t *end = buf + 6;
+	uint8_t *start, *ptr;
+	uint32_t decode;
+
+	ptr = end;
+	corpus_rencode_utf8(code, &ptr);
+
+	ck_assert_int_eq(end - ptr, CORPUS_UTF8_ENCODE_LEN(code));
+	ck_assert(is_utf8((const char *)ptr, CORPUS_UTF8_ENCODE_LEN(code)));
+
+	start = ptr;
+	corpus_decode_utf8((const uint8_t **)&ptr, &decode);
+	ck_assert_int_eq(ptr - start, CORPUS_UTF8_ENCODE_LEN(code));
+	ck_assert_int_eq(code, decode);
+}
+
+
+START_TEST(test_rencode_decode_utf8)
+{
+	uint32_t code;
+
+	// U+0000..U+FFFF
+	for (code = 0; code <= 0xFFFF; code += 0xFF) {
+		if (!CORPUS_IS_UNICODE(code)) {
+			continue;
+		}
+		reverse_roundtrip(code);
+	}
+
+	// U+10000..U+3FFFF
+	reverse_roundtrip(0x10000);
+	reverse_roundtrip(0x10001);
+	reverse_roundtrip(0x3FFFE);
+	reverse_roundtrip(0x3FFFF);
+
+	// U+40000..U+FFFFF
+	reverse_roundtrip(0x40000);
+	reverse_roundtrip(0x40001);
+	reverse_roundtrip(0xFFFFE);
+	reverse_roundtrip(0xFFFFF);
+
+	// U+100000..U+10FFFF
+	reverse_roundtrip(0x100000);
+	reverse_roundtrip(0x100001);
+	reverse_roundtrip(0x10FFFE);
+	reverse_roundtrip(0x10FFFF);
+}
+END_TEST
+
+
 START_TEST(test_normalize_nfc_nfd)
 {
 	unsigned i, n = num_normalization_test;
@@ -543,6 +596,7 @@ Suite *unicode_suite(void)
 
 	tc = tcase_create("utf8 encoding and decoding");
 	tcase_add_test(tc, test_encode_decode_utf8);
+	tcase_add_test(tc, test_rencode_decode_utf8);
 	suite_add_tcase(s, tc);
 
 	tc = tcase_create("utf32 normalization");

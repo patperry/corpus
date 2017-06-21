@@ -121,6 +121,18 @@ void corpus_decode_utf8(const uint8_t **bufptr, uint32_t *codeptr);
 void corpus_encode_utf8(uint32_t code, uint8_t **bufptr);
 
 /**
+ * Encode a codepoint in reverse, at the end of UTF-8 character buffer.
+ * The codepoint must be a valid unicode character (according to
+ * #CORPUS_IS_UNICODE) and the buffer must have space for at least
+ * #CORPUS_UTF8_ENCODE_LEN bytes.
+ *
+ * \param code the codepoint
+ * \param endptr on input, a pointer to the end of the buffer;
+ * 	on exit, a pointer to the start of the encoded codepoint
+ */
+void corpus_rencode_utf8(uint32_t code, uint8_t **endptr);
+
+/**
  * Unicode character decomposition mappings. The compatibility mappings are
  * defined in [UAX #44 Sec. 5.7.3 Character Decomposition Maps]
  * (http://www.unicode.org/reports/tr44/#Character_Decomposition_Mappings).

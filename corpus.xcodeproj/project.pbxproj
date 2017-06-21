@@ -234,6 +234,7 @@
 		88D5CC6B1EE2199800F9C36A /* main_ngrams.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main_ngrams.c; path = src/main_ngrams.c; sourceTree = "<group>"; };
 		88D5CC6D1EE219B300F9C36A /* termset.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = termset.c; path = src/termset.c; sourceTree = "<group>"; };
 		88D5CC6E1EE219B300F9C36A /* termset.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = termset.h; path = src/termset.h; sourceTree = "<group>"; };
+		88E15BBC1EFAFF30002E61C8 /* charwidth.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = charwidth.h; path = src/unicode/charwidth.h; sourceTree = "<group>"; };
 		88E48C9B1EC76E17007F5449 /* memory.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = memory.c; path = src/memory.c; sourceTree = "<group>"; };
 		88E48C9C1EC76E17007F5449 /* memory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = memory.h; path = src/memory.h; sourceTree = "<group>"; };
 		88EA69C41EAF923D00D57BEB /* error.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = error.c; path = src/error.c; sourceTree = "<group>"; };
@@ -356,6 +357,7 @@
 			isa = PBXGroup;
 			children = (
 				88351CF01E8DB677001DA3A8 /* casefold.h */,
+				88E15BBC1EFAFF30002E61C8 /* charwidth.h */,
 				88351CF11E8DB677001DA3A8 /* combining.h */,
 				884F5CAA1EBA67D500DA1C24 /* compose.h */,
 				88351CF21E8DB677001DA3A8 /* decompose.h */,

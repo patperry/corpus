@@ -15,12 +15,12 @@
  */
 
 #include <check.h>
+#include <stdint.h>
 #include <stdio.h>
-#include "../src/unicode/charwidth.h"
+#include "../src/unicode.h"
 #include "wcwidth9/wcwidth9.h"
 #include "testutil.h"
 
-#define UNICODE_MAX 0x10FFFF
 
 /*
  * This check is kind of meaningless. wcwidth9 has Unicode 9.0.0, gives
@@ -28,31 +28,32 @@
  */
 START_TEST(test_wcwidth9)
 {
-	int code, prop, prop0, ok, nfail;
+	int prop, prop0, ok, nfail;
+	int32_t code;
 
 	nfail = 0;
-	for (code = 0; code <= UNICODE_MAX; code++) {
+	for (code = 0; code <= CORPUS_UNICODE_MAX; code++) {
 		prop0 = (code < 0x10FFFE) ? wcwidth9(code) : -3;
-		prop = charwidth(code);
+		prop = corpus_unicode_charwidth(code);
 
 		switch (prop) {
-		case CHARWIDTH_OTHER:
+		case CORPUS_CHARWIDTH_OTHER:
 			ok = prop0 == -1 || prop0 == -3;
 			break;
 
-		case CHARWIDTH_AMBIGUOUS:
+		case CORPUS_CHARWIDTH_AMBIGUOUS:
 			ok = prop0 == -2;
 			break;
 
-		case CHARWIDTH_NONE:
+		case CORPUS_CHARWIDTH_NONE:
 			ok = prop0 == -1 || prop0 >= 1;
 			break;
 
-		case CHARWIDTH_NARROW:
+		case CORPUS_CHARWIDTH_NARROW:
 			ok = prop0 == 1 || prop0 == -1;
 			break;
 
-		case CHARWIDTH_WIDE:
+		case CORPUS_CHARWIDTH_WIDE:
 			ok = prop0 == 2 || prop0 == -1;
 			break;
 

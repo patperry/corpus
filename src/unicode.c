@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "unicode/casefold.h"
+#include "unicode/charwidth.h"
 #include "unicode/compose.h"
 #include "unicode/combining.h"
 #include "unicode/decompose.h"
@@ -602,4 +603,25 @@ void corpus_unicode_compose(uint32_t *ptr, size_t *lenptr)
 
 out:
 	*lenptr = len;
+}
+
+
+int corpus_unicode_charwidth(uint32_t code)
+{
+	int prop = charwidth(code);
+	switch(prop) {
+	case CHARWIDTH_OTHER:
+		return CORPUS_CHARWIDTH_OTHER;
+	case CHARWIDTH_AMBIGUOUS:
+		return CORPUS_CHARWIDTH_AMBIGUOUS;
+	case CHARWIDTH_NONE:
+		return CORPUS_CHARWIDTH_NONE;
+	case CHARWIDTH_NARROW:
+		return CORPUS_CHARWIDTH_NARROW;
+	case CHARWIDTH_WIDE:
+		return CORPUS_CHARWIDTH_WIDE;
+	default:
+		assert(0 && "internal error: unrecognized charwidth property");
+		return CORPUS_CHARWIDTH_OTHER;
+	}
 }

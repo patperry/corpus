@@ -400,15 +400,15 @@ src/tree.o: src/tree.c src/array.h src/error.h src/memory.h src/table.h \
 	src/tree.h
 src/typemap.o: src/typemap.c src/error.h src/memory.h src/private/stopwords.h \
 	src/table.h src/text.h src/unicode.h src/wordscan.h src/typemap.h
-src/unicode.o: src/unicode.c src/unicode/casefold.h src/unicode/combining.h \
-	src/unicode/compose.h src/unicode/decompose.h src/error.h \
-	src/unicode.h
+src/unicode.o: src/unicode.c src/unicode/casefold.h src/unicode/charwidth.h \
+	src/unicode/combining.h src/unicode/compose.h src/unicode/decompose.h \
+	src/error.h src/unicode.h
 src/wordscan.o: src/wordscan.c src/error.h src/text.h \
 	src/unicode/wordbreakprop.h src/wordscan.h
 
 tests/check_census.o: tests/check_census.c src/table.h src/census.h \
 	tests/testutil.h
-tests/check_charwidth.o: tests/check_charwidth.c src/unicode/charwidth.h \
+tests/check_charwidth.o: tests/check_charwidth.c src/unicode.h \
 	tests/testutil.h
 tests/check_data.o: tests/check_data.c src/error.h src/table.h src/text.h \
 	src/textset.h src/typemap.h src/symtab.h src/data.h src/datatype.h \

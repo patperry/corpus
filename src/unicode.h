@@ -205,4 +205,27 @@ void corpus_unicode_order(uint32_t *ptr, size_t len);
  */
 void corpus_unicode_compose(uint32_t *ptr, size_t *lenptr);
 
+
+/**
+ * A Unicode character width type
+ */
+enum corpus_charwidth_type {
+	CORPUS_CHARWIDTH_OTHER = -2,	/**< Control and others: Cc, Cn, Co, Cs, Zl, Zp */
+	CORPUS_CHARWIDTH_AMBIGUOUS = -1,/**< can be narrow or wide depending
+					  on the context */
+	CORPUS_CHARWIDTH_NONE = 0,	/**< Combining marks: Mc, Me, Mn */
+	CORPUS_CHARWIDTH_NARROW = 1,	/**< Most western alphabets */
+	CORPUS_CHARWIDTH_WIDE = 2	/**< Most emoji and ideographs */
+};
+
+/**
+ * Get the width of a Unicode character, using the East Asian Width table and
+ * the Emoji data.
+ *
+ * \param code the codepoint
+ *
+ * \returns a #corpus_charwidth_type value giving the width
+ */
+int corpus_unicode_charwidth(uint32_t code);
+
 #endif /* CORPUS_UNICODE_H */

@@ -1,3 +1,10 @@
+# corpus 0.7.0
+
+* Added ability to search for specific terms.
+
+* Added unicode character widths.
+
+
 # corpus 0.6.0
 
 * Added the ability to iterate backwards over the characters in a text.

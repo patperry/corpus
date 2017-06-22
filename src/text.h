@@ -143,6 +143,15 @@ void corpus_text_iter_make(struct corpus_text_iter *it,
 int corpus_text_iter_advance(struct corpus_text_iter *it);
 
 /**
+ * Check whether a text iterator can advance.
+ *
+ * \param it the text iterator
+ *
+ * \returns non-zero if the iterator can advance, zero otherwise
+ */
+int corpus_text_iter_can_advance(const struct corpus_text_iter *it);
+
+/**
  * Retreat to the previous character in a text.
  *
  * \param it the text iterator
@@ -151,6 +160,15 @@ int corpus_text_iter_advance(struct corpus_text_iter *it);
  * 	the iterator has passed the start of the text.
  */
 int corpus_text_iter_retreat(struct corpus_text_iter *it);
+
+/**
+ * Check whether a text iterator can retreat.
+ *
+ * \param it the text iterator
+ *
+ * \returns non-zero if the iterator can retreat, zero otherwise
+ */
+int corpus_text_iter_can_retreat(const struct corpus_text_iter *it);
 
 /**
  * Reset an iterator to the start of the text.

@@ -114,6 +114,12 @@ void corpus_text_iter_make(struct corpus_text_iter *it,
 }
 
 
+int corpus_text_iter_can_advance(const struct corpus_text_iter *it)
+{
+	return (it->ptr != it->end);
+}
+
+
 int corpus_text_iter_advance(struct corpus_text_iter *it)
 {
 	const uint8_t *ptr = it->ptr;
@@ -121,7 +127,7 @@ int corpus_text_iter_advance(struct corpus_text_iter *it)
 	uint32_t code;
 	size_t attr;
 
-	if (ptr == it->end) {
+	if (!corpus_text_iter_can_advance(it)) {
 		goto at_end;
 	}
 
@@ -171,6 +177,15 @@ void corpus_text_iter_skip(struct corpus_text_iter *it)
 }
 
 
+int corpus_text_iter_can_retreat(const struct corpus_text_iter *it)
+{
+	const size_t size = (it->text_attr & CORPUS_TEXT_SIZE_MASK);
+	const uint8_t *begin = it->end - size;
+	const uint8_t *ptr = it->ptr;
+	return (ptr != begin);
+}
+
+
 int corpus_text_iter_retreat(struct corpus_text_iter *it)
 {
 	const size_t size = (it->text_attr & CORPUS_TEXT_SIZE_MASK);
@@ -179,7 +194,7 @@ int corpus_text_iter_retreat(struct corpus_text_iter *it)
 	const uint8_t *end = it->end;
 	uint32_t code = it->current;
 
-	if (ptr == begin) {
+	if (!corpus_text_iter_can_retreat(it)) {
 		return 0;
 	}
 

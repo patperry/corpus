@@ -45,8 +45,12 @@ START_TEST(test_wcwidth9)
 			ok = prop0 == -2;
 			break;
 
-		case CORPUS_CHARWIDTH_NONE:
+		case CORPUS_CHARWIDTH_IGNORABLE:
 			ok = prop0 == -1 || prop0 >= 1;
+			break;
+
+		case CORPUS_CHARWIDTH_NONE:
+			ok = prop0 == -1;
 			break;
 
 		case CORPUS_CHARWIDTH_NARROW:

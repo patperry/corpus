@@ -74,7 +74,9 @@ for code in range(len(code_props)):
             code_props[code] = 'Ambiguous'
     elif code in other: # other overrides east_asian_width
         code_props[code] = 'Other'
-    elif code in default_ignorable or code in none:
+    elif code in default_ignorable:
+        code_props[code] = 'Ignorable'
+    elif code in none:
         code_props[code] = 'None'
     elif eaw == 'F' or eaw == 'W':
         code_props[code] = 'Wide'
@@ -86,10 +88,10 @@ for code in range(len(code_props)):
         code_props[code] = 'Narrow' # default to narrow
 
 
-prop_names = ['Other', 'Ambiguous', 'None', 'Narrow', 'Wide']
+prop_names = ['Other', 'Ambiguous', 'Ignorable', 'None', 'Narrow', 'Wide']
 prop_vals = {}
 for p in prop_names:
-    prop_vals[p] = len(prop_vals) - 2
+    prop_vals[p] = len(prop_vals) - 3
 
 
 def compute_tables(block_size):

@@ -28,11 +28,11 @@
 		88548A711ECF5BAA0063254E /* tree.c in Sources */ = {isa = PBXBuildFile; fileRef = 88548A6F1ECF5BAA0063254E /* tree.c */; };
 		88548A721ECF5BBE0063254E /* tree.c in Sources */ = {isa = PBXBuildFile; fileRef = 88548A6F1ECF5BAA0063254E /* tree.c */; };
 		88548A781ECF5CDF0063254E /* memory.c in Sources */ = {isa = PBXBuildFile; fileRef = 88E48C9B1EC76E17007F5449 /* memory.c */; };
+		8860F07A1F01544600187F4D /* check_text.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EA69ED1EAF952D00D57BEB /* check_text.c */; };
 		886533651E958CA60089FD91 /* wordscan.c in Sources */ = {isa = PBXBuildFile; fileRef = 886533631E958CA60089FD91 /* wordscan.c */; };
 		886D7CCE1ED32C5E00566B7B /* census.c in Sources */ = {isa = PBXBuildFile; fileRef = 884F5CAB1EBA67ED00DA1C24 /* census.c */; };
 		887D44821EC87CB8001C0E83 /* strntod.c in Sources */ = {isa = PBXBuildFile; fileRef = 887D44811EC87CB8001C0E83 /* strntod.c */; };
 		887D44831EC87CC2001C0E83 /* strntod.c in Sources */ = {isa = PBXBuildFile; fileRef = 887D44811EC87CB8001C0E83 /* strntod.c */; };
-		889DD88E1EF9AC5E00C91F69 /* check_census.c in Sources */ = {isa = PBXBuildFile; fileRef = 884F5CAE1EBA680D00DA1C24 /* check_census.c */; };
 		88B565BD1E96D4CE00FC9AEF /* main_get.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565B81E96D4CE00FC9AEF /* main_get.c */; };
 		88B565BE1E96D4CE00FC9AEF /* main_scan.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565B91E96D4CE00FC9AEF /* main_scan.c */; };
 		88B565BF1E96D4CE00FC9AEF /* main_tokens.c in Sources */ = {isa = PBXBuildFile; fileRef = 88B565BA1E96D4CE00FC9AEF /* main_tokens.c */; };
@@ -641,8 +641,8 @@
 				88CD84621EBB7FAD00DF50CB /* libstemmer_utf8.c in Sources */,
 				88CD846F1EBB7FCA00DF50CB /* stem_UTF_8_porter.c in Sources */,
 				88548A6C1ECE62FC0063254E /* filter.c in Sources */,
-				889DD88E1EF9AC5E00C91F69 /* check_census.c in Sources */,
 				88EA69DF1EAF94D300D57BEB /* render.c in Sources */,
+				8860F07A1F01544600187F4D /* check_text.c in Sources */,
 				88CD846D1EBB7FCA00DF50CB /* stem_UTF_8_italian.c in Sources */,
 				88004F8D1EF863DA00E48E12 /* search.c in Sources */,
 				88CD84711EBB7FCA00DF50CB /* stem_UTF_8_romanian.c in Sources */,

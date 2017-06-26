@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <assert.h>
 #include <check.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -194,6 +195,13 @@ static int next(void)
 	}
 }
 
+
+static int has_next()
+{
+	return corpus_text_iter_can_advance(&iter);
+}
+
+
 static int prev(void)
 {
 	if (corpus_text_iter_retreat(&iter)) {
@@ -204,11 +212,25 @@ static int prev(void)
 }
 
 
+static int has_prev()
+{
+	return corpus_text_iter_can_retreat(&iter);
+}
+
+
 START_TEST(test_iter_empty)
 {
 	start(T(""));
+	ck_assert(!has_next());
+	ck_assert(!has_prev());
+
 	ck_assert_int_eq(next(), -1);
+	ck_assert(!has_next());
+	ck_assert(!has_prev());
+
 	ck_assert_int_eq(prev(), -1);
+	ck_assert(!has_next());
+	ck_assert(!has_prev());
 
 	start(T(""));
 	ck_assert_int_eq(prev(), -1);
@@ -232,12 +254,32 @@ END_TEST
 START_TEST(test_iter_single)
 {
 	start(T("a"));
+	ck_assert(has_next());
+	ck_assert(!has_prev());
+
 	ck_assert_int_eq(next(), 'a');
+	ck_assert(!has_next());
+	ck_assert(!has_prev());
+
 	ck_assert_int_eq(prev(), -1);
+	ck_assert(has_next());
+	ck_assert(!has_prev());
+
 	ck_assert_int_eq(next(), 'a');
+	ck_assert(!has_next());
+	ck_assert(!has_prev());
+
 	ck_assert_int_eq(next(), -1);
+	ck_assert(!has_next());
+	ck_assert(has_prev());
+
 	ck_assert_int_eq(prev(), 'a');
+	ck_assert(!has_next());
+	ck_assert(!has_prev());
+
 	ck_assert_int_eq(prev(), -1);
+	ck_assert(has_next());
+	ck_assert(!has_prev());
 }
 END_TEST
 
@@ -435,13 +477,14 @@ START_TEST(test_iter_random)
 	int ntok_max = 1024 - 1;
 	const uint8_t *ptr;
 	int ntok;
-	size_t len, size;
+	size_t len, size, attr;
 	int i, id;
 
 	srand(_i);
 
 	ntok = (337 * (_i))  % ntok_max;
 	size = 0;
+	attr = 0;
 	for (i = 0; i < ntok; i++) {
 		id = rand() % ntype;
 		toks[i] = id;
@@ -449,17 +492,25 @@ START_TEST(test_iter_random)
 		len = strlen(types[id].string);
 		memcpy(buffer + size, types[id].string, len);
 		size += len;
+		attr |= types[id].attr;
 	}
 
 	ptr = buffer;
 	ck_assert(!corpus_text_assign(&text, ptr, size, 0));
+	ck_assert(CORPUS_TEXT_SIZE(&text) == size);
+	ck_assert(CORPUS_TEXT_BITS(&text) == attr);
+
 	corpus_text_iter_make(&iter, &text);
 	ck_assert(!corpus_text_iter_retreat(&iter));
 	ck_assert(iter.ptr == ptr);
 
 	// forward iteration
 	for (i = 0; i < ntok; i++) {
+		ck_assert(corpus_text_iter_can_advance(&iter));
 		ck_assert(corpus_text_iter_advance(&iter));
+		if (i > 0) {
+			ck_assert(corpus_text_iter_can_retreat(&iter));
+		}
 
 		id = toks[i];
 		ck_assert_uint_eq(iter.current, types[id].value);
@@ -470,13 +521,18 @@ START_TEST(test_iter_random)
 		ck_assert(iter.ptr == ptr);
 	}
 
+	ck_assert(!corpus_text_iter_can_advance(&iter));
 	ck_assert(!corpus_text_iter_advance(&iter));
 	ck_assert(!corpus_text_iter_advance(&iter));
 	ck_assert(iter.ptr == ptr);
 
 	// reverse iteration
 	while (i-- > 0) {
+		ck_assert(corpus_text_iter_can_retreat(&iter));
 		ck_assert(corpus_text_iter_retreat(&iter));
+		if (i != ntok - 1) {
+			ck_assert(corpus_text_iter_can_advance(&iter));
+		}
 
 		id = toks[i];
 		ck_assert_uint_eq(iter.current, types[id].value);
@@ -487,6 +543,7 @@ START_TEST(test_iter_random)
 		ptr -= len;
 	}
 
+	ck_assert(!corpus_text_iter_can_retreat(&iter));
 	ck_assert(!corpus_text_iter_retreat(&iter));
 	ck_assert(!corpus_text_iter_retreat(&iter));
 	ck_assert(iter.ptr == ptr);

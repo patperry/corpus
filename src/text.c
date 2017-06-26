@@ -182,7 +182,25 @@ int corpus_text_iter_can_retreat(const struct corpus_text_iter *it)
 	const size_t size = (it->text_attr & CORPUS_TEXT_SIZE_MASK);
 	const uint8_t *begin = it->end - size;
 	const uint8_t *ptr = it->ptr;
-	return (ptr != begin);
+	uint32_t code = it->current;
+	struct corpus_text_iter it2;
+
+	if (ptr > begin + 12) {
+		return 1;
+	}
+
+	if (ptr == begin) {
+		return 0;
+	}
+
+	if (!(it->attr & CORPUS_TEXT_ESC_BIT)) {
+		return (ptr != begin + CORPUS_UTF8_ENCODE_LEN(code));
+	}
+
+	it2 = *it;
+	iter_retreat_escaped(&it2, begin);
+
+	return (it2.ptr != begin);
 }
 
 
@@ -194,7 +212,7 @@ int corpus_text_iter_retreat(struct corpus_text_iter *it)
 	const uint8_t *end = it->end;
 	uint32_t code = it->current;
 
-	if (!corpus_text_iter_can_retreat(it)) {
+	if (ptr == begin) {
 		return 0;
 	}
 

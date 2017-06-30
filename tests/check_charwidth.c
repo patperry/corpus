@@ -41,6 +41,10 @@ START_TEST(test_wcwidth9)
 			ok = prop0 == -1 || prop0 == -3;
 			break;
 
+		case CORPUS_CHARWIDTH_EMOJI:
+			ok = prop0 == 2 || prop0 == -1;
+			break;
+
 		case CORPUS_CHARWIDTH_AMBIGUOUS:
 			ok = prop0 == -2;
 			break;

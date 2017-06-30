@@ -637,6 +637,8 @@ int corpus_unicode_charwidth(uint32_t code)
 	switch(prop) {
 	case CHARWIDTH_OTHER:
 		return CORPUS_CHARWIDTH_OTHER;
+	case CHARWIDTH_EMOJI:
+		return CORPUS_CHARWIDTH_EMOJI;
 	case CHARWIDTH_AMBIGUOUS:
 		return CORPUS_CHARWIDTH_AMBIGUOUS;
 	case CHARWIDTH_IGNORABLE:

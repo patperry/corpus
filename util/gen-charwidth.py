@@ -69,7 +69,7 @@ for code in range(len(code_props)):
     eaw = east_asian_width[code]
     if code >= emoji_min and code in emoji: # emoji overrides east_asian_width
         if eaw is None or eaw != 'A':
-            code_props[code] = 'Wide'
+            code_props[code] = 'Emoji'
         else:
             code_props[code] = 'Ambiguous'
     elif code in other: # other overrides east_asian_width
@@ -88,7 +88,7 @@ for code in range(len(code_props)):
         code_props[code] = 'Narrow' # default to narrow
 
 
-prop_names = ['Other', 'Ambiguous', 'Ignorable', 'None', 'Narrow', 'Wide']
+prop_names = ['Other', 'Emoji', 'Ambiguous', 'Ignorable', 'None', 'Narrow', 'Wide']
 prop_vals = {}
 for p in prop_names:
     prop_vals[p] = len(prop_vals) - 3

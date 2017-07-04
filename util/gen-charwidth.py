@@ -38,11 +38,9 @@ east_asian_width = property.read(EAST_ASIAN_WIDTH)
 # W:  Wide      (always wide)
 
 
-# Treat emoji above 0x1F000 as wide
 emoji_props = property.read(EMOJI_DATA, sets=True)
-emoji = emoji_props['Emoji']
-emoji_min = 0x1F000
-
+emoji = emoji_props['Emoji_Presentation']
+emoji_min = 0x0
 
 # Treat ignorables as invisible
 derived_core_properties = property.read(DERIVED_CORE_PROPERTIES, sets=True)

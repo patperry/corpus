@@ -40,7 +40,10 @@ east_asian_width = property.read(EAST_ASIAN_WIDTH)
 
 emoji_props = property.read(EMOJI_DATA, sets=True)
 emoji = emoji_props['Emoji_Presentation']
-emoji_min = 0x0
+
+for code in emoji_props['Emoji']:
+    if code >= 0x1F000:
+        emoji.add(code)
 
 # Treat ignorables as invisible
 derived_core_properties = property.read(DERIVED_CORE_PROPERTIES, sets=True)
@@ -65,7 +68,7 @@ for code in range(len(unicode_data.uchars)):
 code_props = [None] * len(east_asian_width)
 for code in range(len(code_props)):
     eaw = east_asian_width[code]
-    if code >= emoji_min and code in emoji: # emoji overrides east_asian_width
+    if code in emoji: # emoji overrides east_asian_width
         if eaw is None or eaw != 'A':
             code_props[code] = 'Emoji'
         else:

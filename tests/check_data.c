@@ -111,7 +111,9 @@ int decode_boolean(const char *str)
 	int val;
 
 	ck_assert(!corpus_data_assign(&data, &schema, (const uint8_t *)str, n));
-	ck_assert(!corpus_data_bool(&data, &val));
+	if (corpus_data_bool(&data, &val)) {
+		ck_assert(val == INT_MIN);
+	}
 
 	return val;
 }
@@ -278,6 +280,7 @@ END_TEST
 
 START_TEST(test_decode_boolean)
 {
+	ck_assert_int_eq(decode_boolean("null"), INT_MIN);
 	ck_assert_int_eq(decode_boolean("true"), 1);
 	ck_assert_int_eq(decode_boolean("  true"), 1);
 	ck_assert_int_eq(decode_boolean(" true "), 1);

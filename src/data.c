@@ -68,7 +68,7 @@ int corpus_data_bool(const struct corpus_data *d, int *valptr)
 	int val;
 	int err;
 
-	if (d->type_id != CORPUS_DATATYPE_BOOLEAN) {
+	if (d->type_id != CORPUS_DATATYPE_BOOLEAN || *d->ptr == 'n') {
 		val = INT_MIN;
 		err = CORPUS_ERROR_INVAL;
 	} else {
@@ -132,7 +132,8 @@ int corpus_data_double(const struct corpus_data *d, double *valptr)
 	int err;
 	int neg = 0;
 
-	if (!(d->type_id == CORPUS_DATATYPE_REAL || d->type_id == CORPUS_DATATYPE_INTEGER)) {
+	if (!(d->type_id == CORPUS_DATATYPE_REAL
+				|| d->type_id == CORPUS_DATATYPE_INTEGER)) {
 		goto nullval;
 	}
 

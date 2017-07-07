@@ -68,7 +68,8 @@ int corpus_data_bool(const struct corpus_data *d, int *valptr)
 	int val;
 	int err;
 
-	if (d->type_id != CORPUS_DATATYPE_BOOLEAN || *d->ptr == 'n') {
+	if (d->type_id != CORPUS_DATATYPE_BOOLEAN
+			|| d->size == 0 || *d->ptr == 'n') {
 		val = INT_MIN;
 		err = CORPUS_ERROR_INVAL;
 	} else {
@@ -90,7 +91,8 @@ int corpus_data_int(const struct corpus_data *d, int *valptr)
 	int val;
 	int err;
 
-	if (d->type_id != CORPUS_DATATYPE_INTEGER) {
+	if (d->type_id != CORPUS_DATATYPE_INTEGER
+			|| d->size == 0 || *d->ptr == 'n') {
 		goto nullval;
 	}
 
@@ -133,7 +135,8 @@ int corpus_data_double(const struct corpus_data *d, double *valptr)
 	int neg = 0;
 
 	if (!(d->type_id == CORPUS_DATATYPE_REAL
-				|| d->type_id == CORPUS_DATATYPE_INTEGER)) {
+				|| d->type_id == CORPUS_DATATYPE_INTEGER)
+			|| d->size == 0 || *d->ptr == 'n') {
 		goto nullval;
 	}
 
@@ -193,7 +196,8 @@ int corpus_data_text(const struct corpus_data *d, struct corpus_text *valptr)
 	const uint8_t *end;
 	int err;
 
-	if (d->type_id != CORPUS_DATATYPE_TEXT) {
+	if (d->type_id != CORPUS_DATATYPE_TEXT
+			|| d->size == 0 || *d->ptr == 'n') {
 		goto nullval;
 	}
 
@@ -456,7 +460,8 @@ int corpus_data_items(const struct corpus_data *d,
 	int err;
 
 	if (d->type_id < 0
-		|| s->types[d->type_id].kind != CORPUS_DATATYPE_ARRAY) {
+		|| s->types[d->type_id].kind != CORPUS_DATATYPE_ARRAY
+		|| d->size == 0 || *d->ptr == 'n') {
 		goto nullval;
 	}
 
@@ -491,7 +496,8 @@ int corpus_data_nitem(const struct corpus_data *d,
 	int err, nitem;
 
 	if (d->type_id < 0
-		|| s->types[d->type_id].kind != CORPUS_DATATYPE_ARRAY) {
+		|| s->types[d->type_id].kind != CORPUS_DATATYPE_ARRAY
+		|| d->size == 0 || *d->ptr == 'n') {
 		goto nullval;
 	}
 
@@ -524,7 +530,8 @@ int corpus_data_nfield(const struct corpus_data *d,
 	int err, nfield;
 
 	if (d->type_id < 0
-		|| s->types[d->type_id].kind != CORPUS_DATATYPE_RECORD) {
+		|| s->types[d->type_id].kind != CORPUS_DATATYPE_RECORD
+		|| d->size == 0 || *d->ptr == 'n') {
 		goto nullval;
 	}
 
@@ -552,7 +559,8 @@ int corpus_data_fields(const struct corpus_data *d,
 	int err;
 
 	if (d->type_id < 0
-		|| s->types[d->type_id].kind != CORPUS_DATATYPE_RECORD) {
+		|| s->types[d->type_id].kind != CORPUS_DATATYPE_RECORD
+		|| d->size == 0 || *d->ptr == 'n') {
 		goto nullval;
 	}
 
@@ -595,7 +603,8 @@ int corpus_data_field(const struct corpus_data *d,
 	int err, flags, id, type_id;
 
 	if (d->type_id < 0
-		|| s->types[d->type_id].kind != CORPUS_DATATYPE_RECORD) {
+		|| s->types[d->type_id].kind != CORPUS_DATATYPE_RECORD
+		|| d->size == 0 || *d->ptr == 'n') {
 		goto nullval;
 	}
 

@@ -527,6 +527,7 @@ out:
 int corpus_data_nfield(const struct corpus_data *d,
 		       const struct corpus_schema *s, int *nfieldptr)
 {
+	struct corpus_data_fields it;
 	int err, nfield;
 
 	if (d->type_id < 0
@@ -535,7 +536,16 @@ int corpus_data_nfield(const struct corpus_data *d,
 		goto nullval;
 	}
 
-	nfield = s->types[d->type_id].meta.record.nfield;
+	// the following won't work:
+	//     nfield = s->types[d->type_id].meta.record.nfield;
+	// (the data type might be that of a supertype with more fields)
+
+	nfield = 0;
+	corpus_data_fields(d, s, &it);
+	while (corpus_data_fields_advance(&it)) {
+		nfield++;
+	}
+
 	err = 0;
 	goto out;
 

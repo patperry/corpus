@@ -312,13 +312,7 @@ int corpus_data_items_advance(struct corpus_data_items *it)
 	end = ptr;
 	scan_value(&end);
 
-	if (it->item_type == CORPUS_DATATYPE_ANY
-			|| it->item_kind == CORPUS_DATATYPE_RECORD) {
-		// we need to re-parse records to figure out exactly
-		// which fields are present (it->item_type is the union
-		// over all items in the array, and might include
-		// fields not in the current item)
-
+	if (it->item_type == CORPUS_DATATYPE_ANY) {
 		// the call to data_assign won't fail because we already
 		// have enough space in the schema buffer to parse the
 		// array item

@@ -263,13 +263,17 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 		if (scan->code == '@' || scan->code == '#') {
 			switch (scan->iter_prop) {
 			case WORD_BREAK_ALETTER:
-			case WORD_BREAK_HEBREW_LETTER:
 			case WORD_BREAK_EXTENDNUMLET:
+			case WORD_BREAK_HEBREW_LETTER:
 			case WORD_BREAK_KATAKANA:
-			case WORD_BREAK_LETTER:
 				NEXT();
 				NEXT();
 				goto Id;
+
+			case WORD_BREAK_LETTER:
+				NEXT();
+				NEXT();
+				goto Break;
 			}
 		}
 		NEXT();
@@ -309,9 +313,7 @@ Id:
 	case WORD_BREAK_ALETTER:
 	case WORD_BREAK_EXTENDNUMLET:
 	case WORD_BREAK_HEBREW_LETTER:
-	case WORD_BREAK_LETTER:
 	case WORD_BREAK_KATAKANA:
-	case WORD_BREAK_NUMBER:
 	case WORD_BREAK_NUMERIC:
 		NEXT();
 		goto Id;

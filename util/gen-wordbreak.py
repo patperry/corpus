@@ -53,7 +53,6 @@ other_cats = set(('Cc', 'Cf', 'Cs', 'Co', 'Cn'))
 punctuation_cats = set(('Pc', 'Pd', 'Pe', 'Pf', 'Pi', 'Po', 'Ps'))
 symbol_cats = set(('Sc', 'Sm', 'So')) # Note: Sk in mark
 
-
 for code in range(len(unicode_data.uchars)):
     u = unicode_data.uchars[code]
     if u is None or u.category in other_cats:
@@ -68,6 +67,11 @@ for code in range(len(unicode_data.uchars)):
         punctuation.add(code)
     elif u.category in symbol_cats:
         symbol.add(code)
+
+# legacy punctuation
+for ch in ['#', '%', '&', '*', '@']:
+    punctuation.remove(ord(ch))
+    symbol.add(ord(ch))
 
 
 prop_names = set(code_props)

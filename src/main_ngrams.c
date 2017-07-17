@@ -76,6 +76,7 @@ static struct string_arg word_classes[] = {
 	{ "punct",  CORPUS_FILTER_DROP_PUNCT,  "Punctuation." },
 	{ "symbol", CORPUS_FILTER_DROP_SYMBOL, "Symbols." },
 	{ "other",  CORPUS_FILTER_DROP_OTHER,  "Other." },
+	{ "url",    CORPUS_FILTER_DROP_URL,    "URL." },
 	{ NULL, 0, NULL }
 };
 

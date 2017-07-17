@@ -117,6 +117,16 @@ START_TEST(test_url)
 END_TEST
 
 
+START_TEST(test_url_punct)
+{
+	start(T("https://url.com/with-dash?query&%%20?"));
+	assert_text_eq(next(), T("https://url.com/with-dash?query&%%20"));
+	assert_text_eq(next(), T("?"));
+	ck_assert(next() == NULL);
+}
+END_TEST
+
+
 START_TEST(test_twitter)
 {
 	start(T(".@ptrckprry #rstats!"));
@@ -317,6 +327,7 @@ Suite *wordscan_suite(void)
         tcase_add_test(tc, test_figure1);
         tcase_add_test(tc, test_quote);
         tcase_add_test(tc, test_url);
+        tcase_add_test(tc, test_url_punct);
         tcase_add_test(tc, test_twitter);
         suite_add_tcase(s, tc);
 

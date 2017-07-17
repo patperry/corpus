@@ -37,6 +37,7 @@ enum corpus_word_type {
 	CORPUS_WORD_NUMBER,	/**< word that appears to be a number */
 	CORPUS_WORD_PUNCT,	/**< punctuation */
 	CORPUS_WORD_SYMBOL,	/**< symbol */
+	CORPUS_WORD_URL,	/**< URL */
 	CORPUS_WORD_OTHER	/**< other */
 };
 

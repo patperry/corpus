@@ -15,6 +15,7 @@
  */
 
 #include <assert.h>
+#include <stdio.h>
 #include "error.h"
 #include "text.h"
 #include "unicode/wordbreakprop.h"
@@ -180,6 +181,10 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 
 	case WORD_BREAK_ALETTER:
 		scan->type = CORPUS_WORD_LETTER;
+		if (scan->code == 'h') {
+			NEXT();
+			goto h;
+		}
 		NEXT();
 		goto ALetter;
 
@@ -253,9 +258,25 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 		NEXT();
 		goto Break;
 
+	case WORD_BREAK_SYMBOL:
+		scan->type = CORPUS_WORD_SYMBOL;
+		if (scan->code == '@' || scan->code == '#') {
+			switch (scan->iter_prop) {
+			case WORD_BREAK_ALETTER:
+			case WORD_BREAK_HEBREW_LETTER:
+			case WORD_BREAK_EXTENDNUMLET:
+			case WORD_BREAK_KATAKANA:
+			case WORD_BREAK_LETTER:
+				NEXT();
+				NEXT();
+				goto Id;
+			}
+		}
+		NEXT();
+		goto Break;
+
 	case WORD_BREAK_E_MODIFIER:
 	case WORD_BREAK_GLUE_AFTER_ZWJ:
-	case WORD_BREAK_SYMBOL:
 		scan->type = CORPUS_WORD_SYMBOL;
 		NEXT();
 		goto Break;
@@ -282,6 +303,85 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 		   "Unhandled word break property (%d)", scan->prop);
 	assert(0);
 	return 0;
+
+Id:
+	switch (scan->prop) {
+	case WORD_BREAK_ALETTER:
+	case WORD_BREAK_EXTENDNUMLET:
+	case WORD_BREAK_HEBREW_LETTER:
+	case WORD_BREAK_LETTER:
+	case WORD_BREAK_KATAKANA:
+	case WORD_BREAK_NUMBER:
+	case WORD_BREAK_NUMERIC:
+		NEXT();
+		goto Id;
+	}
+	goto Break;
+
+h:
+	if (scan->code == 't') {
+		NEXT();
+		goto ht;
+	}
+	goto ALetter;
+
+ht:
+	if (scan->code == 't') {
+		NEXT();
+		goto htt;
+	}
+	goto ALetter;
+
+htt:
+	if (scan->code == 'p') {
+		NEXT();
+		goto http;
+	}
+	goto ALetter;
+
+http:
+	if (scan->code == 's') {
+		NEXT();
+	}
+	if (scan->code == ':' && scan->iter.current == '/') {
+		scan->type = CORPUS_WORD_URL;
+		NEXT();
+		NEXT();
+		goto Url;
+	}
+	goto ALetter;
+
+Url:
+	switch (scan->prop) {
+	case WORD_BREAK_NONE:
+	case WORD_BREAK_CR:
+	case WORD_BREAK_LF:
+	case WORD_BREAK_NEWLINE:
+	case WORD_BREAK_WHITE_SPACE:
+	case WORD_BREAK_OTHER:
+	case WORD_BREAK_DOUBLE_QUOTE:
+		goto Break;
+
+	case WORD_BREAK_MIDLETTER:
+	case WORD_BREAK_MIDNUMLET:
+	case WORD_BREAK_SINGLE_QUOTE:
+	case WORD_BREAK_PUNCTUATION:
+		switch (scan->iter_prop) {
+		case WORD_BREAK_NONE:
+		case WORD_BREAK_CR:
+		case WORD_BREAK_LF:
+		case WORD_BREAK_NEWLINE:
+		case WORD_BREAK_WHITE_SPACE:
+		case WORD_BREAK_OTHER:
+			if (scan->code != '/') {
+				goto Break;
+			}
+		}
+
+	default:
+		NEXT();
+		goto Url;
+	}
 
 ALetter:
 	//fprintf(stderr, "ALetter: code = U+%04X\n", code);

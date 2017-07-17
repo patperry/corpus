@@ -107,6 +107,28 @@ START_TEST(test_quote)
 END_TEST
 
 
+START_TEST(test_url)
+{
+	start(T("http://ptrckprry.com/."));
+	assert_text_eq(next(), T("http://ptrckprry.com/"));
+	assert_text_eq(next(), T("."));
+	ck_assert(next() == NULL);
+}
+END_TEST
+
+
+START_TEST(test_twitter)
+{
+	start(T(".@ptrckprry #rstats!"));
+	assert_text_eq(next(), T("."));
+	assert_text_eq(next(), T("@ptrckprry"));
+	assert_text_eq(next(), T(" "));
+	assert_text_eq(next(), T("#rstats"));
+	assert_text_eq(next(), T("!"));
+}
+END_TEST
+
+
 // Unicode Word Break Test
 // http://www.unicode.org/Public/UCD/latest/ucd/auxiliary/WordBreakTest.txt
 struct unitest {
@@ -294,6 +316,8 @@ Suite *wordscan_suite(void)
         tcase_add_checked_fixture(tc, setup_scan, teardown_scan);
         tcase_add_test(tc, test_figure1);
         tcase_add_test(tc, test_quote);
+        tcase_add_test(tc, test_url);
+        tcase_add_test(tc, test_twitter);
         suite_add_tcase(s, tc);
 
         tc = tcase_create("Unicode WordBreakTest.txt");

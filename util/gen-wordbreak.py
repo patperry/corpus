@@ -69,7 +69,7 @@ for code in range(len(unicode_data.uchars)):
         symbol.add(code)
 
 # legacy punctuation
-for ch in ['#', '%', '&', '*', '@']:
+for ch in ['#', '%', '&', '@']:
     punctuation.remove(ord(ch))
     symbol.add(ord(ch))
 

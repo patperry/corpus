@@ -34,12 +34,14 @@
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  */
 
+#include <ctype.h>
+#include <errno.h>
+#include <float.h>
+#include <limits.h>
+#include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
-#include <ctype.h>
-#include <limits.h>
-#include <errno.h>
 
 
 static int MAX_EXPONENT = 441;	// Largest possible base 10 exponent.  Any
@@ -104,8 +106,8 @@ static long double POWERS_OF_5[] = {	// Binary powers of 5. Entry is
 double corpus_strntod(const char *string, size_t maxlen, char **endPtr)
 {
 	bool hasDec, sign, expSign;
-	long double fraction, dblExp5;
-	double dblExp2;
+	long double ldblFraction, ldblExp5;
+	double dblExp2, result;
 	const char *p;
 	const char *end = string + maxlen;
 	char c;
@@ -183,7 +185,7 @@ double corpus_strntod(const char *string, size_t maxlen, char **endPtr)
 		fracExp = decPt - mantSize;
 	}
 	if (mantSize == 0) {
-		fraction = 0;
+		ldblFraction = 0;
 		p = string;
 		goto done;
 	} else {
@@ -217,7 +219,7 @@ double corpus_strntod(const char *string, size_t maxlen, char **endPtr)
 			}
 			frac = 10 * frac + (unsigned)(c - '0');
 		}
-		fraction = (long double)frac;
+		ldblFraction = (long double)frac;
 	}
 
 	/*
@@ -268,7 +270,7 @@ double corpus_strntod(const char *string, size_t maxlen, char **endPtr)
 	 * computed without error.
 	 */
 
-	if (fraction != 0) {
+	if (ldblFraction != 0) {
 		if (exp < 0) {
 			expSign = true;
 			exp = -exp;
@@ -280,19 +282,19 @@ double corpus_strntod(const char *string, size_t maxlen, char **endPtr)
 			errno = ERANGE;
 		}
 		dblExp2 = 1;
-		dblExp5 = 1;
+		ldblExp5 = 1;
 		for (i = 0; exp != 0; exp >>= 1, i += 1) {
 			if (exp & 0x01) {
 				dblExp2 *= POWERS_OF_2[i];
-				dblExp5 *= POWERS_OF_5[i];
+				ldblExp5 *= POWERS_OF_5[i];
 			}
 		}
 		if (expSign) {
-			fraction /= dblExp5;
-			fraction /= (long double)dblExp2;
+			ldblFraction /= ldblExp5;
+			ldblFraction /= (long double)dblExp2;
 		} else {
-			fraction *= dblExp5;
-			fraction *= (long double)dblExp2;
+			ldblFraction *= ldblExp5;
+			ldblFraction *= (long double)dblExp2;
 		}
 	}
 
@@ -301,8 +303,18 @@ done:
 		*endPtr = (char *)p;
 	}
 
-	if (sign) {
-		return (double)-fraction;
+	if (ldblFraction > DBL_MAX) {
+		result = HUGE_VAL;
+		errno = ERANGE;
+	} else {
+		result = (double)ldblFraction;
+		if (result == 0 && ldblFraction != 0) {
+			errno = ERANGE;
+		}
 	}
-	return (double)fraction;
+
+	if (sign) {
+		return -result;
+	}
+	return result;
 }

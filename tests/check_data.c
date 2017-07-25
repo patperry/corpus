@@ -133,7 +133,7 @@ int decode_int(const char *str)
 
 	ck_assert(!corpus_data_assign(&data, &schema, (const uint8_t *)str, n));
 	err = corpus_data_int(&data, &val);
-	ck_assert(err == 0 || err == CORPUS_ERROR_OVERFLOW);
+	ck_assert(err == 0 || err == CORPUS_ERROR_RANGE);
 
 	return val;
 }
@@ -161,7 +161,7 @@ double decode_double(const char *str)
 
 	ck_assert(!corpus_data_assign(&data, &schema, (const uint8_t *)str, n));
 	err = corpus_data_double(&data, &val);
-	ck_assert(err == 0 || err == CORPUS_ERROR_OVERFLOW);
+	ck_assert(err == 0 || err == CORPUS_ERROR_RANGE);
 
 	return val;
 }

@@ -38,6 +38,8 @@ enum corpus_error_code {
 	CORPUS_ERROR_NOMEM,	/**< memory allocation failure */
 	CORPUS_ERROR_OS,	/**< operating system error */
 	CORPUS_ERROR_OVERFLOW,	/**< value is too big for data type */
+	CORPUS_ERROR_DOMAIN,	/**< input is outside function's domain */
+	CORPUS_ERROR_RANGE,	/**< output is outside data type's range */
 	CORPUS_ERROR_INTERNAL	/**< internal library error */
 };
 

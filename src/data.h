@@ -98,7 +98,7 @@ int corpus_data_bool(const struct corpus_data *d, int *valptr);
  * \param valptr if non-NULL, a location to store the value
  *
  * \returns 0 on success; #CORPUS_ERROR_INVAL if the data value is null or
- * 	not integer; #CORPUS_ERROR_OVERFLOW if the data value is too big
+ * 	not integer; #CORPUS_ERROR_RANGE if the data value is too big
  * 	to store in an `int`, in which case it gets clipped
  * 	to `INT_MAX` or `INT_MIN`
  */
@@ -111,7 +111,7 @@ int corpus_data_int(const struct corpus_data *d, int *valptr);
  * \param valptr if non-NULL, a location to store the value
  *
  * \returns 0 on success; #CORPUS_ERROR_INVAL if the data value is null or
- * 	not numeric (integer or real); #CORPUS_ERROR_OVERFLOW if the data
+ * 	not numeric (integer or real); #CORPUS_ERROR_RANGE if the data
  * 	value is too big to store in a `double`, in which case it
  * 	gets set to `+Infinity` or `-Infinity`
  */

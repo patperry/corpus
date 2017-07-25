@@ -100,13 +100,13 @@ int corpus_data_int(const struct corpus_data *d, int *valptr)
 	lval = corpus_strntoimax((const char *)d->ptr, d->size, NULL);
 	if (errno == ERANGE) {
 		val = lval > 0 ? INT_MAX : INT_MIN;
-		err = CORPUS_ERROR_OVERFLOW;
+		err = CORPUS_ERROR_RANGE;
 	} else if (lval > INT_MAX) {
 		val = INT_MAX;
-		err = CORPUS_ERROR_OVERFLOW;
+		err = CORPUS_ERROR_RANGE;
 	} else if (lval < INT_MIN) {
 		val = INT_MIN;
-		err = CORPUS_ERROR_OVERFLOW;
+		err = CORPUS_ERROR_RANGE;
 	} else {
 		val = (int)lval;
 		err = 0;
@@ -140,14 +140,11 @@ int corpus_data_double(const struct corpus_data *d, double *valptr)
 		goto nullval;
 	}
 
+	errno = 0;
 	val = corpus_strntod((const char *)d->ptr, d->size,
 			     (const char **)&ptr);
 	if (ptr != d->ptr) {
-		if (!isfinite(val)) {
-			err = CORPUS_ERROR_OVERFLOW;
-		} else {
-			err = 0;
-		}
+		err = (errno == ERANGE) ? CORPUS_ERROR_RANGE : 0;
 		goto out;
 	}
 

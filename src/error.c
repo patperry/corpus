@@ -35,6 +35,10 @@ const char *corpus_error_string(int code)
 		return "OS Error";
 	case CORPUS_ERROR_OVERFLOW:
 		return "Overflow Error";
+	case CORPUS_ERROR_DOMAIN:
+		return "Domain Error";
+	case CORPUS_ERROR_RANGE:
+		return "Range Error";
 	case CORPUS_ERROR_INTERNAL:
 		return "Internal Error";
 	default:

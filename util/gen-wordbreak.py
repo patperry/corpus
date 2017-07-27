@@ -68,10 +68,14 @@ for code in range(len(unicode_data.uchars)):
     elif u.category in symbol_cats:
         symbol.add(code)
 
-# legacy punctuation
+# reclassify legacy punctuation as 'Symbol'
 for ch in ['#', '%', '&', '@']:
     punctuation.remove(ord(ch))
     symbol.add(ord(ch))
+    # fullwidth versions
+    wch =  0xFEE0 + ord(ch)
+    punctuation.remove(wch)
+    symbol.add(wch)
 
 
 prop_names = set(code_props)

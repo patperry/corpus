@@ -260,7 +260,10 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 
 	case WORD_BREAK_SYMBOL:
 		scan->type = CORPUS_WORD_SYMBOL;
-		if (scan->code == '@' || scan->code == '#') {
+		// @, #, + fullwidth versions
+		if (scan->code == '@' || scan->code == '#'
+				|| scan->code == 0xFEE0 + '@'
+				|| scan->code == 0xFEE0 + '#') {
 			switch (scan->iter_prop) {
 			case WORD_BREAK_ALETTER:
 			case WORD_BREAK_EXTENDNUMLET:

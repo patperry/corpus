@@ -43,12 +43,6 @@ static int corpus_typemap_set_utf32(struct corpus_typemap *map,
 static int corpus_typemap_stem(struct corpus_typemap *map);
 
 
-const char **corpus_stemmer_names(void)
-{
-	return sb_stemmer_list();
-}
-
-
 const uint8_t **corpus_stopword_list(const char *name, int *lenptr)
 {
 	return stopword_list(name, lenptr);

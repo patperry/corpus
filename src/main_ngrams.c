@@ -30,6 +30,7 @@
 #include "text.h"
 #include "textset.h"
 #include "tree.h"
+#include "stem.h"
 #include "typemap.h"
 #include "symtab.h"
 #include "wordscan.h"

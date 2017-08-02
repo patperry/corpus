@@ -14,6 +14,7 @@ xcuserdata
 /tests/check_search
 /tests/check_sentfilter
 /tests/check_sentscan
+/tests/check_stem
 /tests/check_symtab
 /tests/check_termset
 /tests/check_text

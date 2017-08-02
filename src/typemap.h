@@ -85,13 +85,6 @@ struct corpus_typemap {
 };
 
 /**
- * Get a list of the stemmer algorithms (canonical names, not aliases).
- *
- * \returns a NULL-terminated array of algorithm names
- */
-const char **corpus_stemmer_names(void);
-
-/**
  * Get a list of stop words (common function words) encoded as
  * NULL-terminated UTF-8 strings.
  *

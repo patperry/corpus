@@ -325,6 +325,40 @@ END_TEST
 
 
 
+START_TEST(test_url)
+{
+	init(NULL, IGNORE_SPACE);
+	start(T("http PTRCKPRRY http://www.PTRCKPRRY.com/"));
+	assert_text_eq(next_type(), T("http"));
+	assert_text_eq(next_type(), TYPE_IGNORE);
+	assert_text_eq(next_type(), T("ptrckprry"));
+	assert_text_eq(next_type(), TYPE_IGNORE);
+	assert_text_eq(next_type(), T("http://www.PTRCKPRRY.com/"));
+	assert_text_eq(next_type(), TYPE_EOT);
+}
+END_TEST
+
+
+START_TEST(test_hashtag)
+{
+	init(NULL, IGNORE_SPACE);
+	start(T("#useR2017"));
+	assert_text_eq(next_type(), T("#useR2017"));
+	assert_text_eq(next_type(), TYPE_EOT);
+}
+END_TEST
+
+
+START_TEST(test_mention)
+{
+	init(NULL, IGNORE_SPACE);
+	start(T("@PtrckPrry"));
+	assert_text_eq(next_type(), T("@PtrckPrry"));
+	assert_text_eq(next_type(), TYPE_EOT);
+}
+END_TEST
+
+
 Suite *filter_suite(void)
 {
 	Suite *s;

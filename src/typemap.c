@@ -244,16 +244,21 @@ int corpus_typemap_stem_except(struct corpus_typemap *map,
 	return err;
 }
 
-static int count_words(const struct corpus_text *text)
+static int count_words(const struct corpus_text *text, int *kind_ptr)
 {
 	struct corpus_wordscan scan;
-	int nword;
+	int nword, kind;
 
 	nword = 0;
+	kind = CORPUS_WORD_NONE;
 	corpus_wordscan_make(&scan, text);
 	while (corpus_wordscan_advance(&scan)) {
+		if (nword == 0) {
+			kind = scan.type;
+		}
 		nword++;
 	}
+	*kind_ptr = kind;
 	return nword;
 }
 
@@ -263,9 +268,14 @@ int corpus_typemap_stem(struct corpus_typemap *map)
 	struct corpus_text stem;
 	size_t size;
 	const uint8_t *buf;
-	int err, nword0, nword;
+	int err, kind0, kind, nword0, nword;
 
 	if (!map->stemmer) {
+		return 0;
+	}
+
+	nword0 = count_words(&map->type, &kind0);
+	if (kind0 != CORPUS_WORD_LETTER) {
 		return 0;
 	}
 
@@ -274,7 +284,6 @@ int corpus_typemap_stem(struct corpus_typemap *map)
 	}
 
 	size = CORPUS_TEXT_SIZE(&map->type);
-
 	if (size >= INT_MAX) {
 		err = CORPUS_ERROR_OVERFLOW;
 		corpus_log(err, "type size (%"PRIu64" bytes)"
@@ -283,7 +292,6 @@ int corpus_typemap_stem(struct corpus_typemap *map)
 		goto out;
 	}
 
-	nword0 = count_words(&map->type);
 	buf = (const uint8_t *)sb_stemmer_stem(map->stemmer, map->type.ptr,
 					       (int)size);
 	if (buf == NULL) {
@@ -297,7 +305,7 @@ int corpus_typemap_stem(struct corpus_typemap *map)
 	size = (size_t)sb_stemmer_length(map->stemmer);
 	stem.ptr = (uint8_t *)buf;
 	stem.attr = (map->type.attr & ~CORPUS_TEXT_SIZE_MASK) | size;
-	nword = count_words(&stem);
+	nword = count_words(&stem, &kind);
 
 	// only stem types if the number of words doesn't change; this
 	// protects against turning inner punctuation like 'u.s' to

@@ -147,10 +147,6 @@ int corpus_typemap_set_kind(struct corpus_typemap *map, int kind)
 		map->charmap_type = CORPUS_UDECOMP_ALL;
 	}
 
-	if (kind & CORPUS_TYPE_MAPQUOTE) {
-		map->ascii_map['"'] = '\'';
-	}
-
 	map->kind = kind;
 
 	return 0;
@@ -343,37 +339,17 @@ int corpus_typemap_set_utf32(struct corpus_typemap *map, const uint32_t *ptr,
 			continue;
 		} else if (code <= 0xDFFFF) {
 			switch (code) {
-			// Quotation_Mark = Yes
-			case 0x00AB: // LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
-			case 0x00BB: // RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
 			case 0x2018: // LEFT SINGLE QUOTATION MARK
 			case 0x2019: // RIGHT SINGLE QUOTATION MARK
-			case 0x201A: // SINGLE LOW-9 QUOTATION MARK
-			case 0x201B: // SINGLE HIGH-REVERSED-9 QUOTATION MARK
+				if (map_quote) {
+					code = '\'';
+				}
+				break;
+
 			case 0x201C: // LEFT DOUBLE QUOTATION MARK
 			case 0x201D: // RIGHT DOUBLE QUOTATION MARK
-			case 0x201E: // DOUBLE LOW-9 QUOTATION MARK
-			case 0x201F: // DOUBLE HIGH-REVERSED-9 QUOTATION MARK
-			case 0x2039: // SINGLE LEFT-POINTING ANGLE QUOTATION MARK
-			case 0x203A: // SINGLE RIGHT-POINTING ANGLE QUOTATION MARK
-			case 0x2E42: // DOUBLE LOW-REVERSED-9 QUOTATION MARK
-			case 0x300C: // LEFT CORNER BRACKET
-			case 0x300D: // RIGHT CORNER BRACKET
-			case 0x300E: // LEFT WHITE CORNER BRACKET
-			case 0x300F: // RIGHT WHITE CORNER BRACKET
-			case 0x301D: // REVERSED DOUBLE PRIME QUOTATION MARK
-			case 0x301E: // DOUBLE PRIME QUOTATION MARK
-			case 0x301F: // LOW DOUBLE PRIME QUOTATION MARK
-			case 0xFE41: // PRESENTATION FORM FOR VERTICAL LEFT CORNER BRACKET
-			case 0xFE42: // PRESENTATION FORM FOR VERTICAL RIGHT CORNER BRACKET
-			case 0xFE43: // PRESENTATION FORM FOR VERTICAL LEFT WHITE CORNER BRACKET
-			case 0xFE44: // PRESENTATION FORM FOR VERTICAL RIGHT WHITE CORNER BRACKET
-			case 0xFF02: // FULLWIDTH QUOTATION MARK
-			case 0xFF07: // FULLWIDTH APOSTROPHE
-			case 0xFF62: // HALFWIDTH LEFT CORNER BRACKET
-			case 0xFF63: // HALFWIDTH RIGHT CORNER BRACKET
 				if (map_quote) {
-					code = 0x0027; // APOSTROPHE (')
+					code = '"';
 				}
 				break;
 

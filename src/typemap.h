@@ -45,10 +45,8 @@ struct sb_stemmer;
  *  + #CORPUS_TYPE_MAPCOMPAT: apply all compatibility maps required for
  *  	[NFKC normal form](http://unicode.org/reports/tr15/#Norm_Forms)
  *
- *  + #CORPUS_TYPE_MAPQUOTE: quote fold, replace double quotes, apostrophes,
- *      and anything with the
- *  	[Quotation Mark=Yes](http://unicode.org/reports/tr44/#Quotation_Mark)
- *  	property with a single quote (`'`)
+ *  + #CORPUS_TYPE_MAPQUOTE: quote fold, replace curly quotes with straight
+ *      quotes
  *
  *  + #CORPUS_TYPE_RMDI: remove default ignorables (DI) like soft hyphens and
  *  	zero-width spaces, anything with the

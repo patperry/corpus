@@ -118,11 +118,14 @@ START_TEST(test_typ_esc)
 	assert_text_eq(get_type(S("\\u005C"), TYPE_MAPCASE), S("\\u005c"));
 
 	// quote (")
-	assert_text_eq(get_type(S("\""), TYPE_MAPQUOTE), S("\'"));
-	assert_text_eq(get_type(T("\\\""), TYPE_MAPQUOTE), S("\'"));
-	assert_text_eq(get_type(T("\\u0022"), TYPE_MAPQUOTE), S("\'"));
+	assert_text_eq(get_type(S("'"), TYPE_MAPQUOTE), S("'"));
+	assert_text_eq(get_type(T("'"), TYPE_MAPQUOTE), S("'"));
+	assert_text_eq(get_type(S("\""), TYPE_MAPQUOTE), S("\""));
+	assert_text_eq(get_type(T("\\\""), TYPE_MAPQUOTE), S("\""));
+	assert_text_eq(get_type(T("\\u2019"), TYPE_MAPQUOTE), S("\'"));
+	assert_text_eq(get_type(T("\\u201c"), TYPE_MAPQUOTE), S("\""));
 	assert_text_eq(get_type(S("\\\'"), TYPE_MAPQUOTE), S("\\\'"));
-	assert_text_eq(get_type(S("\\u0022"), TYPE_MAPQUOTE), S("\\u0022"));
+	assert_text_eq(get_type(S("\\u2019"), TYPE_MAPQUOTE), S("\\u2019"));
 }
 END_TEST
 
@@ -445,11 +448,11 @@ END_TEST
 START_TEST(test_map_quote)
 {
 	assert_text_eq(get_type(S("'"), TYPE_MAPQUOTE), S("'"));
-	assert_text_eq(get_type(S("\""), TYPE_MAPQUOTE), S("'"));
+	assert_text_eq(get_type(S("\""), TYPE_MAPQUOTE), S("\""));
 	assert_text_eq(get_type(T("\\u2018"), TYPE_MAPQUOTE), S("'"));
 	assert_text_eq(get_type(T("\\u2019"), TYPE_MAPQUOTE), S("'"));
-	assert_text_eq(get_type(T("\\u201A"), TYPE_MAPQUOTE), S("'"));
-	assert_text_eq(get_type(T("\\u201F"), TYPE_MAPQUOTE), S("'"));
+	assert_text_eq(get_type(T("\\u201C"), TYPE_MAPQUOTE), S("\""));
+	assert_text_eq(get_type(T("\\u201D"), TYPE_MAPQUOTE), S("\""));
 }
 END_TEST
 

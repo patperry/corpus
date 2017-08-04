@@ -49,6 +49,16 @@ suppressions = {
             ])
         }
 
+removals = {
+        'english': set([
+            # common words that rarely get used as abbreviations, and
+            # should be removed
+            'Act.', 'All.', 'As.', 'By.', 'Cap.', 'Do.', 'Go.', 'Hat.',
+            'Is.', 'Link.', 'Long.', 'Ok.', 'OK.', 'On.', 'Or.', 'Pro.',
+            'To.', 'Up.'
+            ])
+    }
+
 locales = {
         'de': 'german', 'en': 'english', 'es': 'spanish', 'fr': 'french',
         'it': 'italian', 'pt': 'portuguese', 'ru': 'russian'
@@ -87,6 +97,16 @@ for key in sorted(locales.keys()):
         s = brk['suppression']
         supps.add(s)
 
+# remove terms from the lists
+for name in removals:
+    if name not in suppressions:
+        continue
+    supps = suppressions[name]
+    for rm in removals[name]:
+        if rm in supps:
+            supps.remove(rm)
+
+# delete empty lists
 for nm in suppressions:
     if len(suppressions[nm]) == 0:
         del suppressions[nm]

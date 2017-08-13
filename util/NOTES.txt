@@ -1,0 +1,75 @@
+# Can't automatically apply compatibility (NFKC) mappings, because the word
+# break property might change.
+
+# (Added to gen-wordbreak.py)
+collapse = {
+    'Space': set(['CR', 'Newline', 'LF', 'White_space']),
+    'Letter': set(['ALetter', 'Hebrew_Letter', 'Katakana', 'Letter']),
+    'Number': set(['Numeric', 'Number']),
+    'Other': set(['ZWJ', 'Format', 'Other']),
+    'Symbol': set(['E_Base', 'E_Base_GAZ', 'E_Modifier', 'Glue_After_Zwj',
+                   'Regional_Indicator', 'Symbol']),
+    'Punct': set(['Double_Quote', 'MidLetter', 'MidNum', 'MidNumLet',
+                  'Punctuation', 'Single_Quote']),
+    'Mark': set(['Extend', 'Mark']),
+    'ExtendNumLet': set(['ExtendNumLet'])
+    }
+
+def collapse_prop(p):
+    for k in collapse:
+        if p in collapse[k]:
+            return k
+    return p
+
+# check for mappings that change the code prop
+
+# No changes: font, initial, medial, final, sub, vertical, narrow, wide,
+# fraction
+
+# noBreak
+# U+202F (NARROW NO-BREAK SPACE) is ExtendNumLet, maps to U+0020 (SPACE)
+#
+# isolated
+# U+FC60 (ARABIC LIGATURE SHADDA WITH FATHA ISOLATED FORM) ALetter
+# maps to U+0020 (SPACE) White_Space
+#         U+064E (ARABIC FATHA) Extend
+#         U+6051 (ARABIC SHADDA) Extend
+# ...
+#
+# circle
+# U+3244 (CIRCLED IDEOGRAPH QUESTION), Symbol
+# maps to U+554F (<CJK Ideograph>), Letter
+# ...
+#
+# super
+# ...
+#
+# small
+# ...
+#
+# square
+# ...
+# 
+# compat
+# ...
+
+maps = {}
+for code in range(len(unicode_data.uchars)):
+    u = unicode_data.uchars[code]
+    if u is None or u.decomp is None:
+        continue
+    decomp = u.decomp
+    if decomp.type is None or decomp.type == 'hangul':
+        continue
+    t = decomp.type
+    if t not in maps:
+        maps[t] = {'fixed': set(), 'changes': set() }
+    m = maps[t]
+    code2 = decomp.map[0]
+    p = collapse_prop(code_props[code])
+    p2 = collapse_prop(code_props[code2])
+    if p != p2:
+        m['changes'].add(code)
+    else:
+        m['fixed'].add(code)
+

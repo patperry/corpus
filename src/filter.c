@@ -681,7 +681,7 @@ int corpus_filter_symbol_prop(const struct corpus_filter *f,
 		break;
 
 	case CORPUS_WORD_OTHER:
-		drop = f->flags & CORPUS_FILTER_DROP_OTHER;
+		ignore = f->flags & CORPUS_FILTER_IGNORE_OTHER;
 		break;
 
 	default:

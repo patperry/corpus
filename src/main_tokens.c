@@ -73,7 +73,6 @@ static struct string_arg word_classes[] = {
 	{ "number", CORPUS_FILTER_DROP_NUMBER, "Appears to be a number." },
 	{ "punct",  CORPUS_FILTER_DROP_PUNCT,  "Punctuation." },
 	{ "symbol", CORPUS_FILTER_DROP_SYMBOL, "Symbols." },
-	{ "other",  CORPUS_FILTER_DROP_OTHER,  "Other." },
 	{ NULL, 0, NULL }
 };
 
@@ -181,7 +180,8 @@ int main_tokens(int argc, char * const argv[])
 	int filter_flags, type_flags;
 	int ch, err, i, name_id, start, type_id, ncomb;
 
-	filter_flags = CORPUS_FILTER_IGNORE_SPACE;
+	filter_flags = (CORPUS_FILTER_IGNORE_SPACE
+			| CORPUS_FILTER_IGNORE_OTHER);
 	type_flags = (CORPUS_TYPE_MAPCASE | CORPUS_TYPE_MAPCOMPAT
 			| CORPUS_TYPE_MAPQUOTE | CORPUS_TYPE_RMDI);
 

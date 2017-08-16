@@ -41,17 +41,17 @@ default_ignorable = derived_core_properties['Default_Ignorable_Code_Point']
 white_space = white_space.union(default_ignorable)
 
 letter = set()
-mark = set()
+#mark = set()
 number = set()
 other = set()
 punctuation = set()
 symbol = set()
-letter_cats = set(('Ll', 'Lm', 'Lo', 'Lt', 'Lu', 'Nl')) # Note: Lm in mark
-mark_cats = set(('Lm', 'Mc', 'Me', 'Mn', 'Sk'))
+letter_cats = set(('Ll', 'Lm', 'Lo', 'Lt', 'Lu', 'Nl'))
+#mark_cats = set(('Mc', 'Me', 'Mn'))
 number_cats = set(('Nd', 'No')) # Note: Nl in 'letter'
 other_cats = set(('Cc', 'Cf', 'Cs', 'Co', 'Cn'))
 punctuation_cats = set(('Pc', 'Pd', 'Pe', 'Pf', 'Pi', 'Po', 'Ps'))
-symbol_cats = set(('Sc', 'Sm', 'So')) # Note: Sk in mark
+symbol_cats = set(('Sc', 'Sk', 'Sm', 'So'))
 
 for code in range(len(unicode_data.uchars)):
     u = unicode_data.uchars[code]
@@ -59,8 +59,8 @@ for code in range(len(unicode_data.uchars)):
         other.add(code)
     elif u.category in letter_cats:
         letter.add(code)
-    elif u.category in mark_cats:
-        mark.add(code)
+#    elif u.category in mark_cats:
+#        mark.add(code)
     elif u.category in number_cats:
         number.add(code)
     elif u.category in punctuation_cats:
@@ -90,7 +90,7 @@ assert 'Symbol' not in prop_names
 assert 'White_Space' not in prop_names
 prop_names.add('Letter')
 prop_names.add('Number')
-prop_names.add('Mark')
+#prop_names.add('Mark')
 prop_names.add('Other')
 prop_names.add('Punctuation')
 prop_names.add('Symbol')
@@ -102,8 +102,8 @@ for code in range(len(code_props)):
             code_props[code] = 'White_Space'
         elif code in letter:
             code_props[code] = 'Letter'
-        elif code in mark:
-            code_props[code] = 'Mark'
+#        elif code in mark:
+#            code_props[code] = 'Mark'
         elif code in number:
             code_props[code] = 'Number'
         elif code in other:

@@ -668,10 +668,6 @@ int corpus_filter_symbol_prop(const struct corpus_filter *f,
 		drop = f->flags & CORPUS_FILTER_DROP_LETTER;
 		break;
 
-	case CORPUS_WORD_MARK:
-		drop = (f->flags & CORPUS_FILTER_DROP_MARK);
-		break;
-
 	case CORPUS_WORD_NUMBER:
 		drop = f->flags & CORPUS_FILTER_DROP_NUMBER;
 		break;

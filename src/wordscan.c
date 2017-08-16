@@ -288,12 +288,7 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 		NEXT();
 		goto Break;
 
-	case WORD_BREAK_EXTEND:
-	case WORD_BREAK_MARK:
-		scan->type = CORPUS_WORD_MARK;
-		NEXT();
-		goto Break;
-
+	case WORD_BREAK_EXTEND: // marks
 	case WORD_BREAK_FORMAT: // Cf format controls
 	case WORD_BREAK_OTHER:
 		scan->type = CORPUS_WORD_OTHER;

@@ -113,6 +113,9 @@ for code in range(len(code_props)):
         elif code in symbol:
             code_props[code] = 'Symbol'
 
+# override the hyphen property (default is 'Punctuation')
+code_props[ord('-')] = 'MidLetter'
+
 # make sure we didn't miss anything
 for code in range(len(code_props)):
     if code_props[code] is None:

@@ -28,6 +28,8 @@ for fn in files:
         w = l.partition('|')[0].strip()
         if len(w) > 0:
             words.extend(w.split())
+    if name == 'english':
+        words.append('will')
     words.sort()
     stopwords[name] = words
 

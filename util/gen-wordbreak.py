@@ -114,7 +114,21 @@ for code in range(len(code_props)):
             code_props[code] = 'Symbol'
 
 # override the hyphen property (default is 'Punctuation')
-code_props[ord('-')] = 'MidLetter'
+prop_names.add('Hyphen')
+code_props[0x002D] = 'Hyphen' # HYPHEN-MINUS
+code_props[0x058A] = 'Hyphen' # ARMENIAN HYPHEN
+code_props[0x05BE] = 'Hyphen' # HEBREW PUNCTUATION MAQAF
+code_props[0x1400] = 'Hyphen' # CANADIAN SYLLABICS HYPHEN
+code_props[0x1806] = 'Hyphen' # MONGOLIAN TODO SOFT HYPHEN
+code_props[0x2010] = 'Hyphen' # HYPHEN
+code_props[0x2011] = 'Hyphen' # NON-BREAKING HYPHEN
+code_props[0x2E17] = 'Hyphen' # DOUBLE OBLIQUE HYPHEN
+code_props[0x2E1A] = 'Hyphen' # HYPHEN WITH DIAERESIS
+code_props[0x2E40] = 'Hyphen' # DOUBLE HYPHEN
+code_props[0x30A0] = 'Hyphen' # KATAKANA-HIRAGANA DOUBLE HYPHEN
+code_props[0xFE63] = 'Hyphen' # SMALL HYPHEN-MINUS
+code_props[0xFF0D] = 'Hyphen' # FULLWIDTH HYPHEN-MINUS
+
 
 # make sure we didn't miss anything
 for code in range(len(code_props)):

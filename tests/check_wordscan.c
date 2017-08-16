@@ -135,6 +135,75 @@ START_TEST(test_twitter)
 	assert_text_eq(next(), T(" "));
 	assert_text_eq(next(), T("#rstats"));
 	assert_text_eq(next(), T("!"));
+	ck_assert(next() == NULL);
+}
+END_TEST
+
+
+START_TEST(test_hyphen)
+{
+	start(T("--"));
+	assert_text_eq(next(), T("-"));
+	assert_text_eq(next(), T("-"));
+	ck_assert(next() == NULL);
+
+	// starts with number
+	start(T("2-gram-"));
+	assert_text_eq(next(), T("2-gram"));
+	assert_text_eq(next(), T("-"));
+	ck_assert(next() == NULL);
+
+	start(T("1-2-3"));
+	assert_text_eq(next(), T("1-2-3"));
+	ck_assert(next() == NULL);
+
+	start(T("0-\\u05D0"));
+	assert_text_eq(next(), T("0-\\u05D0"));
+	ck_assert(next() == NULL);
+
+	start(T("1--"));
+	assert_text_eq(next(), T("1"));
+	assert_text_eq(next(), T("-"));
+	assert_text_eq(next(), T("-"));
+	ck_assert(next() == NULL);
+
+	// starts with hebrew letter
+	start(T("\\u05D0-\\u05D0"));
+	assert_text_eq(next(), T("\\u05D0-\\u05D0"));
+	ck_assert(next() == NULL);
+
+	start(T("\\u05D0-0"));
+	assert_text_eq(next(), T("\\u05D0-0"));
+	ck_assert(next() == NULL);
+
+	start(T("\\u05D0-A"));
+	assert_text_eq(next(), T("\\u05D0-A"));
+	ck_assert(next() == NULL);
+
+	start(T("\\u05D0--"));
+	assert_text_eq(next(), T("\\u05D0"));
+	assert_text_eq(next(), T("-"));
+	assert_text_eq(next(), T("-"));
+	ck_assert(next() == NULL);
+
+	// starts with letter
+	start(T("A-\\u05D0"));
+	assert_text_eq(next(), T("A-\\u05D0"));
+	ck_assert(next() == NULL);
+
+	start(T("A-1"));
+	assert_text_eq(next(), T("A-1"));
+	ck_assert(next() == NULL);
+
+	start(T("A-B-C"));
+	assert_text_eq(next(), T("A-B-C"));
+	ck_assert(next() == NULL);
+
+	start(T("A--"));
+	assert_text_eq(next(), T("A"));
+	assert_text_eq(next(), T("-"));
+	assert_text_eq(next(), T("-"));
+	ck_assert(next() == NULL);
 }
 END_TEST
 
@@ -329,6 +398,7 @@ Suite *wordscan_suite(void)
         tcase_add_test(tc, test_url);
         tcase_add_test(tc, test_url_punct);
         tcase_add_test(tc, test_twitter);
+        tcase_add_test(tc, test_hyphen);
         suite_add_tcase(s, tc);
 
         tc = tcase_create("Unicode WordBreakTest.txt");

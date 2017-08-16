@@ -249,6 +249,7 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 		goto Break;
 
 	case WORD_BREAK_DOUBLE_QUOTE:
+	case WORD_BREAK_HYPHEN:
 	case WORD_BREAK_MIDLETTER:
 	case WORD_BREAK_MIDNUM:
 	case WORD_BREAK_MIDNUMLET:
@@ -362,6 +363,7 @@ Url:
 	case WORD_BREAK_DOUBLE_QUOTE:
 		goto Break;
 
+	case WORD_BREAK_HYPHEN:
 	case WORD_BREAK_MIDLETTER:
 	case WORD_BREAK_MIDNUM:
 	case WORD_BREAK_MIDNUMLET:
@@ -420,6 +422,26 @@ ALetter:
 
 		// Otherwise break everywhere
 		// WB14: Any + Any
+		goto Break;
+	
+	case WORD_BREAK_HYPHEN:
+		// custom rule:
+		// don't break across hyphen when followed by letter or number
+		if (scan->iter_prop == WORD_BREAK_ALETTER) {
+			NEXT();
+			NEXT();
+			goto ALetter;
+		}
+		if (scan->iter_prop == WORD_BREAK_NUMERIC) {
+			NEXT();
+			NEXT();
+			goto Numeric;
+		}
+		if (scan->iter_prop == WORD_BREAK_HEBREW_LETTER) {
+			NEXT();
+			NEXT();
+			goto Hebrew_Letter;
+		}
 		goto Break;
 
 	case WORD_BREAK_NUMERIC:
@@ -481,6 +503,26 @@ Hebrew_Letter:
 		}
 		goto Break;
 
+	case WORD_BREAK_HYPHEN:
+		// custom rule:
+		// don't break across hyphen when followed by letter or number
+		if (scan->iter_prop == WORD_BREAK_HEBREW_LETTER) {
+			NEXT();
+			NEXT();
+			goto Hebrew_Letter;
+		}
+		if (scan->iter_prop == WORD_BREAK_NUMERIC) {
+			NEXT();
+			NEXT();
+			goto Numeric;
+		}
+		if (scan->iter_prop == WORD_BREAK_ALETTER) {
+			NEXT();
+			NEXT();
+			goto ALetter;
+		}
+		goto Break;
+
 	case WORD_BREAK_DOUBLE_QUOTE:
 		// WB7b: Hebrew_Letter * Double_Quote Hebrew_Letter
 		if (scan->iter_prop == WORD_BREAK_HEBREW_LETTER) {
@@ -524,6 +566,26 @@ Numeric:
 			NEXT();
 			NEXT();
 			goto Numeric;
+		}
+		goto Break;
+
+	case WORD_BREAK_HYPHEN:
+		// custom rule:
+		// don't break across hyphen when followed by letter or number
+		if (scan->iter_prop == WORD_BREAK_NUMERIC) {
+			NEXT();
+			NEXT();
+			goto Numeric;
+		}
+		if (scan->iter_prop == WORD_BREAK_ALETTER) {
+			NEXT();
+			NEXT();
+			goto ALetter;
+		}
+		if (scan->iter_prop == WORD_BREAK_HEBREW_LETTER) {
+			NEXT();
+			NEXT();
+			goto Hebrew_Letter;
 		}
 		goto Break;
 

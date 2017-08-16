@@ -42,8 +42,7 @@ enum corpus_filter_type {
 	CORPUS_FILTER_DROP_NUMBER  = (1 << 2),	/**< drop number words */
 	CORPUS_FILTER_DROP_PUNCT   = (1 << 3),	/**< drop punctuation words */
 	CORPUS_FILTER_DROP_SYMBOL  = (1 << 4),	/**< drop symbol words */
-	CORPUS_FILTER_DROP_OTHER   = (1 << 5),	/**< drop other words */
-	CORPUS_FILTER_DROP_URL     = (1 << 6)	/**< drop URLs */
+	CORPUS_FILTER_DROP_OTHER   = (1 << 5)	/**< drop other words */
 };
 
 /**

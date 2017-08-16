@@ -344,7 +344,7 @@ http:
 		NEXT();
 	}
 	if (scan->code == ':' && scan->iter.current == '/') {
-		scan->type = CORPUS_WORD_URL;
+		scan->type = CORPUS_WORD_SYMBOL;
 		NEXT();
 		NEXT();
 		goto Url;

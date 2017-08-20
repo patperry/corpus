@@ -17,6 +17,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <stdint.h>
 #include <string.h>
 #include "../lib/libstemmer_c/include/libstemmer.h"
 #include "private/stopwords.h"
@@ -204,6 +205,16 @@ int corpus_typemap_set(struct corpus_typemap *map,
 	// (You can verify this with util/compute-typelen.py)
 	//
 	// Add one for a trailing NUL.
+	if (size > (SIZE_MAX - 1) / 3) {
+		err = CORPUS_ERROR_OVERFLOW;
+		corpus_log(err, "text size (%"PRIu64" bytes)"
+			   " exceeds maximum normalization size"
+			   " (%"PRIu64" bytes)",
+			   (uint64_t)size,
+			   (uint64_t)((SIZE_MAX - 1) / 3));
+		goto error;
+	}
+
 	if ((err = corpus_typemap_reserve(map, 3 * size + 1))) {
 		goto error;
 	}
@@ -476,6 +487,16 @@ int corpus_typemap_set_ascii(struct corpus_typemap *map,
 	int err;
 
 	assert(CORPUS_TEXT_IS_ASCII(tok));
+
+	if (size == SIZE_MAX) {
+		err = CORPUS_ERROR_OVERFLOW;
+		corpus_log(err, "text size (%"PRIu64" bytes)"
+			   " exceeds maximum normalization size"
+			   " (%"PRIu64" bytes)",
+			   (uint64_t)size,
+			   (uint64_t)(SIZE_MAX - 1));
+		goto error;
+	}
 
 	if ((err = corpus_typemap_reserve(map, size + 1))) {
 		goto error;

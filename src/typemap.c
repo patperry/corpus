@@ -199,7 +199,12 @@ int corpus_typemap_set(struct corpus_typemap *map,
 		goto stem;
 	}
 
-	if ((err = corpus_typemap_reserve(map, size + 1))) {
+	// For most inputs, mapping to type reduces or preserves the size.
+	// However, for U+0390 and U+03B0, case folding triples the size.
+	// (You can verify this with util/compute-typelen.py)
+	//
+	// Add one for a trailing NUL.
+	if ((err = corpus_typemap_reserve(map, 3 * size + 1))) {
 		goto error;
 	}
 

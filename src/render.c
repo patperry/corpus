@@ -228,7 +228,7 @@ void corpus_render_char(struct corpus_render *r, uint32_t ch)
 	end = r->string + r->length;
 	if (CORPUS_IS_ASCII(ch)) {
 		if ((ch <= 0x1F || ch == 0x7F)
-				&& r->escape_flags | CORPUS_ESCAPE_CONTROL) {
+				&& (r->escape_flags & CORPUS_ESCAPE_CONTROL)) {
 			switch (ch) {
 			case '\b':
 				end[0] = '\\'; end[1] = 'b'; end[2] = '\0';
@@ -260,10 +260,10 @@ void corpus_render_char(struct corpus_render *r, uint32_t ch)
 			end[1] = '\0';
 			r->length++;
 		}
-	} else if (ch <= 0x9F && r->escape_flags | CORPUS_ESCAPE_CONTROL) {
+	} else if (ch <= 0x9F && (r->escape_flags & CORPUS_ESCAPE_CONTROL)) {
 		sprintf(end, "\\u%04x", ch);
 		r->length += 6;
-	} else if (r->escape_flags | CORPUS_ESCAPE_UTF8) {
+	} else if (r->escape_flags & CORPUS_ESCAPE_UTF8) {
 		if (CORPUS_UTF16_ENCODE_LEN(ch) == 1) {
 			sprintf(end, "\\u%04x", ch);
 			r->length += 6;

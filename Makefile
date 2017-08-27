@@ -161,6 +161,10 @@ data/ucd/DerivedCoreProperties.txt:
 	$(MKDIR_P) data/ucd
 	$(CURL) -o $@ $(UNICODE)/ucd/DerivedCoreProperties.txt
 
+data/ucd/DerivedNormalizationProps.txt:
+	$(MKDIR_P) data/ucd
+	$(CURL) -o $@ $(UNICODE)/ucd/DerivedNormalizationProps.txt
+
 data/ucd/EastAsianWidth.txt:
 	$(MKDIR_P) data/ucd
 	$(CURL) -o $@ $(UNICODE)/ucd/EastAsianWidth.txt
@@ -247,6 +251,11 @@ src/unicode/decompose.h: util/gen-decompose.py util/unicode_data.py \
 		data/ucd/UnicodeData.txt
 	$(MKDIR_P) src/unicode
 	./util/gen-decompose.py > $@
+
+src/unicode/normalization.h: util/gen-normalization.py \
+		data/ucd/DerivedNormalizationProps.txt
+	$(MKDIR_P) src/unicode
+	./util/gen-normalization.py > $@
 
 src/unicode/sentbreakprop.h: util/gen-sentbreak.py util/property.py \
 		data/ucd/auxiliary/SentenceBreakProperty.txt

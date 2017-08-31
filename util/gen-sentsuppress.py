@@ -33,6 +33,11 @@ import json
 
 suppressions = {
         'english': set([
+            # initials
+            'A.', 'B.', 'C.', 'D.', 'E.', 'F.', 'G.', 'H.', 'I.'
+            'J.', 'K.', 'L.', 'M.', 'N.', 'O.', 'P.', 'Q.', 'R.',
+            'S.', 'T.', 'U.', 'V.', 'W.', 'X.', 'Y.', 'Z.',
+
             # quanteda
             'Mr.' ,'Mrs.', 'Ms.', 'Dr.', 'Jr.', 'Prof.', 'Ph.D.', 'M.',
             'MM.', 'St.', 'etc.',

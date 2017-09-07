@@ -656,31 +656,37 @@ int corpus_filter_symbol_prop(const struct corpus_filter *f,
 		kind = corpus_symbol_kind(symbol);
 	}
 
-	ignore = 0;
 	drop = 0;
+	ignore = 0;
 
 	switch (kind) {
 	case CORPUS_WORD_SPACE:
+		drop = (f->flags & CORPUS_FILTER_DROP_SPACE);
 		ignore = (f->flags & CORPUS_FILTER_IGNORE_SPACE);
 		break;
 
 	case CORPUS_WORD_LETTER:
 		drop = f->flags & CORPUS_FILTER_DROP_LETTER;
+		ignore = f->flags & CORPUS_FILTER_IGNORE_LETTER;
 		break;
 
 	case CORPUS_WORD_NUMBER:
 		drop = f->flags & CORPUS_FILTER_DROP_NUMBER;
+		ignore = f->flags & CORPUS_FILTER_IGNORE_NUMBER;
 		break;
 
 	case CORPUS_WORD_PUNCT:
 		drop = f->flags & CORPUS_FILTER_DROP_PUNCT;
+		ignore = f->flags & CORPUS_FILTER_IGNORE_PUNCT;
 		break;
 
 	case CORPUS_WORD_SYMBOL:
 		drop = f->flags & CORPUS_FILTER_DROP_SYMBOL;
+		ignore = f->flags & CORPUS_FILTER_IGNORE_SYMBOL;
 		break;
 
 	case CORPUS_WORD_OTHER:
+		drop = f->flags & CORPUS_FILTER_DROP_OTHER;
 		ignore = f->flags & CORPUS_FILTER_IGNORE_OTHER;
 		break;
 

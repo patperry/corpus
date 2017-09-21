@@ -45,15 +45,11 @@ static int corpus_filter_try_combine(struct corpus_filter *f, int *idptr);
 static int corpus_filter_add_symbol(struct corpus_filter *f,
 				    const struct corpus_text *symbol,
 				    int *idptr);
-static int corpus_filter_set_type(struct corpus_filter *f,
-				  const struct corpus_text *symbol,
-				  int kind, int symbol_id, int *idptr);
-static int corpus_filter_grow_types(struct corpus_filter *f, int nadd);
 static int corpus_filter_grow_symbols(struct corpus_filter *f, int size0,
 				      int size);
-static int corpus_filter_symbol_prop(const struct corpus_filter *f,
-				     const struct corpus_text *symbol,
-				     int kind);
+static int corpus_filter_get_drop(const struct corpus_filter *f,
+				  const struct corpus_text *symbol,
+				  int kind);
 static int corpus_symbol_kind(const struct corpus_text *symbol);
 
 
@@ -72,10 +68,7 @@ int corpus_filter_init(struct corpus_filter *f, int symbol_kind,
 		goto error_combine;
 	}
 	f->combine_rules = NULL;
-	f->type_ids = NULL;
-	f->symbol_ids = NULL;
-	f->ntype = 0;
-	f->ntype_max = 0;
+	f->drop = NULL;
 	f->flags = flags;
 	f->has_scan = 0;
 	f->scan_type = 0;
@@ -96,8 +89,7 @@ error_symtab:
 
 void corpus_filter_destroy(struct corpus_filter *f)
 {
-	corpus_free(f->symbol_ids);
-	corpus_free(f->type_ids);
+	corpus_free(f->drop);
 	corpus_free(f->combine_rules);
 	corpus_tree_destroy(&f->combine);
 	corpus_symtab_destroy(&f->symtab);
@@ -123,13 +115,9 @@ int corpus_filter_stem_except(struct corpus_filter *f,
 const struct corpus_text *corpus_filter_type(const struct corpus_filter *f,
 					     int id)
 {
-	int symbol_id;
-
 	CHECK_ERROR(NULL);
-	assert(0 <= id && id < f->ntype);
-
-	symbol_id = f->symbol_ids[id];
-	return &f->symtab.types[symbol_id].text;
+	assert(0 <= id && id < f->symtab.ntype);
+	return &f->symtab.types[id].text;
 }
 
 
@@ -171,7 +159,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 	symbol_id = -1;
 
 	while (corpus_filter_advance_raw(f, &symbol_id)) {
-		if (f->type_ids[symbol_id] == CORPUS_FILTER_NONE) {
+		if (symbol_id == CORPUS_FILTER_NONE) {
 			continue;
 		}
 
@@ -236,32 +224,16 @@ out:
 int corpus_filter_drop(struct corpus_filter *f,
 		       const struct corpus_text *type)
 {
-	int err, symbol_id, type_id, i, n;
+	int err, type_id;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
-	if ((err = corpus_filter_add_symbol(f, type, &symbol_id))) {
+	if ((err = corpus_filter_add_symbol(f, type, &type_id))) {
 		goto out;
 	}
 
-	type_id = f->type_ids[symbol_id];
-
-	switch (type_id) {
-	case CORPUS_FILTER_NONE:
-		break;
-
-	default:
-		f->type_ids[symbol_id] = CORPUS_FILTER_NONE;
-
-		// remove the existing type; update old type IDs
-		n = f->ntype;
-		for (i = type_id; i + 1 < n; i++) {
-			f->symbol_ids[i] = f->symbol_ids[i + 1];
-			f->type_ids[f->symbol_ids[i]] = i;
-		}
-		f->ntype--;
-
-		break;
+	if (type_id >= 0) {
+		f->drop[type_id] = 1;
 	}
 
 	err = 0;
@@ -278,29 +250,16 @@ out:
 int corpus_filter_drop_except(struct corpus_filter *f,
 			      const struct corpus_text *type)
 {
-	int err, type_id, symbol_id;
+	int err, type_id;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
-	if ((err = corpus_filter_add_symbol(f, type, &symbol_id))) {
+	if ((err = corpus_filter_add_symbol(f, type, &type_id))) {
 		goto out;
 	}
 
-	type_id = f->type_ids[symbol_id];
-
-	if (type_id == CORPUS_FILTER_NONE) {
-		// add a new type
-		if (f->ntype == f->ntype_max) {
-			if ((err = corpus_filter_grow_types(f, 1))) {
-				goto out;
-			}
-		}
-
-		type_id = f->ntype;
-		f->symbol_ids[type_id] = symbol_id;
-		f->ntype++;
-
-		f->type_ids[symbol_id] = type_id;
+	if (type_id >= 0) {
+		f->drop[type_id] = 0;
 	}
 
 	err = 0;
@@ -331,10 +290,10 @@ int corpus_filter_start(struct corpus_filter *f,
 
 int corpus_filter_advance(struct corpus_filter *f)
 {
-	int symbol_id = -1, id = CORPUS_FILTER_NONE;
+	int type_id = CORPUS_FILTER_NONE;
 	int err, ret;
 
-	ret = corpus_filter_advance_raw(f, &symbol_id);
+	ret = corpus_filter_advance_raw(f, &type_id);
 	f->current = f->scan.current;
 	err = f->error;
 
@@ -342,20 +301,22 @@ int corpus_filter_advance(struct corpus_filter *f)
 		goto out;
 	}
 
-	if ((err = corpus_filter_try_combine(f, &symbol_id))) {
+	if ((err = corpus_filter_try_combine(f, &type_id))) {
 		goto out;
 	}
 
-	id = f->type_ids[symbol_id];
+	if (f->drop[type_id]) {
+		type_id = CORPUS_FILTER_NONE;
+	}
 	err = 0;
 
 out:
 	if (err) {
 		f->error = err;
-		id = CORPUS_FILTER_NONE;
+		type_id = CORPUS_FILTER_NONE;
 	}
 
-	f->type_id = id;
+	f->type_id = type_id;
 
 	return ret;
 }
@@ -366,15 +327,14 @@ int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 	struct corpus_wordscan scan;
 	struct corpus_text current;
 	size_t attr, size;
-	int err, has_scan, id, symbol_id, type_id, node_id, parent_id;
+	int err, has_scan, id, type_id, node_id, parent_id;
 
 	if (!f->combine.nnode) {
 		return 0;
 	}
 
 	id = *idptr;
-	type_id = f->type_ids[id];
-	if (type_id == CORPUS_FILTER_NONE) {
+	if (id == CORPUS_FILTER_NONE) {
 		return 0;
 	}
 
@@ -395,19 +355,18 @@ int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 
 	size = CORPUS_TEXT_SIZE(&current);
 	attr = CORPUS_TEXT_BITS(&current);
-	symbol_id = -1;
+	type_id = CORPUS_FILTER_NONE;
 
-	while (corpus_filter_advance_raw(f, &symbol_id)) {
+	while (corpus_filter_advance_raw(f, &type_id)) {
 		size += CORPUS_TEXT_SIZE(&f->scan.current);
 		attr |= CORPUS_TEXT_BITS(&f->scan.current);
 
-		type_id = f->type_ids[symbol_id];
 		if (type_id == CORPUS_FILTER_NONE) {
 			continue;
 		}
 
 		parent_id = node_id;
-		if (!corpus_tree_has(&f->combine, parent_id, symbol_id,
+		if (!corpus_tree_has(&f->combine, parent_id, type_id,
 				     &node_id)) {
 			// no more potential matches
 			err = 0;
@@ -439,7 +398,7 @@ out:
 	if (err) {
 		corpus_log(err, "failed trying filter combination rule");
 		f->error = err;
-		id = -1;
+		id = CORPUS_FILTER_NONE;
 	}
 
 	if (idptr) {
@@ -453,7 +412,7 @@ out:
 int corpus_filter_advance_raw(struct corpus_filter *f, int *idptr)
 {
 	const struct corpus_text *token, *symbol;
-	int err, token_id, id, nsym0, nsym, size0, size, symbol_id, ret;
+	int err, token_id, nsym0, nsym, size0, size, symbol_id, drop, ret;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
@@ -467,6 +426,13 @@ int corpus_filter_advance_raw(struct corpus_filter *f, int *idptr)
 
 	if (!corpus_wordscan_advance(&f->scan)) {
 		f->has_scan = 0;
+		goto out;
+	}
+
+	if (f->scan.type == CORPUS_WORD_SPACE
+			|| f->scan.type == CORPUS_WORD_OTHER) {
+		symbol_id = CORPUS_FILTER_NONE;
+		ret = 1;
 		goto out;
 	}
 
@@ -498,12 +464,11 @@ int corpus_filter_advance_raw(struct corpus_filter *f, int *idptr)
 	}
 
 	// a new symbol got added
-	if (nsym0 != nsym) {
-		symbol = &f->symtab.types[symbol_id].text;
-		if ((err = corpus_filter_set_type(f, symbol, f->scan.type,
-						  symbol_id, &id))) {
-			goto out;
-		}
+	while (nsym0 != nsym) {
+		symbol = &f->symtab.types[nsym0].text;
+		drop = corpus_filter_get_drop(f, symbol, f->scan.type);
+		f->drop[nsym0] = drop;
+		nsym0++;
 	}
 
 	ret = 1;
@@ -548,7 +513,7 @@ int corpus_filter_add_symbol(struct corpus_filter *f,
 			}
 		}
 
-		corpus_filter_set_type(f, symbol, -1, id, NULL);
+		f->drop[id] = corpus_filter_get_drop(f, symbol, -1);
 	}
 
 	err = 0;
@@ -567,80 +532,21 @@ out:
 }
 
 
-int corpus_filter_set_type(struct corpus_filter *f,
-			   const struct corpus_text *symbol,
-			   int kind, int symbol_id,
-			   int *idptr)
-{
-	int err, prop, id = -1;
-
-	prop = corpus_filter_symbol_prop(f, symbol, kind);
-
-	if (prop) {
-		id = prop;
-	} else {
-		// a new type got added
-		if (f->ntype == f->ntype_max) {
-			if ((err = corpus_filter_grow_types(f, 1))) {
-				goto out;
-			}
-		}
-		id = f->ntype;
-		f->symbol_ids[id] = symbol_id;
-		f->ntype++;
-	}
-
-	f->type_ids[symbol_id] = id;
-	err = 0;
-
-out:
-	if (err) {
-		corpus_log(err, "failed setting type ID for symbol");
-		id = -1;
-	}
-
-	if (idptr) {
-		*idptr = id;
-	}
-
-	return err;
-}
-
-
-int corpus_filter_grow_types(struct corpus_filter *f, int nadd)
-{
-	void *base = f->symbol_ids;
-	int size = f->ntype_max;
-	int err;
-
-	if ((err = corpus_array_grow(&base, &size, sizeof(*f->symbol_ids),
-				     f->ntype, nadd))) {
-		corpus_log(err, "failed allocating type array");
-		f->error = err;
-		return err;
-	}
-
-	f->symbol_ids = base;
-	f->ntype_max = size;
-	return 0;
-}
-
-
 int corpus_filter_grow_symbols(struct corpus_filter *f, int size0, int size)
 {
-	int *ids;
+	int *drop;
 	int err;
 
-	if (!(ids = corpus_realloc(f->type_ids, size * sizeof(*ids)))) {
+	if (!(drop = corpus_realloc(f->drop, size * sizeof(*drop)))) {
 		err = CORPUS_ERROR_NOMEM;
 		goto out;
 	}
-	f->type_ids = ids;
+	f->drop = drop;
 	err = 0;
 
 out:
 	if (err) {
-		corpus_log(err, "failed growing filter symbol id array");
+		corpus_log(err, "failed growing filter type array");
 		f->error = err;
 	}
 
@@ -649,10 +555,10 @@ out:
 }
 
 
-int corpus_filter_symbol_prop(const struct corpus_filter *f,
-			      const struct corpus_text *symbol, int kind)
+int corpus_filter_get_drop(const struct corpus_filter *f,
+			   const struct corpus_text *symbol, int kind)
 {
-	int drop, prop;
+	int drop;
 
 	if (kind < 0) {
 		kind = corpus_symbol_kind(symbol);
@@ -661,10 +567,6 @@ int corpus_filter_symbol_prop(const struct corpus_filter *f,
 	drop = 0;
 
 	switch (kind) {
-	case CORPUS_WORD_SPACE:
-		drop = (f->flags & CORPUS_FILTER_DROP_SPACE);
-		break;
-
 	case CORPUS_WORD_LETTER:
 		drop = f->flags & CORPUS_FILTER_DROP_LETTER;
 		break;
@@ -681,21 +583,12 @@ int corpus_filter_symbol_prop(const struct corpus_filter *f,
 		drop = f->flags & CORPUS_FILTER_DROP_SYMBOL;
 		break;
 
-	case CORPUS_WORD_OTHER:
-		drop = f->flags & CORPUS_FILTER_DROP_OTHER;
-		break;
-
 	default:
+		drop = 1;
 		break;
 	}
 
-	if (drop) {
-		prop = CORPUS_FILTER_NONE;
-	} else {
-		prop = 0;
-	}
-
-	return prop;
+	return drop;
 }
 
 

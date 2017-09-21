@@ -31,12 +31,10 @@
  */
 enum corpus_filter_type {
 	CORPUS_FILTER_KEEP_ALL      = 0,	/**< keep all word types */
-	CORPUS_FILTER_DROP_SPACE    = (1 << 0),	/**< drop white space */
-	CORPUS_FILTER_DROP_LETTER   = (1 << 1),	/**< drop letter words */
-	CORPUS_FILTER_DROP_NUMBER   = (1 << 2),	/**< drop number words */
-	CORPUS_FILTER_DROP_PUNCT    = (1 << 3),	/**< drop punctuation words */
-	CORPUS_FILTER_DROP_SYMBOL   = (1 << 4),	/**< drop symbol words */
-	CORPUS_FILTER_DROP_OTHER    = (1 << 5)  /**< drop other words */
+	CORPUS_FILTER_DROP_LETTER   = (1 << 0),	/**< drop letter words */
+	CORPUS_FILTER_DROP_NUMBER   = (1 << 1),	/**< drop number words */
+	CORPUS_FILTER_DROP_PUNCT    = (1 << 2),	/**< drop punctuation words */
+	CORPUS_FILTER_DROP_SYMBOL   = (1 << 3),	/**< drop symbol words */
 };
 
 /**
@@ -58,11 +56,7 @@ struct corpus_filter {
 	struct corpus_tree combine;	/**< word sequences to combine */
 	int *combine_rules;		/**< properties for nodes in the
 					  combine tree */
-	int *type_ids;			/**< type IDs for the symbols */
-	int *symbol_ids;		/**< symbol IDs for the types */
-	int ntype;			/**< number of types */
-	int ntype_max;			/**< maximum number of types before
-						requiring reallocation */
+	int *drop;			/**< whether to drop each type */
 	struct corpus_wordscan scan;	/**< current word scan */
 	int flags;			/**< filter flags */
 	int has_scan;			/**< whether a scan is in progress */

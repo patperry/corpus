@@ -11,7 +11,6 @@
 		88004F8D1EF863DA00E48E12 /* search.c in Sources */ = {isa = PBXBuildFile; fileRef = 88004F8A1EF863D500E48E12 /* search.c */; };
 		8833A7B81F3261F70041B5DE /* stem.c in Sources */ = {isa = PBXBuildFile; fileRef = 8833A7B61F3261F70041B5DE /* stem.c */; };
 		8833A7B91F3262070041B5DE /* stem.c in Sources */ = {isa = PBXBuildFile; fileRef = 8833A7B61F3261F70041B5DE /* stem.c */; };
-		8833A7BC1F32621B0041B5DE /* check_stem.c in Sources */ = {isa = PBXBuildFile; fileRef = 8833A7BA1F3262170041B5DE /* check_stem.c */; };
 		88341EA01EE09E2D0054BCCE /* ngram.c in Sources */ = {isa = PBXBuildFile; fileRef = 88341E9E1EE09E2D0054BCCE /* ngram.c */; };
 		88351CE71E8DB64F001DA3A8 /* array.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CD41E8DB64F001DA3A8 /* array.c */; };
 		88351CE91E8DB64F001DA3A8 /* filebuf.c in Sources */ = {isa = PBXBuildFile; fileRef = 88351CD91E8DB64F001DA3A8 /* filebuf.c */; };
@@ -686,7 +685,6 @@
 				88CD84751EBB7FCA00DF50CB /* stem_UTF_8_tamil.c in Sources */,
 				88CD846A1EBB7FCA00DF50CB /* stem_UTF_8_french.c in Sources */,
 				88CD84691EBB7FCA00DF50CB /* stem_UTF_8_finnish.c in Sources */,
-				8833A7BC1F32621B0041B5DE /* check_stem.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

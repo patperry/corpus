@@ -111,7 +111,6 @@ Options:\n\
 \t-o <path>\tSaves output at the given path.\n\
 \t-s <stemmer>\tStems tokens with the given algorithm.\n\
 \t-t <stopwords>\tDrops words from the given stop word list.\n\
-\t-z\t\tKeeps white space tokens.\n\
 ", PROGRAM_NAME);
 	printf("\nCharacter Maps:\n");
 	for (i = 0; char_maps[i].name != NULL; i++) {
@@ -181,14 +180,14 @@ int main_tokens(int argc, char * const argv[])
 	int filter_flags, type_flags;
 	int ch, err, i, name_id, start, type_id, ncomb;
 
-	filter_flags = (CORPUS_FILTER_DROP_SPACE | CORPUS_FILTER_DROP_OTHER);
+	filter_flags = CORPUS_FILTER_KEEP_ALL;
 	type_flags = (CORPUS_TYPE_MAPCASE | CORPUS_TYPE_MAPCOMPAT
 			| CORPUS_TYPE_MAPQUOTE | CORPUS_TYPE_RMDI);
 
 	field = "text";
 	ncomb = 0;
 
-	while ((ch = getopt(argc, argv, "c:d:f:k:o:s:t:z")) != -1) {
+	while ((ch = getopt(argc, argv, "c:d:f:k:o:s:t:")) != -1) {
 		switch (ch) {
 		case 'c':
 			if (ncomb == COMBINE_MAX) {
@@ -240,9 +239,6 @@ int main_tokens(int argc, char * const argv[])
 				usage_tokens();
 				return EXIT_FAILURE;
 			}
-			break;
-		case 'z':
-			filter_flags &= ~CORPUS_FILTER_DROP_SPACE;
 			break;
 		default:
 			usage_tokens();

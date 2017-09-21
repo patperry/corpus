@@ -30,13 +30,11 @@
 #include "../src/census.h"
 #include "testutil.h"
 
-#define DROP_SPACE CORPUS_FILTER_DROP_SPACE
 #define DROP_LETTER CORPUS_FILTER_DROP_LETTER
 #define DROP_MARK CORPUS_FILTER_DROP_MARK
 #define DROP_NUMBER CORPUS_FILTER_DROP_NUMBER
 #define DROP_PUNCT CORPUS_FILTER_DROP_PUNCT
 #define DROP_SYMBOL CORPUS_FILTER_DROP_SYMBOL
-#define DROP_OTHER CORPUS_FILTER_DROP_OTHER
 
 #define ID_EOT	  (-1)
 #define ID_DROP	  (-2)
@@ -92,16 +90,14 @@ static void combine(const struct corpus_text *text)
 	ck_assert(!corpus_filter_combine(&filter, text));
 }
 
-/*
 static void drop(const struct corpus_text *text)
 {
 	ck_assert(!corpus_filter_drop(&filter, text));
 }
-*/
 
 static int next_id(void)
 {
-	int type_id, symbol_id;
+	int type_id;
 	int has = corpus_filter_advance(&filter);
 
 	ck_assert(!filter.error);
@@ -111,10 +107,7 @@ static int next_id(void)
 		if (type_id == CORPUS_FILTER_NONE) {
 			return ID_DROP;
 		}
-		ck_assert(type_id < filter.ntype);
-		symbol_id = filter.symbol_ids[type_id];
-		ck_assert(0 <= symbol_id);
-		ck_assert(symbol_id < filter.symtab.ntype);
+		ck_assert(type_id < filter.symtab.ntype);
 		return type_id;
 	} else {
 		return ID_EOT;
@@ -125,7 +118,6 @@ static int next_id(void)
 static const struct corpus_text *next_type(void)
 {
 	int type_id = next_id();
-	int symbol_id;
 
 	switch (type_id) {
 	case ID_EOT:
@@ -133,8 +125,7 @@ static const struct corpus_text *next_type(void)
 	case ID_DROP:
 		return TYPE_DROP;
 	default:
-		symbol_id = filter.symbol_ids[type_id];
-		return &filter.symtab.types[symbol_id].text;
+		return &filter.symtab.types[type_id].text;
 	}
 }
 
@@ -147,7 +138,7 @@ static const struct corpus_text *token(void)
 
 START_TEST(test_basic)
 {
-	init(NULL, DROP_SPACE);
+	init(NULL, 0);
 
 	start(T("A rose is a Rose is a ROSE."));
 
@@ -206,7 +197,7 @@ END_TEST
 
 START_TEST(test_combine)
 {
-	init(NULL, DROP_SPACE | DROP_PUNCT);
+	init(NULL, DROP_PUNCT);
 	combine(T("new york"));
 	combine(T("new york city"));
 
@@ -232,10 +223,9 @@ START_TEST(test_combine)
 END_TEST
 
 
-/*
 START_TEST(test_drop_combine)
 {
-	init(NULL, DROP_SPACE);
+	init(NULL, 0);
 	drop(T("a"));
 	combine(T("a."));
 
@@ -246,7 +236,6 @@ START_TEST(test_drop_combine)
 	assert_text_eq(next_type(), TYPE_EOT);
 }
 END_TEST
-*/
 
 
 START_TEST(test_basic_census)
@@ -256,7 +245,7 @@ START_TEST(test_basic_census)
 
 	ck_assert(!corpus_census_init(&census));
 
-	init(NULL, DROP_SPACE);
+	init(NULL, 0);
 	start(T("A rose is a rose is a rose."));
 
 	while ((type_id = next_id()) != ID_EOT) {
@@ -296,7 +285,7 @@ END_TEST
 
 START_TEST(test_url)
 {
-	init(NULL, DROP_SPACE);
+	init(NULL, 0);
 	start(T("http PTRCKPRRY http://www.PTRCKPRRY.com/"));
 	assert_text_eq(next_type(), T("http"));
 	assert_text_eq(next_type(), TYPE_DROP);
@@ -310,7 +299,7 @@ END_TEST
 
 START_TEST(test_hashtag)
 {
-	init(NULL, DROP_SPACE);
+	init(NULL, 0);
 	start(T("#useR2017"));
 	assert_text_eq(next_type(), T("#user2017"));
 	assert_text_eq(next_type(), TYPE_EOT);
@@ -320,7 +309,7 @@ END_TEST
 
 START_TEST(test_mention)
 {
-	init(NULL, DROP_SPACE);
+	init(NULL, 0);
 	start(T("@PtrckPrry"));
 	assert_text_eq(next_type(), T("@ptrckprry"));
 	assert_text_eq(next_type(), TYPE_EOT);
@@ -339,7 +328,7 @@ Suite *filter_suite(void)
 	tcase_add_checked_fixture(tc, setup_filter, teardown_filter);
         tcase_add_test(tc, test_basic);
         tcase_add_test(tc, test_combine);
-        //tcase_add_test(tc, test_drop_combine); // TODO: re-enable
+        tcase_add_test(tc, test_drop_combine);
         tcase_add_test(tc, test_basic_census);
         tcase_add_test(tc, test_drop_ideo);
         tcase_add_test(tc, test_url);

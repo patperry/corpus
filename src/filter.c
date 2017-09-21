@@ -171,7 +171,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 	symbol_id = -1;
 
 	while (corpus_filter_advance_raw(f, &symbol_id)) {
-		if (f->type_ids[symbol_id] == CORPUS_FILTER_IGNORED) {
+		if (f->type_ids[symbol_id] == CORPUS_FILTER_NONE) {
 			continue;
 		}
 
@@ -247,7 +247,7 @@ int corpus_filter_drop(struct corpus_filter *f,
 	type_id = f->type_ids[symbol_id];
 
 	switch (type_id) {
-	case CORPUS_FILTER_IGNORED:
+	case CORPUS_FILTER_NONE:
 	case CORPUS_FILTER_DROPPED:
 		break;
 
@@ -375,7 +375,7 @@ int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 
 	id = *idptr;
 	type_id = f->type_ids[id];
-	if (type_id == CORPUS_FILTER_IGNORED) {
+	if (type_id == CORPUS_FILTER_NONE) {
 		return 0;
 	}
 
@@ -402,7 +402,7 @@ int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 		attr |= CORPUS_TEXT_BITS(&f->scan.current);
 
 		type_id = f->type_ids[symbol_id];
-		if (type_id == CORPUS_FILTER_IGNORED) {
+		if (type_id == CORPUS_FILTER_NONE) {
 			continue;
 		}
 
@@ -695,7 +695,7 @@ int corpus_filter_symbol_prop(const struct corpus_filter *f,
 	}
 
 	if (ignore) {
-		prop = CORPUS_FILTER_IGNORED;
+		prop = CORPUS_FILTER_NONE;
 	} else if (drop) {
 		prop = CORPUS_FILTER_DROPPED;
 	} else {

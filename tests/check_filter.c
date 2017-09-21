@@ -105,7 +105,7 @@ static int next_id(void)
 
 	if (has) {
 		type_id = filter.type_id;
-		if (type_id == CORPUS_FILTER_IGNORED) {
+		if (type_id == CORPUS_FILTER_NONE) {
 			return ID_IGNORE;
 		} else if (type_id < 0) {
 			return ID_DROP;

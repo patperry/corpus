@@ -30,7 +30,7 @@
 #include "../src/census.h"
 #include "testutil.h"
 
-#define IGNORE_SPACE CORPUS_FILTER_IGNORE_SPACE
+#define DROP_SPACE CORPUS_FILTER_DROP_SPACE
 #define DROP_LETTER CORPUS_FILTER_DROP_LETTER
 #define DROP_MARK CORPUS_FILTER_DROP_MARK
 #define DROP_NUMBER CORPUS_FILTER_DROP_NUMBER
@@ -39,13 +39,11 @@
 #define DROP_OTHER CORPUS_FILTER_DROP_OTHER
 
 #define ID_EOT	  (-1)
-#define ID_IGNORE (-2)
-#define ID_DROP	  (-3)
+#define ID_DROP	  (-2)
 #define TYPE_EOT    ((const struct corpus_text *)&type_eot)
-#define TYPE_IGNORE ((const struct corpus_text *)&type_ignore)
 #define TYPE_DROP   ((const struct corpus_text *)&type_drop)
 
-static struct corpus_text type_eot, type_ignore, type_drop;
+static struct corpus_text type_eot, type_drop;
 static struct corpus_filter filter;
 static int has_filter;
 
@@ -56,8 +54,6 @@ static void setup_filter(void)
 	has_filter = 0;
 	type_eot.ptr = (uint8_t *)"<eot>";
 	type_eot.attr = strlen("<eot>");
-	type_ignore.ptr = (uint8_t *)"<ignore>";
-	type_ignore.attr = strlen("<ignore>");
 	type_drop.ptr = (uint8_t *)"<drop>";
 	type_drop.attr = strlen("<drop>");
 }
@@ -106,8 +102,6 @@ static int next_id(void)
 	if (has) {
 		type_id = filter.type_id;
 		if (type_id == CORPUS_FILTER_NONE) {
-			return ID_IGNORE;
-		} else if (type_id < 0) {
 			return ID_DROP;
 		}
 		ck_assert(type_id < filter.ntype);
@@ -129,8 +123,6 @@ static const struct corpus_text *next_type(void)
 	switch (type_id) {
 	case ID_EOT:
 		return TYPE_EOT;
-	case ID_IGNORE:
-		return TYPE_IGNORE;
 	case ID_DROP:
 		return TYPE_DROP;
 	default:
@@ -148,50 +140,50 @@ static const struct corpus_text *token(void)
 
 START_TEST(test_basic)
 {
-	init(NULL, IGNORE_SPACE);
+	init(NULL, DROP_SPACE);
 
 	start(T("A rose is a Rose is a ROSE."));
 
 	assert_text_eq(next_type(), T("a"));
 	assert_text_eq(token(), T("A"));
 
-	assert_text_eq(next_type(), TYPE_IGNORE);
+	assert_text_eq(next_type(), TYPE_DROP);
 	assert_text_eq(token(), T(" "));
 
 	assert_text_eq(next_type(), T("rose"));
 	assert_text_eq(token(), T("rose"));
 
-	assert_text_eq(next_type(), TYPE_IGNORE);
+	assert_text_eq(next_type(), TYPE_DROP);
 	assert_text_eq(token(), T(" "));
 
 	assert_text_eq(next_type(), T("is"));
 	assert_text_eq(token(), T("is"));
 
-	assert_text_eq(next_type(), TYPE_IGNORE);
+	assert_text_eq(next_type(), TYPE_DROP);
 	assert_text_eq(token(), T(" "));
 
 	assert_text_eq(next_type(), T("a"));
 	assert_text_eq(token(), T("a"));
 
-	assert_text_eq(next_type(), TYPE_IGNORE);
+	assert_text_eq(next_type(), TYPE_DROP);
 	assert_text_eq(token(), T(" "));
 
 	assert_text_eq(next_type(), T("rose"));
 	assert_text_eq(token(), T("Rose"));
 
-	assert_text_eq(next_type(), TYPE_IGNORE);
+	assert_text_eq(next_type(), TYPE_DROP);
 	assert_text_eq(token(), T(" "));
 
 	assert_text_eq(next_type(), T("is"));
 	assert_text_eq(token(), T("is"));
 
-	assert_text_eq(next_type(), TYPE_IGNORE);
+	assert_text_eq(next_type(), TYPE_DROP);
 	assert_text_eq(token(), T(" "));
 
 	assert_text_eq(next_type(), T("a"));
 	assert_text_eq(token(), T("a"));
 
-	assert_text_eq(next_type(), TYPE_IGNORE);
+	assert_text_eq(next_type(), TYPE_DROP);
 	assert_text_eq(token(), T(" "));
 
 	assert_text_eq(next_type(), T("rose"));
@@ -207,7 +199,7 @@ END_TEST
 
 START_TEST(test_combine)
 {
-	init(NULL, IGNORE_SPACE | DROP_PUNCT);
+	init(NULL, DROP_SPACE | DROP_PUNCT);
 	combine(T("new york"));
 	combine(T("new york city"));
 
@@ -219,7 +211,7 @@ START_TEST(test_combine)
 	assert_text_eq(next_type(), TYPE_DROP);
 	assert_text_eq(token(), T(","));
 
-	assert_text_eq(next_type(), TYPE_IGNORE);
+	assert_text_eq(next_type(), TYPE_DROP);
 	assert_text_eq(token(), T(" "));
 
 	assert_text_eq(next_type(), T("new york"));
@@ -240,7 +232,7 @@ START_TEST(test_basic_census)
 
 	ck_assert(!corpus_census_init(&census));
 
-	init(NULL, IGNORE_SPACE);
+	init(NULL, DROP_SPACE);
 	start(T("A rose is a rose is a rose."));
 
 	while ((type_id = next_id()) != ID_EOT) {
@@ -280,12 +272,12 @@ END_TEST
 
 START_TEST(test_url)
 {
-	init(NULL, IGNORE_SPACE);
+	init(NULL, DROP_SPACE);
 	start(T("http PTRCKPRRY http://www.PTRCKPRRY.com/"));
 	assert_text_eq(next_type(), T("http"));
-	assert_text_eq(next_type(), TYPE_IGNORE);
+	assert_text_eq(next_type(), TYPE_DROP);
 	assert_text_eq(next_type(), T("ptrckprry"));
-	assert_text_eq(next_type(), TYPE_IGNORE);
+	assert_text_eq(next_type(), TYPE_DROP);
 	assert_text_eq(next_type(), T("http://www.ptrckprry.com/"));
 	assert_text_eq(next_type(), TYPE_EOT);
 }
@@ -294,7 +286,7 @@ END_TEST
 
 START_TEST(test_hashtag)
 {
-	init(NULL, IGNORE_SPACE);
+	init(NULL, DROP_SPACE);
 	start(T("#useR2017"));
 	assert_text_eq(next_type(), T("#user2017"));
 	assert_text_eq(next_type(), TYPE_EOT);
@@ -304,7 +296,7 @@ END_TEST
 
 START_TEST(test_mention)
 {
-	init(NULL, IGNORE_SPACE);
+	init(NULL, DROP_SPACE);
 	start(T("@PtrckPrry"));
 	assert_text_eq(next_type(), T("@ptrckprry"));
 	assert_text_eq(next_type(), TYPE_EOT);

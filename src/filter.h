@@ -23,11 +23,8 @@
  * Token filter, for converting a text into a sequence of tokens.
  */
 
-/** ID code for a missing type or type that has been ignored. */
+/** ID code for a missing type or type that has been dropped. */
 #define CORPUS_FILTER_NONE  (-1)
-
-/** ID code for a type that has been dropped. */
-#define CORPUS_FILTER_DROPPED  (-2)
 
 /**
  * Filter type, for specifying which word classes to drop.
@@ -35,17 +32,11 @@
 enum corpus_filter_type {
 	CORPUS_FILTER_KEEP_ALL      = 0,	/**< keep all word types */
 	CORPUS_FILTER_DROP_SPACE    = (1 << 0),	/**< drop white space */
-	CORPUS_FILTER_IGNORE_SPACE  = (1 << 1),	/**< ignore white space */
-	CORPUS_FILTER_DROP_LETTER   = (1 << 2),	/**< drop letter words */
-	CORPUS_FILTER_IGNORE_LETTER = (1 << 3),	/**< ignore letter words */
-	CORPUS_FILTER_DROP_NUMBER   = (1 << 4),	/**< drop number words */
-	CORPUS_FILTER_IGNORE_NUMBER = (1 << 5),	/**< ignore number words */
-	CORPUS_FILTER_DROP_PUNCT    = (1 << 6),	/**< drop punctuation words */
-	CORPUS_FILTER_IGNORE_PUNCT  = (1 << 7),	/**< ignore punctuation words */
-	CORPUS_FILTER_DROP_SYMBOL   = (1 << 8),	/**< drop symbol words */
-	CORPUS_FILTER_IGNORE_SYMBOL = (1 << 9),	/**< ignore symbol words */
-	CORPUS_FILTER_DROP_OTHER    = (1 << 10),/**< drop other words */
-	CORPUS_FILTER_IGNORE_OTHER  = (1 << 11)	/**< ignore other words */
+	CORPUS_FILTER_DROP_LETTER   = (1 << 1),	/**< drop letter words */
+	CORPUS_FILTER_DROP_NUMBER   = (1 << 2),	/**< drop number words */
+	CORPUS_FILTER_DROP_PUNCT    = (1 << 3),	/**< drop punctuation words */
+	CORPUS_FILTER_DROP_SYMBOL   = (1 << 4),	/**< drop symbol words */
+	CORPUS_FILTER_DROP_OTHER    = (1 << 5)  /**< drop other words */
 };
 
 /**

@@ -183,7 +183,7 @@ int main_ngrams(int argc, char * const argv[])
 	int ch, err, i, name_id, type_id, ncomb;
 	int count;
 
-	filter_flags = CORPUS_FILTER_IGNORE_SPACE | CORPUS_FILTER_IGNORE_OTHER;
+	filter_flags = CORPUS_FILTER_DROP_SPACE | CORPUS_FILTER_DROP_OTHER;
 	type_flags = (CORPUS_TYPE_MAPCASE | CORPUS_TYPE_MAPCOMPAT
 			| CORPUS_TYPE_MAPQUOTE | CORPUS_TYPE_RMDI);
 
@@ -248,7 +248,7 @@ int main_ngrams(int argc, char * const argv[])
 			}
 			break;
 		case 'z':
-			filter_flags &= ~CORPUS_FILTER_IGNORE_SPACE;
+			filter_flags &= ~CORPUS_FILTER_DROP_SPACE;
 			break;
 		default:
 			usage_ngrams();

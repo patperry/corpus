@@ -42,7 +42,7 @@ static void setup_search(void)
 {
 	setup();
 	ck_assert(!corpus_filter_init(&filter, CORPUS_TYPE_MAPCASE, NULL,
-				      CORPUS_FILTER_IGNORE_SPACE));
+				      CORPUS_FILTER_DROP_SPACE));
 	ck_assert(!corpus_search_init(&search));
 }
 

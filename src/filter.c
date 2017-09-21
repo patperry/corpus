@@ -248,11 +248,10 @@ int corpus_filter_drop(struct corpus_filter *f,
 
 	switch (type_id) {
 	case CORPUS_FILTER_NONE:
-	case CORPUS_FILTER_DROPPED:
 		break;
 
 	default:
-		f->type_ids[symbol_id] = CORPUS_FILTER_DROPPED;
+		f->type_ids[symbol_id] = CORPUS_FILTER_NONE;
 
 		// remove the existing type; update old type IDs
 		n = f->ntype;
@@ -289,7 +288,7 @@ int corpus_filter_drop_except(struct corpus_filter *f,
 
 	type_id = f->type_ids[symbol_id];
 
-	if (type_id == CORPUS_FILTER_DROPPED) {
+	if (type_id == CORPUS_FILTER_NONE) {
 		// add a new type
 		if (f->ntype == f->ntype_max) {
 			if ((err = corpus_filter_grow_types(f, 1))) {
@@ -367,7 +366,7 @@ int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 	struct corpus_wordscan scan;
 	struct corpus_text current;
 	size_t attr, size;
-	int err, id, symbol_id, type_id, node_id, parent_id;
+	int err, has_scan, id, symbol_id, type_id, node_id, parent_id;
 
 	if (!f->combine.nnode) {
 		return 0;
@@ -385,6 +384,7 @@ int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 	}
 
 	// save the state of the current scan
+	has_scan = f->has_scan;
 	scan = f->scan;
 	current = f->current;
 
@@ -416,6 +416,7 @@ int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 
 		// found a longer match
 		if (f->combine_rules[node_id] >= 0) {
+			has_scan = f->has_scan;
 			scan = f->scan;
 			current.attr = size | attr;
 			id = f->combine_rules[node_id];
@@ -431,6 +432,7 @@ int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 
 out:
 	// restore the state of the scan after the longest match
+	f->has_scan = has_scan;
 	f->scan = scan;
 	f->current = current;
 
@@ -650,54 +652,45 @@ out:
 int corpus_filter_symbol_prop(const struct corpus_filter *f,
 			      const struct corpus_text *symbol, int kind)
 {
-	int drop, ignore, prop;
+	int drop, prop;
 
 	if (kind < 0) {
 		kind = corpus_symbol_kind(symbol);
 	}
 
 	drop = 0;
-	ignore = 0;
 
 	switch (kind) {
 	case CORPUS_WORD_SPACE:
 		drop = (f->flags & CORPUS_FILTER_DROP_SPACE);
-		ignore = (f->flags & CORPUS_FILTER_IGNORE_SPACE);
 		break;
 
 	case CORPUS_WORD_LETTER:
 		drop = f->flags & CORPUS_FILTER_DROP_LETTER;
-		ignore = f->flags & CORPUS_FILTER_IGNORE_LETTER;
 		break;
 
 	case CORPUS_WORD_NUMBER:
 		drop = f->flags & CORPUS_FILTER_DROP_NUMBER;
-		ignore = f->flags & CORPUS_FILTER_IGNORE_NUMBER;
 		break;
 
 	case CORPUS_WORD_PUNCT:
 		drop = f->flags & CORPUS_FILTER_DROP_PUNCT;
-		ignore = f->flags & CORPUS_FILTER_IGNORE_PUNCT;
 		break;
 
 	case CORPUS_WORD_SYMBOL:
 		drop = f->flags & CORPUS_FILTER_DROP_SYMBOL;
-		ignore = f->flags & CORPUS_FILTER_IGNORE_SYMBOL;
 		break;
 
 	case CORPUS_WORD_OTHER:
 		drop = f->flags & CORPUS_FILTER_DROP_OTHER;
-		ignore = f->flags & CORPUS_FILTER_IGNORE_OTHER;
 		break;
 
 	default:
 		break;
 	}
 
-	if (ignore) {
+	if (drop) {
 		prop = CORPUS_FILTER_NONE;
-	} else if (drop) {
-		prop = CORPUS_FILTER_DROPPED;
 	} else {
 		prop = 0;
 	}

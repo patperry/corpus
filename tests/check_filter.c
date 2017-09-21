@@ -92,6 +92,11 @@ static void combine(const struct corpus_text *text)
 	ck_assert(!corpus_filter_combine(&filter, text));
 }
 
+static void drop(const struct corpus_text *text)
+{
+	ck_assert(!corpus_filter_drop(&filter, text));
+}
+
 static int next_id(void)
 {
 	int type_id, symbol_id;
@@ -225,6 +230,21 @@ START_TEST(test_combine)
 END_TEST
 
 
+START_TEST(test_drop_combine)
+{
+	init(NULL, DROP_SPACE);
+	drop(T("a"));
+	combine(T("a."));
+
+	start(T("."));
+
+	assert_text_eq(next_type(), T("."));
+	assert_text_eq(token(), T("."));
+	assert_text_eq(next_type(), TYPE_EOT);
+}
+END_TEST
+
+
 START_TEST(test_basic_census)
 {
 	struct corpus_census census;
@@ -316,6 +336,7 @@ Suite *filter_suite(void)
 	tcase_add_checked_fixture(tc, setup_filter, teardown_filter);
         tcase_add_test(tc, test_basic);
         tcase_add_test(tc, test_combine);
+        tcase_add_test(tc, test_drop_combine);
         tcase_add_test(tc, test_basic_census);
         tcase_add_test(tc, test_drop_ideo);
         tcase_add_test(tc, test_url);

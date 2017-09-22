@@ -23,6 +23,12 @@
  * Symbol table, assigning integer IDs to tokens and types.
  */
 
+/** Code for a missing or non-existent token */
+#define CORPUS_TOKEN_NONE (-1)
+
+/** Code for a missing or non-existent type */
+#define CORPUS_TYPE_NONE (-1)
+
 /**
  * Symbol table token.
  */

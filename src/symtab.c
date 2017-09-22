@@ -121,7 +121,7 @@ int corpus_symtab_has_token(const struct corpus_symtab *tab,
 {
 	struct corpus_table_probe probe;
 	unsigned hash = corpus_text_hash(tok);
-	int token_id = -1;
+	int token_id = CORPUS_TOKEN_NONE;
 	bool found = false;
 
 	corpus_table_probe_make(&probe, &tab->token_table, hash);
@@ -147,7 +147,7 @@ int corpus_symtab_has_type(const struct corpus_symtab *tab,
 {
 	struct corpus_table_probe probe;
 	unsigned hash = corpus_text_hash(typ);
-	int type_id = -1;
+	int type_id = CORPUS_TYPE_NONE;
 	bool found = false;
 
 	corpus_table_probe_make(&probe, &tab->type_table, hash);
@@ -177,62 +177,69 @@ int corpus_symtab_add_token(struct corpus_symtab *tab,
 
 	if (corpus_symtab_has_token(tab, tok, &pos)) {
 		token_id = pos;
-	} else {
-		token_id = tab->ntoken;
+		goto out;
+	}
 
-		// compute the type
-		if ((err = corpus_typemap_set(&tab->typemap, tok))) {
-			goto error;
-		}
+	token_id = tab->ntoken;
 
+	// compute the type
+	if ((err = corpus_typemap_set(&tab->typemap, tok))) {
+		goto error;
+	}
+
+	if (tab->typemap.has_type) {
 		// add the type
 		if ((err = corpus_symtab_add_type(tab, &tab->typemap.type,
 						  &type_id))) {
 			goto error;
 		}
+	} else {
+		type_id = CORPUS_TYPE_NONE;
+	}
 
-		// grow the token array if necessary
-		if (token_id == tab->ntoken_max) {
-			if ((err = corpus_symtab_grow_tokens(tab, 1))) {
-				goto error;
-			}
-		}
-
-		// grow the token table if necessary
-		if (token_id == tab->token_table.capacity) {
-			if ((err = corpus_table_reinit(&tab->token_table,
-						       token_id + 1))) {
-				goto error;
-			}
-			rehash = true;
-		}
-
-		// allocate storage for the token
-		if ((err = corpus_text_init_copy(&tab->tokens[token_id].text,
-						 tok))) {
+	// grow the token array if necessary
+	if (token_id == tab->ntoken_max) {
+		if ((err = corpus_symtab_grow_tokens(tab, 1))) {
 			goto error;
 		}
+	}
 
-		// set the type
-		tab->tokens[token_id].type_id = type_id;
+	// grow the token table if necessary
+	if (token_id == tab->token_table.capacity) {
+		if ((err = corpus_table_reinit(&tab->token_table,
+					       token_id + 1))) {
+			goto error;
+		}
+		rehash = true;
+	}
 
+	// allocate storage for the token
+	if ((err = corpus_text_init_copy(&tab->tokens[token_id].text, tok))) {
+		goto error;
+	}
+
+	// set the type
+	tab->tokens[token_id].type_id = type_id;
+
+	if (type_id >= 0) {
 		// add the token to the type
 		if ((err = type_add_token(&tab->types[type_id], token_id))) {
 			corpus_text_destroy(&tab->tokens[token_id].text);
 			goto error;
 		}
-
-		// update the count
-		tab->ntoken++;
-
-		// set the bucket
-		if (rehash) {
-			corpus_symtab_rehash_tokens(tab);
-		} else {
-			tab->token_table.items[pos] = token_id;
-		}
 	}
 
+	// update the count
+	tab->ntoken++;
+
+	// set the bucket
+	if (rehash) {
+		corpus_symtab_rehash_tokens(tab);
+	} else {
+		tab->token_table.items[pos] = token_id;
+	}
+
+out:
 	if (idptr) {
 		*idptr = token_id;
 	}

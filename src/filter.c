@@ -119,7 +119,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 	struct corpus_text scan_current;
 	int *rules;
 	int err, has_scan, symbol_id, node_id, nnode0, nnode, parent_id,
-	    scan_type_id, size0, size, id = -1;
+	    scan_type_id, size0, size, id = CORPUS_FILTER_NONE;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
@@ -147,7 +147,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 	}
 
 	node_id = CORPUS_TREE_NONE;
-	symbol_id = -1;
+	symbol_id = CORPUS_FILTER_NONE;
 
 	while (corpus_filter_advance_raw(f, &symbol_id)) {
 		if (symbol_id == CORPUS_FILTER_NONE) {
@@ -179,7 +179,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 			}
 
 			// set the new rule
-			f->combine_rules[node_id] = -1;
+			f->combine_rules[node_id] = CORPUS_FILTER_NONE;
 		}
 	}
 
@@ -511,7 +511,7 @@ out:
 	if (err) {
 		corpus_log(err, "failed adding symbol to filter");
 		f->error = err;
-		id = -1;
+		id = CORPUS_FILTER_NONE;
 	}
 
 	if (idptr) {

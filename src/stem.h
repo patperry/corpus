@@ -75,7 +75,4 @@ void corpus_stem_snowball_destroy(struct corpus_stem_snowball *stem);
 int corpus_stem_snowball(const uint8_t *ptr, int len,
 			 const uint8_t **stemptr, int *lenptr, void *ctx);
 
-
-
-
 #endif /* CORPUS_STEM_H */

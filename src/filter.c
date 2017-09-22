@@ -420,8 +420,7 @@ int corpus_filter_advance_raw(struct corpus_filter *f, int *idptr)
 		goto out;
 	}
 
-	if (f->scan.type == CORPUS_WORD_SPACE
-			|| f->scan.type == CORPUS_WORD_OTHER) {
+	if (f->scan.type == CORPUS_WORD_NONE) {
 		symbol_id = CORPUS_FILTER_NONE;
 		ret = 1;
 		goto out;

@@ -133,7 +133,7 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 		goto Break;
 
 	case WORD_BREAK_CR:
-		scan->type = CORPUS_WORD_SPACE;
+		scan->type = CORPUS_WORD_NONE;
 		
 		if (scan->iter_prop == WORD_BREAK_LF) {
 			// Do not break within CRLF
@@ -148,7 +148,7 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 
 	case WORD_BREAK_NEWLINE:
 	case WORD_BREAK_LF:
-		scan->type = CORPUS_WORD_SPACE;
+		scan->type = CORPUS_WORD_NONE;
 
 		// Break after Newlines
 		// WB3a: (Newline | LF) +
@@ -156,7 +156,7 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 		goto Break;
 
 	case WORD_BREAK_ZWJ:
-		scan->type = CORPUS_WORD_OTHER;
+		scan->type = CORPUS_WORD_NONE;
 
 		if (scan->iter_prop == WORD_BREAK_GLUE_AFTER_ZWJ) {
 			scan->type = CORPUS_WORD_SYMBOL;
@@ -292,12 +292,8 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 	case WORD_BREAK_EXTEND: // marks
 	case WORD_BREAK_FORMAT: // Cf format controls
 	case WORD_BREAK_OTHER:
-		scan->type = CORPUS_WORD_OTHER;
-		NEXT();
-		goto Break;
-
 	case WORD_BREAK_WHITE_SPACE:
-		scan->type = CORPUS_WORD_SPACE;
+		scan->type = CORPUS_WORD_NONE;
 		NEXT();
 		goto Break;
 	}

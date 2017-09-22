@@ -28,19 +28,26 @@ struct corpus_text *stem(const struct corpus_text *tok, const char *alg)
 {
 	struct corpus_text *typ;
 	struct corpus_stem stem;
+	struct corpus_stem_snowball sb;
 	size_t size;
 
-	ck_assert(!corpus_stem_init(&stem, alg));
+	ck_assert(!corpus_stem_snowball_init(&sb, alg));
+	ck_assert(!corpus_stem_init(&stem, corpus_stem_snowball, &sb));
 	ck_assert(!corpus_stem_set(&stem, tok));
-	size = CORPUS_TEXT_SIZE(&stem.type);
 
-	typ = alloc(sizeof(*typ));
-	typ->ptr = alloc(size + 1);
-	memcpy(typ->ptr, stem.type.ptr, size);
-	typ->ptr[size] = '\0';
-	typ->attr = stem.type.attr;
+	if (!stem.has_type) {
+		typ = NULL;
+	} else {
+		size = CORPUS_TEXT_SIZE(&stem.type);
+		typ = alloc(sizeof(*typ));
+		typ->ptr = alloc(size + 1);
+		memcpy(typ->ptr, stem.type.ptr, size);
+		typ->ptr[size] = '\0';
+		typ->attr = stem.type.attr;
+	}
 
 	corpus_stem_destroy(&stem);
+	corpus_stem_snowball_destroy(&sb);
 
 	return typ;
 }

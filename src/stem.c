@@ -28,14 +28,11 @@
 #include "wordscan.h"
 #include "stem.h"
 
-
-const char **corpus_stemmer_names(void)
-{
-	return sb_stemmer_list();
-}
+static int classify(const struct corpus_text *text, int *lenptr);
 
 
-int corpus_stem_init(struct corpus_stem *stem, const char *alg)
+int corpus_stem_init(struct corpus_stem *stem, corpus_stem_func stemmer,
+		     void *context)
 {
 	int err;
 
@@ -44,27 +41,12 @@ int corpus_stem_init(struct corpus_stem *stem, const char *alg)
 		goto out;
 	}
 
-	if (alg) {
-		errno = 0;
-		stem->stemmer = sb_stemmer_new(alg, "UTF_8");
-		if (!stem->stemmer) {
-		       if (errno == ENOMEM) {
-			       err = CORPUS_ERROR_NOMEM;
-			       corpus_log(err, "failed allocating stemmer");
-		       } else {
-				err = CORPUS_ERROR_INVAL;
-				corpus_log(err,
-					   "unrecognized stemming algorithm"
-					   " (%s)", alg);
-		       }
-		       goto out;
-		}
-	} else {
-		stem->stemmer = NULL;
-	}
-
+	stem->stemmer = stemmer;
+	stem->context = context;
 	stem->type.ptr = NULL;
 	stem->type.attr = 0;
+	stem->has_type = 0;
+
 out:
 	return err;
 }
@@ -72,9 +54,6 @@ out:
 
 void corpus_stem_destroy(struct corpus_stem *stem)
 {
-	if (stem->stemmer) {
-		sb_stemmer_delete(stem->stemmer);
-	}
 	corpus_textset_destroy(&stem->excepts);
 }
 
@@ -107,14 +86,15 @@ static int classify(const struct corpus_text *text, int *lenptr)
 
 int corpus_stem_set(struct corpus_stem *stem, const struct corpus_text *tok)
 {
-	const uint8_t *buf;
 	size_t size;
-	int err, kind, nword0, nword;
+	const uint8_t *ptr;
+	int err, len;
 
 	assert(!CORPUS_TEXT_HAS_ESC(tok));
 
 	if (!stem->stemmer || corpus_textset_has(&stem->excepts, tok, NULL)) {
 		stem->type = *tok;
+		stem->has_type = 1;
 		return 0;
 	}
 
@@ -126,38 +106,30 @@ int corpus_stem_set(struct corpus_stem *stem, const struct corpus_text *tok)
 			   (uint64_t)size, INT_MAX - 1);
 		goto out;
 	}
-	
-	kind = classify(tok, &nword0);
 
-	// only stem letter words
-	if (kind != CORPUS_WORD_LETTER) {
-		stem->type = *tok;
-		return 0;
-	}
-
-	buf = (const uint8_t *)sb_stemmer_stem(stem->stemmer, tok->ptr,
-					       (int)size);
-	if (buf == NULL) {
-		err = CORPUS_ERROR_NOMEM;
-		corpus_log(err, "failed allocating memory to stem word"
-			   " of size %"PRIu64" bytes", (uint64_t)size);
+	if ((err = (stem->stemmer)(tok->ptr, (int)size, &ptr, &len,
+				   stem->context))) {
 		goto out;
 	}
 
-	// keep old utf8 bit, but update to new size
-	size = (size_t)sb_stemmer_length(stem->stemmer);
-	stem->type.ptr = (uint8_t *)buf;
-	stem->type.attr = (tok->attr & ~CORPUS_TEXT_SIZE_MASK) | size;
-	classify(&stem->type, &nword);
-	
-	// only stem the token if the number of words doesn't change; this
-	// protects against turning inner punctuation like 'u.s' to
-	// outer punctuation like 'u.'
-	if (nword != nword0) {
-		stem->type = *tok;
+	if (len < 0) {
+		stem->has_type = 0;
+		goto out;
 	}
+
+	if ((err = corpus_text_assign(&stem->type, ptr, (size_t)len,
+				      CORPUS_TEXT_NOESCAPE))) {
+		corpus_log(err, "stemmer returned invalid type");
+		goto out;
+	}
+
+	stem->has_type = 1;
 	err = 0;
 out:
+	if (err) {
+		corpus_log(err, "failed stemming token");
+		stem->has_type = 0;
+	}
 	return err;
 }
 
@@ -171,6 +143,127 @@ int corpus_stem_except(struct corpus_stem *stem,
 
 	if ((err = corpus_textset_add(&stem->excepts, tok, NULL))) {
 		corpus_log(err, "failed adding token to stem exception set");
+	}
+
+	return err;
+}
+
+
+const char **corpus_stemmer_names(void)
+{
+	return sb_stemmer_list();
+}
+
+
+int corpus_stem_snowball_init(struct corpus_stem_snowball *stem,
+			      const char *alg)
+{
+	int err = 0;
+
+	if (!alg) {
+		stem->stemmer = NULL;
+		goto out;
+	}
+
+	errno = 0;
+	stem->stemmer = sb_stemmer_new(alg, "UTF_8");
+	if (!stem->stemmer) {
+	       err = ((errno == ENOMEM) ? CORPUS_ERROR_NOMEM
+					: CORPUS_ERROR_INVAL);
+	}
+
+out:
+	switch (err) {
+	case CORPUS_ERROR_NOMEM:
+		corpus_log(err, "failed allocating Snowball stemmer");
+		break;
+
+	case CORPUS_ERROR_INVAL:
+		corpus_log(err, "unrecognized Snowball stemming algorithm"
+			   " (\"%s\")", alg);
+		break;
+
+	default:
+		break;
+	}
+
+	return err;
+}
+
+
+void corpus_stem_snowball_destroy(struct corpus_stem_snowball *stem)
+{
+	if (stem->stemmer) {
+		sb_stemmer_delete(stem->stemmer);
+	}
+}
+
+
+int corpus_stem_snowball(const uint8_t *ptr, int len,
+			 const uint8_t **stemptr, int *lenptr, void *ctx)
+{
+	struct corpus_stem_snowball *sb = ctx;
+	struct corpus_text tok, typ;
+	const uint8_t *stem, *buf;
+	int err, kind, nword, nword2, stemlen, size;
+
+	stem = ptr;
+	stemlen = len;
+	err = 0;
+
+	if (len < 0) {
+		goto out;
+	}
+
+	assert((size_t)len <= CORPUS_TEXT_SIZE_MAX);
+
+	tok.ptr = (uint8_t *)ptr;
+	tok.attr = ((size_t)len) | CORPUS_TEXT_UTF8_BIT;
+	kind = classify(&tok, &nword);
+
+	// only stem letter words, and no 0-word or multi-word phrases
+	if (kind != CORPUS_WORD_LETTER || nword != 1) {
+		goto out;
+	}
+
+	buf = (const uint8_t *)sb_stemmer_stem(sb->stemmer, ptr, len);
+	if (buf == NULL) {
+		err = CORPUS_ERROR_NOMEM;
+		corpus_log(err, "failed allocating memory to stem word"
+			   " of size %"PRIu64" bytes", (uint64_t)len);
+		goto out;
+	}
+
+	size = sb_stemmer_length(sb->stemmer);
+	assert(size >= 0);
+
+	if ((err = corpus_text_assign(&typ, buf, (size_t)size,
+				      CORPUS_TEXT_NOESCAPE))) {
+		err = CORPUS_ERROR_INTERNAL;
+		corpus_log(err, "Snowball stemmer returned invalid UTF-8 text");
+		goto out;
+	}
+
+	classify(&typ, &nword2);
+
+	// only stem the token if the number of words doesn't change; this
+	// protects against turning inner punctuation like 'u.s' to
+	// outer punctuation like 'u.'
+	if (nword == nword2) {
+		stem = buf;
+		stemlen = size;
+	}
+
+out:
+	if (err) {
+		stem = NULL;
+		stemlen = -1;
+	}
+	if (stemptr) {
+		*stemptr = stem;
+	}
+	if (lenptr) {
+		*lenptr = stemlen;
 	}
 
 	return err;

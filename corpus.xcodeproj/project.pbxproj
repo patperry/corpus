@@ -41,7 +41,6 @@
 		88C640791EE451C100081C2A /* ngram.c in Sources */ = {isa = PBXBuildFile; fileRef = 88341E9E1EE09E2D0054BCCE /* ngram.c */; };
 		88CB30DE1EDDA5BB000007DE /* sentfilter.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CB30DC1EDDA5BB000007DE /* sentfilter.c */; };
 		88CB30DF1EDDA5CE000007DE /* sentfilter.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CB30DC1EDDA5BB000007DE /* sentfilter.c */; };
-		88CCCE981F740674000E3CDC /* check_filter.c in Sources */ = {isa = PBXBuildFile; fileRef = 881512741ED31D1A00E974F1 /* check_filter.c */; };
 		88CD84251EBB7F4A00DF50CB /* libstemmer_utf8.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CD84241EBB7F4A00DF50CB /* libstemmer_utf8.c */; };
 		88CD842A1EBB7F6000DF50CB /* api.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CD84261EBB7F6000DF50CB /* api.c */; };
 		88CD842B1EBB7F6000DF50CB /* utilities.c in Sources */ = {isa = PBXBuildFile; fileRef = 88CD84291EBB7F6000DF50CB /* utilities.c */; };
@@ -87,6 +86,7 @@
 		88D5CC6C1EE2199800F9C36A /* main_ngrams.c in Sources */ = {isa = PBXBuildFile; fileRef = 88D5CC6B1EE2199800F9C36A /* main_ngrams.c */; };
 		88D5CC6F1EE219B400F9C36A /* termset.c in Sources */ = {isa = PBXBuildFile; fileRef = 88D5CC6D1EE219B300F9C36A /* termset.c */; };
 		88D5CC701EE219C700F9C36A /* termset.c in Sources */ = {isa = PBXBuildFile; fileRef = 88D5CC6D1EE219B300F9C36A /* termset.c */; };
+		88D741191F75777800E3B07F /* check_stem.c in Sources */ = {isa = PBXBuildFile; fileRef = 8833A7BA1F3262170041B5DE /* check_stem.c */; };
 		88E48C9D1EC76E17007F5449 /* memory.c in Sources */ = {isa = PBXBuildFile; fileRef = 88E48C9B1EC76E17007F5449 /* memory.c */; };
 		88EA69C91EAF923D00D57BEB /* error.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EA69C41EAF923D00D57BEB /* error.c */; };
 		88EA69CA1EAF923D00D57BEB /* main_sentences.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EA69C61EAF923D00D57BEB /* main_sentences.c */; };
@@ -640,6 +640,7 @@
 				88CD84661EBB7FCA00DF50CB /* stem_UTF_8_danish.c in Sources */,
 				88CD84671EBB7FCA00DF50CB /* stem_UTF_8_dutch.c in Sources */,
 				88EA69E31EAF94DE00D57BEB /* text.c in Sources */,
+				88D741191F75777800E3B07F /* check_stem.c in Sources */,
 				88548A6D1ECE63010063254E /* textset.c in Sources */,
 				88EA69E21EAF94DE00D57BEB /* table.c in Sources */,
 				88CD84761EBB7FCA00DF50CB /* stem_UTF_8_turkish.c in Sources */,
@@ -671,7 +672,6 @@
 				88EA69DB1EAF94C500D57BEB /* data.c in Sources */,
 				88548A781ECF5CDF0063254E /* memory.c in Sources */,
 				88EA69DE1EAF94D300D57BEB /* filebuf.c in Sources */,
-				88CCCE981F740674000E3CDC /* check_filter.c in Sources */,
 				88CD84651EBB7FCA00DF50CB /* stem_UTF_8_arabic.c in Sources */,
 				88CD84701EBB7FCA00DF50CB /* stem_UTF_8_portuguese.c in Sources */,
 				88EA69EA1EAF94F500D57BEB /* strntoimax.c in Sources */,

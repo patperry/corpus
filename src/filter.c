@@ -112,15 +112,6 @@ int corpus_filter_stem_except(struct corpus_filter *f,
 }
 
 
-const struct corpus_text *corpus_filter_type(const struct corpus_filter *f,
-					     int id)
-{
-	CHECK_ERROR(NULL);
-	assert(0 <= id && id < f->symtab.ntype);
-	return &f->symtab.types[id].text;
-}
-
-
 int corpus_filter_combine(struct corpus_filter *f,
 			  const struct corpus_text *type)
 {

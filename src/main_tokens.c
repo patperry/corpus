@@ -388,7 +388,7 @@ int main_tokens(int argc, char * const argv[])
 			if (type_id < 0) {
 				fprintf(stream, "null");
 			} else {
-				type = corpus_filter_type(&filter, type_id);
+				type = &filter.symtab.types[type_id].text;
 
 				corpus_render_clear(&render);
 				corpus_render_text(&render, type);

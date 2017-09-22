@@ -157,15 +157,4 @@ int corpus_filter_start(struct corpus_filter *f,
  */
 int corpus_filter_advance(struct corpus_filter *f);
 
-/**
- * Get the text corresponding to a given type id.
- *
- * \param f the filter
- * \param id the type id
- *
- * \returns the text for that type
- */
-const struct corpus_text *corpus_filter_type(const struct corpus_filter *f,
-					     int id);
-
 #endif /* CORPUS_FILTER_H */

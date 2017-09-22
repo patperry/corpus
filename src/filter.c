@@ -120,8 +120,8 @@ int corpus_filter_combine(struct corpus_filter *f,
 	struct corpus_wordscan scan;
 	struct corpus_text scan_current;
 	int *rules;
-	int err, has_scan, symbol_id, node_id, nnode0, nnode, parent_id,
-	    scan_type_id, size0, size, id = CORPUS_TYPE_NONE;
+	int err, has_scan, word_id, node_id, nnode0, nnode, parent_id,
+	    scan_type_id, size0, size, type_id = CORPUS_TYPE_NONE;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
@@ -139,7 +139,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 	}
 
 	// add a new type for the combined type
-	if ((err = corpus_filter_add_type(f, type, &id))) {
+	if ((err = corpus_filter_add_type(f, type, &type_id))) {
 		goto out;
 	}
 
@@ -149,17 +149,17 @@ int corpus_filter_combine(struct corpus_filter *f,
 	}
 
 	node_id = CORPUS_TREE_NONE;
-	symbol_id = CORPUS_TYPE_NONE;
+	word_id = CORPUS_TYPE_NONE;
 
-	while (corpus_filter_advance_word(f, &symbol_id)) {
-		if (symbol_id == CORPUS_TYPE_NONE) {
+	while (corpus_filter_advance_word(f, &word_id)) {
+		if (word_id == CORPUS_TYPE_NONE) {
 			continue;
 		}
 
 		parent_id = node_id;
 		nnode0 = f->combine.nnode;
 		size0 = f->combine.nnode_max;
-		if ((err = corpus_tree_add(&f->combine, parent_id, symbol_id,
+		if ((err = corpus_tree_add(&f->combine, parent_id, word_id,
 					   &node_id))) {
 			goto out;
 		}
@@ -191,7 +191,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 	}
 
 	if (node_id >= 0) {
-		f->combine_rules[node_id] = id;
+		f->combine_rules[node_id] = type_id;
 	}
 
 	err = 0;
@@ -513,7 +513,7 @@ int corpus_filter_add_type(struct corpus_filter *f,
 	err = 0;
 out:
 	if (err) {
-		corpus_log(err, "failed adding symbol to filter");
+		corpus_log(err, "failed adding type to filter");
 		f->error = err;
 		id = CORPUS_TYPE_NONE;
 	}

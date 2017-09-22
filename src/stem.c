@@ -149,7 +149,7 @@ int corpus_stem_except(struct corpus_stem *stem,
 }
 
 
-const char **corpus_stemmer_names(void)
+const char **corpus_stem_snowball_names(void)
 {
 	return sb_stemmer_list();
 }

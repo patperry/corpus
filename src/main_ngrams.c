@@ -94,7 +94,7 @@ static int get_arg(const struct string_arg options[], const char *name)
 
 void usage_ngrams(void)
 {
-	const char **stems = corpus_stemmer_names();
+	const char **stems = corpus_stem_snowball_names();
 	const char **stops = corpus_stopword_names();
 	int i;
 

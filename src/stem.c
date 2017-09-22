@@ -79,17 +79,29 @@ void corpus_stem_destroy(struct corpus_stem *stem)
 }
 
 
-static int count_words(const struct corpus_text *text)
+static int classify(const struct corpus_text *text, int *lenptr)
 {
 	struct corpus_wordscan scan;
-	int nword;
+	int kind, len;
 
-	nword = 0;
+	len = 0;
+	kind = CORPUS_WORD_NONE;
 	corpus_wordscan_make(&scan, text);
-	while (corpus_wordscan_advance(&scan)) {
-		nword++;
+
+	// get the kind from the first word
+	if (corpus_wordscan_advance(&scan)) {
+		kind = scan.type;
+		len++;
 	}
-	return nword;
+
+	while (corpus_wordscan_advance(&scan)) {
+		len++;
+	}
+
+	if (lenptr) {
+		*lenptr = len;
+	}
+	return kind;
 }
 
 
@@ -97,7 +109,7 @@ int corpus_stem_set(struct corpus_stem *stem, const struct corpus_text *tok)
 {
 	const uint8_t *buf;
 	size_t size;
-	int err, nword0, nword;
+	int err, kind, nword0, nword;
 
 	assert(!CORPUS_TEXT_HAS_ESC(tok));
 
@@ -115,7 +127,14 @@ int corpus_stem_set(struct corpus_stem *stem, const struct corpus_text *tok)
 		goto out;
 	}
 	
-	nword0 = count_words(tok);
+	kind = classify(tok, &nword0);
+
+	// only stem letter words
+	if (kind != CORPUS_WORD_LETTER) {
+		stem->type = *tok;
+		return 0;
+	}
+
 	buf = (const uint8_t *)sb_stemmer_stem(stem->stemmer, tok->ptr,
 					       (int)size);
 	if (buf == NULL) {
@@ -129,7 +148,7 @@ int corpus_stem_set(struct corpus_stem *stem, const struct corpus_text *tok)
 	size = (size_t)sb_stemmer_length(stem->stemmer);
 	stem->type.ptr = (uint8_t *)buf;
 	stem->type.attr = (tok->attr & ~CORPUS_TEXT_SIZE_MASK) | size;
-	nword = count_words(&stem->type);
+	classify(&stem->type, &nword);
 	
 	// only stem the token if the number of words doesn't change; this
 	// protects against turning inner punctuation like 'u.s' to

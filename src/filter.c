@@ -45,10 +45,8 @@ static int corpus_filter_try_combine(struct corpus_filter *f, int *idptr);
 
 static int corpus_filter_add_type(struct corpus_filter *f,
 				  const struct corpus_text *type, int *idptr);
-static int corpus_filter_grow_types(struct corpus_filter *f, int size0,
-				    int size);
-static int corpus_filter_get_drop(const struct corpus_filter *f,
-				  const struct corpus_text *type, int kind);
+static int corpus_filter_grow_types(struct corpus_filter *f, int size);
+static int corpus_filter_get_drop(const struct corpus_filter *f, int kind);
 static int corpus_type_kind(const struct corpus_text *type);
 
 
@@ -451,7 +449,7 @@ int corpus_filter_advance_word(struct corpus_filter *f, int *idptr)
 
 	// grow the type id array if necessary
 	if (size0 < size) {
-		if ((err = corpus_filter_grow_types(f, size0, size))) {
+		if ((err = corpus_filter_grow_types(f, size))) {
 			goto out;
 		}
 	}
@@ -460,7 +458,7 @@ int corpus_filter_advance_word(struct corpus_filter *f, int *idptr)
 	while (n0 < n) {
 		type = &f->symtab.types[n0].text;
 		kind = corpus_type_kind(type);
-		drop = corpus_filter_get_drop(f, type, kind);
+		drop = corpus_filter_get_drop(f, kind);
 		f->drop[n0] = drop;
 		n0++;
 	}
@@ -501,13 +499,13 @@ int corpus_filter_add_type(struct corpus_filter *f,
 	if (nsym0 != nsym) {
 		size = f->symtab.ntype_max;
 		if (size0 < size) {
-			if ((err = corpus_filter_grow_types(f, size0, size))) {
+			if ((err = corpus_filter_grow_types(f, size))) {
 				goto out;
 			}
 		}
 
 		kind = corpus_type_kind(type);
-		f->drop[id] = corpus_filter_get_drop(f, type, kind);
+		f->drop[id] = corpus_filter_get_drop(f, kind);
 	}
 
 	err = 0;
@@ -526,7 +524,7 @@ out:
 }
 
 
-int corpus_filter_grow_types(struct corpus_filter *f, int size0, int size)
+int corpus_filter_grow_types(struct corpus_filter *f, int size)
 {
 	int *drop;
 	int err;
@@ -544,21 +542,13 @@ out:
 		f->error = err;
 	}
 
-	(void)size0;
 	return err;
 }
 
 
-int corpus_filter_get_drop(const struct corpus_filter *f,
-			   const struct corpus_text *type, int kind)
+int corpus_filter_get_drop(const struct corpus_filter *f, int kind)
 {
 	int drop;
-
-	if (kind < 0) {
-		kind = corpus_type_kind(type);
-	}
-
-	drop = 0;
 
 	switch (kind) {
 	case CORPUS_WORD_LETTER:

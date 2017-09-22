@@ -75,7 +75,7 @@ int corpus_filter_init(struct corpus_filter *f, int flags, int type_kind,
 	f->scan_type = 0;
 	f->current.ptr = NULL;
 	f->current.attr = 0;
-	f->type_id = CORPUS_FILTER_NONE;
+	f->type_id = CORPUS_TYPE_NONE;
 	f->error = 0;
 
 	return 0;
@@ -121,7 +121,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 	struct corpus_text scan_current;
 	int *rules;
 	int err, has_scan, symbol_id, node_id, nnode0, nnode, parent_id,
-	    scan_type_id, size0, size, id = CORPUS_FILTER_NONE;
+	    scan_type_id, size0, size, id = CORPUS_TYPE_NONE;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
@@ -135,7 +135,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 	} else {
 		memset(&scan, 0, sizeof(scan)); // not used; silence warning
 		memset(&scan_current, 0, sizeof(scan_current)); // ditto
-		scan_type_id = CORPUS_FILTER_NONE;
+		scan_type_id = CORPUS_TYPE_NONE;
 	}
 
 	// add a new type for the combined type
@@ -149,10 +149,10 @@ int corpus_filter_combine(struct corpus_filter *f,
 	}
 
 	node_id = CORPUS_TREE_NONE;
-	symbol_id = CORPUS_FILTER_NONE;
+	symbol_id = CORPUS_TYPE_NONE;
 
 	while (corpus_filter_advance_word(f, &symbol_id)) {
-		if (symbol_id == CORPUS_FILTER_NONE) {
+		if (symbol_id == CORPUS_TYPE_NONE) {
 			continue;
 		}
 
@@ -181,7 +181,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 			}
 
 			// set the new rule
-			f->combine_rules[node_id] = CORPUS_FILTER_NONE;
+			f->combine_rules[node_id] = CORPUS_TYPE_NONE;
 		}
 	}
 
@@ -276,14 +276,14 @@ int corpus_filter_start(struct corpus_filter *f,
 	f->scan_type = type;
 	f->current.ptr = text->ptr;
 	f->current.attr = 0;
-	f->type_id = CORPUS_FILTER_NONE;
+	f->type_id = CORPUS_TYPE_NONE;
 	return 0;
 }
 
 
 int corpus_filter_advance(struct corpus_filter *f)
 {
-	int type_id = CORPUS_FILTER_NONE;
+	int type_id = CORPUS_TYPE_NONE;
 	int err, ret;
 
 	ret = corpus_filter_advance_word(f, &type_id);
@@ -299,14 +299,14 @@ int corpus_filter_advance(struct corpus_filter *f)
 	}
 
 	if (f->drop[type_id]) {
-		type_id = CORPUS_FILTER_NONE;
+		type_id = CORPUS_TYPE_NONE;
 	}
 	err = 0;
 
 out:
 	if (err) {
 		f->error = err;
-		type_id = CORPUS_FILTER_NONE;
+		type_id = CORPUS_TYPE_NONE;
 	}
 
 	f->type_id = type_id;
@@ -327,7 +327,7 @@ int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 	}
 
 	id = *idptr;
-	if (id == CORPUS_FILTER_NONE) {
+	if (id == CORPUS_TYPE_NONE) {
 		return 0;
 	}
 
@@ -348,13 +348,13 @@ int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 
 	size = CORPUS_TEXT_SIZE(&current);
 	attr = CORPUS_TEXT_BITS(&current);
-	type_id = CORPUS_FILTER_NONE;
+	type_id = CORPUS_TYPE_NONE;
 
 	while (corpus_filter_advance_word(f, &type_id)) {
 		size += CORPUS_TEXT_SIZE(&f->scan.current);
 		attr |= CORPUS_TEXT_BITS(&f->scan.current);
 
-		if (type_id == CORPUS_FILTER_NONE) {
+		if (type_id == CORPUS_TYPE_NONE) {
 			continue;
 		}
 
@@ -391,7 +391,7 @@ out:
 	if (err) {
 		corpus_log(err, "failed trying filter combination rule");
 		f->error = err;
-		id = CORPUS_FILTER_NONE;
+		id = CORPUS_TYPE_NONE;
 	}
 
 	if (idptr) {
@@ -409,7 +409,7 @@ int corpus_filter_advance_word(struct corpus_filter *f, int *idptr)
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
-	type_id = CORPUS_FILTER_NONE;
+	type_id = CORPUS_TYPE_NONE;
 	ret = 0;
 	err = 0;
 
@@ -423,7 +423,7 @@ int corpus_filter_advance_word(struct corpus_filter *f, int *idptr)
 	}
 
 	if (f->scan.type == CORPUS_WORD_NONE) {
-		type_id = CORPUS_FILTER_NONE;
+		type_id = CORPUS_TYPE_NONE;
 		ret = 1;
 		goto out;
 	}
@@ -471,7 +471,7 @@ out:
 	if (err) {
 		corpus_log(err, "failed advancing text filter");
 		f->error = err;
-		type_id = CORPUS_FILTER_NONE;
+		type_id = CORPUS_TYPE_NONE;
 		ret = 0;
 	}
 
@@ -515,7 +515,7 @@ out:
 	if (err) {
 		corpus_log(err, "failed adding symbol to filter");
 		f->error = err;
-		id = CORPUS_FILTER_NONE;
+		id = CORPUS_TYPE_NONE;
 	}
 
 	if (idptr) {

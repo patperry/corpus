@@ -398,7 +398,7 @@ int main_ngrams(int argc, char * const argv[])
 
 		while (corpus_filter_advance(&filter)) {
 			type_id = filter.type_id;
-			if (type_id == CORPUS_FILTER_NONE) {
+			if (type_id == CORPUS_TYPE_NONE) {
 				continue;
 			} else if (type_id < 0) {
 				if ((err = corpus_ngram_break(&ngram))) {

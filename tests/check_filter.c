@@ -123,7 +123,7 @@ static int next_id(void)
 
 	if (has) {
 		type_id = filter.type_id;
-		if (type_id == CORPUS_FILTER_NONE) {
+		if (type_id == CORPUS_TYPE_NONE) {
 			return ID_DROP;
 		}
 		ck_assert(type_id < filter.symtab.ntype);

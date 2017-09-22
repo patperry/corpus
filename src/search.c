@@ -281,7 +281,7 @@ int buffer_advance(struct corpus_search_buffer *buffer,
 	while (corpus_filter_advance(filter)) {
 		type_id = filter->type_id;
 		current = &filter->current;
-		if (type_id == CORPUS_FILTER_NONE) {
+		if (type_id == CORPUS_TYPE_NONE) {
 			buffer_ignore(buffer, current);
 			continue;
 		} else if (type_id < 0) {

@@ -23,9 +23,6 @@
  * Token filter, for converting a text into a sequence of tokens.
  */
 
-/** ID code for a missing type or type that has been dropped. */
-#define CORPUS_FILTER_NONE  (-1)
-
 /**
  * Filter type, for specifying which word classes to drop.
  */

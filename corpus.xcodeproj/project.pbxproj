@@ -86,8 +86,8 @@
 		88D5CC6C1EE2199800F9C36A /* main_ngrams.c in Sources */ = {isa = PBXBuildFile; fileRef = 88D5CC6B1EE2199800F9C36A /* main_ngrams.c */; };
 		88D5CC6F1EE219B400F9C36A /* termset.c in Sources */ = {isa = PBXBuildFile; fileRef = 88D5CC6D1EE219B300F9C36A /* termset.c */; };
 		88D5CC701EE219C700F9C36A /* termset.c in Sources */ = {isa = PBXBuildFile; fileRef = 88D5CC6D1EE219B300F9C36A /* termset.c */; };
-		88D741191F75777800E3B07F /* check_stem.c in Sources */ = {isa = PBXBuildFile; fileRef = 8833A7BA1F3262170041B5DE /* check_stem.c */; };
 		88E48C9D1EC76E17007F5449 /* memory.c in Sources */ = {isa = PBXBuildFile; fileRef = 88E48C9B1EC76E17007F5449 /* memory.c */; };
+		88E8A1C41F758B70004F2B7B /* check_typemap.c in Sources */ = {isa = PBXBuildFile; fileRef = 88548A741ECF5BD90063254E /* check_typemap.c */; };
 		88EA69C91EAF923D00D57BEB /* error.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EA69C41EAF923D00D57BEB /* error.c */; };
 		88EA69CA1EAF923D00D57BEB /* main_sentences.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EA69C61EAF923D00D57BEB /* main_sentences.c */; };
 		88EA69CB1EAF923D00D57BEB /* render.c in Sources */ = {isa = PBXBuildFile; fileRef = 88EA69C71EAF923D00D57BEB /* render.c */; };
@@ -640,7 +640,6 @@
 				88CD84661EBB7FCA00DF50CB /* stem_UTF_8_danish.c in Sources */,
 				88CD84671EBB7FCA00DF50CB /* stem_UTF_8_dutch.c in Sources */,
 				88EA69E31EAF94DE00D57BEB /* text.c in Sources */,
-				88D741191F75777800E3B07F /* check_stem.c in Sources */,
 				88548A6D1ECE63010063254E /* textset.c in Sources */,
 				88EA69E21EAF94DE00D57BEB /* table.c in Sources */,
 				88CD84761EBB7FCA00DF50CB /* stem_UTF_8_turkish.c in Sources */,
@@ -651,6 +650,7 @@
 				88CD84621EBB7FAD00DF50CB /* libstemmer_utf8.c in Sources */,
 				88CD846F1EBB7FCA00DF50CB /* stem_UTF_8_porter.c in Sources */,
 				88548A6C1ECE62FC0063254E /* filter.c in Sources */,
+				88E8A1C41F758B70004F2B7B /* check_typemap.c in Sources */,
 				88EA69DF1EAF94D300D57BEB /* render.c in Sources */,
 				88CD846D1EBB7FCA00DF50CB /* stem_UTF_8_italian.c in Sources */,
 				8833A7B91F3262070041B5DE /* stem.c in Sources */,

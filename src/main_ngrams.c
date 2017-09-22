@@ -166,6 +166,7 @@ Options:\n\
 int main_ngrams(int argc, char * const argv[])
 {
 	struct corpus_filter filter;
+	struct corpus_stem_snowball snowball;
 	struct corpus_data data, val;
 	struct corpus_text name, text, word;
 	struct corpus_schema schema;
@@ -292,9 +293,20 @@ int main_ngrams(int argc, char * const argv[])
 		goto error_schema;
 	}
 
-	if ((err = corpus_filter_init(&filter, type_flags, stemmer,
-				      filter_flags))) {
-		goto error_filter;
+	if (stemmer) {
+		if ((err = corpus_stem_snowball_init(&snowball, stemmer))) {
+			goto error_snowball;
+		}
+		if ((err = corpus_filter_init(&filter, filter_flags,
+					      type_flags, corpus_stem_snowball,
+					      &snowball))) {
+			goto error_filter;
+		}
+	} else {
+		if ((err = corpus_filter_init(&filter, filter_flags,
+					      type_flags, NULL, NULL))) {
+			goto error_filter;
+		}
 	}
 
 	if (stopwords) {
@@ -419,6 +431,10 @@ error_combine:
 error_stopwords:
 	corpus_filter_destroy(&filter);
 error_filter:
+	if (stemmer) {
+		corpus_stem_snowball_destroy(&snowball);
+	}
+error_snowball:
 	corpus_schema_destroy(&schema);
 error_schema:
 	corpus_render_destroy(&render);

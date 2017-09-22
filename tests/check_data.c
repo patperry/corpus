@@ -26,6 +26,7 @@
 #include "../src/table.h"
 #include "../src/text.h"
 #include "../src/textset.h"
+#include "../src/stem.h"
 #include "../src/typemap.h"
 #include "../src/symtab.h"
 #include "../src/data.h"

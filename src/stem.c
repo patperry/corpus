@@ -211,7 +211,7 @@ int corpus_stem_snowball(const uint8_t *ptr, int len,
 	stemlen = len;
 	err = 0;
 
-	if (len < 0) {
+	if (!sb->stemmer || len < 0) {
 		goto out;
 	}
 

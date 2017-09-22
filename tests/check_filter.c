@@ -23,6 +23,7 @@
 #include "../src/text.h"
 #include "../src/textset.h"
 #include "../src/tree.h"
+#include "../src/stem.h"
 #include "../src/typemap.h"
 #include "../src/symtab.h"
 #include "../src/wordscan.h"
@@ -44,12 +45,15 @@
 static struct corpus_text type_eot, type_drop;
 static struct corpus_filter filter;
 static int has_filter;
+static struct corpus_stem_snowball snowball;
+static int has_snowball;
 
 
 static void setup_filter(void)
 {
 	setup();
 	has_filter = 0;
+	has_snowball = 0;
 	type_eot.ptr = (uint8_t *)"<eot>";
 	type_eot.attr = strlen("<eot>");
 	type_drop.ptr = (uint8_t *)"<drop>";
@@ -63,17 +67,32 @@ static void teardown_filter(void)
 		corpus_filter_destroy(&filter);
 		has_filter = 0;
 	}
+	if (has_snowball) {
+		corpus_stem_snowball_destroy(&snowball);
+		has_snowball = 0;
+	}
 	teardown();
 }
 
 
-static void init(const char *stemmer, int flags)
+static void init(const char *stem_alg, int flags)
 {
+	corpus_stem_func stemmer = NULL;
+	void *context = NULL;
 	int type_kind = (CORPUS_TYPE_MAPCASE | CORPUS_TYPE_MAPCOMPAT
 			 | CORPUS_TYPE_MAPQUOTE | CORPUS_TYPE_RMDI);
 
+	ck_assert(!has_snowball);
+	if (stem_alg) {
+		ck_assert(!corpus_stem_snowball_init(&snowball, stem_alg));
+		has_snowball = 1;
+		stemmer = corpus_stem_snowball;
+		context = &snowball;
+	}
+
 	ck_assert(!has_filter);
-	ck_assert(!corpus_filter_init(&filter, type_kind, stemmer, flags));
+	ck_assert(!corpus_filter_init(&filter, flags, type_kind,
+				      stemmer, context));
 	has_filter = 1;
 }
 

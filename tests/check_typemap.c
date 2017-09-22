@@ -20,6 +20,7 @@
 #include "../src/table.h"
 #include "../src/text.h"
 #include "../src/textset.h"
+#include "../src/stem.h"
 #include "../src/typemap.h"
 #include "../src/unicode.h"
 #include "testutil.h"
@@ -36,20 +37,35 @@ struct corpus_text *get_type_stem(const struct corpus_text *tok, int flags,
 {
 	struct corpus_text *typ;
 	struct corpus_typemap map;
+	struct corpus_stem_snowball snowball;
 	size_t size;
 
-	ck_assert(!corpus_typemap_init(&map, flags, stemmer));
+	if (stemmer) {
+		ck_assert(!corpus_stem_snowball_init(&snowball, stemmer));
+		ck_assert(!corpus_typemap_init(&map, flags,
+					       corpus_stem_snowball,
+					       &snowball));
+	} else {
+		ck_assert(!corpus_typemap_init(&map, flags, NULL, NULL));
+	}
+
 	ck_assert(!corpus_typemap_set(&map, tok));
-	size = CORPUS_TEXT_SIZE(&map.type);
+	if (!map.has_type) {
+		typ = NULL;
+	} else {
+		size = CORPUS_TEXT_SIZE(&map.type);
+		typ = alloc(sizeof(*typ));
 
-	typ = alloc(sizeof(*typ));
-
-	typ->ptr = alloc(size + 1);
-	memcpy(typ->ptr, map.type.ptr, size);
-	typ->ptr[size] = '\0';
-	typ->attr = map.type.attr;
+		typ->ptr = alloc(size + 1);
+		memcpy(typ->ptr, map.type.ptr, size);
+		typ->ptr[size] = '\0';
+		typ->attr = map.type.attr;
+	}
 
 	corpus_typemap_destroy(&map);
+	if (stemmer) {
+		corpus_stem_snowball_destroy(&snowball);
+	}
 
 	return typ;
 }

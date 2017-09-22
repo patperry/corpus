@@ -24,6 +24,7 @@
 #include "text.h"
 #include "textset.h"
 #include "tree.h"
+#include "stem.h"
 #include "typemap.h"
 #include "symtab.h"
 #include "wordscan.h"
@@ -53,12 +54,13 @@ static int corpus_filter_get_drop(const struct corpus_filter *f,
 static int corpus_symbol_kind(const struct corpus_text *symbol);
 
 
-int corpus_filter_init(struct corpus_filter *f, int symbol_kind,
-		       const char *stemmer, int flags)
+int corpus_filter_init(struct corpus_filter *f, int flags, int symbol_kind,
+		       corpus_stem_func stemmer, void *context)
 {
 	int err;
 
-	if ((err = corpus_symtab_init(&f->symtab, symbol_kind, stemmer))) {
+	if ((err = corpus_symtab_init(&f->symtab, symbol_kind, stemmer,
+				      context))) {
 		corpus_log(err, "failed initializing symbol table");
 		goto error_symtab;
 	}

@@ -63,12 +63,13 @@ struct corpus_symtab {
  * \param tab the symbol table
  * \param type_kind the type kind specifier, a bit mask of #corpus_type_kind
  * 	values
- * \param stemmer the stemming algorithm name, or NULL to disable stemming
+ * \param stemmer the stemming function, or NULL to disable stemming
+ * \param context the stemmer context
  *
  * \returns 0 on success
  */
 int corpus_symtab_init(struct corpus_symtab *tab, int type_kind,
-		       const char *stemmer);
+		       corpus_stem_func stemmer, void *context);
 
 /**
  * Release the resources associated with a symbol table.

@@ -28,6 +28,7 @@
 #include "table.h"
 #include "text.h"
 #include "textset.h"
+#include "stem.h"
 #include "typemap.h"
 #include "symtab.h"
 #include "datatype.h"

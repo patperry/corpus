@@ -26,6 +26,7 @@
 #include "table.h"
 #include "text.h"
 #include "textset.h"
+#include "stem.h"
 #include "unicode.h"
 #include "wordscan.h"
 #include "typemap.h"
@@ -56,35 +57,23 @@ const char **corpus_stopword_names(void)
 
 
 int corpus_typemap_init(struct corpus_typemap *map, int kind,
-			const char *stemmer)
+			corpus_stem_func stemmer, void *context)
 {
 	int err;
 
-	if ((err = corpus_textset_init(&map->excepts))) {
-		corpus_log(err, "failed initializing stem exception set");
-		goto out;
-	}
-
 	if (stemmer) {
-		errno = 0;
-		map->stemmer = sb_stemmer_new(stemmer, "UTF_8");
-		if (!map->stemmer) {
-		       if (errno == ENOMEM) {
-			       err = CORPUS_ERROR_NOMEM;
-			       corpus_log(err, "failed allocating stemmer");
-		       } else {
-				err = CORPUS_ERROR_INVAL;
-				corpus_log(err,
-					   "unrecognized stemming algorithm"
-					   " (%s)", stemmer);
-		       }
-		       goto out;
+		if ((err = corpus_stem_init(&map->stem, stemmer, context))) {
+			corpus_log(err, "failed initializing stemmer");
+			goto out;
 		}
+		map->has_stem = 1;
 	} else {
-		map->stemmer = NULL;
+		map->has_stem = 0;
 	}
 
+	map->has_type = 0;
 	map->type.ptr = NULL;
+	map->type.attr = 0;
 	map->codes = NULL;
 	map->size_max = 0;
 
@@ -99,10 +88,9 @@ void corpus_typemap_destroy(struct corpus_typemap *map)
 {
 	corpus_free(map->codes);
 	corpus_free(map->type.ptr);
-	if (map->stemmer) {
-		sb_stemmer_delete(map->stemmer);
+	if (map->has_stem) {
+		corpus_stem_destroy(&map->stem);
 	}
-	corpus_textset_destroy(&map->excepts);
 }
 
 
@@ -241,88 +229,42 @@ error:
 int corpus_typemap_stem_except(struct corpus_typemap *map,
 			       const struct corpus_text *typ)
 {
-	int err;
-
-	if ((err = corpus_textset_add(&map->excepts, typ, NULL))) {
-		corpus_log(err, "failed adding type to stem exception set");
+	if (!map->has_stem) {
+		return 0;
 	}
-
-	return err;
-}
-
-static int count_words(const struct corpus_text *text, int *kind_ptr)
-{
-	struct corpus_wordscan scan;
-	int nword, kind;
-
-	nword = 0;
-	kind = CORPUS_WORD_NONE;
-	corpus_wordscan_make(&scan, text);
-	while (corpus_wordscan_advance(&scan)) {
-		if (nword == 0) {
-			kind = scan.type;
-		}
-		nword++;
-	}
-	*kind_ptr = kind;
-	return nword;
+	return corpus_stem_except(&map->stem, typ);
 }
 
 
 int corpus_typemap_stem(struct corpus_typemap *map)
 {
-	struct corpus_text stem;
 	size_t size;
-	const uint8_t *buf;
-	int err, kind0, kind, nword0, nword;
+	int err;
 
-	if (!map->stemmer) {
+	if (!map->has_stem) {
+		map->has_type = 1;
 		return 0;
 	}
 
-	nword0 = count_words(&map->type, &kind0);
-	if (kind0 != CORPUS_WORD_LETTER) {
-		return 0;
-	}
-
-	if (corpus_textset_has(&map->excepts, &map->type, NULL)) {
-		return 0;
-	}
-
-	size = CORPUS_TEXT_SIZE(&map->type);
-	if (size >= INT_MAX) {
-		err = CORPUS_ERROR_OVERFLOW;
-		corpus_log(err, "type size (%"PRIu64" bytes)"
-			   " exceeds maximum (%d)",
-			   (uint64_t)size, INT_MAX - 1);
+	if ((err = corpus_stem_set(&map->stem, &map->type))) {
 		goto out;
 	}
 
-	buf = (const uint8_t *)sb_stemmer_stem(map->stemmer, map->type.ptr,
-					       (int)size);
-	if (buf == NULL) {
-		err = CORPUS_ERROR_NOMEM;
-		corpus_log(err, "failed allocating memory to stem word"
-			   " of size %"PRIu64" bytes", (uint64_t)size);
+	if (!map->stem.has_type) {
+		map->has_type = 0;
+		return 0;
+	}
+
+	size = CORPUS_TEXT_SIZE(&map->stem.type);
+
+	if ((err = corpus_typemap_reserve(map, size))) {
 		goto out;
 	}
 
-	// keep old utf8 bit, but update to new size
-	size = (size_t)sb_stemmer_length(map->stemmer);
-	stem.ptr = (uint8_t *)buf;
-	stem.attr = (map->type.attr & ~CORPUS_TEXT_SIZE_MASK) | size;
-	nword = count_words(&stem, &kind);
-
-	// only stem types if the number of words doesn't change; this
-	// protects against turning inner punctuation like 'u.s' to
-	// outer punctuation like 'u.'
-	if (nword == nword0) {
-		memcpy(map->type.ptr, buf, size);
-		map->type.ptr[size] = '\0';
-		map->type.attr = stem.attr;
-	}
+	memcpy(map->type.ptr, map->stem.type.ptr, size);
+	map->type.attr = map->stem.type.attr;
+	map->has_type = 1;
 	err = 0;
-
 out:
 	return err;
 }

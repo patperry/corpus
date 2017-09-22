@@ -23,6 +23,7 @@
 #include "../src/termset.h"
 #include "../src/text.h"
 #include "../src/textset.h"
+#include "../src/stem.h"
 #include "../src/typemap.h"
 #include "../src/symtab.h"
 #include "../src/wordscan.h"
@@ -41,8 +42,8 @@ int size;
 static void setup_search(void)
 {
 	setup();
-	ck_assert(!corpus_filter_init(&filter, CORPUS_TYPE_MAPCASE, NULL,
-				      CORPUS_FILTER_KEEP_ALL));
+	ck_assert(!corpus_filter_init(&filter, CORPUS_FILTER_KEEP_ALL,
+				      CORPUS_TYPE_MAPCASE, NULL, NULL));
 	ck_assert(!corpus_search_init(&search));
 }
 

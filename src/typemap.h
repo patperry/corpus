@@ -26,8 +26,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-struct sb_stemmer;
-
 /**
  * Type map descriptor. At a minimum, convert all tokens to
  * composed normal form (NFC). Optionally, apply compatibility maps for
@@ -68,11 +66,12 @@ enum corpus_type_kind {
 struct corpus_typemap {
 	struct corpus_text type;/**< type of the token given to the most
 				  recent typemap_set() call */
+	int has_type;		/**< whether the most recent token has a type
+				  */
 	int8_t ascii_map[128];	/**< a lookup table for the mappings of ASCII
 				  characters; -1 indicates deletion */
-	struct sb_stemmer *stemmer;
-				/**< the stemmer (NULL if none) */
-	struct corpus_textset excepts;
+	struct corpus_stem stem; /**< the stemmer */
+	int has_stem;		/**< whether the typemap has a stemmer */
 				/**< types to exempt from stemming */
 	uint32_t *codes;	/**< buffer for intermediate UTF-32 decoding */
 	size_t size_max;	/**< token size maximum; normalizing a larger
@@ -108,12 +107,13 @@ const char **corpus_stopword_names(void);
  *
  * \param map the type map
  * \param kind a bitmask of #corpus_type_kind values, specifying the map type
- * \param stemmer the stemming algorithm name, or NULL to disable stemming
+ * \param stemmer the stemming function, or NULL to disable stemming
+ * \param context the stemmer context
  *
  * \returns 0 on success
  */
 int corpus_typemap_init(struct corpus_typemap *map, int kind,
-			const char *stemmer);
+			corpus_stem_func stemmer, void *context);
 
 /**
  * Release the resources associated with a type map.

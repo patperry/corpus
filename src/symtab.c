@@ -24,6 +24,7 @@
 #include "table.h"
 #include "text.h"
 #include "textset.h"
+#include "stem.h"
 #include "typemap.h"
 #include "symtab.h"
 
@@ -36,11 +37,12 @@ static int type_add_token(struct corpus_symtab_type *type, int token_id);
 
 
 int corpus_symtab_init(struct corpus_symtab *tab, int type_kind,
-		       const char *stemmer)
+		       corpus_stem_func stemmer, void *context)
 {
 	int err;
 
-	if ((err = corpus_typemap_init(&tab->typemap, type_kind, stemmer))) {
+	if ((err = corpus_typemap_init(&tab->typemap, type_kind, stemmer,
+				       context))) {
 		corpus_log(err, "failed initializing type buffer");
 		goto error_typemap;
 	}

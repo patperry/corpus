@@ -27,6 +27,7 @@
 #include "table.h"
 #include "text.h"
 #include "textset.h"
+#include "stem.h"
 #include "typemap.h"
 #include "symtab.h"
 #include "data.h"
@@ -224,7 +225,7 @@ int corpus_schema_init(struct corpus_schema *s)
 		goto error_sorter;
 	}
 
-	if ((err = corpus_symtab_init(&s->names, 0, NULL))) {
+	if ((err = corpus_symtab_init(&s->names, 0, NULL, NULL))) {
 		goto error_names;
 	}
 

@@ -49,10 +49,7 @@ enum corpus_filter_scan {
  * Text filter.
  */
 struct corpus_filter {
-	struct corpus_symtab symtab;	/**< symbol table;
-					  we refer to symbol table types as
-					  "symbols" to distinguish them from
-					  filter types */
+	struct corpus_symtab symtab;	/**< symbol table */
 	struct corpus_tree combine;	/**< word sequences to combine */
 	int *combine_rules;		/**< properties for nodes in the
 					  combine tree */
@@ -73,13 +70,13 @@ struct corpus_filter {
  * \param f the filter
  * \param flags a big mask of #corpus_filter_type values indicating filter
  * 	options
- * \param symbol_kind flags for the symbol table indicating the symbol type kind
+ * \param type_kind flags for the symbol table indicating the type kind
  * \param stemmer the stemming function
  * \param context the stemmer context
  *
  * \returns 0 on success
  */
-int corpus_filter_init(struct corpus_filter *f, int flags, int symbol_kind,
+int corpus_filter_init(struct corpus_filter *f, int flags, int type_kind,
 		       corpus_stem_func stemmer, void *context);
 
 /**

@@ -92,6 +92,7 @@ static void init(const char *stem_alg, int flags)
 
 	ck_assert(!has_filter);
 	ck_assert(!corpus_filter_init(&filter, flags, type_kind,
+				      CORPUS_FILTER_CONNECTOR,
 				      stemmer, context));
 	has_filter = 1;
 }
@@ -222,7 +223,7 @@ START_TEST(test_combine)
 
 	start(T("New York City, New York."));
 
-	assert_text_eq(next_type(), T("new york city"));
+	assert_text_eq(next_type(), T("new_york_city"));
 	assert_text_eq(token(), T("New York City"));
 
 	assert_text_eq(next_type(), TYPE_DROP);
@@ -231,7 +232,7 @@ START_TEST(test_combine)
 	assert_text_eq(next_type(), TYPE_DROP);
 	assert_text_eq(token(), T(" "));
 
-	assert_text_eq(next_type(), T("new york"));
+	assert_text_eq(next_type(), T("new_york"));
 	assert_text_eq(token(), T("New York"));
 
 	assert_text_eq(next_type(), TYPE_DROP);

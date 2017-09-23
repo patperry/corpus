@@ -20,6 +20,7 @@
 #include "array.h"
 #include "error.h"
 #include "memory.h"
+#include "render.h"
 #include "table.h"
 #include "text.h"
 #include "textset.h"
@@ -51,7 +52,8 @@ static int corpus_type_kind(const struct corpus_text *type);
 
 
 int corpus_filter_init(struct corpus_filter *f, int flags, int type_kind,
-		       corpus_stem_func stemmer, void *context)
+		       uint32_t connector, corpus_stem_func stemmer,
+		       void *context)
 {
 	int err;
 
@@ -69,6 +71,7 @@ int corpus_filter_init(struct corpus_filter *f, int flags, int type_kind,
 	f->combine_rules = NULL;
 	f->drop = NULL;
 	f->flags = flags;
+	f->connector = connector;
 	f->has_scan = 0;
 	f->scan_type = 0;
 	f->current.ptr = NULL;
@@ -116,12 +119,20 @@ int corpus_filter_combine(struct corpus_filter *f,
 			  const struct corpus_text *type)
 {
 	struct corpus_wordscan scan;
-	struct corpus_text scan_current;
+	struct corpus_text scan_current, rule;
+	struct corpus_render render;
 	int *rules;
-	int err, has_scan, word_id, node_id, nnode0, nnode, parent_id,
-	    scan_type_id, size0, size, type_id = CORPUS_TYPE_NONE;
+	int err, has_render, has_scan, word_id, node_id, nnode0, nnode,
+	    parent_id, scan_type_id, size0, size, type_id = CORPUS_TYPE_NONE;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
+
+	has_scan = 0;
+	has_render = 0;
+	if ((err = corpus_render_init(&render, CORPUS_ESCAPE_NONE))) {
+		goto out;
+	}
+	has_render = 1;
 
 	// save the state of the current scan
 	has_scan = f->has_scan;
@@ -136,11 +147,6 @@ int corpus_filter_combine(struct corpus_filter *f,
 		scan_type_id = CORPUS_TYPE_NONE;
 	}
 
-	// add a new type for the combined type
-	if ((err = corpus_filter_add_type(f, type, &type_id))) {
-		goto out;
-	}
-
 	// iterate over all non-ignored words in the type
 	if ((err = corpus_filter_start(f, type, CORPUS_FILTER_SCAN_TYPES))) {
 		goto out;
@@ -151,8 +157,10 @@ int corpus_filter_combine(struct corpus_filter *f,
 
 	while (corpus_filter_advance_word(f, &word_id)) {
 		if (word_id == CORPUS_TYPE_NONE) {
+			corpus_render_char(&render, f->connector);
 			continue;
 		}
+		corpus_render_text(&render, &f->symtab.types[word_id].text);
 
 		parent_id = node_id;
 		nnode0 = f->combine.nnode;
@@ -183,16 +191,26 @@ int corpus_filter_combine(struct corpus_filter *f,
 		}
 	}
 
-	if (f->error) {
-		err = f->error;
+	if ((err = f->error)) {
 		goto out;
 	}
 
 	if (node_id >= 0) {
+		// add a new type for the combined type
+		if ((err = render.error)) {
+			goto out;
+		}
+
+		corpus_text_assign(&rule, (const uint8_t *)render.string,
+				   (size_t)render.length,
+				   CORPUS_TEXT_NOESCAPE
+				   | CORPUS_TEXT_NOVALIDATE);
+		if ((err = corpus_filter_add_type(f, &rule, &type_id))) {
+			goto out;
+		}
+
 		f->combine_rules[node_id] = type_id;
 	}
-
-	err = 0;
 
 out:
 	// restore the old scan if one existed
@@ -202,6 +220,10 @@ out:
 		f->type_id = scan_type_id;
 	}
 	f->has_scan = has_scan;
+
+	if (has_render) {
+		corpus_render_destroy(&render);
+	}
 
 	if (err) {
 		corpus_log(err, "failed adding combination rule to filter");

@@ -23,6 +23,9 @@
  * Token filter, for converting a text into a sequence of tokens.
  */
 
+/** The default word connector for compound tokens */
+#define CORPUS_FILTER_CONNECTOR '_'
+
 /**
  * Filter type, for specifying which word classes to drop.
  */
@@ -53,6 +56,7 @@ struct corpus_filter {
 	int *drop;			/**< whether to drop each type */
 	struct corpus_wordscan scan;	/**< current word scan */
 	int flags;			/**< filter flags */
+	uint32_t connector;		/**< word connector */
 	int has_scan;			/**< whether a scan is in progress */
 	int scan_type;			/**< #corpus_filter_scan value
 					  indicating scan type */
@@ -68,13 +72,16 @@ struct corpus_filter {
  * \param flags a big mask of #corpus_filter_type values indicating filter
  * 	options
  * \param type_kind flags for the symbol table indicating the type kind
+ * \param connector the word connector to join space-separated
+ *   words in the combination rule, specified as a UTF-32 code
  * \param stemmer the stemming function
  * \param context the stemmer context
  *
  * \returns 0 on success
  */
 int corpus_filter_init(struct corpus_filter *f, int flags, int type_kind,
-		       corpus_stem_func stemmer, void *context);
+		       uint32_t connector, corpus_stem_func stemmer,
+		       void *context);
 
 /**
  * Release a text filter's resources.

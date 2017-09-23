@@ -287,13 +287,14 @@ int main_tokens(int argc, char * const argv[])
 			goto error_snowball;
 		}
 		if ((err = corpus_filter_init(&filter, filter_flags,
-					      type_flags, corpus_stem_snowball,
+					      type_flags, '_',
+					      corpus_stem_snowball,
 					      &snowball))) {
 			goto error_filter;
 		}
 	} else {
 		if ((err = corpus_filter_init(&filter, filter_flags,
-					      type_flags, NULL, NULL))) {
+					      type_flags, '_', NULL, NULL))) {
 			goto error_filter;
 		}
 	}

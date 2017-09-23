@@ -395,7 +395,7 @@ src/render.o: src/render.c src/array.h src/error.h src/memory.h src/text.h \
 	src/unicode.h src/render.h
 src/search.o: src/search.c src/error.h src/memory.h src/table.h src/tree.h \
 	src/text.h src/textset.h src/termset.h src/stem.h src/typemap.h \
-	src/symtab.h src/wordscan.h src/filter.h src/search.h
+	src/symtab.h src/wordscan.h src/render.h src/filter.h src/search.h
 src/sentfilter.o: src/sentfilter.c src/private/sentsuppress.h \
 	src/unicode/sentbreakprop.h src/error.h src/memory.h src/table.h \
 	src/text.h src/tree.h src/sentscan.h src/sentfilter.h
@@ -431,14 +431,15 @@ tests/check_data.o: tests/check_data.c src/error.h src/table.h src/text.h \
 	src/datatype.h tests/testutil.h
 tests/check_filter.o: tests/check_filter.c src/table.h src/text.h \
 	src/textset.h src/tree.h src/stem.h src/typemap.h src/symtab.h \
-	src/wordscan.h src/filter.h src/census.h tests/testutil.h
+	src/wordscan.h src/render.h src/filter.h src/census.h tests/testutil.h
 tests/check_intset.o: tests/check_intset.c src/table.h src/intset.h \
 	tests/testutil.h
 tests/check_ngram.o: tests/check_ngram.c src/table.h src/tree.h src/ngram.h \
 	tests/testutil.h
 tests/check_search.o: tests/check_search.c src/table.h src/tree.h \
 	src/termset.h src/text.h src/textset.h src/stem.h src/typemap.h \
-	src/symtab.h src/wordscan.h src/filter.h src/search.h tests/testutil.h
+	src/symtab.h src/wordscan.h src/render.h src/filter.h src/search.h \
+	tests/testutil.h
 tests/check_sentfilter.o: tests/check_sentfilter.c src/table.h src/text.h \
 	src/tree.h src/sentscan.h src/sentfilter.h tests/testutil.h
 tests/check_sentscan.o: tests/check_sentscan.c src/text.h src/unicode.h \

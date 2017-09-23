@@ -27,6 +27,7 @@
 #include "typemap.h"
 #include "symtab.h"
 #include "wordscan.h"
+#include "render.h"
 #include "filter.h"
 #include "search.h"
 

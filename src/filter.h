@@ -59,6 +59,7 @@ struct corpus_filter_prop {
  */
 struct corpus_filter {
 	struct corpus_symtab symtab;	/**< symbol table */
+	struct corpus_render render;	/**< type renderer */
 	struct corpus_tree combine;	/**< word sequences to combine */
 	int *combine_rules;		/**< properties for nodes in the
 					  combine tree */

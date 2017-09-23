@@ -27,6 +27,7 @@
 #include "../src/typemap.h"
 #include "../src/symtab.h"
 #include "../src/wordscan.h"
+#include "../src/render.h"
 #include "../src/filter.h"
 #include "../src/census.h"
 #include "testutil.h"

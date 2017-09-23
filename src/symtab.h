@@ -69,13 +69,10 @@ struct corpus_symtab {
  * \param tab the symbol table
  * \param type_kind the type kind specifier, a bit mask of #corpus_type_kind
  * 	values
- * \param stemmer the stemming function, or NULL to disable stemming
- * \param context the stemmer context
  *
  * \returns 0 on success
  */
-int corpus_symtab_init(struct corpus_symtab *tab, int type_kind,
-		       corpus_stem_func stemmer, void *context);
+int corpus_symtab_init(struct corpus_symtab *tab, int type_kind);
 
 /**
  * Release the resources associated with a symbol table.
@@ -90,18 +87,6 @@ void corpus_symtab_destroy(struct corpus_symtab *tab);
  * \param tab the symbol table
  */
 void corpus_symtab_clear(struct corpus_symtab *tab);
-
-/**
- * Add a type to the stem exception list. When a normalized token
- * matches anything on this list, it does not get stemmed.
- *
- * \param tab the symbol table
- * \param typ the normalized, unstemmed, type
- *
- * \returns 0 on success
- */
-int corpus_symtab_stem_except(struct corpus_symtab *tab,
-			      const struct corpus_text *typ);
 
 /**
  * Add a token to a symbol table if it does not already exist there, and

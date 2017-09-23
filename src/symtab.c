@@ -24,7 +24,6 @@
 #include "table.h"
 #include "text.h"
 #include "textset.h"
-#include "stem.h"
 #include "typemap.h"
 #include "symtab.h"
 
@@ -36,13 +35,11 @@ static void corpus_symtab_rehash_types(struct corpus_symtab *tab);
 static int type_add_token(struct corpus_symtab_type *type, int token_id);
 
 
-int corpus_symtab_init(struct corpus_symtab *tab, int type_kind,
-		       corpus_stem_func stemmer, void *context)
+int corpus_symtab_init(struct corpus_symtab *tab, int type_kind)
 {
 	int err;
 
-	if ((err = corpus_typemap_init(&tab->typemap, type_kind, stemmer,
-				       context))) {
+	if ((err = corpus_typemap_init(&tab->typemap, type_kind))) {
 		corpus_log(err, "failed initializing type buffer");
 		goto error_typemap;
 	}
@@ -106,13 +103,6 @@ void corpus_symtab_clear(struct corpus_symtab *tab)
 
 	corpus_table_clear(&tab->token_table);
 	corpus_table_clear(&tab->type_table);
-}
-
-
-int corpus_symtab_stem_except(struct corpus_symtab *tab,
-			      const struct corpus_text *typ)
-{
-	return corpus_typemap_stem_except(&tab->typemap, typ);
 }
 
 
@@ -187,14 +177,10 @@ int corpus_symtab_add_token(struct corpus_symtab *tab,
 		goto error;
 	}
 
-	if (tab->typemap.has_type) {
-		// add the type
-		if ((err = corpus_symtab_add_type(tab, &tab->typemap.type,
-						  &type_id))) {
-			goto error;
-		}
-	} else {
-		type_id = CORPUS_TYPE_NONE;
+	// add the type
+	if ((err = corpus_symtab_add_type(tab, &tab->typemap.type,
+					  &type_id))) {
+		goto error;
 	}
 
 	// grow the token array if necessary

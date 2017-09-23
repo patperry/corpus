@@ -225,7 +225,7 @@ int corpus_schema_init(struct corpus_schema *s)
 		goto error_sorter;
 	}
 
-	if ((err = corpus_symtab_init(&s->names, 0, NULL, NULL))) {
+	if ((err = corpus_symtab_init(&s->names, 0))) {
 		goto error_names;
 	}
 

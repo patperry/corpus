@@ -73,7 +73,7 @@ int corpus_filter_init(struct corpus_filter *f, int flags, int type_kind,
 {
 	int err;
 
-	if ((err = corpus_symtab_init(&f->symtab, type_kind, NULL, NULL))) {
+	if ((err = corpus_symtab_init(&f->symtab, type_kind))) {
 		corpus_log(err, "failed initializing symbol table");
 		goto error_symtab;
 	}

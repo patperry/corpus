@@ -360,9 +360,9 @@ src/array.o: src/array.c src/error.h src/memory.h src/array.h
 src/census.o: src/census.c src/array.h src/error.h src/memory.h src/table.h \
 	src/census.h
 src/data.o: src/data.c src/error.h src/table.h src/text.h src/textset.h \
-	src/stem.h src/typemap.h src/symtab.h src/datatype.h src/data.h
+	src/typemap.h src/symtab.h src/datatype.h src/data.h
 src/datatype.o: src/datatype.c src/array.h src/error.h src/memory.h \
-	src/render.h src/table.h src/text.h src/textset.h src/stem.h \
+	src/render.h src/table.h src/text.h src/textset.h \
 	src/typemap.h src/symtab.h src/data.h src/datatype.h
 src/error.o: src/error.c src/error.h
 src/filebuf.o: src/filebuf.c src/error.h src/memory.h src/filebuf.h
@@ -404,7 +404,7 @@ src/sentscan.o: src/sentscan.c src/text.h src/unicode/sentbreakprop.h \
 src/stem.o: src/stem.c lib/libstemmer_c/include/libstemmer.h src/error.h \
 	src/memory.h src/table.h src/text.h src/textset.h src/wordscan.h src/stem.h
 src/symtab.o: src/symtab.c src/array.h src/error.h src/memory.h src/table.h \
-	src/text.h src/textset.h src/stem.h src/typemap.h src/symtab.h
+	src/text.h src/textset.h src/typemap.h src/symtab.h
 src/table.o: src/table.c src/error.h src/memory.h src/table.h
 src/termset.o: src/termset.c src/array.h src/error.h src/memory.h src/table.h \
 	src/tree.h src/termset.h
@@ -413,7 +413,7 @@ src/textset.o: src/textset.c src/array.h src/error.h src/memory.h src/table.h \
 	src/text.h src/textset.h
 src/tree.o: src/tree.c src/array.h src/error.h src/memory.h src/table.h \
 	src/tree.h
-src/typemap.o: src/typemap.c src/error.h src/memory.h src/stem.h \
+src/typemap.o: src/typemap.c src/error.h src/memory.h \
 	src/private/stopwords.h src/table.h src/text.h src/unicode.h \
 	src/wordscan.h src/typemap.h
 src/unicode.o: src/unicode.c src/unicode/casefold.h src/unicode/charwidth.h \
@@ -427,7 +427,7 @@ tests/check_census.o: tests/check_census.c src/table.h src/census.h \
 tests/check_charwidth.o: tests/check_charwidth.c src/unicode.h \
 	tests/testutil.h
 tests/check_data.o: tests/check_data.c src/error.h src/table.h src/text.h \
-	src/textset.h src/stem.h src/typemap.h src/symtab.h src/data.h \
+	src/textset.h src/typemap.h src/symtab.h src/data.h \
 	src/datatype.h tests/testutil.h
 tests/check_filter.o: tests/check_filter.c src/table.h src/text.h \
 	src/textset.h src/tree.h src/stem.h src/typemap.h src/symtab.h \
@@ -447,14 +447,14 @@ tests/check_sentscan.o: tests/check_sentscan.c src/text.h src/unicode.h \
 tests/check_stem.o: tests/check_stem.c src/table.h src/text.h src/textset.h \
 	src/stem.h tests/testutil.h
 tests/check_symtab.o: tests/check_symtab.c src/table.h src/text.h \
-	src/textset.h src/stem.h src/typemap.h src/symtab.h tests/testutil.h
+	src/textset.h src/typemap.h src/symtab.h tests/testutil.h
 tests/check_termset.o: tests/check_termset.c src/table.h src/tree.h \
 	src/termset.h tests/testutil.h
 tests/check_text.o: tests/check_text.c src/error.h src/text.h src/unicode.h \
 	tests/testutil.h
 tests/check_tree.o: tests/check_tree.c src/table.h src/tree.h tests/testutil.h
 tests/check_typemap.o: tests/check_typemap.c src/table.h src/text.h \
-	src/textset.h src/stem.h src/typemap.h src/unicode.h tests/testutil.h
+	src/textset.h src/typemap.h src/unicode.h tests/testutil.h
 tests/check_unicode.o: tests/check_unicode.c src/unicode.h tests/testutil.h
 tests/check_wordscan.o: tests/check_wordscan.c src/text.h \
 	src/unicode.h src/wordscan.h tests/testutil.h

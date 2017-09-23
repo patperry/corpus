@@ -66,13 +66,8 @@ enum corpus_type_kind {
 struct corpus_typemap {
 	struct corpus_text type;/**< type of the token given to the most
 				  recent typemap_set() call */
-	int has_type;		/**< whether the most recent token has a type
-				  */
 	int8_t ascii_map[128];	/**< a lookup table for the mappings of ASCII
 				  characters; -1 indicates deletion */
-	struct corpus_stem stem; /**< the stemmer */
-	int has_stem;		/**< whether the typemap has a stemmer */
-				/**< types to exempt from stemming */
 	uint32_t *codes;	/**< buffer for intermediate UTF-32 decoding */
 	size_t size_max;	/**< token size maximum; normalizing a larger
 				 	token will force a reallocation */
@@ -107,13 +102,10 @@ const char **corpus_stopword_names(void);
  *
  * \param map the type map
  * \param kind a bitmask of #corpus_type_kind values, specifying the map type
- * \param stemmer the stemming function, or NULL to disable stemming
- * \param context the stemmer context
  *
  * \returns 0 on success
  */
-int corpus_typemap_init(struct corpus_typemap *map, int kind,
-			corpus_stem_func stemmer, void *context);
+int corpus_typemap_init(struct corpus_typemap *map, int kind);
 
 /**
  * Release the resources associated with a type map.
@@ -132,17 +124,5 @@ void corpus_typemap_destroy(struct corpus_typemap *map);
  */
 int corpus_typemap_set(struct corpus_typemap *map,
 		       const struct corpus_text *tok);
-
-/**
- * Add a type to the stem exception list. When a normalized token
- * matches anything on this list, it does not get stemmed.
- *
- * \param map the type map
- * \param typ the normalized, unstemmed, type
- *
- * \returns 0 on success
- */
-int corpus_typemap_stem_except(struct corpus_typemap *map,
-			       const struct corpus_text *typ);
 
 #endif /* CORPUS_TYPEMAP_H */

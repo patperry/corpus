@@ -20,7 +20,6 @@
 #include "../src/table.h"
 #include "../src/text.h"
 #include "../src/textset.h"
-#include "../src/stem.h"
 #include "../src/typemap.h"
 #include "../src/unicode.h"
 #include "testutil.h"
@@ -32,60 +31,31 @@
 #define TYPE_RMDI	CORPUS_TYPE_RMDI
 
 
-struct corpus_text *get_type_stem(const struct corpus_text *tok, int flags,
-				  const char *stemmer)
+struct corpus_text *get_type(const struct corpus_text *tok, int flags)
 {
 	struct corpus_text *typ;
 	struct corpus_typemap map;
-	struct corpus_stem_snowball snowball;
 	size_t size;
 
-	if (stemmer) {
-		ck_assert(!corpus_stem_snowball_init(&snowball, stemmer));
-		ck_assert(!corpus_typemap_init(&map, flags,
-					       corpus_stem_snowball,
-					       &snowball));
-	} else {
-		ck_assert(!corpus_typemap_init(&map, flags, NULL, NULL));
-	}
-
+	ck_assert(!corpus_typemap_init(&map, flags));
 	ck_assert(!corpus_typemap_set(&map, tok));
-	if (!map.has_type) {
-		typ = NULL;
-	} else {
-		size = CORPUS_TEXT_SIZE(&map.type);
-		typ = alloc(sizeof(*typ));
 
-		typ->ptr = alloc(size + 1);
-		memcpy(typ->ptr, map.type.ptr, size);
-		typ->ptr[size] = '\0';
-		typ->attr = map.type.attr;
-	}
+	size = CORPUS_TEXT_SIZE(&map.type);
+	typ = alloc(sizeof(*typ));
+
+	typ->ptr = alloc(size + 1);
+	memcpy(typ->ptr, map.type.ptr, size);
+	typ->ptr[size] = '\0';
+	typ->attr = map.type.attr;
 
 	corpus_typemap_destroy(&map);
-	if (stemmer) {
-		corpus_stem_snowball_destroy(&snowball);
-	}
-
 	return typ;
-}
-
-
-struct corpus_text *get_type(const struct corpus_text *tok, int flags)
-{
-	return get_type_stem(tok, flags, NULL);
 }
 
 
 struct corpus_text *casefold(const struct corpus_text *tok)
 {
 	return get_type(tok, TYPE_MAPCASE);
-}
-
-
-struct corpus_text *stem_en(const struct corpus_text *tok)
-{
-	return get_type_stem(tok, 0, "english");
 }
 
 
@@ -485,23 +455,6 @@ START_TEST(test_nomap_quote)
 END_TEST
 
 
-START_TEST(test_stem_en)
-{
-	assert_text_eq(stem_en(S("consign")), S("consign"));
-	assert_text_eq(stem_en(S("consigned")), S("consign"));
-	assert_text_eq(stem_en(S("consigning")), S("consign"));
-	assert_text_eq(stem_en(S("consignment")), S("consign"));
-
-	assert_text_eq(stem_en(S("consolation")), S("consol"));
-	assert_text_eq(stem_en(S("consolations")), S("consol"));
-	assert_text_eq(stem_en(S("consolatory")), S("consolatori"));
-	assert_text_eq(stem_en(S("console")), S("consol"));
-
-	assert_text_eq(stem_en(S("")), S(""));
-}
-END_TEST
-
-
 START_TEST(test_stopwords_en)
 {
 	int len;
@@ -559,12 +512,7 @@ Suite *token_suite(void)
 	tcase_add_test(tc, test_nomap_quote);
 	suite_add_tcase(s, tc);
 
-	tc = tcase_create("stem");
-	tcase_add_checked_fixture(tc, setup, teardown);
-	tcase_add_test(tc, test_stem_en);
-	suite_add_tcase(s, tc);
-
-	tc = tcase_create("stem");
+	tc = tcase_create("stopwords");
 	tcase_add_checked_fixture(tc, setup, teardown);
 	tcase_add_test(tc, test_stopwords_en);
 	tcase_add_test(tc, test_stopwords_unknown);

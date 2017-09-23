@@ -21,7 +21,6 @@
 #include "../src/table.h"
 #include "../src/text.h"
 #include "../src/textset.h"
-#include "../src/stem.h"
 #include "../src/typemap.h"
 #include "../src/symtab.h"
 #include "testutil.h"
@@ -34,8 +33,7 @@ void setup_empty_symtab(void)
 	setup();
 	corpus_symtab_init(&tab, (CORPUS_TYPE_MAPCASE
 				  | CORPUS_TYPE_MAPCOMPAT
-				  | CORPUS_TYPE_RMDI),
-			   NULL, NULL);
+				  | CORPUS_TYPE_RMDI));
 }
 
 

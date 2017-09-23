@@ -19,14 +19,12 @@
 #include <inttypes.h>
 #include <stdint.h>
 #include <string.h>
-#include "../lib/libstemmer_c/include/libstemmer.h"
 #include "private/stopwords.h"
 #include "error.h"
 #include "memory.h"
 #include "table.h"
 #include "text.h"
 #include "textset.h"
-#include "stem.h"
 #include "unicode.h"
 #include "wordscan.h"
 #include "typemap.h"
@@ -41,7 +39,6 @@ static int corpus_typemap_set_ascii(struct corpus_typemap *map,
 static int corpus_typemap_set_utf32(struct corpus_typemap *map,
 				    const uint32_t *ptr,
 				    const uint32_t *end);
-static int corpus_typemap_stem(struct corpus_typemap *map);
 
 
 const uint8_t **corpus_stopword_list(const char *name, int *lenptr)
@@ -56,22 +53,10 @@ const char **corpus_stopword_names(void)
 }
 
 
-int corpus_typemap_init(struct corpus_typemap *map, int kind,
-			corpus_stem_func stemmer, void *context)
+int corpus_typemap_init(struct corpus_typemap *map, int kind)
 {
 	int err;
 
-	if (stemmer) {
-		if ((err = corpus_stem_init(&map->stem, stemmer, context))) {
-			corpus_log(err, "failed initializing stemmer");
-			goto out;
-		}
-		map->has_stem = 1;
-	} else {
-		map->has_stem = 0;
-	}
-
-	map->has_type = 0;
 	map->type.ptr = NULL;
 	map->type.attr = 0;
 	map->codes = NULL;
@@ -79,7 +64,6 @@ int corpus_typemap_init(struct corpus_typemap *map, int kind,
 
 	corpus_typemap_clear_kind(map);
 	err = corpus_typemap_set_kind(map, kind);
-out:
 	return err;
 }
 
@@ -88,9 +72,6 @@ void corpus_typemap_destroy(struct corpus_typemap *map)
 {
 	corpus_free(map->codes);
 	corpus_free(map->type.ptr);
-	if (map->has_stem) {
-		corpus_stem_destroy(&map->stem);
-	}
 }
 
 
@@ -176,10 +157,7 @@ int corpus_typemap_set(struct corpus_typemap *map,
 	int err;
 
 	if (CORPUS_TEXT_IS_ASCII(tok)) {
-		if ((err = corpus_typemap_set_ascii(map, tok))) {
-			goto error;
-		}
-		goto stem;
+		return corpus_typemap_set_ascii(map, tok);
 	}
 
 	// For most inputs, mapping to type reduces or preserves the size.
@@ -216,56 +194,10 @@ int corpus_typemap_set(struct corpus_typemap *map,
 		goto error;
 	}
 
-stem:
-	err = corpus_typemap_stem(map);
 	return err;
 
 error:
 	corpus_log(err, "failed normalizing token");
-	return err;
-}
-
-
-int corpus_typemap_stem_except(struct corpus_typemap *map,
-			       const struct corpus_text *typ)
-{
-	if (!map->has_stem) {
-		return 0;
-	}
-	return corpus_stem_except(&map->stem, typ);
-}
-
-
-int corpus_typemap_stem(struct corpus_typemap *map)
-{
-	size_t size;
-	int err;
-
-	if (!map->has_stem) {
-		map->has_type = 1;
-		return 0;
-	}
-
-	if ((err = corpus_stem_set(&map->stem, &map->type))) {
-		goto out;
-	}
-
-	if (!map->stem.has_type) {
-		map->has_type = 0;
-		return 0;
-	}
-
-	size = CORPUS_TEXT_SIZE(&map->stem.type);
-
-	if ((err = corpus_typemap_reserve(map, size))) {
-		goto out;
-	}
-
-	memcpy(map->type.ptr, map->stem.type.ptr, size);
-	map->type.attr = map->stem.type.attr;
-	map->has_type = 1;
-	err = 0;
-out:
 	return err;
 }
 

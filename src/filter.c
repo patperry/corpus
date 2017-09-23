@@ -458,7 +458,9 @@ out:
 
 int corpus_filter_stem(struct corpus_filter *f, int *idptr)
 {
+	struct corpus_wordscan scan;
 	const struct corpus_text *tok;
+	struct corpus_text stem;
 	int err, id, stem_id;
 
 	if (!f->has_stemmer) {
@@ -480,10 +482,34 @@ int corpus_filter_stem(struct corpus_filter *f, int *idptr)
 	}
 
 	if (f->stemmer.has_type) {
-		if ((err = corpus_filter_add_type(f, &f->stemmer.type,
-						  &stem_id))) {
+		// iterate over all words in the stem
+		corpus_wordscan_make(&scan, &f->stemmer.type);
+
+		// render each word, replacing NONE with the connector
+		while (corpus_wordscan_advance(&scan)) {
+			if (scan.type == CORPUS_WORD_NONE) {
+				corpus_render_char(&f->render, f->connector);
+			} else {
+				corpus_render_text(&f->render, &scan.current);
+			}
+		}
+
+		// check for errors
+		if ((err = f->render.error)) {
 			goto out;
 		}
+
+		// add the rendered stem
+		corpus_text_assign(&stem, (const uint8_t *)f->render.string,
+				   (size_t)f->render.length,
+				   CORPUS_TEXT_NOESCAPE
+				   | CORPUS_TEXT_NOVALIDATE);
+
+		if ((err = corpus_filter_add_type(f, &stem, &stem_id))) {
+			goto out;
+		}
+
+		corpus_render_clear(&f->render);
 	}
 
 	f->props[id].stem = stem_id;

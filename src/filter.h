@@ -114,16 +114,15 @@ int corpus_filter_stem_except(struct corpus_filter *f,
 			      const struct corpus_text *symbol);
 
 /**
- * Add a combination rule to to filter. The combine rule should not begin
- * or end with a space or other non-word.
+ * Add a combination rule to to filter.
  *
  * \param f the filter
- * \param type the type to build a combination rule from
+ * \param tokens the tokens to build a combination rule from
  *
  * \returns 0 on success
  */
 int corpus_filter_combine(struct corpus_filter *f,
-			  const struct corpus_text *type);
+			  const struct corpus_text *tokens);
 
 /**
  * Add a type to the filter's drop list.

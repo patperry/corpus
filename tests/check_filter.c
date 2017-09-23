@@ -221,7 +221,7 @@ START_TEST(test_combine)
 	init(NULL, DROP_PUNCT);
 	combine(T("  new   "));
 	combine(T("  new york  "));
-	combine(T("new york city"));
+	combine(T("New York City"));
 
 	start(T("New York City, New York."));
 

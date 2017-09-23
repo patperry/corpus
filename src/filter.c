@@ -156,7 +156,7 @@ int corpus_filter_stem_except(struct corpus_filter *f,
 
 
 int corpus_filter_combine(struct corpus_filter *f,
-			  const struct corpus_text *type)
+			  const struct corpus_text *tokens)
 {
 	struct corpus_filter_state state;
 	struct corpus_text rule;
@@ -169,7 +169,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 	corpus_filter_state_push(f, &state);
 
 	// iterate over all non-ignored words in the type
-	if ((err = corpus_filter_start(f, type, CORPUS_FILTER_SCAN_TYPES))) {
+	if ((err = corpus_filter_start(f, tokens, CORPUS_FILTER_SCAN_TOKENS))) {
 		goto out;
 	}
 

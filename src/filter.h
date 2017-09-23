@@ -46,6 +46,15 @@ enum corpus_filter_scan {
 };
 
 /**
+ * Text filter type properties.
+ */
+struct corpus_filter_prop {
+	int stem;	/**< stem ID */
+	int has_stem;	/**< whether the stem has been computed */
+	int drop;	/**< whether to drop the type */
+};
+
+/**
  * Text filter.
  */
 struct corpus_filter {
@@ -53,7 +62,9 @@ struct corpus_filter {
 	struct corpus_tree combine;	/**< word sequences to combine */
 	int *combine_rules;		/**< properties for nodes in the
 					  combine tree */
-	int *drop;			/**< whether to drop each type */
+	struct corpus_stem stemmer;	/**< stemmer */
+	int has_stemmer;		/**< whether stemmer is in use */
+	struct corpus_filter_prop *props;/**< type properties */
 	struct corpus_wordscan scan;	/**< current word scan */
 	int flags;			/**< filter flags */
 	uint32_t connector;		/**< word connector */

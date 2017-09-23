@@ -43,9 +43,11 @@
 
 static int corpus_filter_advance_word(struct corpus_filter *f, int *idptr);
 static int corpus_filter_try_combine(struct corpus_filter *f, int *idptr);
+static int corpus_filter_stem(struct corpus_filter *f, int *idptr);
 
 static int corpus_filter_add_type(struct corpus_filter *f,
-				  const struct corpus_text *type, int *idptr);
+				  const struct corpus_text *type,
+				  int *idptr);
 static int corpus_filter_grow_types(struct corpus_filter *f, int size);
 static int corpus_filter_get_drop(const struct corpus_filter *f, int kind);
 static int corpus_type_kind(const struct corpus_text *type);
@@ -57,8 +59,7 @@ int corpus_filter_init(struct corpus_filter *f, int flags, int type_kind,
 {
 	int err;
 
-	if ((err = corpus_symtab_init(&f->symtab, type_kind, stemmer,
-				      context))) {
+	if ((err = corpus_symtab_init(&f->symtab, type_kind, NULL, NULL))) {
 		corpus_log(err, "failed initializing symbol table");
 		goto error_symtab;
 	}
@@ -68,8 +69,17 @@ int corpus_filter_init(struct corpus_filter *f, int flags, int type_kind,
 		goto error_combine;
 	}
 
+	f->has_stemmer = 0;
+	if (stemmer) {
+		if ((err = corpus_stem_init(&f->stemmer, stemmer, context))) {
+			corpus_log(err, "failed initializing stemmer");
+			goto error_stemmer;
+		}
+		f->has_stemmer = 1;
+	}
+
 	f->combine_rules = NULL;
-	f->drop = NULL;
+	f->props = NULL;
 	f->flags = flags;
 	f->connector = connector;
 	f->has_scan = 0;
@@ -81,6 +91,8 @@ int corpus_filter_init(struct corpus_filter *f, int flags, int type_kind,
 
 	return 0;
 
+error_stemmer:
+	corpus_tree_destroy(&f->combine);
 error_combine:
 	corpus_symtab_destroy(&f->symtab);
 
@@ -92,8 +104,11 @@ error_symtab:
 
 void corpus_filter_destroy(struct corpus_filter *f)
 {
-	corpus_free(f->drop);
+	corpus_free(f->props);
 	corpus_free(f->combine_rules);
+	if (f->has_stemmer) {
+		corpus_stem_destroy(&f->stemmer);
+	}
 	corpus_tree_destroy(&f->combine);
 	corpus_symtab_destroy(&f->symtab);
 }
@@ -106,7 +121,11 @@ int corpus_filter_stem_except(struct corpus_filter *f,
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
-	if ((err = corpus_symtab_stem_except(&f->symtab, typ))) {
+	if (!f->has_stemmer) {
+		return 0;
+	}
+
+	if ((err = corpus_stem_except(&f->stemmer, typ))) {
 		corpus_log(err, "failed adding stem exception to filter");
 		f->error = err;
 	}
@@ -254,7 +273,7 @@ int corpus_filter_drop(struct corpus_filter *f,
 	}
 
 	if (type_id >= 0) {
-		f->drop[type_id] = 1;
+		f->props[type_id].drop = 1;
 	}
 
 	err = 0;
@@ -280,7 +299,7 @@ int corpus_filter_drop_except(struct corpus_filter *f,
 	}
 
 	if (type_id >= 0) {
-		f->drop[type_id] = 0;
+		f->props[type_id].drop = 0;
 	}
 
 	err = 0;
@@ -327,8 +346,16 @@ int corpus_filter_advance(struct corpus_filter *f)
 			goto out;
 		}
 
-		if (f->drop[type_id]) {
-			type_id = CORPUS_TYPE_NONE;
+		assert(type_id >= 0);
+
+		if ((err = corpus_filter_stem(f, &type_id))) {
+			goto out;
+		}
+
+		if (type_id >= 0) {
+			if (f->props[type_id].drop) {
+				type_id = CORPUS_TYPE_NONE;
+			}
 		}
 	}
 	err = 0;
@@ -436,6 +463,50 @@ out:
 }
 
 
+int corpus_filter_stem(struct corpus_filter *f, int *idptr)
+{
+	const struct corpus_text *tok;
+	int err, id, stem_id;
+
+	if (!f->has_stemmer) {
+		return 0;
+	}
+
+	id = *idptr;
+
+	// used cached result
+	if (f->props[id].has_stem) {
+		*idptr = f->props[id].stem;
+		return 0;
+	}
+
+	tok = &f->symtab.types[id].text;
+	if ((err = corpus_stem_set(&f->stemmer, tok))) {
+		goto out;
+	}
+
+	stem_id = CORPUS_TYPE_NONE;
+	if (f->stemmer.has_type) {
+		if ((err = corpus_filter_add_type(f, &f->stemmer.type,
+						  &stem_id))) {
+			goto out;
+		}
+	}
+
+	f->props[id].stem = stem_id;
+	f->props[id].has_stem = 1;
+
+out:
+	if (err) {
+		stem_id = CORPUS_TYPE_NONE;
+		corpus_log(err, "failed stemming token");
+	}
+
+	*idptr = stem_id;
+	return err;
+}
+
+
 int corpus_filter_advance_word(struct corpus_filter *f, int *idptr)
 {
 	const struct corpus_text *token, *type;
@@ -495,7 +566,8 @@ int corpus_filter_advance_word(struct corpus_filter *f, int *idptr)
 		type = &f->symtab.types[n0].text;
 		kind = corpus_type_kind(type);
 		drop = corpus_filter_get_drop(f, kind);
-		f->drop[n0] = drop;
+		f->props[n0].drop = drop;
+		f->props[n0].has_stem = 0;
 		n0++;
 	}
 
@@ -541,7 +613,8 @@ int corpus_filter_add_type(struct corpus_filter *f,
 		}
 
 		kind = corpus_type_kind(type);
-		f->drop[id] = corpus_filter_get_drop(f, kind);
+		f->props[id].drop = corpus_filter_get_drop(f, kind);
+		f->props[id].has_stem = 0;
 	}
 
 	err = 0;
@@ -562,19 +635,19 @@ out:
 
 int corpus_filter_grow_types(struct corpus_filter *f, int size)
 {
-	int *drop;
+	struct corpus_filter_prop *props;
 	int err;
 
-	if (!(drop = corpus_realloc(f->drop, size * sizeof(*drop)))) {
+	if (!(props = corpus_realloc(f->props, size * sizeof(*props)))) {
 		err = CORPUS_ERROR_NOMEM;
 		goto out;
 	}
-	f->drop = drop;
+	f->props = props;
 	err = 0;
 
 out:
 	if (err) {
-		corpus_log(err, "failed growing filter type array");
+		corpus_log(err, "failed growing filter type property array");
 		f->error = err;
 	}
 

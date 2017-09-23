@@ -490,7 +490,7 @@ int corpus_filter_stem(struct corpus_filter *f, int *idptr)
 	struct corpus_wordscan scan;
 	const struct corpus_text *tok;
 	struct corpus_text stem;
-	int err, id, stem_id;
+	int err, id, has_stem, stem_id, has_space;
 
 	if (!f->has_stemmer) {
 		return 0;
@@ -504,7 +504,9 @@ int corpus_filter_stem(struct corpus_filter *f, int *idptr)
 		return 0;
 	}
 
+	has_stem = 1;
 	stem_id = CORPUS_TYPE_NONE;
+
 	tok = &f->symtab.types[id].text;
 	if ((err = corpus_stem_set(&f->stemmer, tok))) {
 		goto out;
@@ -514,13 +516,35 @@ int corpus_filter_stem(struct corpus_filter *f, int *idptr)
 		// iterate over all words in the stem
 		corpus_wordscan_make(&scan, &f->stemmer.type);
 
-		// render each word, replacing NONE with the connector
+		// find the first word
+		while (corpus_wordscan_advance(&scan)) {
+			if (scan.type != CORPUS_WORD_NONE) {
+				break;
+			}
+		}
+
+		// no words in stem
+		if (scan.type == CORPUS_WORD_NONE) {
+			goto out;
+		}
+
+		// render the first word
+		corpus_render_text(&f->render, &scan.current);
+
+		// render trailing words, replacing runs of NONE with connector
+		has_space = 0;
 		while (corpus_wordscan_advance(&scan)) {
 			if (scan.type == CORPUS_WORD_NONE) {
-				corpus_render_char(&f->render, f->connector);
-			} else {
-				corpus_render_text(&f->render, &scan.current);
+				has_space = 1;
+				continue;
 			}
+
+			if (has_space) {
+				corpus_render_char(&f->render, f->connector);
+				has_space = 0;
+			}
+
+			corpus_render_text(&f->render, &scan.current);
 		}
 
 		// check for errors
@@ -541,14 +565,16 @@ int corpus_filter_stem(struct corpus_filter *f, int *idptr)
 		corpus_render_clear(&f->render);
 	}
 
-	f->props[id].stem = stem_id;
-	f->props[id].has_stem = 1;
 
 out:
 	if (err) {
 		stem_id = CORPUS_TYPE_NONE;
+		has_stem = 0;
 		corpus_log(err, "failed stemming token");
 	}
+
+	f->props[id].stem = stem_id;
+	f->props[id].has_stem = has_stem;
 
 	*idptr = stem_id;
 	return err;

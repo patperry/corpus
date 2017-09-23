@@ -102,7 +102,8 @@ int corpus_filter_stem_except(struct corpus_filter *f,
 			      const struct corpus_text *symbol);
 
 /**
- * Add a combination rule to to filter.
+ * Add a combination rule to to filter. The combine rule should not begin
+ * or end with a space or other non-word.
  *
  * \param f the filter
  * \param type the type to build a combination rule from

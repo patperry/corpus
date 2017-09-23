@@ -28,7 +28,7 @@
 #include "wordscan.h"
 #include "stem.h"
 
-static int classify(const struct corpus_text *text, int *lenptr);
+static int classify(const struct corpus_text *text);
 
 
 int corpus_stem_init(struct corpus_stem *stem, corpus_stem_func stemmer,
@@ -58,28 +58,19 @@ void corpus_stem_destroy(struct corpus_stem *stem)
 }
 
 
-static int classify(const struct corpus_text *text, int *lenptr)
+static int classify(const struct corpus_text *text)
 {
 	struct corpus_wordscan scan;
-	int kind, len;
+	int kind;
 
-	len = 0;
 	kind = CORPUS_WORD_NONE;
 	corpus_wordscan_make(&scan, text);
 
 	// get the kind from the first word
 	if (corpus_wordscan_advance(&scan)) {
 		kind = scan.type;
-		len++;
 	}
 
-	while (corpus_wordscan_advance(&scan)) {
-		len++;
-	}
-
-	if (lenptr) {
-		*lenptr = len;
-	}
 	return kind;
 }
 
@@ -205,7 +196,7 @@ int corpus_stem_snowball(const uint8_t *ptr, int len,
 	struct corpus_stem_snowball *sb = ctx;
 	struct corpus_text tok, typ;
 	const uint8_t *stem, *buf;
-	int err, kind, nword, nword2, stemlen, size;
+	int err, kind, stemlen, size;
 
 	stem = ptr;
 	stemlen = len;
@@ -219,10 +210,10 @@ int corpus_stem_snowball(const uint8_t *ptr, int len,
 
 	tok.ptr = (uint8_t *)ptr;
 	tok.attr = ((size_t)len) | CORPUS_TEXT_UTF8_BIT;
-	kind = classify(&tok, &nword);
+	kind = classify(&tok);
 
-	// only stem letter words, and no 0-word or multi-word phrases
-	if (kind != CORPUS_WORD_LETTER || nword != 1) {
+	// only stem letter words
+	if (kind != CORPUS_WORD_LETTER) {
 		goto out;
 	}
 
@@ -244,15 +235,8 @@ int corpus_stem_snowball(const uint8_t *ptr, int len,
 		goto out;
 	}
 
-	classify(&typ, &nword2);
-
-	// only stem the token if the number of words doesn't change; this
-	// protects against turning inner punctuation like 'u.s' to
-	// outer punctuation like 'u.'
-	if (nword == nword2) {
-		stem = buf;
-		stemlen = size;
-	}
+	stem = buf;
+	stemlen = size;
 
 out:
 	if (err) {

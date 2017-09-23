@@ -63,8 +63,7 @@ static int add(const struct corpus_text *term)
 	int type_ids[256];
 	int length, term_id;
 
-	ck_assert(!corpus_filter_start(&filter, term,
-				       CORPUS_FILTER_SCAN_TYPES));
+	ck_assert(!corpus_filter_start(&filter, term));
 	length = 0;
 	while (corpus_filter_advance(&filter)) {
 		if (filter.type_id < 0) {

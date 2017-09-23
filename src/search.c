@@ -137,8 +137,7 @@ int corpus_search_start(struct corpus_search *search,
 		goto out;
 	}
 
-	if ((err = corpus_filter_start(filter, text,
-				       CORPUS_FILTER_SCAN_TOKENS))) {
+	if ((err = corpus_filter_start(filter, text))) {
 		goto out;
 	}
 

@@ -381,8 +381,7 @@ int main_tokens(int argc, char * const argv[])
 		fprintf(stream, "[");
 		start = 1;
 
-		if ((err = corpus_filter_start(&filter, &text,
-					       CORPUS_FILTER_SCAN_TOKENS))) {
+		if ((err = corpus_filter_start(&filter, &text))) {
 			goto error;
 		}
 

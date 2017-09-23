@@ -99,7 +99,6 @@ int corpus_filter_init(struct corpus_filter *f, int flags, int type_kind,
 	f->flags = flags;
 	f->connector = connector;
 	f->has_scan = 0;
-	f->scan_type = 0;
 	f->current.ptr = NULL;
 	f->current.attr = 0;
 	f->type_id = CORPUS_TYPE_NONE;
@@ -166,7 +165,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 	corpus_filter_state_push(f, &state);
 
 	// iterate over all non-ignored words in the type
-	if ((err = corpus_filter_start(f, tokens, CORPUS_FILTER_SCAN_TOKENS))) {
+	if ((err = corpus_filter_start(f, tokens))) {
 		goto out;
 	}
 
@@ -333,13 +332,12 @@ out:
 
 
 int corpus_filter_start(struct corpus_filter *f,
-			const struct corpus_text *text, int type)
+			const struct corpus_text *text)
 {
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
 	corpus_wordscan_make(&f->scan, text);
 	f->has_scan = 1;
-	f->scan_type = type;
 	f->current.ptr = text->ptr;
 	f->current.attr = 0;
 	f->type_id = CORPUS_TYPE_NONE;
@@ -608,20 +606,12 @@ int corpus_filter_advance_word(struct corpus_filter *f, int *idptr)
 	n0 = f->symtab.ntype;
 	size0 = f->symtab.ntype_max;
 
-	if (f->scan_type == CORPUS_FILTER_SCAN_TOKENS) {
-		// add the token
-		if ((err = corpus_symtab_add_token(&f->symtab, token,
-						   &token_id))) {
-			goto out;
-		}
-		type_id = f->symtab.tokens[token_id].type_id;
-	} else {
-		// add the type
-		if ((err = corpus_symtab_add_type(&f->symtab, token,
-						  &type_id))) {
-			goto out;
-		}
+	// add the token
+	if ((err = corpus_symtab_add_token(&f->symtab, token, &token_id))) {
+		goto out;
 	}
+	type_id = f->symtab.tokens[token_id].type_id;
+
 	n = f->symtab.ntype;
 	size = f->symtab.ntype_max;
 

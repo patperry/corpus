@@ -388,8 +388,7 @@ int main_ngrams(int argc, char * const argv[])
 			continue;
 		}
 
-		if ((err = corpus_filter_start(&filter, &text,
-					       CORPUS_FILTER_SCAN_TOKENS))) {
+		if ((err = corpus_filter_start(&filter, &text))) {
 			goto error;
 		}
 

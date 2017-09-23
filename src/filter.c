@@ -123,7 +123,8 @@ int corpus_filter_combine(struct corpus_filter *f,
 	struct corpus_render render;
 	int *rules;
 	int err, has_render, has_scan, word_id, node_id, nnode0, nnode,
-	    parent_id, scan_type_id, size0, size, type_id = CORPUS_TYPE_NONE;
+	    parent_id, scan_type_id, size0, size, in_space,
+	    type_id = CORPUS_TYPE_NONE;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
@@ -154,13 +155,20 @@ int corpus_filter_combine(struct corpus_filter *f,
 
 	node_id = CORPUS_TREE_NONE;
 	word_id = CORPUS_TYPE_NONE;
+	in_space = 0;
 
 	while (corpus_filter_advance_word(f, &word_id)) {
 		if (word_id == CORPUS_TYPE_NONE) {
+			if (in_space) {
+				continue;
+			}
 			corpus_render_char(&render, f->connector);
-			continue;
+			in_space = 1;
+		} else {
+			corpus_render_text(&render,
+					   &f->symtab.types[word_id].text);
+			in_space = 0;
 		}
-		corpus_render_text(&render, &f->symtab.types[word_id].text);
 
 		parent_id = node_id;
 		nnode0 = f->combine.nnode;
@@ -314,12 +322,14 @@ int corpus_filter_advance(struct corpus_filter *f)
 		goto out;
 	}
 
-	if ((err = corpus_filter_try_combine(f, &type_id))) {
-		goto out;
-	}
+	if (type_id >= 0) {
+		if ((err = corpus_filter_try_combine(f, &type_id))) {
+			goto out;
+		}
 
-	if (f->drop[type_id]) {
-		type_id = CORPUS_TYPE_NONE;
+		if (f->drop[type_id]) {
+			type_id = CORPUS_TYPE_NONE;
+		}
 	}
 	err = 0;
 
@@ -340,18 +350,15 @@ int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 	struct corpus_wordscan scan;
 	struct corpus_text current;
 	size_t attr, size;
-	int err, has_scan, id, type_id, node_id, parent_id;
+	int err, has_scan, id, type_id, node_id, parent_id, in_space;
 
 	if (!f->combine.nnode) {
 		return 0;
 	}
 
 	id = *idptr;
-	if (id == CORPUS_TYPE_NONE) {
-		return 0;
-	}
-
 	parent_id = CORPUS_TREE_NONE;
+
 	if (!corpus_tree_has(&f->combine, parent_id, id, &node_id)) {
 		return 0;
 	}
@@ -369,13 +376,20 @@ int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 	size = CORPUS_TEXT_SIZE(&current);
 	attr = CORPUS_TEXT_BITS(&current);
 	type_id = CORPUS_TYPE_NONE;
+	in_space = 0;
 
 	while (corpus_filter_advance_word(f, &type_id)) {
 		size += CORPUS_TEXT_SIZE(&f->scan.current);
 		attr |= CORPUS_TEXT_BITS(&f->scan.current);
 
 		if (type_id == CORPUS_TYPE_NONE) {
-			continue;
+			if (in_space) {
+				continue;
+			} else {
+				in_space = 1;
+			}
+		} else {
+			in_space = 0;
 		}
 
 		parent_id = node_id;

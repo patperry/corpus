@@ -219,7 +219,8 @@ END_TEST
 START_TEST(test_combine)
 {
 	init(NULL, DROP_PUNCT);
-	combine(T("new york"));
+	combine(T("  new   "));
+	combine(T("  new york  "));
 	combine(T("new york city"));
 
 	start(T("New York City, New York."));

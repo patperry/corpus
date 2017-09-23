@@ -161,8 +161,8 @@ int corpus_filter_combine(struct corpus_filter *f,
 	struct corpus_filter_state state;
 	struct corpus_text rule;
 	int *rules;
-	int err, word_id, node_id, nnode0, nnode, parent_id,
-	    size0, size, in_space, type_id = CORPUS_TYPE_NONE;
+	int err, word_id, next_id, node_id, nnode0, nnode, parent_id,
+	    size0, size, has_space, type_id = CORPUS_TYPE_NONE;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
@@ -173,62 +173,92 @@ int corpus_filter_combine(struct corpus_filter *f,
 		goto out;
 	}
 
-	node_id = CORPUS_TREE_NONE;
 	word_id = CORPUS_TYPE_NONE;
-	in_space = 0;
 
+	// find the first word in the pattern
 	while (corpus_filter_advance_word(f, &word_id)) {
-		if (word_id == CORPUS_TYPE_NONE) {
-			if (in_space) {
-				continue;
-			}
-			corpus_render_char(&f->render, f->connector);
-			in_space = 1;
-		} else {
-			corpus_render_text(&f->render,
-					   &f->symtab.types[word_id].text);
-			in_space = 0;
-		}
-
-		parent_id = node_id;
-		nnode0 = f->combine.nnode;
-		size0 = f->combine.nnode_max;
-		if ((err = corpus_tree_add(&f->combine, parent_id, word_id,
-					   &node_id))) {
-			goto out;
-		}
-		nnode = f->combine.nnode;
-
-		// check whether a new node got added
-		if (nnode0 < nnode) {
-			// expand the rules array if necessary
-			size = f->combine.nnode_max;
-			if (size0 < size) {
-				rules = f->combine_rules;
-				rules = corpus_realloc(rules,
-						       size * sizeof(*rules));
-				if (!rules) {
-					err = CORPUS_ERROR_NOMEM;
-					goto out;
-				}
-				f->combine_rules = rules;
-			}
-
-			// set the new rule
-			f->combine_rules[node_id] = CORPUS_TYPE_NONE;
+		if (word_id != CORPUS_TYPE_NONE) {
+			break;
 		}
 	}
 
-	if ((err = f->error)) {
+	// if error or no first word in the pattern, do nothing
+	if ((err = f->error) || word_id == CORPUS_TYPE_NONE) {
 		goto out;
 	}
 
-	if (node_id >= 0) {
-		// add a new type for the combined type
-		if ((err = f->render.error)) {
-			goto out;
+	next_id = CORPUS_TYPE_NONE;
+	has_space = 0;
+
+	node_id = CORPUS_TREE_NONE;
+	nnode0 = f->combine.nnode;
+	size0 = f->combine.nnode_max;
+
+	// find the next word
+	while (corpus_filter_advance_word(f, &next_id)) {
+		if (next_id == CORPUS_TYPE_NONE) {
+			has_space = 1;
+			continue;
 		}
 
+		// add the first word if haven't already
+		if (node_id == CORPUS_TREE_NONE) {
+			corpus_render_text(&f->render,
+					   &f->symtab.types[word_id].text);
+			parent_id = node_id;
+			if ((err = corpus_tree_add(&f->combine, parent_id,
+						   word_id, &node_id))) {
+				goto out;
+			}
+		}
+
+		// add the space
+		if (has_space) {
+			corpus_render_char(&f->render, f->connector);
+			parent_id = node_id;
+			if ((err = corpus_tree_add(&f->combine, parent_id,
+						   CORPUS_TYPE_NONE,
+						   &node_id))) {
+				goto out;
+			}
+			has_space = 0;
+		}
+
+		// add the next word
+		corpus_render_text(&f->render, &f->symtab.types[next_id].text);
+		parent_id = node_id;
+		if ((err = corpus_tree_add(&f->combine, parent_id, next_id,
+					   &node_id))) {
+			goto out;
+		}
+	}
+
+	// check for errors
+	if ((err = f->error) || (err = f->render.error)) {
+		goto out;
+	}
+
+	// expand the rules array if necessary
+	size = f->combine.nnode_max;
+	if (size0 < size) {
+		rules = f->combine_rules;
+		rules = corpus_realloc(rules, size * sizeof(*rules));
+		if (!rules) {
+			err = CORPUS_ERROR_NOMEM;
+			goto out;
+		}
+		f->combine_rules = rules;
+	}
+
+	// add the new nodes
+	nnode = f->combine.nnode;
+	while (nnode0 < nnode) {
+		f->combine_rules[nnode0] = CORPUS_TYPE_NONE;
+		nnode0++;
+	}
+
+	if (node_id != CORPUS_TREE_NONE) {
+		// add a new type for the combined type
 		corpus_text_assign(&rule, (const uint8_t *)f->render.string,
 				   (size_t)f->render.length,
 				   CORPUS_TEXT_NOESCAPE
@@ -237,7 +267,6 @@ int corpus_filter_combine(struct corpus_filter *f,
 			goto out;
 		}
 		corpus_render_clear(&f->render);
-
 		f->combine_rules[node_id] = type_id;
 	}
 

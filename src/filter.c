@@ -41,6 +41,20 @@
 		} \
 	} while (0)
 
+
+struct corpus_filter_state {
+	int has_scan;
+	struct corpus_wordscan scan;
+	struct corpus_text current;
+	int type_id;
+};
+
+
+static void corpus_filter_state_push(struct corpus_filter *f,
+				     struct corpus_filter_state *state);
+static void corpus_filter_state_pop(struct corpus_filter *f,
+				    struct corpus_filter_state *state);
+
 static int corpus_filter_advance_word(struct corpus_filter *f, int *idptr);
 static int corpus_filter_try_combine(struct corpus_filter *f, int *idptr);
 static int corpus_filter_stem(struct corpus_filter *f, int *idptr);
@@ -144,28 +158,15 @@ int corpus_filter_stem_except(struct corpus_filter *f,
 int corpus_filter_combine(struct corpus_filter *f,
 			  const struct corpus_text *type)
 {
-	struct corpus_wordscan scan;
-	struct corpus_text scan_current, rule;
+	struct corpus_filter_state state;
+	struct corpus_text rule;
 	int *rules;
-	int err, has_scan, word_id, node_id, nnode0, nnode, parent_id,
-	    scan_type_id, size0, size, in_space, type_id = CORPUS_TYPE_NONE;
+	int err, word_id, node_id, nnode0, nnode, parent_id,
+	    size0, size, in_space, type_id = CORPUS_TYPE_NONE;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
-	has_scan = 0;
-
-	// save the state of the current scan
-	has_scan = f->has_scan;
-	if (has_scan) {
-		f->has_scan = 0;
-		scan = f->scan;
-		scan_current = f->current;
-		scan_type_id = f->type_id;
-	} else {
-		memset(&scan, 0, sizeof(scan)); // not used; silence warning
-		memset(&scan_current, 0, sizeof(scan_current)); // ditto
-		scan_type_id = CORPUS_TYPE_NONE;
-	}
+	corpus_filter_state_push(f, &state);
 
 	// iterate over all non-ignored words in the type
 	if ((err = corpus_filter_start(f, type, CORPUS_FILTER_SCAN_TYPES))) {
@@ -242,12 +243,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 
 out:
 	// restore the old scan if one existed
-	if (has_scan) {
-		f->scan = scan;
-		f->current = scan_current;
-		f->type_id = scan_type_id;
-	}
-	f->has_scan = has_scan;
+	corpus_filter_state_pop(f, &state);
 
 	if (err) {
 		corpus_log(err, "failed adding combination rule to filter");
@@ -477,12 +473,12 @@ int corpus_filter_stem(struct corpus_filter *f, int *idptr)
 		return 0;
 	}
 
+	stem_id = CORPUS_TYPE_NONE;
 	tok = &f->symtab.types[id].text;
 	if ((err = corpus_stem_set(&f->stemmer, tok))) {
 		goto out;
 	}
 
-	stem_id = CORPUS_TYPE_NONE;
 	if (f->stemmer.has_type) {
 		if ((err = corpus_filter_add_type(f, &f->stemmer.type,
 						  &stem_id))) {
@@ -696,4 +692,32 @@ int corpus_type_kind(const struct corpus_text *type)
 	}
 
 	return kind;
+}
+
+
+void corpus_filter_state_push(struct corpus_filter *f,
+			      struct corpus_filter_state *state)
+{
+	if (f->has_scan) {
+		state->has_scan = f->has_scan;
+		state->scan = f->scan;
+		state->current = f->current;
+		state->type_id = f->type_id;
+	} else {
+		state->has_scan = 0;
+	}
+}
+
+
+void corpus_filter_state_pop(struct corpus_filter *f,
+			     struct corpus_filter_state *state)
+{
+	if (state->has_scan) {
+		f->has_scan = state->has_scan;
+		f->scan = state->scan;
+		f->current = state->current;
+		f->type_id = state->type_id;
+	} else {
+		f->has_scan = 0;
+	}
 }

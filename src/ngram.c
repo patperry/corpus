@@ -123,7 +123,6 @@ int corpus_ngram_add(struct corpus_ngram *ng, int type_id, double weight)
 			goto out;
 		}
 		nnode = ng->terms.nnode;
-		size = ng->terms.nnode_max;
 
 		// check whether a new node got added
 		if (nnode0 < nnode) {

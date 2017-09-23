@@ -125,6 +125,19 @@ int corpus_filter_combine(struct corpus_filter *f,
 			  const struct corpus_text *tokens);
 
 /**
+ * Add a type to a filter table if it does not already exist there, and
+ * get the id of the type in the filter.
+ *
+ * \param f the filter
+ * \param typ the type
+ * \param idptr a pointer to store the type id, or NULL
+ *
+ * \returns 0 on success
+ */
+int corpus_filter_add_type(struct corpus_filter *f,
+			   const struct corpus_text *typ, int *idptr);
+
+/**
  * Add a type to the filter's drop list.
  *
  * \param f the filter

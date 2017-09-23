@@ -59,9 +59,6 @@ static int corpus_filter_advance_word(struct corpus_filter *f, int *idptr);
 static int corpus_filter_try_combine(struct corpus_filter *f, int *idptr);
 static int corpus_filter_stem(struct corpus_filter *f, int *idptr);
 
-static int corpus_filter_add_type(struct corpus_filter *f,
-				  const struct corpus_text *type,
-				  int *idptr);
 static int corpus_filter_grow_types(struct corpus_filter *f, int size);
 static int corpus_filter_get_drop(const struct corpus_filter *f, int kind);
 static int corpus_type_kind(const struct corpus_text *type);

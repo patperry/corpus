@@ -28,7 +28,7 @@
 #include "wordscan.h"
 #include "stem.h"
 
-static int classify(const struct corpus_text *text);
+static int needs_stem(const struct corpus_text *text);
 
 
 int corpus_stem_init(struct corpus_stem *stem, corpus_stem_func stemmer,
@@ -58,20 +58,26 @@ void corpus_stem_destroy(struct corpus_stem *stem)
 }
 
 
-static int classify(const struct corpus_text *text)
+static int needs_stem(const struct corpus_text *text)
 {
 	struct corpus_wordscan scan;
-	int kind;
+	int needs = 0;
 
-	kind = CORPUS_WORD_NONE;
 	corpus_wordscan_make(&scan, text);
 
-	// get the kind from the first word
+	// only stem if first word is letter
 	if (corpus_wordscan_advance(&scan)) {
-		kind = scan.type;
+		if (scan.type == CORPUS_WORD_LETTER) {
+			needs = 1;
+		}
 	}
 
-	return kind;
+	// if there is a second word, don't stem
+	if (corpus_wordscan_advance(&scan)) {
+		needs = 0;
+	}
+
+	return needs;
 }
 
 
@@ -196,7 +202,7 @@ int corpus_stem_snowball(const uint8_t *ptr, int len,
 	struct corpus_stem_snowball *sb = ctx;
 	struct corpus_text tok, typ;
 	const uint8_t *stem, *buf;
-	int err, kind, stemlen, size;
+	int err, stemlen, size;
 
 	stem = ptr;
 	stemlen = len;
@@ -210,10 +216,8 @@ int corpus_stem_snowball(const uint8_t *ptr, int len,
 
 	tok.ptr = (uint8_t *)ptr;
 	tok.attr = ((size_t)len) | CORPUS_TEXT_UTF8_BIT;
-	kind = classify(&tok);
 
-	// only stem letter words
-	if (kind != CORPUS_WORD_LETTER) {
+	if (!needs_stem(&tok)) {
 		goto out;
 	}
 

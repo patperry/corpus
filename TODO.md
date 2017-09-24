@@ -3,9 +3,8 @@ Todo
 
 ## Features
 
-  * Change `text_filter_combine()` to use `CORPUS_FILTER_SCAN_TOKENS`
-    instead of `CORPUS_FILTER_SCAN_TOKENS`. This can only happen if stemming
-    is done after combining.
+  
+  * Use Unicdoe character class table in isspace()
 
   * Some sort of index for allowing KWIC queries.
 

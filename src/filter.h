@@ -42,7 +42,11 @@ enum corpus_filter_type {
  */
 struct corpus_filter_prop {
 	int stem;	/**< stem ID */
+	int unspace;	/**< version with spaces removed */
+
 	int has_stem;	/**< whether the stem has been computed */
+	int has_unspace; /**< whether the unspaced version has
+			    been computed */
 	int drop;	/**< whether to drop the type */
 };
 
@@ -156,8 +160,6 @@ int corpus_filter_drop_except(struct corpus_filter *f,
  *
  * \param f the filter
  * \param text the text
- * \param type a #corpus_filter_scan value indicating the scan type
-
  *
  * \returns 0 on success
  */

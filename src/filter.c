@@ -29,6 +29,7 @@
 #include "typemap.h"
 #include "symtab.h"
 #include "wordscan.h"
+#include "unicode.h"
 #include "filter.h"
 
 
@@ -58,6 +59,7 @@ static void corpus_filter_state_pop(struct corpus_filter *f,
 static int corpus_filter_advance_word(struct corpus_filter *f, int *idptr);
 static int corpus_filter_try_combine(struct corpus_filter *f, int *idptr);
 static int corpus_filter_stem(struct corpus_filter *f, int *idptr);
+static int corpus_filter_unspace(struct corpus_filter *f, int *idptr);
 
 static int corpus_filter_grow_types(struct corpus_filter *f, int size);
 static int corpus_filter_get_drop(const struct corpus_filter *f, int kind);
@@ -156,7 +158,6 @@ int corpus_filter_combine(struct corpus_filter *f,
 {
 	struct corpus_filter_state state;
 	struct corpus_text rule;
-	uint32_t space;
 	int *rules;
 	int err, word_id, next_id, node_id, nnode0, nnode, parent_id,
 	    size0, size, has_space, type_id = CORPUS_TYPE_NONE;
@@ -190,7 +191,6 @@ int corpus_filter_combine(struct corpus_filter *f,
 	node_id = CORPUS_TREE_NONE;
 	nnode0 = f->combine.nnode;
 	size0 = f->combine.nnode_max;
-	space = f->has_stemmer ? ' ' : f->connector;
 
 	// find the next word
 	while (corpus_filter_advance_word(f, &next_id)) {
@@ -212,7 +212,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 
 		// add the space
 		if (has_space) {
-			corpus_render_char(&f->render, space);
+			corpus_render_char(&f->render, ' ');
 			parent_id = node_id;
 			if ((err = corpus_tree_add(&f->combine, parent_id,
 						   CORPUS_TYPE_NONE,
@@ -356,28 +356,28 @@ int corpus_filter_advance(struct corpus_filter *f)
 	f->current = f->scan.current;
 	err = f->error;
 
-	if (!ret || err) {
+	if (!ret || err || type_id < 0) {
 		goto out;
 	}
 
-	if (type_id >= 0) {
-		if ((err = corpus_filter_try_combine(f, &type_id))) {
-			goto out;
-		}
-
-		assert(type_id >= 0);
-
-		if ((err = corpus_filter_stem(f, &type_id))) {
-			goto out;
-		}
-
-		if (type_id >= 0) {
-			if (f->props[type_id].drop) {
-				type_id = CORPUS_TYPE_NONE;
-			}
-		}
+	if ((err = corpus_filter_try_combine(f, &type_id))) {
+		goto out;
 	}
-	err = 0;
+
+	assert(type_id >= 0);
+
+	if ((err = corpus_filter_stem(f, &type_id))) {
+		goto out;
+	}
+
+	if (type_id < 0 || f->props[type_id].drop) {
+		type_id = CORPUS_TYPE_NONE;
+		goto out;
+	}
+
+	if ((err = corpus_filter_unspace(f, &type_id))) {
+		goto out;
+	}
 
 out:
 	if (err) {
@@ -484,10 +484,8 @@ out:
 
 int corpus_filter_stem(struct corpus_filter *f, int *idptr)
 {
-	struct corpus_wordscan scan;
 	const struct corpus_text *tok;
-	struct corpus_text stem;
-	int err, id, has_stem, stem_id, has_space;
+	int err, id, has_stem, stem_id;
 
 	if (!f->has_stemmer) {
 		return 0;
@@ -509,59 +507,13 @@ int corpus_filter_stem(struct corpus_filter *f, int *idptr)
 		goto out;
 	}
 
-	if (f->stemmer.has_type) {
-		// iterate over all words in the stem
-		corpus_wordscan_make(&scan, &f->stemmer.type);
-
-		// find the first word
-		while (corpus_wordscan_advance(&scan)) {
-			if (scan.type != CORPUS_WORD_NONE) {
-				break;
-			}
-		}
-
-		// no words in stem
-		if (scan.type == CORPUS_WORD_NONE) {
+	if (f->stemmer.has_type && CORPUS_TEXT_SIZE(&f->stemmer.type) > 0) {
+		// add the type
+		if ((err = corpus_filter_add_type(f, &f->stemmer.type,
+						  &stem_id))) {
 			goto out;
 		}
-
-		// render the first word
-		corpus_render_text(&f->render, &scan.current);
-
-		// render trailing words, replacing runs of NONE with connector
-		has_space = 0;
-		while (corpus_wordscan_advance(&scan)) {
-			if (scan.type == CORPUS_WORD_NONE) {
-				has_space = 1;
-				continue;
-			}
-
-			if (has_space) {
-				corpus_render_char(&f->render, f->connector);
-				has_space = 0;
-			}
-
-			corpus_render_text(&f->render, &scan.current);
-		}
-
-		// check for errors
-		if ((err = f->render.error)) {
-			goto out;
-		}
-
-		// add the rendered stem
-		corpus_text_assign(&stem, (const uint8_t *)f->render.string,
-				   (size_t)f->render.length,
-				   CORPUS_TEXT_NOESCAPE
-				   | CORPUS_TEXT_NOVALIDATE);
-
-		if ((err = corpus_filter_add_type(f, &stem, &stem_id))) {
-			goto out;
-		}
-
-		corpus_render_clear(&f->render);
 	}
-
 
 out:
 	if (err) {
@@ -574,6 +526,93 @@ out:
 	f->props[id].has_stem = has_stem;
 
 	*idptr = stem_id;
+	return err;
+}
+
+
+int corpus_filter_unspace(struct corpus_filter *f, int *idptr)
+{
+	const struct corpus_text *type;
+	struct corpus_text_iter it;
+	struct corpus_text unspace;
+	uint32_t ch;
+	size_t attr;
+	int err, id, in_space, needs_unspace, has_unspace, unspace_id;
+
+	id = *idptr;
+
+	// used cached result
+	if (f->props[id].has_unspace) {
+		*idptr = f->props[id].unspace;
+		return 0;
+	}
+
+	has_unspace = 1;
+	unspace_id = CORPUS_TYPE_NONE;
+	type = &f->symtab.types[id].text;
+
+	// see whether the type contains a space
+	needs_unspace = 0;
+	corpus_text_iter_make(&it, type);
+	while (corpus_text_iter_advance(&it)) {
+		ch = it.current;
+		if (corpus_unicode_isspace(ch)) {
+			needs_unspace = 1;
+			break;
+		}
+	}
+
+	if (!needs_unspace) {
+		unspace_id = id;
+		err = 0;
+		goto out;
+	}
+
+	// replace sequences of spaces with connectors
+	in_space = 0;
+	attr = CORPUS_IS_ASCII(f->connector) ? 0 : CORPUS_TEXT_UTF8_BIT;
+	corpus_text_iter_make(&it, type);
+
+	while (corpus_text_iter_advance(&it)) {
+		ch = it.current;
+		if (corpus_unicode_isspace(ch)) {
+			// only render one connector for a string of spaces
+			if (!in_space) {
+				corpus_render_char(&f->render, f->connector);
+				in_space = 1;
+			}
+		} else {
+			corpus_render_char(&f->render, ch);
+			attr |= it.attr;
+			in_space = 0;
+		}
+	}
+
+	if ((err = f->render.error)) {
+		goto out;
+	}
+
+	unspace.ptr = (uint8_t *)f->render.string;
+	unspace.attr = attr | (size_t)f->render.length;
+
+	// add the unspaced type
+	if ((err = corpus_filter_add_type(f, &unspace, &unspace_id))) {
+		goto out;
+	}
+
+	corpus_render_clear(&f->render);
+
+out:
+	if (err) {
+		unspace_id = CORPUS_TYPE_NONE;
+		has_unspace = 0;
+		corpus_log(err, "failed removing spaces from type");
+	}
+
+	f->props[id].unspace = unspace_id;
+	f->props[id].has_unspace = has_unspace;
+
+	*idptr = unspace_id;
 	return err;
 }
 
@@ -631,6 +670,7 @@ int corpus_filter_advance_word(struct corpus_filter *f, int *idptr)
 		drop = corpus_filter_get_drop(f, kind);
 		f->props[n0].drop = drop;
 		f->props[n0].has_stem = 0;
+		f->props[n0].has_unspace = 0;
 		n0++;
 	}
 
@@ -678,6 +718,7 @@ int corpus_filter_add_type(struct corpus_filter *f,
 		kind = corpus_type_kind(type);
 		f->props[id].drop = corpus_filter_get_drop(f, kind);
 		f->props[id].has_stem = 0;
+		f->props[id].has_unspace = 0;
 	}
 
 	err = 0;
@@ -755,10 +796,12 @@ int corpus_type_kind(const struct corpus_text *type)
 
 	corpus_wordscan_make(&scan, type);
 
-	if (corpus_wordscan_advance(&scan)) {
+	kind = CORPUS_WORD_NONE;
+	while (corpus_wordscan_advance(&scan)) {
 		kind = scan.type;
-	} else {
-		kind = CORPUS_WORD_NONE;
+		if (kind != CORPUS_WORD_NONE) {
+			break;
+		}
 	}
 
 	return kind;

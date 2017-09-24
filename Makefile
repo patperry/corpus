@@ -368,7 +368,7 @@ src/error.o: src/error.c src/error.h
 src/filebuf.o: src/filebuf.c src/error.h src/memory.h src/filebuf.h
 src/filter.o: src/filter.c src/array.h src/error.h src/memory.h src/render.h \
 	src/table.h src/text.h src/textset.h src/tree.h src/typemap.h src/stem.h \
-	src/symtab.h src/wordscan.h src/filter.h
+	src/symtab.h src/wordscan.h src/unicode.h src/filter.h
 src/intset.o: src/intset.c src/array.h src/error.h src/memory.h src/table.h \
 	src/intset.h
 src/main.o: src/main.c src/error.h src/filebuf.h src/table.h src/text.h \

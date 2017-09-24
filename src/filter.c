@@ -156,6 +156,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 {
 	struct corpus_filter_state state;
 	struct corpus_text rule;
+	uint32_t space;
 	int *rules;
 	int err, word_id, next_id, node_id, nnode0, nnode, parent_id,
 	    size0, size, has_space, type_id = CORPUS_TYPE_NONE;
@@ -189,6 +190,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 	node_id = CORPUS_TREE_NONE;
 	nnode0 = f->combine.nnode;
 	size0 = f->combine.nnode_max;
+	space = f->has_stemmer ? ' ' : f->connector;
 
 	// find the next word
 	while (corpus_filter_advance_word(f, &next_id)) {
@@ -210,7 +212,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 
 		// add the space
 		if (has_space) {
-			corpus_render_char(&f->render, f->connector);
+			corpus_render_char(&f->render, space);
 			parent_id = node_id;
 			if ((err = corpus_tree_add(&f->combine, parent_id,
 						   CORPUS_TYPE_NONE,

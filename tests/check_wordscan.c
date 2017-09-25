@@ -140,6 +140,51 @@ START_TEST(test_twitter)
 END_TEST
 
 
+START_TEST(test_extendnumlet)
+{
+	start(T("_"));
+	assert_text_eq(next(), T("_"));
+	ck_assert_int_eq(scan.type, CORPUS_WORD_PUNCT);
+
+	start(T("__"));
+	assert_text_eq(next(), T("__"));
+	ck_assert_int_eq(scan.type, CORPUS_WORD_PUNCT);
+
+	start(T("___"));
+	assert_text_eq(next(), T("___"));
+	ck_assert_int_eq(scan.type, CORPUS_WORD_PUNCT);
+
+	start(T("\\u202f"));
+	assert_text_eq(next(), T("\\u202f"));
+	ck_assert_int_eq(scan.type, CORPUS_WORD_NONE);
+
+	start(T("\\u202f\\u202f"));
+	assert_text_eq(next(), T("\\u202f\\u202f"));
+	ck_assert_int_eq(scan.type, CORPUS_WORD_NONE);
+
+	start(T("\\u202f_"));
+	assert_text_eq(next(), T("\\u202f_"));
+	ck_assert_int_eq(scan.type, CORPUS_WORD_PUNCT);
+
+	start(T("_1"));
+	assert_text_eq(next(), T("_1"));
+	ck_assert_int_eq(scan.type, CORPUS_WORD_NUMBER);
+
+	start(T("__1"));
+	assert_text_eq(next(), T("__1"));
+	ck_assert_int_eq(scan.type, CORPUS_WORD_NUMBER);
+
+	start(T("_A"));
+	assert_text_eq(next(), T("_A"));
+	ck_assert_int_eq(scan.type, CORPUS_WORD_LETTER);
+
+	start(T("__A"));
+	assert_text_eq(next(), T("__A"));
+	ck_assert_int_eq(scan.type, CORPUS_WORD_LETTER);
+}
+END_TEST
+
+
 START_TEST(test_hyphen)
 {
 	start(T("--"));
@@ -398,6 +443,7 @@ Suite *wordscan_suite(void)
         tcase_add_test(tc, test_url);
         tcase_add_test(tc, test_url_punct);
         tcase_add_test(tc, test_twitter);
+	tcase_add_test(tc, test_extendnumlet);
         tcase_add_test(tc, test_hyphen);
         suite_add_tcase(s, tc);
 

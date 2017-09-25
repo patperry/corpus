@@ -576,6 +576,58 @@ START_TEST(test_normalize_nfkc_nfkd)
 END_TEST
 
 
+START_TEST(test_whitespace)
+{
+	ck_assert(!corpus_unicode_isspace(0x08));
+	ck_assert(corpus_unicode_isspace('\t'));
+	ck_assert(corpus_unicode_isspace('\n'));
+	ck_assert(corpus_unicode_isspace('\v'));
+	ck_assert(corpus_unicode_isspace('\f'));
+	ck_assert(corpus_unicode_isspace('\r'));
+	ck_assert(!corpus_unicode_isspace(0x0E));
+	ck_assert(corpus_unicode_isspace(' '));
+
+	ck_assert(corpus_unicode_isspace(0x85));
+	ck_assert(!corpus_unicode_isspace(0x86));
+	ck_assert(corpus_unicode_isspace(0xA0));
+	ck_assert(corpus_unicode_isspace(0xA0));
+
+	ck_assert(!corpus_unicode_isspace(0x1FFF));
+	ck_assert(corpus_unicode_isspace(0x2000));
+	ck_assert(corpus_unicode_isspace(0x2001));
+	ck_assert(corpus_unicode_isspace(0x200A));
+	ck_assert(!corpus_unicode_isspace(0x200B));
+
+	ck_assert(corpus_unicode_isspace(0x2028));
+	ck_assert(corpus_unicode_isspace(0x2029));
+	ck_assert(!corpus_unicode_isspace(0x202A));
+	ck_assert(corpus_unicode_isspace(0x3000));
+	ck_assert(!corpus_unicode_isspace(0x3001));
+}
+END_TEST
+
+
+START_TEST(test_ignorable)
+{
+	ck_assert(!corpus_unicode_isignorable(0x00));
+	ck_assert(!corpus_unicode_isignorable(0x7F));
+
+	ck_assert(corpus_unicode_isignorable(0x00AD));
+	ck_assert(corpus_unicode_isignorable(0x034F));
+	ck_assert(corpus_unicode_isignorable(0x061C));
+	ck_assert(corpus_unicode_isignorable(0x115F));
+	ck_assert(corpus_unicode_isignorable(0x1160));
+	ck_assert(corpus_unicode_isignorable(0xFE00));
+	ck_assert(corpus_unicode_isignorable(0x1BCA0));
+
+	ck_assert(!corpus_unicode_isignorable(0xDFFFF));
+	ck_assert(corpus_unicode_isignorable(0xE0000));
+	ck_assert(corpus_unicode_isignorable(0xE0FFF));
+	ck_assert(!corpus_unicode_isignorable(0xE1000));
+}
+END_TEST
+
+
 Suite *unicode_suite(void)
 {
 	Suite *s;
@@ -604,6 +656,11 @@ Suite *unicode_suite(void)
 				  teardown_normalization);
 	tcase_add_test(tc, test_normalize_nfc_nfd);
 	tcase_add_test(tc, test_normalize_nfkc_nfkd);
+	suite_add_tcase(s, tc);
+
+	tc = tcase_create("utf8 character properties");
+	tcase_add_test(tc, test_whitespace);
+	tcase_add_test(tc, test_ignorable);
 	suite_add_tcase(s, tc);
 
 	return s;

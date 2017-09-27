@@ -129,6 +129,13 @@ code_props[0x30A0] = 'Hyphen' # KATAKANA-HIRAGANA DOUBLE HYPHEN
 code_props[0xFE63] = 'Hyphen' # SMALL HYPHEN-MINUS
 code_props[0xFF0D] = 'Hyphen' # FULLWIDTH HYPHEN-MINUS
 
+# extra MidLetter properties
+# TR#29: "Some or all of the following characters may be tailored to be in
+#   MidLetter, depending on the environment: 
+code_props[0x055A] = 'MidLetter' # ARMENIAN APOSTROPHE
+code_props[0x0F0B] = 'MidLetter' # TIBETAN MARK INTERSYLLABIC TSHEG
+code_props[0x201B] = 'MidLetter' # SINGLE HIGH-REVERSED-9 QUOTATION MARK
+code_props[0x30FB] = 'MidLetter' # KATAKANA MIDDLE DOT
 
 # make sure we didn't miss anything
 for code in range(len(code_props)):

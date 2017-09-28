@@ -22,42 +22,9 @@ try:
 except ModuleNotFoundError:
     from util import unicode_data
 
-decomp_vals = {
-    'hangul': -1, 'none': 0,
-    'font': 1, 'noBreak': 2, 'initial': 3, 'medial': 4, 'final': 5,
-    'isolated': 6, 'circle': 7, 'super': 8, 'sub': 9, 'vertical': 10,
-    'wide': 11, 'narrow': 12, 'small': 13, 'square': 14, 'fraction': 15,
-    'compat': 16 }
-
-
-decomp_map = []
-decomp = []
-
-for code in range(len(unicode_data.uchars)):
-    u = unicode_data.uchars[code]
-
-    if u is None or u.decomp is None:
-        decomp.append(None)
-        continue
-
-    d = u.decomp
-    if d.map is not None:
-        d_len = len(d.map)
-
-        if d_len > 1:
-            d_data = len(decomp_map)
-            decomp_map.extend(d.map)
-        else:
-            d_data = d.map[0]
-
-        decomp.append((d.type, d_len, d_data))
-
-    elif d.type == 'hangul':
-        decomp.append(('hangul', 2, 0))
-
-    else:
-        decomp.append(None)
-
+decomp_vals = unicode_data.decomp_vals
+decomp_map = unicode_data.decomp_map
+decomp = unicode_data.decomp
 
 def compute_tables(block_size):
     nblock = len(decomp) // block_size

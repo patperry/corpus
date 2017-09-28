@@ -224,7 +224,6 @@ int corpus_typemap_set_utf32(struct corpus_typemap *map, const uint32_t *ptr,
 		} else {
 			switch (code) {
 			case 0x055A: // ARMENIAN APOSTROPHE
-			case 0xFE10: // PRESENTATION FORM FOR VERTICAL COMMA
 			case 0x2018: // LEFT SINGLE QUOTATION MARK
 			case 0x2019: // RIGHT SINGLE QUOTATION MARK
 			case 0x201B: // SINGLE HIGH-REVERSED-9 QUOTATION MARK

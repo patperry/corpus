@@ -1,0 +1,3 @@
+ignore:
+    lib/libstemmer_c
+    src/main*.c

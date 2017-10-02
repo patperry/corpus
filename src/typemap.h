@@ -43,8 +43,8 @@
  *  + #CORPUS_TYPE_MAPCOMPAT: apply all compatibility maps required for
  *  	[NFKC normal form](http://unicode.org/reports/tr15/#Norm_Forms)
  *
- *  + #CORPUS_TYPE_MAPQUOTE: quote fold, replace curly quotes with straight
- *      quotes
+ *  + #CORPUS_TYPE_MAPQUOTE: quote fold, replace single quotes and
+ *      Unicode apostrophe with ASCII apostrophe (U+0027)
  *
  *  + #CORPUS_TYPE_RMDI: remove default ignorables (DI) like soft hyphens and
  *  	zero-width spaces, anything with the
@@ -56,7 +56,7 @@ enum corpus_type_kind {
 	CORPUS_TYPE_NORMAL    = 0, /**< transform to composed normal form */
 	CORPUS_TYPE_MAPCASE   = (1 << 0), /**< perform case folding */
 	CORPUS_TYPE_MAPCOMPAT = (1 << 1), /**< apply compatibility mappings */
-	CORPUS_TYPE_MAPQUOTE  = (1 << 2), /**< replace quotes with `'` */
+	CORPUS_TYPE_MAPQUOTE  = (1 << 2), /**< replace apostrophe with `'` */
 	CORPUS_TYPE_RMDI      = (1 << 3)  /**< remove default ignorables */
 };
 

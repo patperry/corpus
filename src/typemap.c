@@ -233,13 +233,6 @@ int corpus_typemap_set_utf32(struct corpus_typemap *map, const uint32_t *ptr,
 				}
 				break;
 
-			case 0x201C: // LEFT DOUBLE QUOTATION MARK
-			case 0x201D: // RIGHT DOUBLE QUOTATION MARK
-				if (map_quote) {
-					code = '"';
-				}
-				break;
-
 			default:
 				if (rm_di && corpus_unicode_isignorable(code)) {
 					continue;

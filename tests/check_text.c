@@ -19,9 +19,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 #include "../src/error.h"
 #include "../src/text.h"
-#include "../src/unicode.h"
 #include "testutil.h"
 
 
@@ -73,7 +73,7 @@ const char *unescape(const struct corpus_text *text)
 
 	corpus_text_iter_make(&it, text);
 	while (corpus_text_iter_advance(&it)) {
-		corpus_encode_utf8(it.current, &ptr);
+		utf8lite_encode_utf8(it.current, &ptr);
 	}
 	*ptr = '\0';
 	return (const char *)buf;

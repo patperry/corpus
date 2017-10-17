@@ -17,11 +17,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <check.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 #include "../src/table.h"
 #include "../src/text.h"
 #include "../src/textset.h"
 #include "../src/typemap.h"
-#include "../src/unicode.h"
 #include "testutil.h"
 
 
@@ -231,7 +231,7 @@ START_TEST(test_keep_ws_utf8)
 		}
 
 		buf = str;
-		corpus_encode_utf8(ws[i], &buf);
+		utf8lite_encode_utf8(ws[i], &buf);
 		*buf = '\0';
 		t = S((char *)str);
 		assert_text_eq(get_type(t, TYPE_MAPCOMPAT), typ);

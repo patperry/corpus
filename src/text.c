@@ -18,9 +18,9 @@
 #include <inttypes.h>
 #include <stdint.h>
 #include <string.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 #include "error.h"
 #include "memory.h"
-#include "unicode.h"
 #include "text.h"
 
 #define CORPUS_TEXT_CODE_NONE ((uint32_t)-1)
@@ -143,7 +143,7 @@ int corpus_text_iter_advance(struct corpus_text_iter *it)
 	} else if (code >= 0x80) {
 		attr = CORPUS_TEXT_UTF8_BIT;
 		ptr--;
-		corpus_decode_utf8(&ptr, &code);
+		utf8lite_decode_utf8(&ptr, &code);
 	}
 
 	it->ptr = ptr;
@@ -194,7 +194,7 @@ int corpus_text_iter_can_retreat(const struct corpus_text_iter *it)
 	}
 
 	if (!(it->attr & CORPUS_TEXT_ESC_BIT)) {
-		return (ptr != begin + CORPUS_UTF8_ENCODE_LEN(code));
+		return (ptr != begin + UTF8LITE_UTF8_ENCODE_LEN(code));
 	}
 
 	it2 = *it;
@@ -272,7 +272,7 @@ void iter_retreat_raw(struct corpus_text_iter *it)
 
 		it->ptr = (uint8_t *)ptr;
 
-		corpus_decode_utf8(&ptr, &it->current);
+		utf8lite_decode_utf8(&ptr, &it->current);
 		it->attr = CORPUS_TEXT_UTF8_BIT;
 	}
 }
@@ -369,13 +369,13 @@ void iter_retreat_escaped(struct corpus_text_iter *it, const uint8_t *begin)
 			attr |= CORPUS_TEXT_UTF8_BIT;
 		}
 
-		if (CORPUS_IS_UTF16_LOW(code)) {
+		if (UTF8LITE_IS_UTF16_LOW(code)) {
 			hi = 0;
 			for (i = 0; i < 4; i++) {
 				hi = (hi << 4) + hextoi(ptr[i - 4]);
 			}
 
-			code = CORPUS_DECODE_UTF16_PAIR(hi, code);
+			code = UTF8LITE_DECODE_UTF16_PAIR(hi, code);
 			ptr -= 6;
 		}
 
@@ -396,7 +396,7 @@ void iter_retreat_escaped(struct corpus_text_iter *it, const uint8_t *begin)
 
 	// decode the utf-8 value
 	it->ptr = (uint8_t *)ptr;
-	corpus_decode_utf8(&ptr, &it->current);
+	utf8lite_decode_utf8(&ptr, &it->current);
 	it->attr = CORPUS_TEXT_UTF8_BIT;
 	return;
 
@@ -424,7 +424,7 @@ int assign_raw(struct corpus_text *text, const uint8_t *ptr, size_t size)
 		if (ch & 0x80) {
 			attr |= CORPUS_TEXT_UTF8_BIT;
 			ptr--;
-			if ((err = corpus_scan_utf8(&ptr, end))) {
+			if ((err = utf8lite_scan_utf8(&ptr, end))) {
 				goto error_inval_utf8;
 			}
 		}
@@ -476,7 +476,7 @@ int assign_raw_unsafe(struct corpus_text *text, const uint8_t *ptr, size_t size)
 		ch = *ptr++;
 		if (ch & 0x80) {
 			attr |= CORPUS_TEXT_UTF8_BIT;
-			ptr += CORPUS_UTF8_TAIL_LEN(ch);
+			ptr += UTF8LITE_UTF8_TAIL_LEN(ch);
 		}
 	}
 
@@ -549,7 +549,7 @@ int assign_esc(struct corpus_text *text, const uint8_t *ptr, size_t size)
 		} else if (ch & 0x80) {
 			attr |= CORPUS_TEXT_UTF8_BIT;
 			ptr--;
-			if ((err = corpus_scan_utf8(&ptr, end))) {
+			if ((err = utf8lite_scan_utf8(&ptr, end))) {
 				goto error_inval_utf8;
 			}
 		}
@@ -629,7 +629,7 @@ int assign_esc_unsafe(struct corpus_text *text, const uint8_t *ptr, size_t size)
 			}
 		} else if (ch & 0x80) {
 			attr |= CORPUS_TEXT_UTF8_BIT;
-			ptr += CORPUS_UTF8_TAIL_LEN(ch);
+			ptr += UTF8LITE_UTF8_TAIL_LEN(ch);
 		}
 	}
 
@@ -680,7 +680,7 @@ int decode_uescape(const uint8_t **inputptr, const uint8_t *end,
 		code = (code << 4) + hextoi(ch);
 	}
 
-	if (CORPUS_IS_UTF16_HIGH(code)) {
+	if (UTF8LITE_IS_UTF16_HIGH(code)) {
 		if (ptr + 6 > end || ptr[0] != '\\' || ptr[1] != 'u') {
 			goto error_inval_nolow;
 		}
@@ -695,12 +695,12 @@ int decode_uescape(const uint8_t **inputptr, const uint8_t *end,
 			}
 			low = (low << 4) + hextoi(ch);
 		}
-		if (!CORPUS_IS_UTF16_LOW(low)) {
+		if (!UTF8LITE_IS_UTF16_LOW(low)) {
 			ptr -= 6;
 			goto error_inval_low;
 		}
-		code = CORPUS_DECODE_UTF16_PAIR(code, low);
-	} else if (CORPUS_IS_UTF16_LOW(code)) {
+		code = UTF8LITE_DECODE_UTF16_PAIR(code, low);
+	} else if (UTF8LITE_IS_UTF16_LOW(code)) {
 		goto error_inval_nohigh;
 	}
 
@@ -739,7 +739,7 @@ error_inval_nohigh:
 	goto error_inval;
 
 error_inval:
-	code = CORPUS_UNICODE_REPLACEMENT;
+	code = UTF8LITE_REPLACEMENT;
 
 out:
 	*codeptr = code;
@@ -762,7 +762,7 @@ void decode_valid_uescape(const uint8_t **inputptr, uint32_t *codeptr)
 		code = (code << 4) + hextoi(ch);
 	}
 
-	if (CORPUS_IS_UTF16_HIGH(code)) {
+	if (UTF8LITE_IS_UTF16_HIGH(code)) {
 		// skip over \u
 		ptr += 2;
 
@@ -772,7 +772,7 @@ void decode_valid_uescape(const uint8_t **inputptr, uint32_t *codeptr)
 			low = (uint_fast16_t)(low << 4) + hextoi(ch);
 		}
 
-		code = CORPUS_DECODE_UTF16_PAIR(code, low);
+		code = UTF8LITE_DECODE_UTF16_PAIR(code, low);
 	}
 
 	*codeptr = code;

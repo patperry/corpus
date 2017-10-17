@@ -17,8 +17,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <check.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 #include "../src/text.h"
-#include "../src/unicode.h"
 #include "../src/wordscan.h"
 #include "testutil.h"
 
@@ -382,7 +382,7 @@ void setup_unicode(void)
 				if (code > 0x7F) {
 					is_ascii = 0;
 				}
-				corpus_encode_utf8((uint32_t)code, &dst);
+				utf8lite_encode_utf8((uint32_t)code, &dst);
 				test->code_end[ncode] = dst;
 				ncode++;
 			} else {

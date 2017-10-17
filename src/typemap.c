@@ -19,13 +19,13 @@
 #include <inttypes.h>
 #include <stdint.h>
 #include <string.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 #include "private/stopwords.h"
 #include "error.h"
 #include "memory.h"
 #include "table.h"
 #include "text.h"
 #include "textset.h"
-#include "unicode.h"
 #include "wordscan.h"
 #include "typemap.h"
 
@@ -79,7 +79,7 @@ void corpus_typemap_clear_kind(struct corpus_typemap *map)
 {
 	uint_fast8_t ch;
 
-	map->charmap_type = CORPUS_UDECOMP_NORMAL | CORPUS_UCASEFOLD_NONE;
+	map->charmap_type = UTF8LITE_DECOMP_NORMAL | UTF8LITE_CASEFOLD_NONE;
 
 	for (ch = 0; ch < 0x80; ch++) {
 		map->ascii_map[ch] = (int8_t)ch;
@@ -104,11 +104,11 @@ int corpus_typemap_set_kind(struct corpus_typemap *map, int kind)
 			map->ascii_map[ch] = ch + ('a' - 'A');
 		}
 
-		map->charmap_type |= CORPUS_UCASEFOLD_ALL;
+		map->charmap_type |= UTF8LITE_CASEFOLD_ALL;
 	}
 
 	if (kind & CORPUS_TYPE_MAPCOMPAT) {
-		map->charmap_type = CORPUS_UDECOMP_ALL;
+		map->charmap_type = UTF8LITE_DECOMP_ALL;
 	}
 
 	map->kind = kind;
@@ -133,7 +133,7 @@ int corpus_typemap_reserve(struct corpus_typemap *map, size_t size)
 	map->type.ptr = ptr;
 
 	if (!(codes = corpus_realloc(codes,
-				     size * CORPUS_UNICODE_DECOMP_MAX))) {
+				     size * UTF8LITE_DECOMP_MAX))) {
 		goto error_nomem;
 	}
 	map->codes = codes;
@@ -182,12 +182,12 @@ int corpus_typemap_set(struct corpus_typemap *map,
 	dst = map->codes;
 	corpus_text_iter_make(&it, tok);
 	while (corpus_text_iter_advance(&it)) {
-		corpus_unicode_map(map->charmap_type, it.current, &dst);
+		utf8lite_map(map->charmap_type, it.current, &dst);
 	}
 
 	size = (size_t)(dst - map->codes);
-	corpus_unicode_order(map->codes, size);
-	corpus_unicode_compose(map->codes, &size);
+	utf8lite_order(map->codes, size);
+	utf8lite_compose(map->codes, &size);
 
 	if ((err = corpus_typemap_set_utf32(map, map->codes,
 					    map->codes + size))) {
@@ -234,7 +234,7 @@ int corpus_typemap_set_utf32(struct corpus_typemap *map, const uint32_t *ptr,
 				break;
 
 			default:
-				if (rm_di && corpus_unicode_isignorable(code)) {
+				if (rm_di && utf8lite_isignorable(code)) {
 					continue;
 				}
 				break;
@@ -243,7 +243,7 @@ int corpus_typemap_set_utf32(struct corpus_typemap *map, const uint32_t *ptr,
 		if (code >= 0x80) {
 			is_utf8 = 1;
 		}
-		corpus_encode_utf8(code, &dst);
+		utf8lite_encode_utf8(code, &dst);
 	}
 
 	*dst = '\0'; // not necessary, but helps with debugging

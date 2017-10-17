@@ -20,11 +20,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 #include "array.h"
 #include "error.h"
 #include "memory.h"
 #include "text.h"
-#include "unicode.h"
 #include "render.h"
 
 
@@ -226,7 +226,7 @@ void corpus_render_char(struct corpus_render *r, uint32_t ch)
 	}
 
 	end = r->string + r->length;
-	if (CORPUS_IS_ASCII(ch)) {
+	if (UTF8LITE_IS_ASCII(ch)) {
 		if ((ch <= 0x1F || ch == 0x7F)
 				&& (r->escape_flags & CORPUS_ESCAPE_CONTROL)) {
 			switch (ch) {
@@ -264,20 +264,20 @@ void corpus_render_char(struct corpus_render *r, uint32_t ch)
 		sprintf(end, "\\u%04x", ch);
 		r->length += 6;
 	} else if (r->escape_flags & CORPUS_ESCAPE_UTF8) {
-		if (CORPUS_UTF16_ENCODE_LEN(ch) == 1) {
+		if (UTF8LITE_UTF16_ENCODE_LEN(ch) == 1) {
 			sprintf(end, "\\u%04x", ch);
 			r->length += 6;
 		} else {
-			hi = CORPUS_UTF16_HIGH(ch);
-			lo = CORPUS_UTF16_LOW(ch);
+			hi = UTF8LITE_UTF16_HIGH(ch);
+			lo = UTF8LITE_UTF16_LOW(ch);
 			sprintf(end, "\\u%04x\\u%04x", hi, lo);
 			r->length += 12;
 		}
 	} else {
 		uend = (uint8_t *)end;
-		corpus_encode_utf8(ch, &uend);
+		utf8lite_encode_utf8(ch, &uend);
 		*uend = '\0';
-		r->length += CORPUS_UTF8_ENCODE_LEN(ch);
+		r->length += UTF8LITE_UTF8_ENCODE_LEN(ch);
 	}
 }
 
@@ -292,7 +292,7 @@ void corpus_render_string(struct corpus_render *r, const char *str)
 	}
 
 	while (1) {
-		corpus_decode_utf8(&ptr, &ch);
+		utf8lite_decode_utf8(&ptr, &ch);
 		if (ch == 0) {
 			return;
 		}

@@ -36,12 +36,13 @@ EMOJI = http://www.unicode.org/Public/emoji/5.0
 UNICODE = http://www.unicode.org/Public/10.0.0
 
 CORPUS_A = libcorpus.a
-LIB_O	= lib/strntod.o lib/strntoimax.o src/array.o src/census.o \
+LIB_O	= lib/strntod.o lib/strntoimax.o lib/utf8lite/src/utf8lite.o \
+	  src/array.o src/census.o \
 	  src/data.o src/datatype.o src/error.o src/filebuf.o src/filter.o \
 	  src/intset.o src/memory.o src/ngram.o src/render.o src/search.o \
 	  src/sentfilter.o src/sentscan.o src/stem.o src/symtab.o src/table.o \
 	  src/termset.o src/text.o src/textset.o src/tree.o src/typemap.o \
-	  src/unicode.o src/wordscan.o
+	  src/wordscan.o
 
 STEMMER = lib/libstemmer_c
 STEMMER_O = $(STEMMER)/src_c/stem_UTF_8_arabic.o \
@@ -81,21 +82,20 @@ DATA    = data/emoji/emoji-data.txt \
 	  data/ucd/auxiliary/SentenceBreakProperty.txt \
 	  data/ucd/auxiliary/WordBreakProperty.txt
 
-TESTS_T = tests/check_census tests/check_charwidth tests/check_data \
+TESTS_T = tests/check_census tests/check_data \
 	  tests/check_filter tests/check_intset tests/check_ngram \
 	  tests/check_search tests/check_sentfilter tests/check_sentscan \
 	  tests/check_stem tests/check_symtab tests/check_termset \
 	  tests/check_text tests/check_tree tests/check_typemap \
-	  tests/check_unicode tests/check_wordscan
-TESTS_O = tests/check_census.o tests/check_charwidth.o tests/check_data.o \
+	  tests/check_wordscan
+TESTS_O = tests/check_census.o tests/check_data.o \
 	  tests/check_filter.o tests/check_intset.o tests/check_ngram.o \
 	  tests/check_search.o tests/check_sentfilter.o tests/check_sentscan.o \
 	  tests/check_stem.o tests/check_symtab.o tests/check_termset.o \
 	  tests/check_text.o tests/check_tree.o tests/check_typemap.o \
-	  tests/check_unicode.o tests/check_wordscan.o tests/testutil.o
+	  tests/check_wordscan.o tests/testutil.o
 
-TESTS_DATA = data/ucd/NormalizationTest.txt \
-	     data/ucd/auxiliary/SentenceBreakTest.txt \
+TESTS_DATA = data/ucd/auxiliary/SentenceBreakTest.txt \
 	     data/ucd/auxiliary/WordBreakTest.txt
 
 ALL_O = $(LIB_O) $(CORPUS_O) $(STEMMER_O)
@@ -145,33 +145,9 @@ data/cldr/segments/ru/suppressions.json:
 	$(MKDIR_P) data/cldr/segments/ru
 	$(CURL) -o $@ $(CLDR)/segments/ru/suppressions.json
 
-data/emoji/emoji-data.txt:
-	$(MKDIR_P) data/emoji
-	$(CURL) -o $@ $(EMOJI)/emoji-data.txt
-
-data/ucd/CaseFolding.txt:
-	$(MKDIR_P) data/ucd
-	$(CURL) -o $@ $(UNICODE)/ucd/CaseFolding.txt
-
-data/ucd/CompositionExclusions.txt:
-	$(MKDIR_P) data/ucd
-	$(CURL) -o $@ $(UNICODE)/ucd/CompositionExclusions.txt
-
 data/ucd/DerivedCoreProperties.txt:
 	$(MKDIR_P) data/ucd
 	$(CURL) -o $@ $(UNICODE)/ucd/DerivedCoreProperties.txt
-
-data/ucd/DerivedNormalizationProps.txt:
-	$(MKDIR_P) data/ucd
-	$(CURL) -o $@ $(UNICODE)/ucd/DerivedNormalizationProps.txt
-
-data/ucd/EastAsianWidth.txt:
-	$(MKDIR_P) data/ucd
-	$(CURL) -o $@ $(UNICODE)/ucd/EastAsianWidth.txt
-
-data/ucd/NormalizationTest.txt:
-	$(MKDIR_P) data/ucd
-	$(CURL) -o $@ $(UNICODE)/ucd/NormalizationTest.txt
 
 data/ucd/PropList.txt:
 	$(MKDIR_P) data/ucd
@@ -226,37 +202,6 @@ src/private/stopwords.h: util/gen-stopwords.py \
 	$(MKDIR_P) src/private
 	./util/gen-stopwords.py > $@
 
-src/unicode/casefold.h: util/gen-casefold.py \
-		data/ucd/CaseFolding.txt
-	$(MKDIR_P) src/unicode
-	./util/gen-casefold.py > $@
-
-src/unicode/charwidth.h: util/gen-charwidth.py util/property.py util/unicode_data.py \
-		data/emoji/emoji-data.txt data/ucd/DerivedCoreProperties.txt \
-		data/ucd/EastAsianWidth.txt data/ucd/UnicodeData.txt
-	$(MKDIR_P) src/unicode
-	./util/gen-charwidth.py > $@
-
-src/unicode/combining.h: util/gen-combining.py util/unicode_data.py \
-		data/ucd/UnicodeData.txt
-	$(MKDIR_P) src/unicode
-	./util/gen-combining.py > $@
-
-src/unicode/compose.h: util/gen-compose.py util/unicode_data.py \
-		data/ucd/CompositionExclusions.txt data/ucd/UnicodeData.txt
-	$(MKDIR_P) src/unicode
-	./util/gen-compose.py > $@
-
-src/unicode/decompose.h: util/gen-decompose.py util/unicode_data.py \
-		data/ucd/UnicodeData.txt
-	$(MKDIR_P) src/unicode
-	./util/gen-decompose.py > $@
-
-src/unicode/normalization.h: util/gen-normalization.py \
-		data/ucd/DerivedNormalizationProps.txt
-	$(MKDIR_P) src/unicode
-	./util/gen-normalization.py > $@
-
 src/unicode/sentbreakprop.h: util/gen-sentbreak.py util/property.py \
 		data/ucd/auxiliary/SentenceBreakProperty.txt
 	$(MKDIR_P) src/unicode
@@ -274,9 +219,6 @@ src/unicode/wordbreakprop.h: util/gen-wordbreak.py util/property.py \
 # Tests
 
 tests/check_census: tests/check_census.o tests/testutil.o $(CORPUS_A)
-	$(CC) -o $@ $^ $(LIBS) $(TEST_LIBS) $(LDFLAGS)
-
-tests/check_charwidth: tests/check_charwidth.o tests/testutil.o $(CORPUS_A)
 	$(CC) -o $@ $^ $(LIBS) $(TEST_LIBS) $(LDFLAGS)
 
 tests/check_data: tests/check_data.o tests/testutil.o $(CORPUS_A)
@@ -320,11 +262,6 @@ tests/check_tree: tests/check_tree.o tests/testutil.o $(CORPUS_A)
 tests/check_typemap: tests/check_typemap.o tests/testutil.o $(CORPUS_A)
 	$(CC) -o $@ $^ $(LIBS) $(TEST_LIBS) $(LDFLAGS)
 
-tests/check_unicode: tests/check_unicode.o $(CORPUS_A) \
-		data/ucd/NormalizationTest.txt
-	$(CC) -o $@ tests/check_unicode.o $(CORPUS_A) \
-		$(LIBS) $(TEST_LIBS) $(LDFLAGS)
-
 tests/check_wordscan: tests/check_wordscan.o tests/testutil.o $(CORPUS_A) \
 		data/ucd/auxiliary/WordBreakTest.txt
 	$(CC) -o $@ tests/check_wordscan.o tests/testutil.o $(CORPUS_A) \
@@ -367,8 +304,8 @@ src/datatype.o: src/datatype.c src/array.h src/error.h src/memory.h \
 src/error.o: src/error.c src/error.h
 src/filebuf.o: src/filebuf.c src/error.h src/memory.h src/filebuf.h
 src/filter.o: src/filter.c src/array.h src/error.h src/memory.h src/render.h \
-	src/table.h src/text.h src/textset.h src/tree.h src/typemap.h src/stem.h \
-	src/symtab.h src/wordscan.h src/unicode.h src/filter.h
+	src/table.h src/text.h src/textset.h src/tree.h src/typemap.h \
+	src/stem.h src/symtab.h src/wordscan.h src/filter.h
 src/intset.o: src/intset.c src/array.h src/error.h src/memory.h src/table.h \
 	src/intset.h
 src/main.o: src/main.c src/error.h src/filebuf.h src/table.h src/text.h \
@@ -392,7 +329,7 @@ src/memory.o: src/memory.c src/memory.h
 src/ngram.o: src/ngram.c src/array.h src/error.h src/memory.h src/table.h \
 	src/tree.h src/ngram.h
 src/render.o: src/render.c src/array.h src/error.h src/memory.h src/text.h \
-	src/unicode.h src/render.h
+	src/render.h
 src/search.o: src/search.c src/error.h src/memory.h src/table.h src/tree.h \
 	src/text.h src/textset.h src/termset.h src/stem.h src/typemap.h \
 	src/symtab.h src/wordscan.h src/render.h src/filter.h src/search.h
@@ -408,23 +345,18 @@ src/symtab.o: src/symtab.c src/array.h src/error.h src/memory.h src/table.h \
 src/table.o: src/table.c src/error.h src/memory.h src/table.h
 src/termset.o: src/termset.c src/array.h src/error.h src/memory.h src/table.h \
 	src/tree.h src/termset.h
-src/text.o: src/text.c src/error.h src/memory.h src/unicode.h src/text.h
+src/text.o: src/text.c src/error.h src/memory.h src/text.h
 src/textset.o: src/textset.c src/array.h src/error.h src/memory.h src/table.h \
 	src/text.h src/textset.h
 src/tree.o: src/tree.c src/array.h src/error.h src/memory.h src/table.h \
 	src/tree.h
 src/typemap.o: src/typemap.c src/error.h src/memory.h \
-	src/private/stopwords.h src/table.h src/text.h src/unicode.h \
+	src/private/stopwords.h src/table.h src/text.h \
 	src/wordscan.h src/typemap.h
-src/unicode.o: src/unicode.c src/unicode/casefold.h src/unicode/charwidth.h \
-	src/unicode/combining.h src/unicode/compose.h src/unicode/decompose.h \
-	src/error.h src/unicode.h
 src/wordscan.o: src/wordscan.c src/error.h src/text.h \
 	src/unicode/wordbreakprop.h src/wordscan.h
 
 tests/check_census.o: tests/check_census.c src/table.h src/census.h \
-	tests/testutil.h
-tests/check_charwidth.o: tests/check_charwidth.c src/unicode.h \
 	tests/testutil.h
 tests/check_data.o: tests/check_data.c src/error.h src/table.h src/text.h \
 	src/textset.h src/typemap.h src/symtab.h src/data.h \
@@ -442,7 +374,7 @@ tests/check_search.o: tests/check_search.c src/table.h src/tree.h \
 	tests/testutil.h
 tests/check_sentfilter.o: tests/check_sentfilter.c src/table.h src/text.h \
 	src/tree.h src/sentscan.h src/sentfilter.h tests/testutil.h
-tests/check_sentscan.o: tests/check_sentscan.c src/text.h src/unicode.h \
+tests/check_sentscan.o: tests/check_sentscan.c src/text.h \
 	src/sentscan.h tests/testutil.h
 tests/check_stem.o: tests/check_stem.c src/table.h src/text.h src/textset.h \
 	src/stem.h tests/testutil.h
@@ -450,12 +382,11 @@ tests/check_symtab.o: tests/check_symtab.c src/table.h src/text.h \
 	src/textset.h src/typemap.h src/symtab.h tests/testutil.h
 tests/check_termset.o: tests/check_termset.c src/table.h src/tree.h \
 	src/termset.h tests/testutil.h
-tests/check_text.o: tests/check_text.c src/error.h src/text.h src/unicode.h \
+tests/check_text.o: tests/check_text.c src/error.h src/text.h \
 	tests/testutil.h
 tests/check_tree.o: tests/check_tree.c src/table.h src/tree.h tests/testutil.h
 tests/check_typemap.o: tests/check_typemap.c src/table.h src/text.h \
-	src/textset.h src/typemap.h src/unicode.h tests/testutil.h
-tests/check_unicode.o: tests/check_unicode.c src/unicode.h tests/testutil.h
+	src/textset.h src/typemap.h tests/testutil.h
 tests/check_wordscan.o: tests/check_wordscan.c src/text.h \
-	src/unicode.h src/wordscan.h tests/testutil.h
+	src/wordscan.h tests/testutil.h
 tests/testutil.o: tests/testutil.c src/text.h tests/testutil.h

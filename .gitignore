@@ -6,7 +6,6 @@ xcuserdata
 /corpus
 /doc/html
 /tests/check_census
-/tests/check_charwidth
 /tests/check_data
 /tests/check_filter
 /tests/check_intset
@@ -20,5 +19,4 @@ xcuserdata
 /tests/check_text
 /tests/check_tree
 /tests/check_typemap
-/tests/check_unicode
 /tests/check_wordscan

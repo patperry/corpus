@@ -17,6 +17,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 #include "array.h"
 #include "error.h"
 #include "memory.h"
@@ -29,7 +30,6 @@
 #include "typemap.h"
 #include "symtab.h"
 #include "wordscan.h"
-#include "unicode.h"
 #include "filter.h"
 
 
@@ -556,7 +556,7 @@ int corpus_filter_unspace(struct corpus_filter *f, int *idptr)
 	corpus_text_iter_make(&it, type);
 	while (corpus_text_iter_advance(&it)) {
 		ch = it.current;
-		if (corpus_unicode_isspace(ch)) {
+		if (utf8lite_isspace(ch)) {
 			needs_unspace = 1;
 			break;
 		}
@@ -570,12 +570,12 @@ int corpus_filter_unspace(struct corpus_filter *f, int *idptr)
 
 	// replace sequences of spaces with connectors
 	in_space = 0;
-	attr = CORPUS_IS_ASCII(f->connector) ? 0 : CORPUS_TEXT_UTF8_BIT;
+	attr = UTF8LITE_IS_ASCII(f->connector) ? 0 : CORPUS_TEXT_UTF8_BIT;
 	corpus_text_iter_make(&it, type);
 
 	while (corpus_text_iter_advance(&it)) {
 		ch = it.current;
-		if (corpus_unicode_isspace(ch)) {
+		if (utf8lite_isspace(ch)) {
 			// only render one connector for a string of spaces
 			if (!in_space) {
 				corpus_render_char(&f->render, f->connector);

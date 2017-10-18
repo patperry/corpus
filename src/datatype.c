@@ -1601,13 +1601,13 @@ int scan_text(const uint8_t **bufptr, const uint8_t *end,
 	uint_fast8_t ch;
 	int err, flags;
 
-	flags = CORPUS_TEXT_NOESCAPE;
+	flags = 0;
 	while (ptr != end) {
 		ch = *ptr;
 		if (ch == '"') {
 			goto close;
 		} else if (ch == '\\') {
-			flags = 0;
+			flags = CORPUS_TEXT_UNESCAPE;
 			if (ptr == end) {
 				goto error_noclose;
 			}

@@ -84,17 +84,17 @@ int corpus_text_assign(struct corpus_text *text, const uint8_t *ptr,
 {
 	int err;
 
-	if (flags & CORPUS_TEXT_NOESCAPE) {
-		if (flags & CORPUS_TEXT_NOVALIDATE) {
-			err = assign_raw_unsafe(text, ptr, size);
-		} else {
-			err = assign_raw(text, ptr, size);
-		}
-	} else {
-		if (flags & CORPUS_TEXT_NOVALIDATE) {
+	if (flags & CORPUS_TEXT_UNESCAPE) {
+		if (flags & CORPUS_TEXT_VALID) {
 			err = assign_esc_unsafe(text, ptr, size);
 		} else {
 			err = assign_esc(text, ptr, size);
+		}
+	} else {
+		if (flags & CORPUS_TEXT_VALID) {
+			err = assign_raw_unsafe(text, ptr, size);
+		} else {
+			err = assign_raw(text, ptr, size);
 		}
 	}
 

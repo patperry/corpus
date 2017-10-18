@@ -211,7 +211,7 @@ int corpus_data_text(const struct corpus_data *d, struct corpus_text *valptr)
 	}
 
 	err = corpus_text_assign(&val, ptr, (size_t)(end - ptr),
-				 CORPUS_TEXT_NOVALIDATE);
+				 CORPUS_TEXT_VALID | CORPUS_TEXT_UNESCAPE);
 	goto out;
 
 nullval:
@@ -384,16 +384,16 @@ int corpus_data_fields_advance(struct corpus_data_fields *it)
 
 	// name
 	begin = ptr;
-	flags = CORPUS_TEXT_NOESCAPE;
+	flags = 0;
 	while (*ptr != '"') {
 		if (*ptr == '\\') {
-			flags = 0;
+			flags = CORPUS_TEXT_UNESCAPE;
 			ptr++;
 		}
 		ptr++;
 	}
 	corpus_text_assign(&name, begin, (size_t)(ptr - begin),
-			   flags | CORPUS_TEXT_NOVALIDATE);
+			   flags | CORPUS_TEXT_VALID);
 
 	// the call to schema_name always succeeds and does not
 	// create a new name, because the field name already
@@ -634,16 +634,16 @@ int corpus_data_field(const struct corpus_data *d,
 
 		// name
 		begin = ptr;
-		flags = CORPUS_TEXT_NOESCAPE;
+		flags = 0;
 		while (*ptr != '"') {
 			if (*ptr == '\\') {
-				flags = 0;
+				flags = CORPUS_TEXT_UNESCAPE;
 				ptr++;
 			}
 			ptr++;
 		}
 		corpus_text_assign(&name, begin, (size_t)(ptr - begin),
-				   flags | CORPUS_TEXT_NOVALIDATE);
+				   flags | CORPUS_TEXT_VALID);
 
 		// the call to schema_name always succeeds and does not
 		// create a new name, because the field name already

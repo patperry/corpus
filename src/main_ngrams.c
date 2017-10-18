@@ -315,7 +315,7 @@ int main_ngrams(int argc, char * const argv[])
 			err = corpus_text_assign(&word, *stopwords,
 						 strlen((const char *)
 							*stopwords),
-						 CORPUS_TEXT_NOESCAPE);
+						 CORPUS_TEXT_UNKNOWN);
 			if (err) {
 				fprintf(stderr, "Internal error:"
 					" stop word list is not valid UTF-8.");
@@ -340,7 +340,7 @@ int main_ngrams(int argc, char * const argv[])
 		err = corpus_text_assign(&word,
 					 (const uint8_t *)combine_rules[i],
 					 strlen(combine_rules[i]),
-					 CORPUS_TEXT_NOESCAPE);
+					 CORPUS_TEXT_UNKNOWN);
 		if (err) {
 			fprintf(stderr,
 				"Combination rule ('%s') is not valid UTF-8.",

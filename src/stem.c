@@ -115,7 +115,7 @@ int corpus_stem_set(struct corpus_stem *stem, const struct corpus_text *tok)
 	}
 
 	if ((err = corpus_text_assign(&stem->type, ptr, (size_t)len,
-				      CORPUS_TEXT_NOESCAPE))) {
+				      CORPUS_TEXT_UNKNOWN))) {
 		corpus_log(err, "stemmer returned invalid type");
 		goto out;
 	}
@@ -233,7 +233,7 @@ int corpus_stem_snowball(const uint8_t *ptr, int len,
 	assert(size >= 0);
 
 	if ((err = corpus_text_assign(&typ, buf, (size_t)size,
-				      CORPUS_TEXT_NOESCAPE))) {
+				      CORPUS_TEXT_UNKNOWN))) {
 		err = CORPUS_ERROR_INTERNAL;
 		corpus_log(err, "Snowball stemmer returned invalid UTF-8 text");
 		goto out;

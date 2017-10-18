@@ -252,18 +252,14 @@ START_TEST(test_suppress_cldr)
 			ptr = buffer;
 			size = strlen((const char *)supp);
 			memcpy(ptr, supp, size);
-			ck_assert(!corpus_text_assign(&text, buffer,
-						      size,
-						      CORPUS_TEXT_NOESCAPE));
+			ck_assert(!corpus_text_assign(&text, buffer, size, 0));
 			suppress(&text);
 
 			// test the rule
 			ptr[size++] = ' ';
 			ptr[size++] = 'A';
 			ptr[size] = '\0';
-			ck_assert(!corpus_text_assign(&text, buffer,
-						      size,
-						      CORPUS_TEXT_NOESCAPE));
+			ck_assert(!corpus_text_assign(&text, buffer, size, 0));
 			
 			start(&text);
 			sent = next();
@@ -301,9 +297,7 @@ START_TEST(test_suppress_cldr_crlf)
 			ptr = buffer;
 			size = strlen((const char *)supp);
 			memcpy(ptr, supp, size);
-			ck_assert(!corpus_text_assign(&text, buffer,
-						      size,
-						      CORPUS_TEXT_NOESCAPE));
+			ck_assert(!corpus_text_assign(&text, buffer, size, 0));
 			suppress(&text);
 
 			// test the rule
@@ -311,10 +305,7 @@ START_TEST(test_suppress_cldr_crlf)
 			ptr[size++] = '\n';
 			ptr[size++] = 'A';
 			ptr[size] = '\0';
-			ck_assert(!corpus_text_assign(&text, buffer,
-						      size,
-						      CORPUS_TEXT_NOESCAPE));
-
+			ck_assert(!corpus_text_assign(&text, buffer, size, 0));
 			start(&text);
 			assert_text_eq(next(), &text);
 			assert_text_eq(next(), SENT_EOT);

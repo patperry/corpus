@@ -259,8 +259,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 		// add a new type for the combined type
 		corpus_text_assign(&rule, (const uint8_t *)f->render.string,
 				   (size_t)f->render.length,
-				   CORPUS_TEXT_NOESCAPE
-				   | CORPUS_TEXT_NOVALIDATE);
+				   CORPUS_TEXT_VALID);
 		if ((err = corpus_filter_add_type(f, &rule, &type_id))) {
 			goto out;
 		}

@@ -83,11 +83,14 @@ struct corpus_text_iter {
  * Flags for corpus_text_assign().
  */
 enum corpus_text_flag {
-	/** do not interpret backslash (`\`) as an escape */
-	CORPUS_TEXT_NOESCAPE = (1 << 0),
+	/** validate the input */
+	CORPUS_TEXT_UNKNOWN = 0,
 
 	/** do not perform any validation on the input */
-	CORPUS_TEXT_NOVALIDATE = (1 << 1)
+	CORPUS_TEXT_VALID = (1 << 0),
+
+	/** interpret backslash (`\`) as an escape */
+	CORPUS_TEXT_UNESCAPE = (1 << 1)
 };
 
 /**

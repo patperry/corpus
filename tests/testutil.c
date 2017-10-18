@@ -63,13 +63,13 @@ void *alloc(size_t size)
 
 struct corpus_text *T(const char *str)
 {
-	return mktext(str, 0);
+	return mktext(str, CORPUS_TEXT_UNESCAPE);
 }
 
 
 struct corpus_text *S(const char *str)
 {
-	return mktext(str, CORPUS_TEXT_NOESCAPE);
+	return mktext(str, 0);
 }
 
 

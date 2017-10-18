@@ -49,7 +49,8 @@ int is_valid_text(const char *str)
 {
 	struct corpus_text text;
 	size_t n = strlen(str);
-	int err = corpus_text_assign(&text, (const uint8_t *)str, n, 0);
+	int err = corpus_text_assign(&text, (const uint8_t *)str, n,
+				     CORPUS_TEXT_UNESCAPE);
 	return !err;
 }
 
@@ -58,8 +59,7 @@ int is_valid_raw(const char *str)
 {
 	struct corpus_text text;
 	size_t n = strlen(str);
-	int err = corpus_text_assign(&text, (const uint8_t *)str, n,
-				     CORPUS_TEXT_NOESCAPE);
+	int err = corpus_text_assign(&text, (const uint8_t *)str, n, 0);
 	return !err;
 }
 
@@ -496,7 +496,7 @@ START_TEST(test_iter_random)
 	}
 
 	ptr = buffer;
-	ck_assert(!corpus_text_assign(&text, ptr, size, 0));
+	ck_assert(!corpus_text_assign(&text, ptr, size, CORPUS_TEXT_UNESCAPE));
 	ck_assert(CORPUS_TEXT_SIZE(&text) == size);
 	ck_assert(CORPUS_TEXT_BITS(&text) == attr);
 

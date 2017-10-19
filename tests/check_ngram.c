@@ -91,7 +91,7 @@ void break_(void)
 
 double weight(const char *term)
 {
-	int buffer[16];
+	int buf[16];
 	int length = (int)strlen(term);
 	double w;
 	int k;
@@ -99,9 +99,9 @@ double weight(const char *term)
 	ck_assert(has_ngram);
 
 	for (k = 0; k < length; k++) {
-		buffer[k] = (int)term[k];
+		buf[k] = (int)term[k];
 	}
-	if (corpus_ngram_has(&ngram, buffer, length, &w)) {
+	if (corpus_ngram_has(&ngram, buf, length, &w)) {
 		return w;
 	} else {
 		return 0;
@@ -116,7 +116,7 @@ void start(void)
 	if (has_iter) {
 		free(iter_buffer);
 	}
-	iter_buffer = malloc(ngram.length);
+	iter_buffer = malloc((size_t)ngram.length);
 	ck_assert(iter_buffer != NULL || ngram.length == 0);
 
 	corpus_ngram_iter_make(&iter, &ngram, iter_buffer);

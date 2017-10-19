@@ -2701,9 +2701,9 @@ static const int8_t sent_break_stage2[][128] = {
   }
 };
 
-static int sent_break(uint32_t code)
+static int sent_break(int32_t code)
 {
-	const uint32_t block_size = 128;
+	const int32_t block_size = 128;
 	uint8_t i = sent_break_stage1[code / block_size];
 	return sent_break_stage2[i][code % block_size];
 }

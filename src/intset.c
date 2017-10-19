@@ -163,7 +163,7 @@ static int intptr_cmp(const void *x1, const void *x2)
 
 int corpus_intset_sort(struct corpus_intset *set, void *base, size_t width)
 {
-	int i, j, n = set->nitem;
+	size_t i, j, n = (size_t)set->nitem;
 	int **ptrs;
 	int *items;
 	char *buf;
@@ -200,7 +200,7 @@ int corpus_intset_sort(struct corpus_intset *set, void *base, size_t width)
 
 	// put the items in order
 	for (i = 0; i < n; i++) {
-		j = (int)(ptrs[i] - set->items);
+		j = (size_t)(ptrs[i] - set->items);
 		set->items[i] = items[j];
 		memcpy((char *)base + i * width, buf + j * width, width);
 	}

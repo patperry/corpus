@@ -62,7 +62,7 @@ struct corpus_sentscan {
 	size_t text_attr;	/**< the input text attributes */
 	int flags;		/**< the scan flags */
 
-	uint32_t code;		/**< next code point */
+	int32_t code;		/**< next code point */
 	size_t attr;		/**< next code's attributes */
 	int prop;		/**< next code's sentence break property */
 	const uint8_t *ptr;	/**< next code's start */

@@ -114,7 +114,8 @@ int corpus_termset_add(struct corpus_termset *set, const int *type_ids,
 	size = set->prefix.nnode_max;
 	if (size0 < size) {
 		if (!(term_ids = corpus_realloc(set->term_ids,
-						size * sizeof(*term_ids)))) {
+						(size_t)size
+						* sizeof(*term_ids)))) {
 			err = CORPUS_ERROR_NOMEM;
 			goto out;
 		}
@@ -155,7 +156,8 @@ int corpus_termset_add(struct corpus_termset *set, const int *type_ids,
 	}
 
 	// initialize the new item
-	memcpy(set->buffer + set->nbuf, type_ids, length * sizeof(*type_ids));
+	memcpy(set->buffer + set->nbuf, type_ids,
+	       (size_t)length * sizeof(*type_ids));
 	set->items[term_id].type_ids = set->buffer + set->nbuf;
 	set->items[term_id].length = length;
 	set->nbuf += (size_t)length;

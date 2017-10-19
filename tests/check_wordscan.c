@@ -262,7 +262,7 @@ struct unitest {
 	struct utf8lite_text text;
 	uint8_t buf[1024];
 
-	uint32_t code[256];
+	int32_t code[256];
 	int can_break_before[256];
 	uint8_t *code_end[256];
 	unsigned ncode;
@@ -377,11 +377,11 @@ void setup_unicode(void)
 			}
 
 			if (fscanf(file, "%x", &code)) {
-				test->code[ncode] = (uint32_t)code;
+				test->code[ncode] = (int32_t)code;
 				if (code > 0x7F) {
 					is_ascii = 0;
 				}
-				utf8lite_encode_utf8((uint32_t)code, &dst);
+				utf8lite_encode_utf8((int32_t)code, &dst);
 				test->code_end[ncode] = dst;
 				ncode++;
 			} else {

@@ -131,7 +131,7 @@ int corpus_textset_has(const struct corpus_textset *set,
 {
 
 	struct corpus_table_probe probe;
-	unsigned hash = utf8lite_text_hash(text);
+	unsigned hash = (unsigned)utf8lite_text_hash(text);
 	int id = -1;
 	int found = 0;
 
@@ -163,7 +163,7 @@ void corpus_textset_rehash(struct corpus_textset *set)
 	corpus_table_clear(table);
 
 	for (i = 0; i < n; i++) {
-		hash = utf8lite_text_hash(&items[i]);
+		hash = (unsigned)utf8lite_text_hash(&items[i]);
 		corpus_table_add(table, hash, i);
 	}
 }

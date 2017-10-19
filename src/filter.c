@@ -65,7 +65,7 @@ static int corpus_type_kind(const struct utf8lite_text *type);
 
 
 int corpus_filter_init(struct corpus_filter *f, int flags, int type_kind,
-		       uint32_t connector, corpus_stem_func stemmer,
+		       int32_t connector, corpus_stem_func stemmer,
 		       void *context)
 {
 	int err;

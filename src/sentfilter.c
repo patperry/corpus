@@ -227,7 +227,8 @@ int add_fwdsupp(struct corpus_sentfilter *f, const struct utf8lite_text *pattern
 			if (size0 < size) {
 				rules = f->fwdsupp_rules;
 				rules = corpus_realloc(rules,
-						       size * sizeof(*rules));
+						       (size_t)size
+						       * sizeof(*rules));
 				if (!rules) {
 					err = CORPUS_ERROR_NOMEM;
 					goto out;
@@ -309,7 +310,8 @@ int add_backsupp(struct corpus_sentfilter *f, const struct utf8lite_text *prefix
 			if (size0 < size) {
 				rules = f->backsupp_rules;
 				rules = corpus_realloc(rules,
-						       size * sizeof(*rules));
+						       (size_t)size
+						       * sizeof(*rules));
 				if (!rules) {
 					err = CORPUS_ERROR_NOMEM;
 					goto out;
@@ -421,7 +423,8 @@ int has_suppress(const struct corpus_sentfilter *f,
 		 struct utf8lite_text_iter *it)
 {
 	struct utf8lite_text_iter it2;
-	int code, id, parent_id, prop, skip_space, rule;
+	int32_t code;
+	int id, parent_id, prop, skip_space, rule;
 	
 	if (f->scan.type != CORPUS_SENT_ATERM) {
 		return 0;
@@ -436,7 +439,7 @@ int has_suppress(const struct corpus_sentfilter *f,
 	id = CORPUS_TREE_NONE;
 
 	while (utf8lite_text_iter_retreat(it)) {
-		code = (int)it->current;
+		code = it->current;
 		prop = sent_break(code);
 
 		switch (prop) {

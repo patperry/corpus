@@ -64,7 +64,7 @@ struct corpus_filter {
 	struct corpus_filter_prop *props;/**< type properties */
 	struct corpus_wordscan scan;	/**< current word scan */
 	int flags;			/**< filter flags */
-	uint32_t connector;		/**< word connector */
+	int32_t connector;		/**< word connector */
 	int has_scan;			/**< whether a scan is in progress */
 	struct utf8lite_text current;	/**< current token */
 	int type_id;			/**< current type ID */
@@ -86,7 +86,7 @@ struct corpus_filter {
  * \returns 0 on success
  */
 int corpus_filter_init(struct corpus_filter *f, int flags, int type_kind,
-		       uint32_t connector, corpus_stem_func stemmer,
+		       int32_t connector, corpus_stem_func stemmer,
 		       void *context);
 
 /**

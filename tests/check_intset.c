@@ -91,7 +91,7 @@ void clear()
 void sort()
 {
 	int nitem = set.nitem;
-	int *items = alloc(nitem * sizeof(int));
+	int *items = alloc((size_t)nitem * sizeof(int));
 	int i, j;
 
 	for (i = 0; i < nitem; i++) {
@@ -195,12 +195,12 @@ START_TEST(test_add_random)
 	int i, key;
 
 	for (seed = 0; seed < nseed; seed++) {
-		srand(seed);
+		srand((unsigned)seed);
 		clear();
 
 		for (i = 0; i < 2 * nseed; i++) {
 			// choose a key in [0,nseed)
-			key = (int)rand() % nseed;
+			key = rand() % nseed;
 			add(key);
 		}
 

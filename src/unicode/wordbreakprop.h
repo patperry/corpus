@@ -2968,9 +2968,9 @@ static const int8_t word_break_stage2[][128] = {
   }
 };
 
-static int word_break(uint32_t code)
+static int word_break(int32_t code)
 {
-	const uint32_t block_size = 128;
+	const int32_t block_size = 128;
 	uint8_t i = word_break_stage1[code / block_size];
 	return word_break_stage2[i][code % block_size];
 }

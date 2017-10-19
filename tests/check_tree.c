@@ -27,11 +27,11 @@ struct corpus_tree tree;
 char *random_keys(void)
 {
 	int i, j, nkey = (int)rand() % 6;
-	char *keys = alloc(nkey + 1);
+	char *keys = alloc((size_t)nkey + 1);
 
 	for (i = 0; i < nkey; i++) {
 		j = (int)rand() % 4;
-		keys[i] = 'a' + j;
+		keys[i] = (char)('a' + j);
 
 	}
 	keys[nkey] = '\0';
@@ -75,7 +75,7 @@ int get_depth(int id)
 char *get_keys(int id)
 {
 	int depth = get_depth(id);
-	char *keys = alloc(depth + 1);
+	char *keys = alloc((size_t)depth + 1);
 	int key;
 	int parent_id;
 
@@ -259,7 +259,7 @@ void tree_clear(void)
 void sort(void)
 {
 	int nnode = tree.nnode;
-	char **keys = alloc(nnode * sizeof(char *));
+	char **keys = alloc((size_t)nnode * sizeof(char *));
 	const char *k1, *k2;
 	int i, j;
 
@@ -386,7 +386,7 @@ START_TEST(test_add_random)
 	const char *keys;
 
 	for (seed = 0; seed < nseed; seed++) {
-		srand(seed);
+		srand((unsigned)seed);
 		tree_clear();
 
 		for (i = 0; i < 2 * nseed; i++) {

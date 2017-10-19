@@ -247,14 +247,15 @@ int buffer_reserve(struct corpus_search_buffer *buffer, int size)
 		return 0;
 	}
 
-	tokens = corpus_realloc(buffer->tokens, size * sizeof(*tokens));
+	tokens = corpus_realloc(buffer->tokens, (size_t)size * sizeof(*tokens));
 	if (!tokens) {
 		err = CORPUS_ERROR_NOMEM;
 		goto out;
 	}
 	buffer->tokens = tokens;
 
-	type_ids = corpus_realloc(buffer->type_ids, size * sizeof(*type_ids));
+	type_ids = corpus_realloc(buffer->type_ids,
+				  (size_t)size * sizeof(*type_ids));
 	if (!type_ids) {
 		err = CORPUS_ERROR_NOMEM;
 		goto out;
@@ -320,9 +321,9 @@ void buffer_push(struct corpus_search_buffer *buffer, int type_id,
 		n--;
 		if (n > 0) {
 			memmove(buffer->type_ids, buffer->type_ids + 1,
-				n * sizeof(*buffer->type_ids));
+				(size_t)n * sizeof(*buffer->type_ids));
 			memmove(buffer->tokens, buffer->tokens + 1,
-				n * sizeof(*buffer->tokens));
+				(size_t)n * sizeof(*buffer->tokens));
 		}
 	}
 

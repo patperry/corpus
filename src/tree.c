@@ -188,7 +188,7 @@ int corpus_tree_has(const struct corpus_tree *t, int parent_id, int key,
 
 int corpus_tree_sort(struct corpus_tree *t, void *base, size_t width)
 {
-	int i, n = t->nnode;
+	size_t i, n = (size_t)t->nnode;
 	int j, m;
 	int qbegin, qend;
 	int child_id, visit, *ids, *map;
@@ -229,7 +229,7 @@ int corpus_tree_sort(struct corpus_tree *t, void *base, size_t width)
 	qend = 0;
 
 	/* add the root's children to the queue */
-	for (i = 0; i < t->root.nchild; i++) {
+	for (i = 0; i < (size_t)t->root.nchild; i++) {
 		ids[qend++] = t->root.child_ids[i];
 	}
 
@@ -244,18 +244,19 @@ int corpus_tree_sort(struct corpus_tree *t, void *base, size_t width)
 			ids[qend++] = t->nodes[visit].child_ids[j];
 		}
 	}
-	assert(qend == n);
+	assert(qend == (int)n);
 
 	/* construct the map from (old id) -> (new id) */
 	for (i = 0; i < n; i++) {
-		map[ids[i]] = i;
+		map[ids[i]] = (int)i;
 	}
 
 	/* put the nodes into sorted order */
 	for (i = 0; i < n; i++) {
 		nodebuf[i] = t->nodes[ids[i]];
 		if (buf) {
-			memcpy(buf + i * width, (char *)base + ids[i] * width,
+			memcpy(buf + i * width,
+			       (char *)base + (size_t)ids[i] * width,
 			       width);
 		}
 
@@ -378,7 +379,7 @@ int node_insert(struct corpus_tree_node *node, int index, int id)
 
 	ntail = node->nchild - index;
 	memmove(node->child_ids + index + 1, node->child_ids + index,
-		ntail * sizeof(*node->child_ids));
+		(size_t)ntail * sizeof(*node->child_ids));
 
 	node->child_ids[index] = id;
 	node->nchild++;
@@ -431,7 +432,8 @@ int node_grow(struct corpus_tree_node *node, int nadd)
 		goto out;
 	}
 
-	child_ids = corpus_realloc(node->child_ids, n * sizeof(*child_ids));
+	child_ids = corpus_realloc(node->child_ids,
+				   (size_t)n * sizeof(*child_ids));
 	if (!child_ids) {
 		err = CORPUS_ERROR_NOMEM;
 		goto out;
@@ -574,7 +576,7 @@ int root_sort(struct corpus_tree_root *root, const struct corpus_tree *tree)
 		return 0;
 	}
 
-	if (!(buffer = corpus_malloc(n * sizeof(*buffer)))) {
+	if (!(buffer = corpus_malloc((unsigned)n * sizeof(*buffer)))) {
 		err = CORPUS_ERROR_NOMEM;
 		goto out;
 	}
@@ -585,7 +587,7 @@ int root_sort(struct corpus_tree_root *root, const struct corpus_tree *tree)
 		buffer[i].id = child_id;
 	}
 
-	qsort(buffer, n, sizeof(*buffer), key_cmp);
+	qsort(buffer, (unsigned)n, sizeof(*buffer), key_cmp);
 
 	for (i = 0; i < n; i++) {
 		root->child_ids[i] = buffer[i].id;

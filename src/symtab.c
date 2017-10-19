@@ -109,7 +109,7 @@ int corpus_symtab_has_token(const struct corpus_symtab *tab,
 			    const struct utf8lite_text *tok, int *idptr)
 {
 	struct corpus_table_probe probe;
-	unsigned hash = utf8lite_text_hash(tok);
+	unsigned hash = (unsigned)utf8lite_text_hash(tok);
 	int token_id = CORPUS_TOKEN_NONE;
 	bool found = false;
 
@@ -135,7 +135,7 @@ int corpus_symtab_has_type(const struct corpus_symtab *tab,
 			   const struct utf8lite_text *typ, int *idptr)
 {
 	struct corpus_table_probe probe;
-	unsigned hash = utf8lite_text_hash(typ);
+	unsigned hash = (unsigned)utf8lite_text_hash(typ);
 	int type_id = CORPUS_TYPE_NONE;
 	bool found = false;
 
@@ -350,7 +350,7 @@ void corpus_symtab_rehash_tokens(struct corpus_symtab *tab)
 	corpus_table_clear(token_table);
 
 	for (i = 0; i < n; i++) {
-		hash = utf8lite_text_hash(&tokens[i].text);
+		hash = (unsigned)utf8lite_text_hash(&tokens[i].text);
 		corpus_table_add(token_table, hash, i);
 	}
 }
@@ -366,7 +366,7 @@ void corpus_symtab_rehash_types(struct corpus_symtab *tab)
 	corpus_table_clear(type_table);
 
 	for (i = 0; i < n; i++) {
-		hash = utf8lite_text_hash(&types[i].text);
+		hash = (unsigned)utf8lite_text_hash(&types[i].text);
 		corpus_table_add(type_table, hash, i);
 	}
 }

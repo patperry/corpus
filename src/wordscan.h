@@ -50,7 +50,7 @@ struct corpus_wordscan {
 	struct utf8lite_text text;/**< the input text */
 	size_t text_attr;	/**< the input text attributes */
 
-	uint32_t code;		/**< next code point */
+	int32_t code;		/**< next code point */
 	size_t attr;		/**< next code's attributes */
 	int prop;		/**< next code's word break property */
 	const uint8_t *ptr;	/**< next code's start */

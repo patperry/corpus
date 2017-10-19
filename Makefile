@@ -28,7 +28,8 @@ TEST_CFLAGS = $(shell pkg-config --cflags check) \
 	-Wno-gnu-zero-variadic-macro-arguments \
 	-Wno-missing-prototypes \
 	-Wno-missing-variable-declarations \
-	-Wno-reserved-id-macro
+	-Wno-reserved-id-macro \
+	-Wno-strict-prototypes
 
 TEST_LIBS = $(shell pkg-config --libs check)
 

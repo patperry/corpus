@@ -54,7 +54,7 @@ int corpus_ngram_init(struct corpus_ngram *ng, int length)
 	ng->weights = NULL;
 
 	n = ngram_nbuffer(length);
-	if (!(ng->buffer = corpus_malloc(n * sizeof(*ng->buffer)))) {
+	if (!(ng->buffer = corpus_malloc((size_t)n * sizeof(*ng->buffer)))) {
 		err = CORPUS_ERROR_NOMEM;
 		goto error_buffer;
 	}
@@ -100,7 +100,7 @@ int corpus_ngram_add(struct corpus_ngram *ng, int type_id, double weight)
 	nmax = ng->nbuffer_max;
 	if (n == nmax) {
 		memmove(ng->buffer, ng->buffer + (nmax + 1 - length),
-			(length - 1) * sizeof(*ng->buffer));
+			(size_t)(length - 1) * sizeof(*ng->buffer));
 		n = length - 1;
 	}
 	ng->buffer[n] = type_id;
@@ -131,7 +131,8 @@ int corpus_ngram_add(struct corpus_ngram *ng, int type_id, double weight)
 			if (size0 < size) {
 				weights = ng->weights;
 				weights = corpus_realloc(weights,
-						size * sizeof(*weights));
+						(size_t)size
+						* sizeof(*weights));
 				if (!weights) {
 					err = CORPUS_ERROR_NOMEM;
 					goto out;

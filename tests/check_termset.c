@@ -57,7 +57,7 @@ void init(void)
 int add(const char *str)
 {
 	int buf[32];
-	int i, n = strlen(str);
+	int i, n = (int)strlen(str);
 	int id;
 
 	for (i = 0; i < n; i++) {
@@ -75,7 +75,7 @@ int add(const char *str)
 int has(const char *str)
 {
 	int buf[32];
-	int i, n = strlen(str);
+	int i, n = (int)strlen(str);
 	int id, has;
 
 	for (i = 0; i < n; i++) {

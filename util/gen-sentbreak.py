@@ -170,9 +170,9 @@ for i in range(0,len(stage2)):
 print("};")
 
 print("")
-print("static int sent_break(uint32_t code)")
+print("static int sent_break(int32_t code)")
 print("{")
-print("\tconst uint32_t block_size = " + str(block_size) + ";")
+print("\tconst int32_t block_size = " + str(block_size) + ";")
 print("\t" + type1 + " i = sent_break_stage1[code / block_size];")
 print("\treturn sent_break_stage2[i][code % block_size];")
 print("}")

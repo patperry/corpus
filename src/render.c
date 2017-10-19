@@ -201,7 +201,7 @@ static void maybe_indent(struct corpus_render *r)
 }
 
 
-void corpus_render_char(struct corpus_render *r, uint32_t ch)
+void corpus_render_char(struct corpus_render *r, int32_t ch)
 {
 	char *end;
 	uint8_t *uend;

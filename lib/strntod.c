@@ -303,7 +303,7 @@ done:
 		*endPtr = (char *)p;
 	}
 
-	if (ldblFraction > DBL_MAX) {
+	if (ldblFraction > (long double)DBL_MAX) {
 		result = HUGE_VAL;
 		errno = ERANGE;
 	} else {

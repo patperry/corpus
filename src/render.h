@@ -158,7 +158,7 @@ void corpus_render_newlines(struct corpus_render *r, int nline);
  * \param r the render object
  * \param ch the character (UTF-32)
  */
-void corpus_render_char(struct corpus_render *r, uint32_t ch);
+void corpus_render_char(struct corpus_render *r, int32_t ch);
 
 /**
  * Render a string. If any render escape flags are set, filter

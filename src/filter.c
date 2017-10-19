@@ -238,7 +238,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 	size = f->combine.nnode_max;
 	if (size0 < size) {
 		rules = f->combine_rules;
-		rules = corpus_realloc(rules, size * sizeof(*rules));
+		rules = corpus_realloc(rules, (size_t)size * sizeof(*rules));
 		if (!rules) {
 			err = CORPUS_ERROR_NOMEM;
 			goto out;
@@ -532,7 +532,7 @@ int corpus_filter_unspace(struct corpus_filter *f, int *idptr)
 	const struct utf8lite_text *type;
 	struct utf8lite_text_iter it;
 	struct utf8lite_text unspace;
-	uint32_t ch;
+	int32_t ch;
 	size_t attr;
 	int err, id, in_space, needs_unspace, has_unspace, unspace_id;
 
@@ -739,7 +739,8 @@ int corpus_filter_grow_types(struct corpus_filter *f, int size)
 	struct corpus_filter_prop *props;
 	int err;
 
-	if (!(props = corpus_realloc(f->props, size * sizeof(*props)))) {
+	if (!(props = corpus_realloc(f->props,
+					(size_t)size * sizeof(*props)))) {
 		err = CORPUS_ERROR_NOMEM;
 		goto out;
 	}

@@ -19,12 +19,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 #include "../src/table.h"
-#include "../src/text.h"
 #include "../src/textset.h"
 #include "../src/tree.h"
 #include "../src/stem.h"
-#include "../src/typemap.h"
 #include "../src/symtab.h"
 #include "../src/wordscan.h"
 #include "../src/render.h"
@@ -40,10 +39,10 @@
 
 #define ID_EOT	  (-1)
 #define ID_DROP	  (-2)
-#define TYPE_EOT    ((const struct corpus_text *)&type_eot)
-#define TYPE_DROP   ((const struct corpus_text *)&type_drop)
+#define TYPE_EOT    ((const struct utf8lite_text *)&type_eot)
+#define TYPE_DROP   ((const struct utf8lite_text *)&type_drop)
 
-static struct corpus_text type_eot, type_drop;
+static struct utf8lite_text type_eot, type_drop;
 static struct corpus_filter filter;
 static int has_filter;
 static struct corpus_stem_snowball snowball;
@@ -80,8 +79,8 @@ static void init(const char *stem_alg, int flags)
 {
 	corpus_stem_func stemmer = NULL;
 	void *context = NULL;
-	int type_kind = (CORPUS_TYPE_MAPCASE | CORPUS_TYPE_MAPCOMPAT
-			 | CORPUS_TYPE_MAPQUOTE | CORPUS_TYPE_RMDI);
+	int type_kind = (UTF8LITE_TEXTMAP_CASE | UTF8LITE_TEXTMAP_COMPAT
+			 | UTF8LITE_TEXTMAP_QUOTE | UTF8LITE_TEXTMAP_RMDI);
 
 	ck_assert(!has_snowball);
 	if (stem_alg) {
@@ -99,18 +98,18 @@ static void init(const char *stem_alg, int flags)
 }
 
 
-static void start(const struct corpus_text *text)
+static void start(const struct utf8lite_text *text)
 {
 	ck_assert(!corpus_filter_start(&filter, text));
 }
 
 
-static void combine(const struct corpus_text *text)
+static void combine(const struct utf8lite_text *text)
 {
 	ck_assert(!corpus_filter_combine(&filter, text));
 }
 
-static void drop(const struct corpus_text *text)
+static void drop(const struct utf8lite_text *text)
 {
 	ck_assert(!corpus_filter_drop(&filter, text));
 }
@@ -135,7 +134,7 @@ static int next_id(void)
 }
 
 
-static const struct corpus_text *next_type(void)
+static const struct utf8lite_text *next_type(void)
 {
 	int type_id = next_id();
 
@@ -150,7 +149,7 @@ static const struct corpus_text *next_type(void)
 }
 
 
-static const struct corpus_text *token(void)
+static const struct utf8lite_text *token(void)
 {
 	return &filter.current;
 }

@@ -19,8 +19,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 #include "../src/table.h"
-#include "../src/text.h"
 #include "../src/tree.h"
 #include "../src/sentscan.h"
 #include "../src/sentfilter.h"
@@ -29,10 +29,10 @@
 #define STRICT CORPUS_SENTSCAN_STRICT
 #define SPCRLF CORPUS_SENTSCAN_SPCRLF
 
-#define SENT_EOT ((const struct corpus_text *)&sent_eot)
+#define SENT_EOT ((const struct utf8lite_text *)&sent_eot)
 
 static struct corpus_sentfilter sentfilter;
-static struct corpus_text sent_eot;
+static struct utf8lite_text sent_eot;
 static int has_sentfilter;
 
 
@@ -72,20 +72,20 @@ static void clear(void)
 }
 
 
-static void suppress(const struct corpus_text *pattern)
+static void suppress(const struct utf8lite_text *pattern)
 {
 	ck_assert(has_sentfilter);
 	ck_assert(!corpus_sentfilter_suppress(&sentfilter, pattern));
 }
 
 
-static void start(const struct corpus_text *text)
+static void start(const struct utf8lite_text *text)
 {
 	ck_assert(!corpus_sentfilter_start(&sentfilter, text));
 }
 
 
-static const struct corpus_text *next(void)
+static const struct utf8lite_text *next(void)
 {
 	int has = corpus_sentfilter_advance(&sentfilter);
 
@@ -234,8 +234,8 @@ START_TEST(test_suppress_cldr)
 {
 	const char *name, **names = corpus_sentsuppress_names();
 	const uint8_t *supp, **list;
-	const struct corpus_text *sent;
-	struct corpus_text text;
+	const struct utf8lite_text *sent;
+	struct utf8lite_text text;
 	size_t size;
 	uint8_t *ptr;
 	uint8_t buffer[128];
@@ -252,18 +252,20 @@ START_TEST(test_suppress_cldr)
 			ptr = buffer;
 			size = strlen((const char *)supp);
 			memcpy(ptr, supp, size);
-			ck_assert(!corpus_text_assign(&text, buffer, size, 0));
+			ck_assert(!utf8lite_text_assign(&text, buffer, size, 0,
+						        NULL));
 			suppress(&text);
 
 			// test the rule
 			ptr[size++] = ' ';
 			ptr[size++] = 'A';
 			ptr[size] = '\0';
-			ck_assert(!corpus_text_assign(&text, buffer, size, 0));
+			ck_assert(!utf8lite_text_assign(&text, buffer, size, 0,
+						        NULL));
 			
 			start(&text);
 			sent = next();
-			if (!corpus_text_equals(sent, &text)) {
+			if (!utf8lite_text_equals(sent, &text)) {
 				printf("failed (%s): %s\n", name, supp);
 				nfail++;
 			} else {
@@ -281,7 +283,7 @@ START_TEST(test_suppress_cldr_crlf)
 {
 	const char *name, **names = corpus_sentsuppress_names();
 	const uint8_t *supp, **list;
-	struct corpus_text text;
+	struct utf8lite_text text;
 	size_t size;
 	uint8_t *ptr;
 	uint8_t buffer[128];
@@ -297,7 +299,8 @@ START_TEST(test_suppress_cldr_crlf)
 			ptr = buffer;
 			size = strlen((const char *)supp);
 			memcpy(ptr, supp, size);
-			ck_assert(!corpus_text_assign(&text, buffer, size, 0));
+			ck_assert(!utf8lite_text_assign(&text, buffer, size, 0,
+						        NULL));
 			suppress(&text);
 
 			// test the rule
@@ -305,7 +308,8 @@ START_TEST(test_suppress_cldr_crlf)
 			ptr[size++] = '\n';
 			ptr[size++] = 'A';
 			ptr[size] = '\0';
-			ck_assert(!corpus_text_assign(&text, buffer, size, 0));
+			ck_assert(!utf8lite_text_assign(&text, buffer, size, 0,
+						        NULL));
 			start(&text);
 			assert_text_eq(next(), &text);
 			assert_text_eq(next(), SENT_EOT);

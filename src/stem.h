@@ -44,7 +44,7 @@ struct corpus_stem {
 	struct corpus_textset excepts;
 	corpus_stem_func stemmer;
 	void *context;
-	struct corpus_text type;
+	struct utf8lite_text type;
 	int has_type;
 };
 
@@ -58,8 +58,8 @@ struct corpus_stem_snowball {
 int corpus_stem_init(struct corpus_stem *stem, corpus_stem_func stemmer,
 		     void *context);
 void corpus_stem_destroy(struct corpus_stem *stem);
-int corpus_stem_set(struct corpus_stem *stem, const struct corpus_text *tok);
-int corpus_stem_except(struct corpus_stem *stem, const struct corpus_text *tok);
+int corpus_stem_set(struct corpus_stem *stem, const struct utf8lite_text *tok);
+int corpus_stem_except(struct corpus_stem *stem, const struct utf8lite_text *tok);
 
 
 /**

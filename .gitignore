@@ -14,9 +14,8 @@ xcuserdata
 /tests/check_sentfilter
 /tests/check_sentscan
 /tests/check_stem
+/tests/check_stopword
 /tests/check_symtab
 /tests/check_termset
-/tests/check_text
 /tests/check_tree
-/tests/check_typemap
 /tests/check_wordscan

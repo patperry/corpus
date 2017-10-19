@@ -22,14 +22,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 
 #include "error.h"
 #include "filebuf.h"
 #include "table.h"
-#include "text.h"
 #include "textset.h"
 #include "stem.h"
-#include "typemap.h"
 #include "symtab.h"
 #include "datatype.h"
 #include "data.h"
@@ -61,7 +60,7 @@ int main_sentences(int argc, char * const argv[])
 {
 	struct corpus_sentscan scan;
 	struct corpus_data data, val;
-	struct corpus_text name, text;
+	struct utf8lite_text name, text;
 	struct corpus_schema schema;
 	struct corpus_filebuf buf;
 	struct corpus_filebuf_iter it;
@@ -112,7 +111,8 @@ int main_sentences(int argc, char * const argv[])
 
 	input = argv[0];
 
-	if (corpus_text_assign(&name, (const uint8_t *)field, field_len, 0)) {
+	if (utf8lite_text_assign(&name, (const uint8_t *)field, field_len, 0,
+				 NULL)) {
 		fprintf(stderr, "Invalid field name (%s)\n", field);
 		return EXIT_FAILURE;
 	}
@@ -168,7 +168,7 @@ int main_sentences(int argc, char * const argv[])
 			}
 
 			fprintf(stream, "\"%.*s\"",
-				(int)CORPUS_TEXT_SIZE(&scan.current),
+				(int)UTF8LITE_TEXT_SIZE(&scan.current),
 				(char *)scan.current.ptr);
 		}
 		fprintf(stream, "]\n");

@@ -23,11 +23,9 @@
 #include "memory.h"
 #include "render.h"
 #include "table.h"
-#include "text.h"
 #include "textset.h"
 #include "tree.h"
 #include "stem.h"
-#include "typemap.h"
 #include "symtab.h"
 #include "wordscan.h"
 #include "filter.h"
@@ -46,7 +44,7 @@
 struct corpus_filter_state {
 	int has_scan;
 	struct corpus_wordscan scan;
-	struct corpus_text current;
+	struct utf8lite_text current;
 	int type_id;
 };
 
@@ -63,7 +61,7 @@ static int corpus_filter_unspace(struct corpus_filter *f, int *idptr);
 
 static int corpus_filter_grow_types(struct corpus_filter *f, int size);
 static int corpus_filter_get_drop(const struct corpus_filter *f, int kind);
-static int corpus_type_kind(const struct corpus_text *type);
+static int corpus_type_kind(const struct utf8lite_text *type);
 
 
 int corpus_filter_init(struct corpus_filter *f, int flags, int type_kind,
@@ -134,7 +132,7 @@ void corpus_filter_destroy(struct corpus_filter *f)
 
 
 int corpus_filter_stem_except(struct corpus_filter *f,
-			      const struct corpus_text *typ)
+			      const struct utf8lite_text *typ)
 {
 	int err;
 
@@ -154,10 +152,10 @@ int corpus_filter_stem_except(struct corpus_filter *f,
 
 
 int corpus_filter_combine(struct corpus_filter *f,
-			  const struct corpus_text *tokens)
+			  const struct utf8lite_text *tokens)
 {
 	struct corpus_filter_state state;
-	struct corpus_text rule;
+	struct utf8lite_text rule;
 	int *rules;
 	int err, word_id, next_id, node_id, nnode0, nnode, parent_id,
 	    size0, size, has_space, type_id = CORPUS_TYPE_NONE;
@@ -257,9 +255,9 @@ int corpus_filter_combine(struct corpus_filter *f,
 
 	if (node_id != CORPUS_TREE_NONE) {
 		// add a new type for the combined type
-		corpus_text_assign(&rule, (const uint8_t *)f->render.string,
-				   (size_t)f->render.length,
-				   CORPUS_TEXT_VALID);
+		utf8lite_text_assign(&rule, (const uint8_t *)f->render.string,
+				     (size_t)f->render.length,
+				     UTF8LITE_TEXT_VALID, NULL);
 		if ((err = corpus_filter_add_type(f, &rule, &type_id))) {
 			goto out;
 		}
@@ -281,7 +279,7 @@ out:
 
 
 int corpus_filter_drop(struct corpus_filter *f,
-		       const struct corpus_text *type)
+		       const struct utf8lite_text *type)
 {
 	int err, type_id;
 
@@ -307,7 +305,7 @@ out:
 
 
 int corpus_filter_drop_except(struct corpus_filter *f,
-			      const struct corpus_text *type)
+			      const struct utf8lite_text *type)
 {
 	int err, type_id;
 
@@ -333,7 +331,7 @@ out:
 
 
 int corpus_filter_start(struct corpus_filter *f,
-			const struct corpus_text *text)
+			const struct utf8lite_text *text)
 {
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
@@ -393,7 +391,7 @@ out:
 int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 {
 	struct corpus_wordscan scan;
-	struct corpus_text current;
+	struct utf8lite_text current;
 	size_t attr, size;
 	int err, has_scan, id, type_id, node_id, parent_id, in_space;
 
@@ -418,14 +416,14 @@ int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 		id = f->combine_rules[node_id];
 	}
 
-	size = CORPUS_TEXT_SIZE(&current);
-	attr = CORPUS_TEXT_BITS(&current);
+	size = UTF8LITE_TEXT_SIZE(&current);
+	attr = UTF8LITE_TEXT_BITS(&current);
 	type_id = CORPUS_TYPE_NONE;
 	in_space = 0;
 
 	while (corpus_filter_advance_word(f, &type_id)) {
-		size += CORPUS_TEXT_SIZE(&f->scan.current);
-		attr |= CORPUS_TEXT_BITS(&f->scan.current);
+		size += UTF8LITE_TEXT_SIZE(&f->scan.current);
+		attr |= UTF8LITE_TEXT_BITS(&f->scan.current);
 
 		if (type_id == CORPUS_TYPE_NONE) {
 			if (in_space) {
@@ -483,7 +481,7 @@ out:
 
 int corpus_filter_stem(struct corpus_filter *f, int *idptr)
 {
-	const struct corpus_text *tok;
+	const struct utf8lite_text *tok;
 	int err, id, has_stem, stem_id;
 
 	if (!f->has_stemmer) {
@@ -506,7 +504,7 @@ int corpus_filter_stem(struct corpus_filter *f, int *idptr)
 		goto out;
 	}
 
-	if (f->stemmer.has_type && CORPUS_TEXT_SIZE(&f->stemmer.type) > 0) {
+	if (f->stemmer.has_type && UTF8LITE_TEXT_SIZE(&f->stemmer.type) > 0) {
 		// add the type
 		if ((err = corpus_filter_add_type(f, &f->stemmer.type,
 						  &stem_id))) {
@@ -531,9 +529,9 @@ out:
 
 int corpus_filter_unspace(struct corpus_filter *f, int *idptr)
 {
-	const struct corpus_text *type;
-	struct corpus_text_iter it;
-	struct corpus_text unspace;
+	const struct utf8lite_text *type;
+	struct utf8lite_text_iter it;
+	struct utf8lite_text unspace;
 	uint32_t ch;
 	size_t attr;
 	int err, id, in_space, needs_unspace, has_unspace, unspace_id;
@@ -552,8 +550,8 @@ int corpus_filter_unspace(struct corpus_filter *f, int *idptr)
 
 	// see whether the type contains a space
 	needs_unspace = 0;
-	corpus_text_iter_make(&it, type);
-	while (corpus_text_iter_advance(&it)) {
+	utf8lite_text_iter_make(&it, type);
+	while (utf8lite_text_iter_advance(&it)) {
 		ch = it.current;
 		if (utf8lite_isspace(ch)) {
 			needs_unspace = 1;
@@ -569,10 +567,10 @@ int corpus_filter_unspace(struct corpus_filter *f, int *idptr)
 
 	// replace sequences of spaces with connectors
 	in_space = 0;
-	attr = UTF8LITE_IS_ASCII(f->connector) ? 0 : CORPUS_TEXT_UTF8_BIT;
-	corpus_text_iter_make(&it, type);
+	attr = UTF8LITE_IS_ASCII(f->connector) ? 0 : UTF8LITE_TEXT_UTF8_BIT;
+	utf8lite_text_iter_make(&it, type);
 
-	while (corpus_text_iter_advance(&it)) {
+	while (utf8lite_text_iter_advance(&it)) {
 		ch = it.current;
 		if (utf8lite_isspace(ch)) {
 			// only render one connector for a string of spaces
@@ -618,7 +616,7 @@ out:
 
 int corpus_filter_advance_word(struct corpus_filter *f, int *idptr)
 {
-	const struct corpus_text *token, *type;
+	const struct utf8lite_text *token, *type;
 	int err, kind, token_id, n0, n, size0, size, type_id, drop, ret;
 
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
@@ -692,7 +690,7 @@ out:
 
 
 int corpus_filter_add_type(struct corpus_filter *f,
-			   const struct corpus_text *type, int *idptr)
+			   const struct utf8lite_text *type, int *idptr)
 {
 	int err, id, kind, nsym0, nsym, size0, size;
 
@@ -788,7 +786,7 @@ int corpus_filter_get_drop(const struct corpus_filter *f, int kind)
 }
 
 
-int corpus_type_kind(const struct corpus_text *type)
+int corpus_type_kind(const struct utf8lite_text *type)
 {
 	struct corpus_wordscan scan;
 	int kind;

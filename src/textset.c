@@ -15,11 +15,11 @@
  */
 
 #include <stddef.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 #include "array.h"
 #include "error.h"
 #include "memory.h"
 #include "table.h"
-#include "text.h"
 #include "textset.h"
 
 static void corpus_textset_rehash(struct corpus_textset *set);
@@ -60,7 +60,7 @@ void corpus_textset_clear(struct corpus_textset *set)
 	int nitem = set->nitem;
 
 	while (nitem-- > 0) {
-		corpus_text_destroy(&set->items[nitem]);
+		utf8lite_text_destroy(&set->items[nitem]);
 	}
 	set->nitem = 0;
 
@@ -69,7 +69,7 @@ void corpus_textset_clear(struct corpus_textset *set)
 
 
 int corpus_textset_add(struct corpus_textset *set,
-		       const struct corpus_text *text, int *idptr)
+		       const struct utf8lite_text *text, int *idptr)
 {
 	int pos, id;
 	int rehash = 0;
@@ -96,7 +96,7 @@ int corpus_textset_add(struct corpus_textset *set,
 		}
 
 		// initialize the new item
-		if ((err = corpus_text_init_copy(&set->items[id], text))) {
+		if ((err = utf8lite_text_init_copy(&set->items[id], text))) {
 			goto error;
 		}
 
@@ -127,18 +127,18 @@ error:
 
 
 int corpus_textset_has(const struct corpus_textset *set,
-		       const struct corpus_text *text, int *idptr)
+		       const struct utf8lite_text *text, int *idptr)
 {
 
 	struct corpus_table_probe probe;
-	unsigned hash = corpus_text_hash(text);
+	unsigned hash = utf8lite_text_hash(text);
 	int id = -1;
 	int found = 0;
 
 	corpus_table_probe_make(&probe, &set->table, hash);
 	while (corpus_table_probe_advance(&probe)) {
 		id = probe.current;
-		if (corpus_text_equals(text, &set->items[id])) {
+		if (utf8lite_text_equals(text, &set->items[id])) {
 			found = 1;
 			goto out;
 		}
@@ -155,7 +155,7 @@ out:
 
 void corpus_textset_rehash(struct corpus_textset *set)
 {
-	const struct corpus_text *items = set->items;
+	const struct utf8lite_text *items = set->items;
 	struct corpus_table *table = &set->table;
 	int i, n = set->nitem;
 	unsigned hash;
@@ -163,7 +163,7 @@ void corpus_textset_rehash(struct corpus_textset *set)
 	corpus_table_clear(table);
 
 	for (i = 0; i < n; i++) {
-		hash = corpus_text_hash(&items[i]);
+		hash = utf8lite_text_hash(&items[i]);
 		corpus_table_add(table, hash, i);
 	}
 }

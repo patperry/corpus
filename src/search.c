@@ -16,15 +16,14 @@
 
 #include <stddef.h>
 #include <string.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 #include "error.h"
 #include "memory.h"
 #include "table.h"
 #include "tree.h"
-#include "text.h"
 #include "textset.h"
 #include "termset.h"
 #include "stem.h"
-#include "typemap.h"
 #include "symtab.h"
 #include "wordscan.h"
 #include "render.h"
@@ -46,9 +45,9 @@ static void buffer_destroy(struct corpus_search_buffer *buffer);
 static void buffer_clear(struct corpus_search_buffer *buffer);
 static int buffer_reserve(struct corpus_search_buffer *buffer, int size);
 static void buffer_ignore(struct corpus_search_buffer *buffer,
-		          const struct corpus_text *text);
+		          const struct utf8lite_text *text);
 static void buffer_push(struct corpus_search_buffer *buffer, int type_id,
-		        const struct corpus_text *token);
+		        const struct utf8lite_text *token);
 static int buffer_advance(struct corpus_search_buffer *buffer,
 			  struct corpus_filter *filter);
 
@@ -125,7 +124,7 @@ int corpus_search_has(const struct corpus_search *search,
 
 
 int corpus_search_start(struct corpus_search *search,
-			const struct corpus_text *text,
+			const struct utf8lite_text *text,
 			struct corpus_filter *filter)
 {
 	int err;
@@ -159,8 +158,8 @@ out:
 
 int corpus_search_advance(struct corpus_search *search)
 {
-	const struct corpus_text *tokens;
-	struct corpus_text token;
+	const struct utf8lite_text *tokens;
+	struct utf8lite_text token;
 	const int *type_ids;
 	int err, length, i, off, nbuf, term_id;
 
@@ -188,9 +187,9 @@ int corpus_search_advance(struct corpus_search *search)
 				token = tokens[0];
 				for (i = 1; i < length; i++) {
 					token.attr +=
-						CORPUS_TEXT_SIZE(&tokens[i]);
+						UTF8LITE_TEXT_SIZE(&tokens[i]);
 					token.attr |=
-						CORPUS_TEXT_BITS(&tokens[i]);
+						UTF8LITE_TEXT_BITS(&tokens[i]);
 				}
 				search->current = token;
 
@@ -239,7 +238,7 @@ void buffer_clear(struct corpus_search_buffer *buffer)
 
 int buffer_reserve(struct corpus_search_buffer *buffer, int size)
 {
-	struct corpus_text *tokens;
+	struct utf8lite_text *tokens;
 	int *type_ids;
 	int err;
 
@@ -275,7 +274,7 @@ out:
 int buffer_advance(struct corpus_search_buffer *buffer,
 		   struct corpus_filter *filter)
 {
-	const struct corpus_text *current;
+	const struct utf8lite_text *current;
 	int type_id;
 
 	while (corpus_filter_advance(filter)) {
@@ -297,19 +296,19 @@ int buffer_advance(struct corpus_search_buffer *buffer,
 
 
 void buffer_ignore(struct corpus_search_buffer *buffer,
-		   const struct corpus_text *text)
+		   const struct utf8lite_text *text)
 {
 	if (buffer->size == 0) {
 		return;
 	}
 
-	buffer->tokens[buffer->size - 1].attr |= CORPUS_TEXT_BITS(text);
-	buffer->tokens[buffer->size - 1].attr += CORPUS_TEXT_SIZE(text);
+	buffer->tokens[buffer->size - 1].attr |= UTF8LITE_TEXT_BITS(text);
+	buffer->tokens[buffer->size - 1].attr += UTF8LITE_TEXT_SIZE(text);
 }
 
 
 void buffer_push(struct corpus_search_buffer *buffer, int type_id,
-		 const struct corpus_text *token)
+		 const struct utf8lite_text *token)
 {
 	int n = buffer->size;
 

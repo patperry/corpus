@@ -26,7 +26,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-struct corpus_text;
+struct utf8lite_text;
 
 /**
  * Values specifying render escape behavior. This allows replacing
@@ -177,7 +177,7 @@ void corpus_render_string(struct corpus_render *r, const char *str);
  * \param format the format string
  */
 void corpus_render_printf(struct corpus_render *r, const char *format, ...)
-#if (defined(_WIN32) || defined(_WIN64))
+#if defined(_MSC_VER)
 	;
 #else
 	__attribute__ ((format (printf, 2, 3)));
@@ -191,6 +191,6 @@ void corpus_render_printf(struct corpus_render *r, const char *format, ...)
  * \param text the text object
  */
 void corpus_render_text(struct corpus_render *r,
-			const struct corpus_text *text);
+			const struct utf8lite_text *text);
 
 #endif /* CORPUS_RENDER_H */

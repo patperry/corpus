@@ -22,14 +22,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 
 #include "error.h"
 #include "filebuf.h"
 #include "table.h"
-#include "text.h"
 #include "textset.h"
 #include "stem.h"
-#include "typemap.h"
 #include "symtab.h"
 #include "datatype.h"
 #include "data.h"
@@ -57,7 +56,7 @@ Options:\n\
 int main_get(int argc, char * const argv[])
 {
 	struct corpus_data data, val;
-	struct corpus_text name;
+	struct utf8lite_text name;
 	struct corpus_schema schema;
 	struct corpus_filebuf buf;
 	struct corpus_filebuf_iter it;
@@ -104,7 +103,8 @@ int main_get(int argc, char * const argv[])
 		field_len -= 2;
 	}
 
-	if (corpus_text_assign(&name, (const uint8_t *)field, field_len, 0)) {
+	if (utf8lite_text_assign(&name, (const uint8_t *)field, field_len, 0,
+				 NULL)) {
 		fprintf(stderr, "Invalid field name (%s)\n", field);
 		return EXIT_FAILURE;
 	}

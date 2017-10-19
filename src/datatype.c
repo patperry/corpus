@@ -20,15 +20,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 #include "array.h"
 #include "error.h"
 #include "memory.h"
 #include "render.h"
 #include "table.h"
-#include "text.h"
 #include "textset.h"
 #include "stem.h"
-#include "typemap.h"
 #include "symtab.h"
 #include "data.h"
 #include "datatype.h"
@@ -75,7 +74,7 @@ static int scan_null(const uint8_t **bufptr, const uint8_t *end);
 static int scan_false(const uint8_t **bufptr, const uint8_t *end);
 static int scan_true(const uint8_t **bufptr, const uint8_t *end);
 static int scan_text(const uint8_t **bufptr, const uint8_t *end,
-		     struct corpus_text *text);
+		     struct utf8lite_text *text);
 static int scan_numeric(const uint8_t **bufptr, const uint8_t *end,
 			int *idptr);
 static int scan_infinity(const uint8_t **bufptr, const uint8_t *end);
@@ -304,7 +303,7 @@ void corpus_schema_clear(struct corpus_schema *s)
 
 
 int corpus_schema_name(struct corpus_schema *s,
-		       const struct corpus_text *name, int *idptr)
+		       const struct utf8lite_text *name, int *idptr)
 {
 	int tokid, id;
 	int err;
@@ -604,7 +603,7 @@ sorted:
 error_duplicate:
 	err = CORPUS_ERROR_INVAL;
 	corpus_log(err, "duplicate field name \"%.*s\" in record",
-		   (int)CORPUS_TEXT_SIZE(&s->names.types[name_ids[index]].text),
+		   (int)UTF8LITE_TEXT_SIZE(&s->names.types[name_ids[index]].text),
 		   s->names.types[name_ids[index]].text.ptr);
 	goto error;
 
@@ -870,7 +869,7 @@ int corpus_schema_grow_types(struct corpus_schema *s, int nadd)
 void corpus_render_datatype(struct corpus_render *r,
 			    const struct corpus_schema *s, int id)
 {
-	const struct corpus_text *name;
+	const struct utf8lite_text *name;
 	const struct corpus_datatype *t;
 	int name_id, type_id;
 	int i, n;
@@ -986,7 +985,7 @@ error_init:
 int corpus_schema_scan(struct corpus_schema *s, const uint8_t *ptr,
 		       size_t size, int *idptr)
 {
-	struct corpus_text text;
+	struct utf8lite_text text;
 	const uint8_t *input = ptr;
 	const uint8_t *end = ptr + size;
 	uint_fast8_t ch;
@@ -1080,7 +1079,7 @@ out:
 int scan_value(struct corpus_schema *s, const uint8_t **bufptr,
 	       const uint8_t *end, int *idptr)
 {
-	struct corpus_text text;
+	struct utf8lite_text text;
 	const uint8_t *ptr = *bufptr;
 	uint_fast8_t ch;
 	int err, id;
@@ -1368,7 +1367,7 @@ out:
 int scan_field(struct corpus_schema *s, const uint8_t **bufptr,
 	       const uint8_t *end, int *name_idptr, int *type_idptr)
 {
-	struct corpus_text name;
+	struct utf8lite_text name;
 	const uint8_t *ptr = *bufptr;
 	int err, name_id, type_id;
 
@@ -1413,19 +1412,19 @@ error_inval_noname:
 error_inval_nocolon:
 	err = CORPUS_ERROR_INVAL;
 	corpus_log(err, "missing colon after field name \"%.*s\" in record",
-		   (unsigned)CORPUS_TEXT_SIZE(&name), name.ptr);
+		   (unsigned)UTF8LITE_TEXT_SIZE(&name), name.ptr);
 	goto error;
 
 error_inval_noval:
 	err = CORPUS_ERROR_INVAL;
 	corpus_log(err, "missing value for field \"%.*s\" in record",
-		   (unsigned)CORPUS_TEXT_SIZE(&name), name.ptr);
+		   (unsigned)UTF8LITE_TEXT_SIZE(&name), name.ptr);
 	goto error;
 
 error_inval_val:
 	err = CORPUS_ERROR_INVAL;
 	corpus_log(err, "failed parsing value for field \"%.*s\" in record",
-		   (unsigned)CORPUS_TEXT_SIZE(&name), name.ptr);
+		   (unsigned)UTF8LITE_TEXT_SIZE(&name), name.ptr);
 	goto error;
 
 error:
@@ -1594,8 +1593,9 @@ int scan_infinity(const uint8_t **bufptr, const uint8_t *end)
 
 
 int scan_text(const uint8_t **bufptr, const uint8_t *end,
-	      struct corpus_text *text)
+	      struct utf8lite_text *text)
 {
+	struct utf8lite_message msg;
 	const uint8_t *input = *bufptr;
 	const uint8_t *ptr = input;
 	uint_fast8_t ch;
@@ -1607,7 +1607,7 @@ int scan_text(const uint8_t **bufptr, const uint8_t *end,
 		if (ch == '"') {
 			goto close;
 		} else if (ch == '\\') {
-			flags = CORPUS_TEXT_UNESCAPE;
+			flags = UTF8LITE_TEXT_UNESCAPE;
 			if (ptr == end) {
 				goto error_noclose;
 			}
@@ -1622,9 +1622,10 @@ error_noclose:
 	goto out;
 
 close:
-	if ((err = corpus_text_assign(text, input, (size_t)(ptr - input),
-				      flags))) {
+	if ((err = utf8lite_text_assign(text, input, (size_t)(ptr - input),
+					flags, &msg))) {
 		err = CORPUS_ERROR_INVAL;
+		corpus_log(err, "invalid JSON string: %s", msg.string);
 		goto out;
 	}
 

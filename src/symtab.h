@@ -33,7 +33,7 @@
  * Symbol table token.
  */
 struct corpus_symtab_token {
-	struct corpus_text text;/**< the token text */
+	struct utf8lite_text text;/**< the token text */
 	int type_id;		/**< the ID of the token's type */
 };
 
@@ -41,7 +41,7 @@ struct corpus_symtab_token {
  * Symbol table type.
  */
 struct corpus_symtab_type {
-	struct corpus_text text;/**< the type text */
+	struct utf8lite_text text;/**< the type text */
 	int *token_ids;		/**< the IDs of the tokens in the type */
 	int ntoken;		/**< the number of tokens in the type */
 };
@@ -50,7 +50,7 @@ struct corpus_symtab_type {
  * Symbol table.
  */
 struct corpus_symtab {
-	struct corpus_typemap typemap;	/**< type map, for normalizing
+	struct utf8lite_textmap typemap;/**< type map, for normalizing
 					  tokens to types */
 	struct corpus_table type_table;	/**< type hash table */
 	struct corpus_table token_table;/**< token hash table */
@@ -99,7 +99,7 @@ void corpus_symtab_clear(struct corpus_symtab *tab);
  * \returns 0 on success
  */
 int corpus_symtab_add_token(struct corpus_symtab *tab,
-			    const struct corpus_text *tok, int *idptr);
+			    const struct utf8lite_text *tok, int *idptr);
 
 /**
  * Add a type to a symbol table if it does not already exist there, and
@@ -112,7 +112,7 @@ int corpus_symtab_add_token(struct corpus_symtab *tab,
  * \returns 0 on success
  */
 int corpus_symtab_add_type(struct corpus_symtab *tab,
-			   const struct corpus_text *typ, int *idptr);
+			   const struct utf8lite_text *typ, int *idptr);
 
 /**
  * Query whether a token exists in a symbol table.
@@ -124,7 +124,7 @@ int corpus_symtab_add_type(struct corpus_symtab *tab,
  * \returns non-zero if the token exists in the table; zero otherwise
  */
 int corpus_symtab_has_token(const struct corpus_symtab *tab,
-			    const struct corpus_text *tok, int *idptr);
+			    const struct utf8lite_text *tok, int *idptr);
 
 /**
  * Query whether a type exists in a symbol table.
@@ -136,6 +136,6 @@ int corpus_symtab_has_token(const struct corpus_symtab *tab,
  * \returns non-zero if the type exists in the table; zero otherwise
  */
 int corpus_symtab_has_type(const struct corpus_symtab *tab,
-			   const struct corpus_text *typ, int *idptr);
+			   const struct utf8lite_text *typ, int *idptr);
 
 #endif /* CORPUS_SYMTAB_H */

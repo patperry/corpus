@@ -20,12 +20,11 @@
 #include <inttypes.h>
 #include <math.h>
 #include <stdlib.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 #include "error.h"
 #include "table.h"
-#include "text.h"
 #include "textset.h"
 #include "stem.h"
-#include "typemap.h"
 #include "symtab.h"
 #include "datatype.h"
 #include "data.h"
@@ -187,9 +186,9 @@ out:
 }
 
 
-int corpus_data_text(const struct corpus_data *d, struct corpus_text *valptr)
+int corpus_data_text(const struct corpus_data *d, struct utf8lite_text *valptr)
 {
-	struct corpus_text val;
+	struct utf8lite_text val;
 	const uint8_t *ptr;
 	const uint8_t *end;
 	int err;
@@ -210,8 +209,8 @@ int corpus_data_text(const struct corpus_data *d, struct corpus_text *valptr)
 		end--;
 	}
 
-	err = corpus_text_assign(&val, ptr, (size_t)(end - ptr),
-				 CORPUS_TEXT_VALID | CORPUS_TEXT_UNESCAPE);
+	err = utf8lite_text_assign(&val, ptr, (size_t)(end - ptr),
+			UTF8LITE_TEXT_VALID | UTF8LITE_TEXT_UNESCAPE, NULL);
 	goto out;
 
 nullval:
@@ -353,7 +352,7 @@ static int compare_int(const void *x1, const void *x2)
 
 int corpus_data_fields_advance(struct corpus_data_fields *it)
 {
-	struct corpus_text name;
+	struct utf8lite_text name;
 	const uint8_t *begin;
 	const uint8_t *ptr;
 	const uint8_t *end;
@@ -387,13 +386,13 @@ int corpus_data_fields_advance(struct corpus_data_fields *it)
 	flags = 0;
 	while (*ptr != '"') {
 		if (*ptr == '\\') {
-			flags = CORPUS_TEXT_UNESCAPE;
+			flags = UTF8LITE_TEXT_UNESCAPE;
 			ptr++;
 		}
 		ptr++;
 	}
-	corpus_text_assign(&name, begin, (size_t)(ptr - begin),
-			   flags | CORPUS_TEXT_VALID);
+	utf8lite_text_assign(&name, begin, (size_t)(ptr - begin),
+			     flags | UTF8LITE_TEXT_VALID, NULL);
 
 	// the call to schema_name always succeeds and does not
 	// create a new name, because the field name already
@@ -601,7 +600,7 @@ int corpus_data_field(const struct corpus_data *d,
 	const uint8_t *begin;
 	const uint8_t *ptr = d->ptr;
 	const int *idptr;
-	struct corpus_text name;
+	struct utf8lite_text name;
 	int err, flags, id, type_id;
 
 	if (d->type_id < 0
@@ -637,13 +636,13 @@ int corpus_data_field(const struct corpus_data *d,
 		flags = 0;
 		while (*ptr != '"') {
 			if (*ptr == '\\') {
-				flags = CORPUS_TEXT_UNESCAPE;
+				flags = UTF8LITE_TEXT_UNESCAPE;
 				ptr++;
 			}
 			ptr++;
 		}
-		corpus_text_assign(&name, begin, (size_t)(ptr - begin),
-				   flags | CORPUS_TEXT_VALID);
+		utf8lite_text_assign(&name, begin, (size_t)(ptr - begin),
+				flags | UTF8LITE_TEXT_VALID, NULL);
 
 		// the call to schema_name always succeeds and does not
 		// create a new name, because the field name already

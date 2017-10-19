@@ -17,16 +17,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <check.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 #include "../src/table.h"
-#include "../src/text.h"
 #include "../src/textset.h"
 #include "../src/stem.h"
 #include "testutil.h"
 
 
-struct corpus_text *stem(const struct corpus_text *tok, const char *alg)
+struct utf8lite_text *stem(const struct utf8lite_text *tok, const char *alg)
 {
-	struct corpus_text *typ;
+	struct utf8lite_text *typ;
 	struct corpus_stem stem;
 	struct corpus_stem_snowball sb;
 	size_t size;
@@ -38,7 +38,7 @@ struct corpus_text *stem(const struct corpus_text *tok, const char *alg)
 	if (!stem.has_type) {
 		typ = NULL;
 	} else {
-		size = CORPUS_TEXT_SIZE(&stem.type);
+		size = UTF8LITE_TEXT_SIZE(&stem.type);
 		typ = alloc(sizeof(*typ));
 		typ->ptr = alloc(size + 1);
 		memcpy(typ->ptr, stem.type.ptr, size);
@@ -53,7 +53,7 @@ struct corpus_text *stem(const struct corpus_text *tok, const char *alg)
 }
 
 
-struct corpus_text *stem_en(const struct corpus_text *tok)
+struct utf8lite_text *stem_en(const struct utf8lite_text *tok)
 {
 	return stem(tok, "english");
 }

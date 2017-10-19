@@ -143,7 +143,7 @@ void corpus_schema_clear(struct corpus_schema *s);
  * \returns 0 on success
  */
 int corpus_schema_name(struct corpus_schema *s,
-		       const struct corpus_text *name, int *idptr);
+		       const struct utf8lite_text *name, int *idptr);
 
 /**
  * Create a new array type, or get the type's ID if it already exists.

@@ -22,14 +22,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 
 #include "error.h"
 #include "filebuf.h"
 #include "table.h"
-#include "text.h"
 #include "textset.h"
 #include "stem.h"
-#include "typemap.h"
 #include "symtab.h"
 #include "datatype.h"
 #include "data.h"

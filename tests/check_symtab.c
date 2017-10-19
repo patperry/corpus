@@ -18,10 +18,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <check.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 #include "../src/table.h"
-#include "../src/text.h"
 #include "../src/textset.h"
-#include "../src/typemap.h"
 #include "../src/symtab.h"
 #include "testutil.h"
 
@@ -31,9 +30,9 @@ struct corpus_symtab tab;
 void setup_empty_symtab(void)
 {
 	setup();
-	corpus_symtab_init(&tab, (CORPUS_TYPE_MAPCASE
-				  | CORPUS_TYPE_MAPCOMPAT
-				  | CORPUS_TYPE_RMDI));
+	corpus_symtab_init(&tab, (UTF8LITE_TEXTMAP_CASE
+				  | UTF8LITE_TEXTMAP_COMPAT
+				  | UTF8LITE_TEXTMAP_RMDI));
 }
 
 
@@ -44,7 +43,7 @@ void teardown_symtab(void)
 }
 
 
-int has_type(const struct corpus_text *typ)
+int has_type(const struct utf8lite_text *typ)
 {
 	int ntoken = tab.ntoken;
 	int ntype = tab.ntype;
@@ -79,7 +78,7 @@ int has_type(const struct corpus_text *typ)
 }
 
 
-int has_token(const struct corpus_text *tok)
+int has_token(const struct utf8lite_text *tok)
 {
 	int ntoken = tab.ntoken;
 	int ntype = tab.ntype;
@@ -115,7 +114,7 @@ int has_token(const struct corpus_text *tok)
 
 
 
-int add_type(const struct corpus_text *typ)
+int add_type(const struct utf8lite_text *typ)
 {
 	int type_id;
 	int ntoken = tab.ntoken;
@@ -154,7 +153,7 @@ int add_type(const struct corpus_text *typ)
 }
 
 
-int add_token(const struct corpus_text *tok)
+int add_token(const struct utf8lite_text *tok)
 {
 	int i, token_id, type_id;
 	int ntoken = tab.ntoken;
@@ -302,7 +301,7 @@ START_TEST(test_many_add_typ)
 {
 	char buf[256];
 	int i, j, n = 100;
-	struct corpus_text *typ;
+	struct utf8lite_text *typ;
 
 	for (i = 0; i < n; i++) {
 		sprintf(buf, "type %d", i);
@@ -323,7 +322,7 @@ START_TEST(test_many_add_tok)
 {
 	char buf[256];
 	int i, j, n = 100;
-	struct corpus_text *tok;
+	struct utf8lite_text *tok;
 
 	for (i = 0; i < n; i++) {
 		sprintf(buf, "token %d", i);

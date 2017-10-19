@@ -16,19 +16,19 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 #include "error.h"
-#include "text.h"
 #include "unicode/wordbreakprop.h"
 #include "wordscan.h"
 
 
 void corpus_wordscan_make(struct corpus_wordscan *scan,
-			  const struct corpus_text *text)
+			  const struct utf8lite_text *text)
 {
 	scan->text = *text;
-	scan->text_attr = text->attr & ~CORPUS_TEXT_SIZE_MASK;
+	scan->text_attr = text->attr & ~UTF8LITE_TEXT_SIZE_MASK;
 
-	corpus_text_iter_make(&scan->iter, text);
+	utf8lite_text_iter_make(&scan->iter, text);
 	corpus_wordscan_reset(scan);
 }
 
@@ -40,7 +40,7 @@ void corpus_wordscan_make(struct corpus_wordscan *scan,
 		scan->attr = scan->iter.attr; \
 		scan->prop = scan->iter_prop; \
 		scan->iter_ptr = scan->iter.ptr; \
-		if (corpus_text_iter_advance(&scan->iter)) { \
+		if (utf8lite_text_iter_advance(&scan->iter)) { \
 			scan->iter_prop = word_break(scan->iter.current); \
 		} else { \
 			scan->iter_prop = WORD_BREAK_NONE; \
@@ -58,7 +58,7 @@ void corpus_wordscan_make(struct corpus_wordscan *scan,
 				|| scan->iter_prop == WORD_BREAK_ZWJ) { \
 			scan->attr |= scan->iter.attr; \
 			scan->iter_ptr = scan->iter.ptr; \
-			if (corpus_text_iter_advance(&scan->iter)) { \
+			if (utf8lite_text_iter_advance(&scan->iter)) { \
 				scan->iter_prop = \
 					word_break(scan->iter.current); \
 			} else { \
@@ -94,16 +94,16 @@ void corpus_wordscan_reset(struct corpus_wordscan *scan)
 	scan->current.attr = 0;
 	scan->type = CORPUS_WORD_NONE;
 
-	corpus_text_iter_reset(&scan->iter);
+	utf8lite_text_iter_reset(&scan->iter);
 	scan->ptr = scan->iter.ptr;
 
-	if (corpus_text_iter_advance(&scan->iter)) {
+	if (utf8lite_text_iter_advance(&scan->iter)) {
 		scan->code = scan->iter.current;
 		scan->attr = scan->iter.attr;
 		scan->prop = word_break(scan->code);
 
 		scan->iter_ptr = scan->iter.ptr;
-		if (corpus_text_iter_advance(&scan->iter)) {
+		if (utf8lite_text_iter_advance(&scan->iter)) {
 			scan->iter_prop = word_break(scan->iter.current);
 		} else {
 			scan->iter_prop = WORD_BREAK_NONE;

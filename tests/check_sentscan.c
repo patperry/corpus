@@ -18,7 +18,6 @@
 #include <stdlib.h>
 #include <check.h>
 #include "../lib/utf8lite/src/utf8lite.h"
-#include "../src/text.h"
 #include "../src/sentscan.h"
 #include "testutil.h"
 
@@ -38,15 +37,15 @@ void teardown_scan(void)
 }
 
 
-void start(const struct corpus_text *text)
+void start(const struct utf8lite_text *text)
 {
 	corpus_sentscan_make(&scan, text, CORPUS_SENTSCAN_STRICT);
 }
 
 
-const struct corpus_text *next(void)
+const struct utf8lite_text *next(void)
 {
-	struct corpus_text *sent;
+	struct utf8lite_text *sent;
 	if (!corpus_sentscan_advance(&scan)) {
 		return NULL;
 	}
@@ -109,7 +108,7 @@ struct unitest {
 	unsigned line;
 	int is_ascii;
 
-	struct corpus_text text;
+	struct utf8lite_text text;
 	uint8_t buf[4096];
 
 	uint32_t code[256];
@@ -185,7 +184,7 @@ void setup_unicode(void)
 			test->is_ascii = is_ascii;
 			test->text.attr = (size_t)(dst - test->text.ptr);
 			if (!is_ascii) {
-				test->text.attr |= CORPUS_TEXT_UTF8_BIT;
+				test->text.attr |= UTF8LITE_TEXT_UTF8_BIT;
 			}
 
 			if (ncode > 0) {
@@ -272,7 +271,7 @@ START_TEST(test_unicode)
 			ck_assert(corpus_sentscan_advance(&scan));
 			ck_assert(scan.current.ptr == test->break_begin[j]);
 			ck_assert(scan.current.ptr
-					+ CORPUS_TEXT_SIZE(&scan.current)
+					+ UTF8LITE_TEXT_SIZE(&scan.current)
 					== test->break_end[j]);
 		}
 		ck_assert(!corpus_sentscan_advance(&scan));

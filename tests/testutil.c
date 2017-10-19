@@ -18,10 +18,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <check.h>
-#include "../src/text.h"
+#include "../lib/utf8lite/src/utf8lite.h"
 #include "testutil.h"
 
-static struct corpus_text *mktext(const char *str, int flags);
+static struct utf8lite_text *mktext(const char *str, int flags);
 
 
 static void **allocs;
@@ -61,27 +61,27 @@ void *alloc(size_t size)
 }
 
 
-struct corpus_text *T(const char *str)
+struct utf8lite_text *T(const char *str)
 {
-	return mktext(str, CORPUS_TEXT_UNESCAPE);
+	return mktext(str, UTF8LITE_TEXT_UNESCAPE);
 }
 
 
-struct corpus_text *S(const char *str)
+struct utf8lite_text *S(const char *str)
 {
 	return mktext(str, 0);
 }
 
 
-struct corpus_text *mktext(const char *str, int flags)
+struct utf8lite_text *mktext(const char *str, int flags)
 {
-	struct corpus_text *text = alloc(sizeof(*text));
+	struct utf8lite_text *text = alloc(sizeof(*text));
 	size_t size = strlen(str);
 	uint8_t *ptr = alloc(size + 1);
 	int err;
 
 	memcpy(ptr, str, size + 1);
-	err = corpus_text_assign(text, ptr, size, flags);
+	err = utf8lite_text_assign(text, ptr, size, flags, NULL);
 	ck_assert(!err);
 
 	return text;

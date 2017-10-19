@@ -17,12 +17,12 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 #include "private/sentsuppress.h"
 #include "unicode/sentbreakprop.h"
 #include "error.h"
 #include "memory.h"
 #include "table.h"
-#include "text.h"
 #include "tree.h"
 #include "sentscan.h"
 #include "sentfilter.h"
@@ -46,13 +46,13 @@
 
 
 static int add_backsupp(struct corpus_sentfilter *f,
-			const struct corpus_text *prefix, int rule);
+			const struct utf8lite_text *prefix, int rule);
 static int add_fwdsupp(struct corpus_sentfilter *f,
-		        const struct corpus_text *pattern);
+		        const struct utf8lite_text *pattern);
 static int has_suppress(const struct corpus_sentfilter *f,
-			struct corpus_text_iter *it);
+			struct utf8lite_text_iter *it);
 static int has_fwdsupp(const struct corpus_sentfilter *f,
-			struct corpus_text_iter *it);
+			struct utf8lite_text_iter *it);
 
 
 const char **corpus_sentsuppress_names(void)
@@ -112,10 +112,10 @@ void corpus_sentfilter_clear(struct corpus_sentfilter *f)
 
 
 int corpus_sentfilter_suppress(struct corpus_sentfilter *f,
-			       const struct corpus_text *pattern)
+			       const struct utf8lite_text *pattern)
 {
-	struct corpus_text prefix;
-	struct corpus_text_iter it;
+	struct utf8lite_text prefix;
+	struct utf8lite_text_iter it;
 	size_t attr, size;
 	int err, has_partial;
 
@@ -129,8 +129,8 @@ int corpus_sentfilter_suppress(struct corpus_sentfilter *f,
 	// add partial suppression rules for the internal ATerms
 	has_partial = 0;
 	attr = 0;
-	corpus_text_iter_make(&it, pattern);
-	while (corpus_text_iter_advance(&it)) {
+	utf8lite_text_iter_make(&it, pattern);
+	while (utf8lite_text_iter_advance(&it)) {
 		attr |= it.attr;
 
 		// find the next ATerm ('.')
@@ -144,7 +144,7 @@ int corpus_sentfilter_suppress(struct corpus_sentfilter *f,
 		prefix.attr = size | attr;
 
 		// peek at the next character
-		if (!corpus_text_iter_advance(&it)) {
+		if (!utf8lite_text_iter_advance(&it)) {
 			break;
 		}
 		attr |= it.attr;
@@ -174,9 +174,9 @@ out:
 }
 
 
-int add_fwdsupp(struct corpus_sentfilter *f, const struct corpus_text *pattern)
+int add_fwdsupp(struct corpus_sentfilter *f, const struct utf8lite_text *pattern)
 {
-	struct corpus_text_iter it;
+	struct utf8lite_text_iter it;
 	int *rules;
 	int size, size0, nnode, nnode0;
 	int code, id, prop, parent_id, err;
@@ -184,10 +184,10 @@ int add_fwdsupp(struct corpus_sentfilter *f, const struct corpus_text *pattern)
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
 	// iterate over the characters in the pattern
-	corpus_text_iter_make(&it, pattern);
+	utf8lite_text_iter_make(&it, pattern);
 	id = CORPUS_TREE_NONE;
 
-	while (corpus_text_iter_advance(&it)) {
+	while (utf8lite_text_iter_advance(&it)) {
 		code = (int)it.current;
 		prop = sent_break(code);
 
@@ -255,10 +255,10 @@ out:
 }
 
 
-int add_backsupp(struct corpus_sentfilter *f, const struct corpus_text *prefix,
+int add_backsupp(struct corpus_sentfilter *f, const struct utf8lite_text *prefix,
 		 int rule)
 {
-	struct corpus_text_iter it;
+	struct utf8lite_text_iter it;
 	int *rules;
 	int size, size0, nnode, nnode0;
 	int code, id, prop, parent_id, err;
@@ -266,11 +266,11 @@ int add_backsupp(struct corpus_sentfilter *f, const struct corpus_text *prefix,
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
 	// iterate over the characters in the prefix, in reverse
-	corpus_text_iter_make(&it, prefix);
-	corpus_text_iter_skip(&it);
+	utf8lite_text_iter_make(&it, prefix);
+	utf8lite_text_iter_skip(&it);
 	id = CORPUS_TREE_NONE;
 
-	while (corpus_text_iter_retreat(&it)) {
+	while (utf8lite_text_iter_retreat(&it)) {
 		code = (int)it.current;
 		prop = sent_break(code);
 
@@ -338,7 +338,7 @@ out:
 
 
 int corpus_sentfilter_start(struct corpus_sentfilter *f,
-			    const struct corpus_text *text)
+			    const struct utf8lite_text *text)
 {
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
@@ -353,9 +353,9 @@ int corpus_sentfilter_start(struct corpus_sentfilter *f,
 
 int corpus_sentfilter_advance(struct corpus_sentfilter *f)
 {
-	const struct corpus_text *text;
-	const struct corpus_text *current;
-	struct corpus_text_iter it;
+	const struct utf8lite_text *text;
+	const struct utf8lite_text *current;
+	struct utf8lite_text_iter it;
 	const uint8_t *ptr;
 	size_t size, attr;
 
@@ -372,16 +372,16 @@ int corpus_sentfilter_advance(struct corpus_sentfilter *f)
 	text = &f->scan.text;
 
 	// set an iterator to the end of the sentence
-	corpus_text_iter_make(&it, current);
-	corpus_text_iter_skip(&it);
+	utf8lite_text_iter_make(&it, current);
+	utf8lite_text_iter_skip(&it);
 
 	// the following is a bit of a hack. we need an iterator that
 	// can move across sentence boundaries. the call to 'iter_advance'
 	// is to ensure that the first call to 'iter_retreat' returns the
 	// last character in the sentence
-	it.end = text->ptr + CORPUS_TEXT_SIZE(text);
+	it.end = text->ptr + UTF8LITE_TEXT_SIZE(text);
 	it.text_attr = text->attr;
-	corpus_text_iter_advance(&it);
+	utf8lite_text_iter_advance(&it);
 
 	if (!has_suppress(f, &it)) {
 		f->current = *current;
@@ -389,21 +389,21 @@ int corpus_sentfilter_advance(struct corpus_sentfilter *f)
 	}
 
 	ptr = current->ptr;
-	size = CORPUS_TEXT_SIZE(current);
-	attr = CORPUS_TEXT_BITS(current);
+	size = UTF8LITE_TEXT_SIZE(current);
+	attr = UTF8LITE_TEXT_BITS(current);
 
 	while (corpus_sentscan_advance(&f->scan)) {
 		current = &f->scan.current;
-		size += CORPUS_TEXT_SIZE(current);
-		attr |= CORPUS_TEXT_BITS(current);
+		size += UTF8LITE_TEXT_SIZE(current);
+		attr |= UTF8LITE_TEXT_BITS(current);
 
-		corpus_text_iter_make(&it, current);
-		corpus_text_iter_skip(&it);
+		utf8lite_text_iter_make(&it, current);
+		utf8lite_text_iter_skip(&it);
 
 		// hack; see above
-		it.end = text->ptr + CORPUS_TEXT_SIZE(text);
+		it.end = text->ptr + UTF8LITE_TEXT_SIZE(text);
 		it.text_attr = text->attr;
-		corpus_text_iter_advance(&it);
+		utf8lite_text_iter_advance(&it);
 
 		if (!has_suppress(f, &it)) {
 			break;
@@ -418,9 +418,9 @@ int corpus_sentfilter_advance(struct corpus_sentfilter *f)
 
 
 int has_suppress(const struct corpus_sentfilter *f,
-		 struct corpus_text_iter *it)
+		 struct utf8lite_text_iter *it)
 {
-	struct corpus_text_iter it2;
+	struct utf8lite_text_iter it2;
 	int code, id, parent_id, prop, skip_space, rule;
 	
 	if (f->scan.type != CORPUS_SENT_ATERM) {
@@ -435,7 +435,7 @@ int has_suppress(const struct corpus_sentfilter *f,
 	rule = BACKSUPP_NONE;
 	id = CORPUS_TREE_NONE;
 
-	while (corpus_text_iter_retreat(it)) {
+	while (utf8lite_text_iter_retreat(it)) {
 		code = (int)it->current;
 		prop = sent_break(code);
 
@@ -502,7 +502,7 @@ boundary:
 }
 
 
-int has_fwdsupp(const struct corpus_sentfilter *f, struct corpus_text_iter *it)
+int has_fwdsupp(const struct corpus_sentfilter *f, struct utf8lite_text_iter *it)
 {
 	int code, id, parent_id, prop, rule;
 
@@ -513,7 +513,7 @@ int has_fwdsupp(const struct corpus_sentfilter *f, struct corpus_text_iter *it)
 	id = CORPUS_TREE_NONE;
 	rule = FWDSUPP_NONE;
 
-	while (corpus_text_iter_advance(it)) {
+	while (utf8lite_text_iter_advance(it)) {
 		code = (int)it->current;
 		prop = sent_break(code);
 

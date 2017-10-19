@@ -20,15 +20,15 @@
 #include <limits.h>
 #include <stddef.h>
 #include "../lib/libstemmer_c/include/libstemmer.h"
+#include "../lib/utf8lite/src/utf8lite.h"
 #include "error.h"
 #include "memory.h"
 #include "table.h"
-#include "text.h"
 #include "textset.h"
 #include "wordscan.h"
 #include "stem.h"
 
-static int needs_stem(const struct corpus_text *text);
+static int needs_stem(const struct utf8lite_text *text);
 
 
 int corpus_stem_init(struct corpus_stem *stem, corpus_stem_func stemmer,
@@ -58,7 +58,7 @@ void corpus_stem_destroy(struct corpus_stem *stem)
 }
 
 
-static int needs_stem(const struct corpus_text *text)
+static int needs_stem(const struct utf8lite_text *text)
 {
 	struct corpus_wordscan scan;
 	int needs = 0;
@@ -81,13 +81,14 @@ static int needs_stem(const struct corpus_text *text)
 }
 
 
-int corpus_stem_set(struct corpus_stem *stem, const struct corpus_text *tok)
+int corpus_stem_set(struct corpus_stem *stem, const struct utf8lite_text *tok)
 {
+	struct utf8lite_message msg;
 	size_t size;
 	const uint8_t *ptr;
 	int err, len;
 
-	assert(!CORPUS_TEXT_HAS_ESC(tok));
+	assert(!UTF8LITE_TEXT_HAS_ESC(tok));
 
 	if (!stem->stemmer || corpus_textset_has(&stem->excepts, tok, NULL)) {
 		stem->type = *tok;
@@ -95,7 +96,7 @@ int corpus_stem_set(struct corpus_stem *stem, const struct corpus_text *tok)
 		return 0;
 	}
 
-	size = CORPUS_TEXT_SIZE(tok);
+	size = UTF8LITE_TEXT_SIZE(tok);
 	if (size >= INT_MAX) {
 		err = CORPUS_ERROR_OVERFLOW;
 		corpus_log(err, "token size (%"PRIu64" bytes)"
@@ -114,9 +115,10 @@ int corpus_stem_set(struct corpus_stem *stem, const struct corpus_text *tok)
 		goto out;
 	}
 
-	if ((err = corpus_text_assign(&stem->type, ptr, (size_t)len,
-				      CORPUS_TEXT_UNKNOWN))) {
-		corpus_log(err, "stemmer returned invalid type");
+	if ((err = utf8lite_text_assign(&stem->type, ptr, (size_t)len,
+					UTF8LITE_TEXT_UNKNOWN, &msg))) {
+		corpus_log(err, "stemmer returned invalid type: %s",
+			   msg.string);
 		goto out;
 	}
 
@@ -132,11 +134,11 @@ out:
 
 
 int corpus_stem_except(struct corpus_stem *stem,
-		       const struct corpus_text *tok)
+		       const struct utf8lite_text *tok)
 {
 	int err;
 
-	assert(!CORPUS_TEXT_HAS_ESC(tok));
+	assert(!UTF8LITE_TEXT_HAS_ESC(tok));
 
 	if ((err = corpus_textset_add(&stem->excepts, tok, NULL))) {
 		corpus_log(err, "failed adding token to stem exception set");
@@ -199,8 +201,9 @@ void corpus_stem_snowball_destroy(struct corpus_stem_snowball *stem)
 int corpus_stem_snowball(const uint8_t *ptr, int len,
 			 const uint8_t **stemptr, int *lenptr, void *ctx)
 {
+	struct utf8lite_message msg;
 	struct corpus_stem_snowball *sb = ctx;
-	struct corpus_text tok, typ;
+	struct utf8lite_text tok, typ;
 	const uint8_t *stem, *buf;
 	int err, stemlen, size;
 
@@ -212,10 +215,10 @@ int corpus_stem_snowball(const uint8_t *ptr, int len,
 		goto out;
 	}
 
-	assert((size_t)len <= CORPUS_TEXT_SIZE_MAX);
+	assert((size_t)len <= UTF8LITE_TEXT_SIZE_MAX);
 
 	tok.ptr = (uint8_t *)ptr;
-	tok.attr = ((size_t)len) | CORPUS_TEXT_UTF8_BIT;
+	tok.attr = ((size_t)len) | UTF8LITE_TEXT_UTF8_BIT;
 
 	if (!needs_stem(&tok)) {
 		goto out;
@@ -232,10 +235,12 @@ int corpus_stem_snowball(const uint8_t *ptr, int len,
 	size = sb_stemmer_length(sb->stemmer);
 	assert(size >= 0);
 
-	if ((err = corpus_text_assign(&typ, buf, (size_t)size,
-				      CORPUS_TEXT_UNKNOWN))) {
+	if ((err = utf8lite_text_assign(&typ, buf, (size_t)size,
+				      UTF8LITE_TEXT_UNKNOWN, &msg))) {
 		err = CORPUS_ERROR_INTERNAL;
-		corpus_log(err, "Snowball stemmer returned invalid UTF-8 text");
+		corpus_log(err,
+			   "Snowball stemmer returned invalid UTF-8 text: %s",
+			   msg.string);
 		goto out;
 	}
 

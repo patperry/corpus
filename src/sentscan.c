@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-#include "text.h"
+#include "../lib/utf8lite/src/utf8lite.h"
 #include "unicode/sentbreakprop.h"
 #include "sentscan.h"
 
 
 void corpus_sentscan_make(struct corpus_sentscan *scan,
-			  const struct corpus_text *text,
+			  const struct utf8lite_text *text,
 			  int flags)
 {
 	scan->text = *text;
-	scan->text_attr = text->attr & ~CORPUS_TEXT_SIZE_MASK;
+	scan->text_attr = text->attr & ~UTF8LITE_TEXT_SIZE_MASK;
 	scan->flags = flags;
 
-	corpus_text_iter_make(&scan->iter, text);
+	utf8lite_text_iter_make(&scan->iter, text);
 	corpus_sentscan_reset(scan);
 }
 
@@ -40,7 +40,7 @@ void corpus_sentscan_make(struct corpus_sentscan *scan,
 		scan->attr = scan->iter.attr; \
 		scan->prop = scan->iter_prop; \
 		scan->iter_ptr = scan->iter.ptr; \
-		if (corpus_text_iter_advance(&scan->iter)) { \
+		if (utf8lite_text_iter_advance(&scan->iter)) { \
 			scan->iter_prop = sent_break(scan->iter.current); \
 		} else { \
 			scan->iter_prop = -1; \
@@ -57,7 +57,7 @@ void corpus_sentscan_make(struct corpus_sentscan *scan,
 				|| scan->iter_prop == SENT_BREAK_FORMAT) { \
 			scan->attr |= scan->iter.attr; \
 			scan->iter_ptr = scan->iter.ptr; \
-			if (corpus_text_iter_advance(&scan->iter)) { \
+			if (utf8lite_text_iter_advance(&scan->iter)) { \
 				scan->iter_prop = \
 					sent_break(scan->iter.current); \
 			} else { \
@@ -96,16 +96,16 @@ void corpus_sentscan_reset(struct corpus_sentscan *scan)
 	scan->current.attr = 0;
 	scan->type = CORPUS_SENT_NONE;
 
-	corpus_text_iter_reset(&scan->iter);
+	utf8lite_text_iter_reset(&scan->iter);
 	scan->ptr = scan->iter.ptr;
 
-	if (corpus_text_iter_advance(&scan->iter)) {
+	if (utf8lite_text_iter_advance(&scan->iter)) {
 		scan->code = scan->iter.current;
 		scan->attr = scan->iter.attr;
 		scan->prop = sent_break(scan->code);
 
 		scan->iter_ptr = scan->iter.ptr;
-		if (corpus_text_iter_advance(&scan->iter)) {
+		if (utf8lite_text_iter_advance(&scan->iter)) {
 			scan->iter_prop = sent_break(scan->iter.current);
 		} else {
 			scan->iter_prop = -1;
@@ -124,7 +124,7 @@ void corpus_sentscan_reset(struct corpus_sentscan *scan)
 
 static int has_future_lower(const struct corpus_sentscan *scan)
 {
-	struct corpus_text_iter iter;
+	struct utf8lite_text_iter iter;
 	int prop, ret;
 
 	if (scan->iter_prop < 0) {
@@ -160,7 +160,7 @@ static int has_future_lower(const struct corpus_sentscan *scan)
 			break;
 		}
 
-		if (corpus_text_iter_advance(&iter)) {
+		if (utf8lite_text_iter_advance(&iter)) {
 			prop = sent_break(iter.current);
 		} else {
 			ret = 0;
@@ -391,8 +391,8 @@ STerm_Close_Sp:
 Break:
 	scan->current.attr |= (size_t)(scan->ptr - scan->current.ptr);
 
-	if (CORPUS_TEXT_SIZE(&scan->current) == 0) {
-		if (CORPUS_TEXT_SIZE(&scan->text) == 0 && !scan->at_end) {
+	if (UTF8LITE_TEXT_SIZE(&scan->current) == 0) {
+		if (UTF8LITE_TEXT_SIZE(&scan->text) == 0 && !scan->at_end) {
 			scan->at_end = 1;
 			return 1;
 		} else {

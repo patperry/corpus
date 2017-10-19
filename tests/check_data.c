@@ -22,12 +22,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 #include "../src/error.h"
 #include "../src/table.h"
-#include "../src/text.h"
 #include "../src/textset.h"
 #include "../src/stem.h"
-#include "../src/typemap.h"
 #include "../src/symtab.h"
 #include "../src/data.h"
 #include "../src/datatype.h"

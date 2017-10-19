@@ -41,7 +41,7 @@ struct corpus_sentfilter {
 	int flags;	/**< #corpus_sentscan_type flags */
 	int has_scan;	/**< whether a scan is in progress */
 
-	struct corpus_text current; /**< current sentence */
+	struct utf8lite_text current; /**< current sentence */
 	int error;	/**< error code for the last failing operation */
 };
 
@@ -98,7 +98,7 @@ void corpus_sentfilter_clear(struct corpus_sentfilter *f);
  * \returns 0 on success
  */
 int corpus_sentfilter_suppress(struct corpus_sentfilter *f,
-			       const struct corpus_text *pattern);
+			       const struct utf8lite_text *pattern);
 
 /**
  * Start segmenting a text into sentences.
@@ -109,7 +109,7 @@ int corpus_sentfilter_suppress(struct corpus_sentfilter *f,
  * \returns 0 on success
  */
 int corpus_sentfilter_start(struct corpus_sentfilter *f,
-			    const struct corpus_text *text);
+			    const struct utf8lite_text *text);
 
 /**
  * Advance a sentence filter to the next sentence in the current text.

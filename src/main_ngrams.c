@@ -22,16 +22,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 
 #include "error.h"
 #include "filebuf.h"
 #include "render.h"
+#include "stopword.h"
 #include "table.h"
-#include "text.h"
 #include "textset.h"
 #include "tree.h"
 #include "stem.h"
-#include "typemap.h"
 #include "symtab.h"
 #include "wordscan.h"
 #include "datatype.h"
@@ -58,13 +58,13 @@ struct string_arg {
 
 
 static struct string_arg char_maps[] = {
-	{ "case", CORPUS_TYPE_MAPCASE,
+	{ "case", UTF8LITE_TEXTMAP_CASE,
 		"Performs Unicode case-folding." },
-	{ "compat", CORPUS_TYPE_MAPCOMPAT,
+	{ "compat", UTF8LITE_TEXTMAP_COMPAT,
 		"Applies Unicode compatibility mappings."},
-	{ "ignorable", CORPUS_TYPE_RMDI,
+	{ "ignorable", UTF8LITE_TEXTMAP_RMDI,
 		"Removes Unicode default ignorables." },
-	{ "quote", CORPUS_TYPE_MAPQUOTE,
+	{ "quote", UTF8LITE_TEXTMAP_QUOTE,
 		"Replaces Unicode quotes with ASCII single quote (')." },
 	{ NULL, 0, NULL }
 };
@@ -168,7 +168,7 @@ int main_ngrams(int argc, char * const argv[])
 	struct corpus_filter filter;
 	struct corpus_stem_snowball snowball;
 	struct corpus_data data, val;
-	struct corpus_text name, text, word;
+	struct utf8lite_text name, text, word;
 	struct corpus_schema schema;
 	struct corpus_filebuf buf;
 	struct corpus_filebuf_iter it;
@@ -185,8 +185,8 @@ int main_ngrams(int argc, char * const argv[])
 	int count;
 
 	filter_flags = CORPUS_FILTER_KEEP_ALL;
-	type_flags = (CORPUS_TYPE_MAPCASE | CORPUS_TYPE_MAPCOMPAT
-			| CORPUS_TYPE_MAPQUOTE | CORPUS_TYPE_RMDI);
+	type_flags = (UTF8LITE_TEXTMAP_CASE | UTF8LITE_TEXTMAP_COMPAT
+			| UTF8LITE_TEXTMAP_QUOTE | UTF8LITE_TEXTMAP_RMDI);
 
 	field = "text";
 	length = 1;
@@ -275,7 +275,8 @@ int main_ngrams(int argc, char * const argv[])
 
 	input = argv[0];
 
-	if (corpus_text_assign(&name, (const uint8_t *)field, field_len, 0)) {
+	if (utf8lite_text_assign(&name, (const uint8_t *)field, field_len, 0,
+				NULL)) {
 		fprintf(stderr, "Invalid field name (%s)\n", field);
 		return EXIT_FAILURE;
 	}
@@ -312,10 +313,10 @@ int main_ngrams(int argc, char * const argv[])
 
 	if (stopwords) {
 		while (*stopwords) {
-			err = corpus_text_assign(&word, *stopwords,
+			err = utf8lite_text_assign(&word, *stopwords,
 						 strlen((const char *)
 							*stopwords),
-						 CORPUS_TEXT_UNKNOWN);
+						 UTF8LITE_TEXT_UNKNOWN, NULL);
 			if (err) {
 				fprintf(stderr, "Internal error:"
 					" stop word list is not valid UTF-8.");
@@ -337,10 +338,10 @@ int main_ngrams(int argc, char * const argv[])
 	}
 
 	for (i = 0; i < ncomb; i++) {
-		err = corpus_text_assign(&word,
+		err = utf8lite_text_assign(&word,
 					 (const uint8_t *)combine_rules[i],
 					 strlen(combine_rules[i]),
-					 CORPUS_TEXT_UNKNOWN);
+					 UTF8LITE_TEXT_UNKNOWN, NULL);
 		if (err) {
 			fprintf(stderr,
 				"Combination rule ('%s') is not valid UTF-8.",

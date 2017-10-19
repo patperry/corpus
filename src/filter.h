@@ -66,7 +66,7 @@ struct corpus_filter {
 	int flags;			/**< filter flags */
 	uint32_t connector;		/**< word connector */
 	int has_scan;			/**< whether a scan is in progress */
-	struct corpus_text current;	/**< current token */
+	struct utf8lite_text current;	/**< current token */
 	int type_id;			/**< current type ID */
 	int error;			/**< last error code */
 };
@@ -105,7 +105,7 @@ void corpus_filter_destroy(struct corpus_filter *f);
  * \returns 0 on success
  */
 int corpus_filter_stem_except(struct corpus_filter *f,
-			      const struct corpus_text *symbol);
+			      const struct utf8lite_text *symbol);
 
 /**
  * Add a combination rule to to filter.
@@ -116,7 +116,7 @@ int corpus_filter_stem_except(struct corpus_filter *f,
  * \returns 0 on success
  */
 int corpus_filter_combine(struct corpus_filter *f,
-			  const struct corpus_text *tokens);
+			  const struct utf8lite_text *tokens);
 
 /**
  * Add a type to a filter table if it does not already exist there, and
@@ -129,7 +129,7 @@ int corpus_filter_combine(struct corpus_filter *f,
  * \returns 0 on success
  */
 int corpus_filter_add_type(struct corpus_filter *f,
-			   const struct corpus_text *typ, int *idptr);
+			   const struct utf8lite_text *typ, int *idptr);
 
 /**
  * Add a type to the filter's drop list.
@@ -140,7 +140,7 @@ int corpus_filter_add_type(struct corpus_filter *f,
  * \returns 0 on success
  */
 int corpus_filter_drop(struct corpus_filter *f,
-		       const struct corpus_text *type);
+		       const struct utf8lite_text *type);
 
 /**
  * Add a type to the filter's drop exception list. This overrides the
@@ -153,7 +153,7 @@ int corpus_filter_drop(struct corpus_filter *f,
  * \returns 0 on success
  */
 int corpus_filter_drop_except(struct corpus_filter *f,
-			      const struct corpus_text *type);
+			      const struct utf8lite_text *type);
 
 /**
  * Start scanning a text.
@@ -164,7 +164,7 @@ int corpus_filter_drop_except(struct corpus_filter *f,
  * \returns 0 on success
  */
 int corpus_filter_start(struct corpus_filter *f,
-			const struct corpus_text *text);
+			const struct utf8lite_text *text);
 
 /**
  * Advance a text to the next type.

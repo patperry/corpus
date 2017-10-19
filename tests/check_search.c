@@ -18,13 +18,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <check.h>
+#include "../lib/utf8lite/src/utf8lite.h"
 #include "../src/table.h"
 #include "../src/tree.h"
 #include "../src/termset.h"
-#include "../src/text.h"
 #include "../src/textset.h"
 #include "../src/stem.h"
-#include "../src/typemap.h"
 #include "../src/symtab.h"
 #include "../src/wordscan.h"
 #include "../src/render.h"
@@ -35,7 +34,7 @@
 
 struct corpus_filter filter;
 struct corpus_search search;
-struct corpus_text search_text;
+struct utf8lite_text search_text;
 int offset;
 int size;
 
@@ -44,7 +43,7 @@ static void setup_search(void)
 {
 	setup();
 	ck_assert(!corpus_filter_init(&filter, CORPUS_FILTER_KEEP_ALL,
-				      CORPUS_TYPE_MAPCASE,
+				      UTF8LITE_TEXTMAP_CASE,
 				      CORPUS_FILTER_CONNECTOR, NULL, NULL));
 	ck_assert(!corpus_search_init(&search));
 }
@@ -58,7 +57,7 @@ static void teardown_search(void)
 }
 
 
-static int add(const struct corpus_text *term)
+static int add(const struct utf8lite_text *term)
 {
 	int type_ids[256];
 	int length, term_id;
@@ -80,7 +79,7 @@ static int add(const struct corpus_text *term)
 }
 
 
-static void start(const struct corpus_text *text)
+static void start(const struct utf8lite_text *text)
 {
 	ck_assert(!corpus_search_start(&search, text, &filter));
 	search_text = *text;
@@ -94,7 +93,7 @@ static int next(void)
 	if (corpus_search_advance(&search)) {
 		id = search.term_id;
 		offset = (int)(search.current.ptr - search_text.ptr);
-		size = (int)CORPUS_TEXT_SIZE(&search.current);
+		size = (int)UTF8LITE_TEXT_SIZE(&search.current);
 	} else {
 		ck_assert(!search.error);
 		id = -1;

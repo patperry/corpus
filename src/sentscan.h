@@ -58,7 +58,7 @@ enum corpus_sentscan_type {
  * [uax29]: http://unicode.org/reports/tr29/
  */
 struct corpus_sentscan {
-	struct corpus_text text;/**< the input text */
+	struct utf8lite_text text;/**< the input text */
 	size_t text_attr;	/**< the input text attributes */
 	int flags;		/**< the scan flags */
 
@@ -67,12 +67,12 @@ struct corpus_sentscan {
 	int prop;		/**< next code's sentence break property */
 	const uint8_t *ptr;	/**< next code's start */
 
-	struct corpus_text_iter iter;	/**< an iterator over the input,
+	struct utf8lite_text_iter iter;	/**< an iterator over the input,
 					  positioned past next code */
 	int iter_prop;		/**< iterator code's sentence break property */
 	const uint8_t *iter_ptr;/**< iterator code's start */
 
-	struct corpus_text current;	/**< the current sentence */
+	struct utf8lite_text current;	/**< the current sentence */
 	enum corpus_sent_type type;	/**< the type of the current sentence */
 	int at_end;		/**< whether the scanner is at the end of
 				  the text */
@@ -87,7 +87,7 @@ struct corpus_sentscan {
  * 	the scanning behavior
  */
 void corpus_sentscan_make(struct corpus_sentscan *scan,
-			  const struct corpus_text *text,
+			  const struct utf8lite_text *text,
 			  int flags);
 
 /**

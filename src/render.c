@@ -24,7 +24,6 @@
 #include "array.h"
 #include "error.h"
 #include "memory.h"
-#include "text.h"
 #include "render.h"
 
 
@@ -285,7 +284,7 @@ void corpus_render_char(struct corpus_render *r, uint32_t ch)
 void corpus_render_string(struct corpus_render *r, const char *str)
 {
 	const uint8_t *ptr = (const uint8_t *)str;
-	uint32_t ch;
+	int32_t ch;
 
 	if (r->error) {
 		return;
@@ -340,16 +339,16 @@ out:
 
 
 void corpus_render_text(struct corpus_render *r,
-			const struct corpus_text *text)
+			const struct utf8lite_text *text)
 {
-	struct corpus_text_iter it;
+	struct utf8lite_text_iter it;
 
 	if (r->error) {
 		return;
 	}
 
-	corpus_text_iter_make(&it, text);
-	while (corpus_text_iter_advance(&it)) {
+	utf8lite_text_iter_make(&it, text);
+	while (utf8lite_text_iter_advance(&it)) {
 		corpus_render_char(r, it.current);
 		if (r->error) {
 			return;

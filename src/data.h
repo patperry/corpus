@@ -126,7 +126,7 @@ int corpus_data_double(const struct corpus_data *d, double *valptr);
  * \returns 0 on success; #CORPUS_ERROR_INVAL if the data value is null or
  * 	not text
  */
-int corpus_data_text(const struct corpus_data *d, struct corpus_text *valptr);
+int corpus_data_text(const struct corpus_data *d, struct utf8lite_text *valptr);
 
 /**
  * Get the number of items (the length) of an array data value.

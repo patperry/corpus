@@ -27,7 +27,7 @@
  * Internal search buffer.
  */
 struct corpus_search_buffer {
-	struct corpus_text *tokens;	/**< tokens */
+	struct utf8lite_text *tokens;	/**< tokens */
 	int *type_ids;			/**< type IDs */
 	int size;			/**< size */
 	int size_max;			/**< capacity */
@@ -42,7 +42,7 @@ struct corpus_search {
 	struct corpus_termset terms;	/**< search query term set */
 	int length_max;			/**< maximum term length */
 
-	struct corpus_text current;	/**< current result instance token */
+	struct utf8lite_text current;	/**< current result instance token */
 	int term_id;			/**< current result instance ID */
 	int length;			/**< current result term length */
 	int error;			/**< last non-zero error code */
@@ -101,7 +101,7 @@ int corpus_search_has(const struct corpus_search *search,
  * \returns 0 on success
  */
 int corpus_search_start(struct corpus_search *search,
-			const struct corpus_text *text,
+			const struct utf8lite_text *text,
 			struct corpus_filter *filter);
 
 /**

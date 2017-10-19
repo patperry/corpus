@@ -47,7 +47,7 @@ enum corpus_word_type {
  * [uax29]: http://unicode.org/reports/tr29/
  */
 struct corpus_wordscan {
-	struct corpus_text text;/**< the input text */
+	struct utf8lite_text text;/**< the input text */
 	size_t text_attr;	/**< the input text attributes */
 
 	uint32_t code;		/**< next code point */
@@ -55,12 +55,12 @@ struct corpus_wordscan {
 	int prop;		/**< next code's word break property */
 	const uint8_t *ptr;	/**< next code's start */
 
-	struct corpus_text_iter iter;	/**< an iterator over the input,
+	struct utf8lite_text_iter iter;	/**< an iterator over the input,
 				  positioned past next code */
 	int iter_prop;		/**< iterator code's word break property */
 	const uint8_t *iter_ptr;/**< iterator code's start */
 
-	struct corpus_text current;	/**< the current word */
+	struct utf8lite_text current;	/**< the current word */
 	enum corpus_word_type type;	/**< the type of the current word */
 };
 
@@ -71,7 +71,7 @@ struct corpus_wordscan {
  * \param text the text
  */
 void corpus_wordscan_make(struct corpus_wordscan *scan,
-			  const struct corpus_text *text);
+			  const struct utf8lite_text *text);
 
 /**
  * Advance a scanner to the next word.

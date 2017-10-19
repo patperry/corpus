@@ -23,14 +23,14 @@
  * Text set, assigning integer IDs to text strings.
  */
 
-struct corpus_text;
+struct utf8lite_text;
 
 /**
  * Text set.
  */
 struct corpus_textset {
 	struct corpus_table table;	/**< item hash table */
-	struct corpus_text *items;	/**< items */
+	struct utf8lite_text *items;	/**< items */
 	int nitem;			/**< number of items in the set */
 	int nitem_max;			/**< current set capacity */
 };
@@ -68,7 +68,7 @@ void corpus_textset_clear(struct corpus_textset *set);
  * \returns 0 on success.
  */
 int corpus_textset_add(struct corpus_textset *set,
-		       const struct corpus_text *text, int *idptr);
+		       const struct utf8lite_text *text, int *idptr);
 
 /**
  * Check whether an item exists in a text set.
@@ -81,6 +81,6 @@ int corpus_textset_add(struct corpus_textset *set,
  * \returns non-zero if the item exists in the set, zero otherwise.
  */
 int corpus_textset_has(const struct corpus_textset *set,
-		       const struct corpus_text *text, int *idptr);
+		       const struct utf8lite_text *text, int *idptr);
 
 #endif /* CORPUS_TEXTSET_H */

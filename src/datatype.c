@@ -24,7 +24,6 @@
 #include "array.h"
 #include "error.h"
 #include "memory.h"
-#include "render.h"
 #include "table.h"
 #include "textset.h"
 #include "stem.h"
@@ -866,91 +865,98 @@ int corpus_schema_grow_types(struct corpus_schema *s, int nadd)
 }
 
 
-void corpus_render_datatype(struct corpus_render *r,
+void corpus_render_datatype(struct utf8lite_render *r,
 			    const struct corpus_schema *s, int id)
 {
 	const struct utf8lite_text *name;
 	const struct corpus_datatype *t;
-	int name_id, type_id;
+	int flags, name_id, type_id;
 	int i, n;
 
 	if (id < 0) {
-		corpus_render_string(r, "any");
+		utf8lite_render_string(r, "any");
 		return;
 	}
 
 	t = &s->types[id];
 
+	flags = (r->flags & ~UTF8LITE_ENCODE_C) | UTF8LITE_ENCODE_JSON;
+	flags = utf8lite_render_set_flags(r, flags);
+
 	switch (t->kind) {
 	case CORPUS_DATATYPE_NULL:
-		corpus_render_string(r, "null");
+		utf8lite_render_string(r, "null");
 		break;
 
 	case CORPUS_DATATYPE_BOOLEAN:
-		corpus_render_string(r, "boolean");
+		utf8lite_render_string(r, "boolean");
 		break;
 
 	case CORPUS_DATATYPE_INTEGER:
-		corpus_render_string(r, "integer");
+		utf8lite_render_string(r, "integer");
 		break;
 
 	case CORPUS_DATATYPE_REAL:
-		corpus_render_string(r, "real");
+		utf8lite_render_string(r, "real");
 		break;
 
 	case CORPUS_DATATYPE_TEXT:
-		corpus_render_string(r, "text");
+		utf8lite_render_string(r, "text");
 		break;
 
 	case CORPUS_DATATYPE_ARRAY:
-		corpus_render_char(r, '[');
+		utf8lite_render_char(r, '[');
 		corpus_render_datatype(r, s, t->meta.array.type_id);
 		if (t->meta.array.length >= 0) {
-			corpus_render_printf(r, "; %d", t->meta.array.length);
+			utf8lite_render_printf(r, "; %d", t->meta.array.length);
 		}
-		corpus_render_char(r, ']');
+		utf8lite_render_char(r, ']');
 		break;
 
 	case CORPUS_DATATYPE_RECORD:
-		corpus_render_char(r, '{');
-		corpus_render_indent(r, +1);
+		utf8lite_render_char(r, '{');
+		utf8lite_render_indent(r, +1);
 
 		n = t->meta.record.nfield;
 		for (i = 0; i < n; i++) {
 			if (i > 0) {
-				corpus_render_string(r, ",");
+				utf8lite_render_string(r, ",");
 			}
-			corpus_render_newlines(r, 1);
+			utf8lite_render_newlines(r, 1);
 
 			name_id = t->meta.record.name_ids[i];
 			name = &s->names.types[name_id].text;
-			corpus_render_char(r, '"');
-			corpus_render_text(r, name);
-			corpus_render_string(r, "\": ");
+			utf8lite_render_char(r, '"');
+			utf8lite_render_text(r, name);
+			utf8lite_render_string(r, "\": ");
 
 			type_id = t->meta.record.type_ids[i];
 			corpus_render_datatype(r, s, type_id);
 		}
 
-		corpus_render_indent(r, -1);
-		corpus_render_newlines(r, 1);
-		corpus_render_char(r, '}');
+		utf8lite_render_indent(r, -1);
+		utf8lite_render_newlines(r, 1);
+		utf8lite_render_char(r, '}');
 		break;
 
 	default:
 		corpus_log(CORPUS_ERROR_INTERNAL,
 			   "internal error: invalid datatype kind");
 	}
+
+	utf8lite_render_set_flags(r, flags);
 }
 
 
 int corpus_write_datatype(FILE *stream, const struct corpus_schema *s, int id)
 {
-	struct corpus_render r;
+	struct utf8lite_render r;
 	int err;
 
-	if ((err = corpus_render_init(&r, CORPUS_ESCAPE_CONTROL
-					  | CORPUS_ESCAPE_UTF8))) {
+	if ((err = utf8lite_render_init(&r,
+					UTF8LITE_ESCAPE_CONTROL
+					| UTF8LITE_ESCAPE_UTF8
+					| UTF8LITE_ENCODE_JSON))) {
 		goto error_init;
 	}
 
@@ -971,7 +977,7 @@ int corpus_write_datatype(FILE *stream, const struct corpus_schema *s, int id)
 
 error_fwrite:
 error_render:
-	corpus_render_destroy(&r);
+	utf8lite_render_destroy(&r);
 error_init:
 	if (err) {
 		corpus_log(err, "failed writing datatype to output stream");

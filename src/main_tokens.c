@@ -26,7 +26,6 @@
 
 #include "error.h"
 #include "filebuf.h"
-#include "render.h"
 #include "stopword.h"
 #include "table.h"
 #include "textset.h"
@@ -171,7 +170,7 @@ int main_tokens(int argc, char * const argv[])
 	struct corpus_schema schema;
 	struct corpus_filebuf buf;
 	struct corpus_filebuf_iter it;
-	struct corpus_render render;
+	struct utf8lite_render render;
 	const char *output = NULL;
 	const char *stemmer = NULL;
 	const uint8_t **stopwords = NULL;
@@ -274,8 +273,8 @@ int main_tokens(int argc, char * const argv[])
 		return EXIT_FAILURE;
 	}
 
-	if ((err = corpus_render_init(&render, (CORPUS_ESCAPE_CONTROL
-						| CORPUS_ESCAPE_UTF8)))) {
+	if ((err = utf8lite_render_init(&render, (UTF8LITE_ESCAPE_CONTROL
+						  | UTF8LITE_ESCAPE_UTF8)))) {
 		goto error_render;
 	}
 
@@ -404,8 +403,8 @@ int main_tokens(int argc, char * const argv[])
 			} else {
 				type = &filter.symtab.types[type_id].text;
 
-				corpus_render_clear(&render);
-				corpus_render_text(&render, type);
+				utf8lite_render_clear(&render);
+				utf8lite_render_text(&render, type);
 				if ((err = render.error)) {
 					goto error;
 				}
@@ -439,7 +438,7 @@ error_filter:
 error_snowball:
 	corpus_schema_destroy(&schema);
 error_schema:
-	corpus_render_destroy(&render);
+	utf8lite_render_destroy(&render);
 error_render:
 	if (err) {
 		fprintf(stderr, "An error occurred.\n");

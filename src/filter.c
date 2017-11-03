@@ -21,7 +21,6 @@
 #include "array.h"
 #include "error.h"
 #include "memory.h"
-#include "render.h"
 #include "table.h"
 #include "textset.h"
 #include "tree.h"
@@ -75,7 +74,7 @@ int corpus_filter_init(struct corpus_filter *f, int flags, int type_kind,
 		goto error_symtab;
 	}
 
-	if ((err = corpus_render_init(&f->render, CORPUS_ESCAPE_NONE))) {
+	if ((err = utf8lite_render_init(&f->render, UTF8LITE_ESCAPE_NONE))) {
 		corpus_log(err, "failed initializing type renderer");
 		goto error_render;
 	}
@@ -109,7 +108,7 @@ int corpus_filter_init(struct corpus_filter *f, int flags, int type_kind,
 error_stemmer:
 	corpus_tree_destroy(&f->combine);
 error_combine:
-	corpus_render_destroy(&f->render);
+	utf8lite_render_destroy(&f->render);
 error_render:
 	corpus_symtab_destroy(&f->symtab);
 error_symtab:
@@ -126,7 +125,7 @@ void corpus_filter_destroy(struct corpus_filter *f)
 		corpus_stem_destroy(&f->stemmer);
 	}
 	corpus_tree_destroy(&f->combine);
-	corpus_render_destroy(&f->render);
+	utf8lite_render_destroy(&f->render);
 	corpus_symtab_destroy(&f->symtab);
 }
 
@@ -199,8 +198,8 @@ int corpus_filter_combine(struct corpus_filter *f,
 
 		// add the first word if haven't already
 		if (node_id == CORPUS_TREE_NONE) {
-			corpus_render_text(&f->render,
-					   &f->symtab.types[word_id].text);
+			utf8lite_render_text(&f->render,
+					     &f->symtab.types[word_id].text);
 			parent_id = node_id;
 			if ((err = corpus_tree_add(&f->combine, parent_id,
 						   word_id, &node_id))) {
@@ -210,7 +209,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 
 		// add the space
 		if (has_space) {
-			corpus_render_char(&f->render, ' ');
+			utf8lite_render_spaces(&f->render, 1);
 			parent_id = node_id;
 			if ((err = corpus_tree_add(&f->combine, parent_id,
 						   CORPUS_TYPE_NONE,
@@ -221,7 +220,8 @@ int corpus_filter_combine(struct corpus_filter *f,
 		}
 
 		// add the next word
-		corpus_render_text(&f->render, &f->symtab.types[next_id].text);
+		utf8lite_render_text(&f->render,
+				     &f->symtab.types[next_id].text);
 		parent_id = node_id;
 		if ((err = corpus_tree_add(&f->combine, parent_id, next_id,
 					   &node_id))) {
@@ -261,7 +261,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 		if ((err = corpus_filter_add_type(f, &rule, &type_id))) {
 			goto out;
 		}
-		corpus_render_clear(&f->render);
+		utf8lite_render_clear(&f->render);
 		f->combine_rules[node_id] = type_id;
 	}
 
@@ -575,11 +575,11 @@ int corpus_filter_unspace(struct corpus_filter *f, int *idptr)
 		if (utf8lite_isspace(ch)) {
 			// only render one connector for a string of spaces
 			if (!in_space) {
-				corpus_render_char(&f->render, f->connector);
+				utf8lite_render_char(&f->render, f->connector);
 				in_space = 1;
 			}
 		} else {
-			corpus_render_char(&f->render, ch);
+			utf8lite_render_char(&f->render, ch);
 			attr |= it.attr;
 			in_space = 0;
 		}
@@ -597,7 +597,7 @@ int corpus_filter_unspace(struct corpus_filter *f, int *idptr)
 		goto out;
 	}
 
-	corpus_render_clear(&f->render);
+	utf8lite_render_clear(&f->render);
 
 out:
 	if (err) {

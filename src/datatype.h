@@ -25,8 +25,6 @@
 
 #include <stdio.h>
 
-struct corpus_render;
-
 /**
  * A basic data type.
  */
@@ -204,7 +202,7 @@ int corpus_schema_scan(struct corpus_schema *s, const uint8_t *ptr,
  * \param s the schema
  * \param id the type id
  */
-void corpus_render_datatype(struct corpus_render *r,
+void corpus_render_datatype(struct utf8lite_render *r,
 			    const struct corpus_schema *s, int id);
 
 /**

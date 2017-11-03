@@ -26,7 +26,6 @@
 
 #include "error.h"
 #include "filebuf.h"
-#include "render.h"
 #include "stopword.h"
 #include "table.h"
 #include "textset.h"
@@ -172,7 +171,6 @@ int main_ngrams(int argc, char * const argv[])
 	struct corpus_schema schema;
 	struct corpus_filebuf buf;
 	struct corpus_filebuf_iter it;
-	struct corpus_render render;
 	struct corpus_ngram ngram;
 	const char *output = NULL;
 	const char *stemmer = NULL;
@@ -283,11 +281,6 @@ int main_ngrams(int argc, char * const argv[])
 
 	if ((err = corpus_ngram_init(&ngram, length))) {
 		goto error_ngram;
-	}
-
-	if ((err = corpus_render_init(&render, (CORPUS_ESCAPE_CONTROL
-						| CORPUS_ESCAPE_UTF8)))) {
-		goto error_render;
 	}
 
 	if ((err = corpus_schema_init(&schema))) {
@@ -438,8 +431,6 @@ error_filter:
 error_snowball:
 	corpus_schema_destroy(&schema);
 error_schema:
-	corpus_render_destroy(&render);
-error_render:
 	corpus_ngram_destroy(&ngram);
 error_ngram:
 	if (err) {

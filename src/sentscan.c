@@ -24,7 +24,6 @@ void corpus_sentscan_make(struct corpus_sentscan *scan,
 			  int flags)
 {
 	scan->text = *text;
-	scan->text_attr = text->attr & ~UTF8LITE_TEXT_SIZE_MASK;
 	scan->flags = flags;
 
 	utf8lite_text_iter_make(&scan->iter, text);
@@ -34,10 +33,8 @@ void corpus_sentscan_make(struct corpus_sentscan *scan,
 
 #define SCAN() \
 	do { \
-		scan->current.attr |= scan->attr; \
 		scan->ptr = scan->iter_ptr; \
 		scan->code = scan->iter.current; \
-		scan->attr = scan->iter.attr; \
 		scan->prop = scan->iter_prop; \
 		scan->iter_ptr = scan->iter.ptr; \
 		if (utf8lite_text_iter_advance(&scan->iter)) { \
@@ -55,7 +52,6 @@ void corpus_sentscan_make(struct corpus_sentscan *scan,
 	do { \
 		while (scan->iter_prop == SENT_BREAK_EXTEND \
 				|| scan->iter_prop == SENT_BREAK_FORMAT) { \
-			scan->attr |= scan->iter.attr; \
 			scan->iter_ptr = scan->iter.ptr; \
 			if (utf8lite_text_iter_advance(&scan->iter)) { \
 				scan->iter_prop = \
@@ -92,8 +88,8 @@ void corpus_sentscan_make(struct corpus_sentscan *scan,
 
 void corpus_sentscan_reset(struct corpus_sentscan *scan)
 {
-	scan->current.ptr = 0;
-	scan->current.attr = 0;
+	scan->current.ptr = NULL;
+	scan->current.attr = scan->iter.text_attr & ~UTF8LITE_TEXT_SIZE_MASK;
 	scan->type = CORPUS_SENT_NONE;
 
 	utf8lite_text_iter_reset(&scan->iter);
@@ -101,7 +97,6 @@ void corpus_sentscan_reset(struct corpus_sentscan *scan)
 
 	if (utf8lite_text_iter_advance(&scan->iter)) {
 		scan->code = scan->iter.current;
-		scan->attr = scan->iter.attr;
 		scan->prop = sent_break(scan->code);
 
 		scan->iter_ptr = scan->iter.ptr;
@@ -113,7 +108,6 @@ void corpus_sentscan_reset(struct corpus_sentscan *scan)
 		MAYBE_EXTEND();
 	} else {
 		scan->code = 0;
-		scan->attr = 0;
 		scan->prop = -1;
 		scan->iter_ptr = NULL;
 		scan->iter_prop = -1;
@@ -176,7 +170,7 @@ out:
 int corpus_sentscan_advance(struct corpus_sentscan *scan)
 {
 	scan->current.ptr = (uint8_t *)scan->ptr;
-	scan->current.attr = 0;
+	scan->current.attr = scan->iter.text_attr & ~UTF8LITE_TEXT_SIZE_MASK;
 	scan->type = CORPUS_SENT_NONE;
 
 NoBreak:

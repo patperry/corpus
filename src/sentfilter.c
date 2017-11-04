@@ -128,11 +128,9 @@ int corpus_sentfilter_suppress(struct corpus_sentfilter *f,
 
 	// add partial suppression rules for the internal ATerms
 	has_partial = 0;
-	attr = 0;
+	attr = UTF8LITE_TEXT_BITS(pattern);
 	utf8lite_text_iter_make(&it, pattern);
 	while (utf8lite_text_iter_advance(&it)) {
-		attr |= it.attr;
-
 		// find the next ATerm ('.')
 		if (sent_break(it.current) != SENT_BREAK_ATERM) {
 			continue;
@@ -147,7 +145,6 @@ int corpus_sentfilter_suppress(struct corpus_sentfilter *f,
 		if (!utf8lite_text_iter_advance(&it)) {
 			break;
 		}
-		attr |= it.attr;
 
 		// skip the prefix if not followed by a space
 		if (sent_break(it.current) != SENT_BREAK_SP) {

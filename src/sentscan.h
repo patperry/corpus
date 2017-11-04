@@ -59,7 +59,6 @@ enum corpus_sentscan_type {
  */
 struct corpus_sentscan {
 	struct utf8lite_text text;/**< the input text */
-	size_t text_attr;	/**< the input text attributes */
 	int flags;		/**< the scan flags */
 
 	int32_t code;		/**< next code point */

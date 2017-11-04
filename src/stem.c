@@ -218,7 +218,7 @@ int corpus_stem_snowball(const uint8_t *ptr, int len,
 	assert((size_t)len <= UTF8LITE_TEXT_SIZE_MAX);
 
 	tok.ptr = (uint8_t *)ptr;
-	tok.attr = ((size_t)len) | UTF8LITE_TEXT_UTF8_BIT;
+	tok.attr = (size_t)len;
 
 	if (!needs_stem(&tok)) {
 		goto out;

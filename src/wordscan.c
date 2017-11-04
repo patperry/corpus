@@ -25,19 +25,14 @@
 void corpus_wordscan_make(struct corpus_wordscan *scan,
 			  const struct utf8lite_text *text)
 {
-	scan->text = *text;
-	scan->text_attr = text->attr & ~UTF8LITE_TEXT_SIZE_MASK;
-
 	utf8lite_text_iter_make(&scan->iter, text);
 	corpus_wordscan_reset(scan);
 }
 
 #define SCAN() \
 	do { \
-		scan->current.attr |= scan->attr; \
 		scan->ptr = scan->iter_ptr; \
 		scan->code = scan->iter.current; \
-		scan->attr = scan->iter.attr; \
 		scan->prop = scan->iter_prop; \
 		scan->iter_ptr = scan->iter.ptr; \
 		if (utf8lite_text_iter_advance(&scan->iter)) { \
@@ -56,7 +51,6 @@ void corpus_wordscan_make(struct corpus_wordscan *scan,
 		while (scan->iter_prop == WORD_BREAK_EXTEND \
 				|| scan->iter_prop == WORD_BREAK_FORMAT \
 				|| scan->iter_prop == WORD_BREAK_ZWJ) { \
-			scan->attr |= scan->iter.attr; \
 			scan->iter_ptr = scan->iter.ptr; \
 			if (utf8lite_text_iter_advance(&scan->iter)) { \
 				scan->iter_prop = \
@@ -90,8 +84,8 @@ void corpus_wordscan_make(struct corpus_wordscan *scan,
 
 void corpus_wordscan_reset(struct corpus_wordscan *scan)
 {
-	scan->current.ptr = 0;
-	scan->current.attr = 0;
+	scan->current.ptr = NULL;
+	scan->current.attr = scan->iter.text_attr & ~UTF8LITE_TEXT_SIZE_MASK;
 	scan->type = CORPUS_WORD_NONE;
 
 	utf8lite_text_iter_reset(&scan->iter);
@@ -99,7 +93,6 @@ void corpus_wordscan_reset(struct corpus_wordscan *scan)
 
 	if (utf8lite_text_iter_advance(&scan->iter)) {
 		scan->code = scan->iter.current;
-		scan->attr = scan->iter.attr;
 		scan->prop = word_break(scan->code);
 
 		scan->iter_ptr = scan->iter.ptr;
@@ -111,7 +104,6 @@ void corpus_wordscan_reset(struct corpus_wordscan *scan)
 		MAYBE_EXTEND();
 	} else {
 		scan->code = 0;
-		scan->attr = 0;
 		scan->prop = WORD_BREAK_NONE;
 		scan->iter_ptr = NULL;
 		scan->iter_prop = WORD_BREAK_NONE;
@@ -124,7 +116,7 @@ int corpus_wordscan_advance(struct corpus_wordscan *scan)
 	int in_extend = 0;
 
 	scan->current.ptr = (uint8_t *)scan->ptr;
-	scan->current.attr = 0;
+	scan->current.attr &= ~UTF8LITE_TEXT_SIZE_MASK;
 
 	switch ((enum word_break_prop)scan->prop) {
 	case WORD_BREAK_NONE:

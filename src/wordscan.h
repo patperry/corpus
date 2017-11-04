@@ -47,9 +47,6 @@ enum corpus_word_type {
  * [uax29]: http://unicode.org/reports/tr29/
  */
 struct corpus_wordscan {
-	struct utf8lite_text text;/**< the input text */
-	size_t text_attr;	/**< the input text attributes */
-
 	int32_t code;		/**< next code point */
 	size_t attr;		/**< next code's attributes */
 	int prop;		/**< next code's word break property */

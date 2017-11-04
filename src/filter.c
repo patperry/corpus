@@ -533,7 +533,6 @@ int corpus_filter_unspace(struct corpus_filter *f, int *idptr)
 	struct utf8lite_text_iter it;
 	struct utf8lite_text unspace;
 	int32_t ch;
-	size_t attr;
 	int err, id, in_space, needs_unspace, has_unspace, unspace_id;
 
 	id = *idptr;
@@ -567,7 +566,6 @@ int corpus_filter_unspace(struct corpus_filter *f, int *idptr)
 
 	// replace sequences of spaces with connectors
 	in_space = 0;
-	attr = UTF8LITE_IS_ASCII(f->connector) ? 0 : UTF8LITE_TEXT_UTF8_BIT;
 	utf8lite_text_iter_make(&it, type);
 
 	while (utf8lite_text_iter_advance(&it)) {
@@ -580,7 +578,6 @@ int corpus_filter_unspace(struct corpus_filter *f, int *idptr)
 			}
 		} else {
 			utf8lite_render_char(&f->render, ch);
-			attr |= it.attr;
 			in_space = 0;
 		}
 	}
@@ -590,7 +587,7 @@ int corpus_filter_unspace(struct corpus_filter *f, int *idptr)
 	}
 
 	unspace.ptr = (uint8_t *)f->render.string;
-	unspace.attr = attr | (size_t)f->render.length;
+	unspace.attr = (size_t)f->render.length;
 
 	// add the unspaced type
 	if ((err = corpus_filter_add_type(f, &unspace, &unspace_id))) {

@@ -209,7 +209,7 @@ int corpus_filter_combine(struct corpus_filter *f,
 
 		// add the space
 		if (has_space) {
-			utf8lite_render_spaces(&f->render, 1);
+			utf8lite_render_char(&f->render, ' ');
 			parent_id = node_id;
 			if ((err = corpus_tree_add(&f->combine, parent_id,
 						   CORPUS_TYPE_NONE,

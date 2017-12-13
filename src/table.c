@@ -115,13 +115,9 @@ int corpus_table_reinit(struct corpus_table *tab, int min_capacity)
 		size = corpus_table_size_min(min_capacity, size);
 		capacity = (int)(CORPUS_TABLE_LOAD_FACTOR * size);
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wtype-limits"
-		// gcc emits a warning if sizeof(size_t) > sizeof(unsigned)
-
+#if SIZE_MAX <= UINT_MAX
+		// overflow possible if sizeof(size_t) <= sizeof(unsigned)
 		if ((size_t)size > SIZE_MAX / sizeof(*items)) {
-#pragma GCC diagnostic pop
-
 			err = CORPUS_ERROR_OVERFLOW;
 			corpus_log(err, "table size (%d)"
 				   " exceeds maximum (%"PRIu64")",
@@ -130,6 +126,7 @@ int corpus_table_reinit(struct corpus_table *tab, int min_capacity)
 
 			return err;
 		}
+#endif
 
 		items = corpus_realloc(items, size * sizeof(*items));
 		if (!items) {

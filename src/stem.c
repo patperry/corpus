@@ -25,7 +25,6 @@
 #include "memory.h"
 #include "table.h"
 #include "textset.h"
-#include "wordscan.h"
 #include "stem.h"
 
 static int needs_stem(const struct utf8lite_text *text);
@@ -60,20 +59,20 @@ void corpus_stem_destroy(struct corpus_stem *stem)
 
 static int needs_stem(const struct utf8lite_text *text)
 {
-	struct corpus_wordscan scan;
+	struct utf8lite_wordscan scan;
 	int needs = 0;
 
-	corpus_wordscan_make(&scan, text);
+	utf8lite_wordscan_make(&scan, text);
 
 	// only stem if first word is letter
-	if (corpus_wordscan_advance(&scan)) {
-		if (scan.type == CORPUS_WORD_LETTER) {
+	if (utf8lite_wordscan_advance(&scan)) {
+		if (scan.type == UTF8LITE_WORD_LETTER) {
 			needs = 1;
 		}
 	}
 
 	// if there is a second word, don't stem
-	if (corpus_wordscan_advance(&scan)) {
+	if (utf8lite_wordscan_advance(&scan)) {
 		needs = 0;
 	}
 

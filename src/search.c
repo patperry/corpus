@@ -25,7 +25,6 @@
 #include "termset.h"
 #include "stem.h"
 #include "symtab.h"
-#include "wordscan.h"
 #include "filter.h"
 #include "search.h"
 

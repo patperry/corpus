@@ -26,7 +26,6 @@
 #include "tree.h"
 #include "stem.h"
 #include "symtab.h"
-#include "wordscan.h"
 #include "filter.h"
 
 
@@ -42,7 +41,7 @@
 
 struct corpus_filter_state {
 	int has_scan;
-	struct corpus_wordscan scan;
+	struct utf8lite_wordscan scan;
 	struct utf8lite_text current;
 	int type_id;
 };
@@ -335,7 +334,7 @@ int corpus_filter_start(struct corpus_filter *f,
 {
 	CHECK_ERROR(CORPUS_ERROR_INVAL);
 
-	corpus_wordscan_make(&f->scan, text);
+	utf8lite_wordscan_make(&f->scan, text);
 	f->has_scan = 1;
 	f->current.ptr = text->ptr;
 	f->current.attr = 0;
@@ -390,7 +389,7 @@ out:
 
 int corpus_filter_try_combine(struct corpus_filter *f, int *idptr)
 {
-	struct corpus_wordscan scan;
+	struct utf8lite_wordscan scan;
 	struct utf8lite_text current;
 	size_t attr, size;
 	int err, has_scan, id, type_id, node_id, parent_id, in_space;
@@ -626,12 +625,12 @@ int corpus_filter_advance_word(struct corpus_filter *f, int *idptr)
 		goto out;
 	}
 
-	if (!corpus_wordscan_advance(&f->scan)) {
+	if (!utf8lite_wordscan_advance(&f->scan)) {
 		f->has_scan = 0;
 		goto out;
 	}
 
-	if (f->scan.type == CORPUS_WORD_NONE) {
+	if (f->scan.type == UTF8LITE_WORD_NONE) {
 		type_id = CORPUS_TYPE_NONE;
 		ret = 1;
 		goto out;
@@ -759,19 +758,19 @@ int corpus_filter_get_drop(const struct corpus_filter *f, int kind)
 	int drop;
 
 	switch (kind) {
-	case CORPUS_WORD_LETTER:
+	case UTF8LITE_WORD_LETTER:
 		drop = f->flags & CORPUS_FILTER_DROP_LETTER;
 		break;
 
-	case CORPUS_WORD_NUMBER:
+	case UTF8LITE_WORD_NUMBER:
 		drop = f->flags & CORPUS_FILTER_DROP_NUMBER;
 		break;
 
-	case CORPUS_WORD_PUNCT:
+	case UTF8LITE_WORD_PUNCT:
 		drop = f->flags & CORPUS_FILTER_DROP_PUNCT;
 		break;
 
-	case CORPUS_WORD_SYMBOL:
+	case UTF8LITE_WORD_SYMBOL:
 		drop = f->flags & CORPUS_FILTER_DROP_SYMBOL;
 		break;
 
@@ -786,15 +785,15 @@ int corpus_filter_get_drop(const struct corpus_filter *f, int kind)
 
 int corpus_type_kind(const struct utf8lite_text *type)
 {
-	struct corpus_wordscan scan;
+	struct utf8lite_wordscan scan;
 	int kind;
 
-	corpus_wordscan_make(&scan, type);
+	utf8lite_wordscan_make(&scan, type);
 
-	kind = CORPUS_WORD_NONE;
-	while (corpus_wordscan_advance(&scan)) {
+	kind = UTF8LITE_WORD_NONE;
+	while (utf8lite_wordscan_advance(&scan)) {
 		kind = scan.type;
-		if (kind != CORPUS_WORD_NONE) {
+		if (kind != UTF8LITE_WORD_NONE) {
 			break;
 		}
 	}

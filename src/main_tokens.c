@@ -32,7 +32,6 @@
 #include "tree.h"
 #include "stem.h"
 #include "symtab.h"
-#include "wordscan.h"
 #include "datatype.h"
 #include "data.h"
 #include "filter.h"

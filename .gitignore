@@ -18,4 +18,3 @@ xcuserdata
 /tests/check_symtab
 /tests/check_termset
 /tests/check_tree
-/tests/check_wordscan

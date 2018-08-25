@@ -62,7 +62,7 @@ struct corpus_filter {
 	struct corpus_stem stemmer;	/**< stemmer */
 	int has_stemmer;		/**< whether stemmer is in use */
 	struct corpus_filter_prop *props;/**< type properties */
-	struct corpus_wordscan scan;	/**< current word scan */
+	struct utf8lite_wordscan scan;	/**< current word scan */
 	int flags;			/**< filter flags */
 	int32_t connector;		/**< word connector */
 	int has_scan;			/**< whether a scan is in progress */

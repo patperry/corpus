@@ -25,7 +25,6 @@
 #include "../src/textset.h"
 #include "../src/stem.h"
 #include "../src/symtab.h"
-#include "../src/wordscan.h"
 #include "../src/filter.h"
 #include "../src/search.h"
 #include "testutil.h"
